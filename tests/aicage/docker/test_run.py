@@ -27,7 +27,7 @@ class RunCommandTests(TestCase):
         )
         with (
             mock.patch("aicage.docker.run._assemble_docker_run", return_value=["docker", "run"]),
-            mock.patch("aicage.docker.run.subprocess.run") as run_mock,
+            mock.patch("aicage.docker.run.run_docker_command") as run_mock,
         ):
             run.run_container(args)
 

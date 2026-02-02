@@ -6,6 +6,7 @@ from pathlib import Path
 from docker.errors import ContainerError, DockerException, ImageNotFound
 
 from aicage.docker._client import get_docker_client
+from aicage.docker.cli import run_docker_command
 from aicage.paths import CONTAINER_WORKSPACE_DIR, container_project_path
 from aicage.runtime.env_vars import AICAGE_GID, AICAGE_UID, AICAGE_USER, AICAGE_WORKSPACE
 from aicage.runtime.run_args import DockerRunArgs
@@ -13,7 +14,7 @@ from aicage.runtime.run_args import DockerRunArgs
 
 def run_container(args: DockerRunArgs) -> None:
     command = _assemble_docker_run(args)
-    subprocess.run(command, check=True)
+    run_docker_command(command, check=True)
 
 
 def print_run_command(args: DockerRunArgs) -> None:

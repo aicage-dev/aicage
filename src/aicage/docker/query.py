@@ -5,6 +5,7 @@ from docker.errors import DockerException, ImageNotFound
 from aicage._logging import get_logger
 
 from ._client import get_docker_client
+from .cli import run_docker_command
 from .types import ImageRefRepository
 
 
@@ -64,7 +65,7 @@ def get_local_rootfs_layers(image_ref: str) -> list[str] | None:
 def _remove_old_image_digest(repository: str, old_digest: str) -> None:
     image_ref = f"{repository}@{old_digest}"
     logger = get_logger()
-    result = subprocess.run(
+    result = run_docker_command(
         ["docker", "image", "rm", image_ref],
         check=False,
         stdout=subprocess.DEVNULL,

@@ -2,6 +2,7 @@ import subprocess
 
 from aicage._logging import get_logger
 from aicage.constants import COSIGN_IDENTITY_REGEXP, COSIGN_IMAGE_REF, COSIGN_OIDC_ISSUER
+from aicage.docker.cli import run_docker_command_capture
 from aicage.docker.pull import run_pull
 from aicage.docker.query import (
     cleanup_old_digest,
@@ -57,10 +58,9 @@ def _run_cosign_verify(image_ref: str) -> subprocess.CompletedProcess[str]:
         COSIGN_IDENTITY_REGEXP,
         image_ref,
     ]
-    return subprocess.run(
+    return run_docker_command_capture(
         command,
         check=False,
-        capture_output=True,
         text=True,
     )
 

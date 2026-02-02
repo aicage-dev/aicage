@@ -5,6 +5,7 @@ from aicage._logging import get_logger
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.resources import find_packaged_path
 from aicage.config.runtime_config import RunConfig
+from aicage.docker.cli import run_docker_command
 from aicage.docker.errors import DockerError
 
 
@@ -38,7 +39,12 @@ def run_build(
         str(build_root),
     ]
     with log_path.open("w", encoding="utf-8") as log_handle:
-        result = subprocess.run(command, check=False, stdout=log_handle, stderr=subprocess.STDOUT)
+        result = run_docker_command(
+            command,
+            check=False,
+            stdout=log_handle,
+            stderr=subprocess.STDOUT,
+        )
     if result.returncode != 0:
         logger.error("Local image build failed for %s (logs: %s)", image_ref, log_path)
         raise DockerError(
@@ -88,7 +94,12 @@ def run_extended_build(
                 target_ref,
                 str(extension.directory),
             ]
-            result = subprocess.run(command, check=False, stdout=log_handle, stderr=subprocess.STDOUT)
+            result = run_docker_command(
+                command,
+                check=False,
+                stdout=log_handle,
+                stderr=subprocess.STDOUT,
+            )
             if result.returncode != 0:
                 logger.error(
                     "Extended image build failed for %s (logs: %s)",
@@ -128,7 +139,12 @@ def run_custom_base_build(
         str(build_root),
     ]
     with log_path.open("w", encoding="utf-8") as log_handle:
-        result = subprocess.run(command, check=False, stdout=log_handle, stderr=subprocess.STDOUT)
+        result = run_docker_command(
+            command,
+            check=False,
+            stdout=log_handle,
+            stderr=subprocess.STDOUT,
+        )
     if result.returncode != 0:
         logger.error("Custom base image build failed for %s (logs: %s)", image_ref, log_path)
         raise DockerError(
@@ -163,7 +179,7 @@ def _parse_image_ref(image_ref: str) -> tuple[str, str]:
 def _cleanup_intermediate_images(intermediate_refs: list[str]) -> None:
     logger = get_logger()
     for image_ref in intermediate_refs:
-        result = subprocess.run(
+        result = run_docker_command(
             ["docker", "image", "rm", "-f", image_ref],
             check=False,
             stdout=subprocess.DEVNULL,
