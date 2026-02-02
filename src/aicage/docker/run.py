@@ -1,7 +1,7 @@
 import os
 import shlex
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from docker.errors import ContainerError, DockerException, ImageNotFound
 
@@ -88,13 +88,12 @@ def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
     cmd.extend(["-e", f"{AICAGE_WORKSPACE}={project_container_path.as_posix()}"])
     for env in args.env:
         cmd.extend(["-e", f"{env.name}={env.value}"])
-    cmd.extend(["-v", f"{args.project_path}:{CONTAINER_WORKSPACE_DIR.as_posix()}"])
-    cmd.extend(["-v", f"{args.project_path}:{project_container_path.as_posix()}"])
+    _append_mount(cmd, args.project_path, CONTAINER_WORKSPACE_DIR, read_only=False)
+    _append_mount(cmd, args.project_path, project_container_path, read_only=False)
     for mount in args.agent_config_mounts:
-        cmd.extend(["-v", f"{mount.host_path}:{mount.container_path.as_posix()}"])
+        _append_mount(cmd, mount.host_path, mount.container_path, read_only=False)
     for mount in args.mounts:
-        suffix = ":ro" if mount.read_only else ""
-        cmd.extend(["-v", f"{mount.host_path}:{mount.container_path.as_posix()}{suffix}"])
+        _append_mount(cmd, mount.host_path, mount.container_path, read_only=mount.read_only)
 
     if args.merged_docker_args:
         cmd.extend(shlex.split(args.merged_docker_args))
@@ -102,3 +101,30 @@ def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
     cmd.append(args.image_ref)
     cmd.extend(args.agent_args)
     return cmd
+
+
+def _append_mount(
+    cmd: list[str],
+    host_path: Path,
+    container_path: PurePosixPath,
+    *,
+    read_only: bool,
+) -> None:
+    mount_value = _format_mount_value(host_path, container_path, read_only=read_only)
+    cmd.extend(["--mount", mount_value])
+
+
+def _format_mount_value(
+    host_path: Path,
+    container_path: PurePosixPath,
+    *,
+    read_only: bool,
+) -> str:
+    parts = [
+        "type=bind",
+        f"src={host_path}",
+        f"dst={container_path.as_posix()}",
+    ]
+    if read_only:
+        parts.append("readonly")
+    return ",".join(parts)

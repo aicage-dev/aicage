@@ -159,12 +159,12 @@ class RunCommandTests(TestCase):
                 "-it",
                 "-e",
                 f"AICAGE_WORKSPACE={container_project_path}",
-                "-v",
-                f"{host_project_path}:{CONTAINER_WORKSPACE_DIR.as_posix()}",
-                "-v",
-                f"{host_project_path}:{container_project_path}",
-                "-v",
-                f"/host/.codex:{CONTAINER_AGENT_CONFIG_DIR.as_posix()}/.codex",
+                "--mount",
+                f"type=bind,src={host_project_path},dst={CONTAINER_WORKSPACE_DIR.as_posix()}",
+                "--mount",
+                f"type=bind,src={host_project_path},dst={container_project_path}",
+                "--mount",
+                f"type=bind,src=/host/.codex,dst={CONTAINER_AGENT_CONFIG_DIR.as_posix()}/.codex",
                 "--network=host",
                 "ghcr.io/aicage/aicage:codex-ubuntu",
                 "--flag",
@@ -195,8 +195,8 @@ class RunCommandTests(TestCase):
             windows_workspace = container_project_path(project_path).as_posix()
         workspace_root = CONTAINER_WORKSPACE_DIR.as_posix()
         self.assertIn(f"AICAGE_WORKSPACE={windows_workspace}", cmd)
-        self.assertIn(f"{project_path}:{workspace_root}", cmd)
-        self.assertIn(f"{project_path}:{windows_workspace}", cmd)
+        self.assertIn(f"type=bind,src={project_path},dst={workspace_root}", cmd)
+        self.assertIn(f"type=bind,src={project_path},dst={windows_workspace}", cmd)
 
     def test_assemble_includes_env_and_mounts(self) -> None:
         with mock.patch("aicage.docker.run._resolve_user_ids", return_value=["-e", "AICAGE_USER=me"]):
@@ -223,6 +223,9 @@ class RunCommandTests(TestCase):
             cmd = run._assemble_docker_run(run_args)
         self.assertIn("-e", cmd)
         self.assertIn("EXTRA=1", cmd)
-        self.assertIn("-v", cmd)
-        self.assertIn(f"{Path('/tmp/one')}:{PurePosixPath('/opt/one').as_posix()}:ro", cmd)
+        self.assertIn("--mount", cmd)
+        self.assertIn(
+            f"type=bind,src={Path('/tmp/one')},dst={PurePosixPath('/opt/one').as_posix()},readonly",
+            cmd,
+        )
         self.assertNotIn("AICAGE_AGENT_CONFIG_PATH", " ".join(cmd))
