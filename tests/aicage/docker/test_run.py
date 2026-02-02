@@ -99,41 +99,11 @@ class RunCommandTests(TestCase):
         self.assertEqual("", result.stdout)
         self.assertEqual("boom", result.stderr)
 
-    def test_resolve_user_ids_handles_missing(self) -> None:
-        with (
-            mock.patch("aicage.docker.run.os.getuid", None, create=True),
-            mock.patch("aicage.docker.run.os.getgid", None, create=True),
-            mock.patch.dict(os.environ, {"USER": "tester"}, clear=True),
-            mock.patch("aicage.docker.run.os.name", "posix"),
-        ):
-            env_flags = run._resolve_user_ids()
-        self.assertEqual(["-e", "AICAGE_USER=tester"], env_flags)
-
-    def test_resolve_user_ids_includes_uid_gid(self) -> None:
-        with (
-            mock.patch("aicage.docker.run.os.getuid", return_value=1000, create=True),
-            mock.patch("aicage.docker.run.os.getgid", return_value=1001, create=True),
-            mock.patch.dict(os.environ, {"USER": "tester"}, clear=True),
-            mock.patch("aicage.docker.run.os.name", "posix"),
-        ):
-            env_flags = run._resolve_user_ids()
-        self.assertEqual(
-            ["-e", "AICAGE_UID=1000", "-e", "AICAGE_GID=1001", "-e", "AICAGE_USER=tester"],
-            env_flags,
-        )
-
-    def test_resolve_user_ids_sets_root_on_windows(self) -> None:
-        with mock.patch("aicage.docker.run.os.getuid", side_effect=AttributeError, create=True), mock.patch(
-            "aicage.docker.run.os.getgid", side_effect=AttributeError, create=True
-        ), mock.patch.dict(os.environ, {"USER": "tester"}, clear=True), mock.patch("aicage.docker.run.os.name", "nt"):
-            env_flags = run._resolve_user_ids()
-        self.assertEqual(["-e", "AICAGE_USER=root"], env_flags)
-
     def test_assemble_includes_workspace_mount(self) -> None:
         if os.name == "nt":
             self.skipTest("posix-only path expectations")
         with (
-            mock.patch("aicage.docker.run._resolve_user_ids", return_value=[]),
+            mock.patch("aicage.docker.run.resolve_user_ids", return_value=[]),
             mock.patch("aicage.paths.os.name", "posix"),
         ):
             run_args = DockerRunArgs(
@@ -149,7 +119,7 @@ class RunCommandTests(TestCase):
                 agent_args=["--flag"],
             )
             cmd = run._assemble_docker_run(run_args)
-        host_project_path = str(run_args.project_path)
+        host_project_path = run_args.project_path.as_posix()
         container_project_path = PurePosixPath("/work/project").as_posix()
         self.assertEqual(
             [
@@ -176,7 +146,7 @@ class RunCommandTests(TestCase):
         project_path = Path("C:/work/project")
         agent_config_host = Path("C:/host/.codex")
         with (
-            mock.patch("aicage.docker.run._resolve_user_ids", return_value=[]),
+            mock.patch("aicage.docker.run.resolve_user_ids", return_value=[]),
             mock.patch("aicage.paths.os.name", "nt"),
         ):
             run_args = DockerRunArgs(
@@ -195,11 +165,12 @@ class RunCommandTests(TestCase):
             windows_workspace = container_project_path(project_path).as_posix()
         workspace_root = CONTAINER_WORKSPACE_DIR.as_posix()
         self.assertIn(f"AICAGE_WORKSPACE={windows_workspace}", cmd)
-        self.assertIn(f"type=bind,src={project_path},dst={workspace_root}", cmd)
-        self.assertIn(f"type=bind,src={project_path},dst={windows_workspace}", cmd)
+        project_path_posix = project_path.as_posix()
+        self.assertIn(f"type=bind,src={project_path_posix},dst={workspace_root}", cmd)
+        self.assertIn(f"type=bind,src={project_path_posix},dst={windows_workspace}", cmd)
 
     def test_assemble_includes_env_and_mounts(self) -> None:
-        with mock.patch("aicage.docker.run._resolve_user_ids", return_value=["-e", "AICAGE_USER=me"]):
+        with mock.patch("aicage.docker.run.resolve_user_ids", return_value=["-e", "AICAGE_USER=me"]):
             run_args = DockerRunArgs(
                 image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
                 project_path=Path("/work/project"),
@@ -224,8 +195,7 @@ class RunCommandTests(TestCase):
         self.assertIn("-e", cmd)
         self.assertIn("EXTRA=1", cmd)
         self.assertIn("--mount", cmd)
-        self.assertIn(
-            f"type=bind,src={Path('/tmp/one')},dst={PurePosixPath('/opt/one').as_posix()},readonly",
-            cmd,
-        )
+        host_mount = Path("/tmp/one").as_posix()
+        container_mount = PurePosixPath("/opt/one").as_posix()
+        self.assertIn(f"type=bind,src={host_mount},dst={container_mount},readonly", cmd)
         self.assertNotIn("AICAGE_AGENT_CONFIG_PATH", " ".join(cmd))

@@ -1,14 +1,15 @@
-import os
 import shlex
 import subprocess
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from docker.errors import ContainerError, DockerException, ImageNotFound
 
 from aicage.docker._client import get_docker_client
+from aicage.docker._env import resolve_user_ids
+from aicage.docker._mounts import append_mount
 from aicage.docker.cli import run_docker_command
 from aicage.paths import CONTAINER_WORKSPACE_DIR, container_project_path
-from aicage.runtime.env_vars import AICAGE_GID, AICAGE_UID, AICAGE_USER, AICAGE_WORKSPACE
+from aicage.runtime.env_vars import AICAGE_WORKSPACE
 from aicage.runtime.run_args import DockerRunArgs
 
 
@@ -62,38 +63,19 @@ def _decode_container_output(output: object) -> str:
     return ""
 
 
-def _resolve_user_ids() -> list[str]:
-    env_flags: list[str] = []
-    if os.name == "nt":
-        user = "root"
-        env_flags.extend(["-e", f"{AICAGE_USER}={user}"])
-        return env_flags
-
-    getuid = getattr(os, "getuid", None)
-    getgid = getattr(os, "getgid", None)
-    uid = getuid() if callable(getuid) else None
-    gid = getgid() if callable(getgid) else None
-
-    user = os.environ.get("USER") or os.environ.get("USERNAME") or "aicage"
-    if uid is not None:
-        env_flags.extend(["-e", f"{AICAGE_UID}={uid}", "-e", f"{AICAGE_GID}{'='}{gid}"])
-    env_flags.extend(["-e", f"{AICAGE_USER}={user}"])
-    return env_flags
-
-
 def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
     cmd: list[str] = ["docker", "run", "--rm", "-it"]
-    cmd.extend(_resolve_user_ids())
+    cmd.extend(resolve_user_ids())
     project_container_path = container_project_path(args.project_path)
     cmd.extend(["-e", f"{AICAGE_WORKSPACE}={project_container_path.as_posix()}"])
     for env in args.env:
         cmd.extend(["-e", f"{env.name}={env.value}"])
-    _append_mount(cmd, args.project_path, CONTAINER_WORKSPACE_DIR, read_only=False)
-    _append_mount(cmd, args.project_path, project_container_path, read_only=False)
+    append_mount(cmd, args.project_path, CONTAINER_WORKSPACE_DIR, read_only=False)
+    append_mount(cmd, args.project_path, project_container_path, read_only=False)
     for mount in args.agent_config_mounts:
-        _append_mount(cmd, mount.host_path, mount.container_path, read_only=False)
+        append_mount(cmd, mount.host_path, mount.container_path, read_only=False)
     for mount in args.mounts:
-        _append_mount(cmd, mount.host_path, mount.container_path, read_only=mount.read_only)
+        append_mount(cmd, mount.host_path, mount.container_path, read_only=mount.read_only)
 
     if args.merged_docker_args:
         cmd.extend(shlex.split(args.merged_docker_args))
@@ -101,30 +83,3 @@ def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
     cmd.append(args.image_ref)
     cmd.extend(args.agent_args)
     return cmd
-
-
-def _append_mount(
-    cmd: list[str],
-    host_path: Path,
-    container_path: PurePosixPath,
-    *,
-    read_only: bool,
-) -> None:
-    mount_value = _format_mount_value(host_path, container_path, read_only=read_only)
-    cmd.extend(["--mount", mount_value])
-
-
-def _format_mount_value(
-    host_path: Path,
-    container_path: PurePosixPath,
-    *,
-    read_only: bool,
-) -> str:
-    parts = [
-        "type=bind",
-        f"src={host_path}",
-        f"dst={container_path.as_posix()}",
-    ]
-    if read_only:
-        parts.append("readonly")
-    return ",".join(parts)
