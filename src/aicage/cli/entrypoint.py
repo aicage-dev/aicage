@@ -31,10 +31,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             remove_project_config()
             return 0
         run_config: RunConfig = load_run_config(parsed.agent, parsed)
-        _validate_home_mount_safety(run_config)
+        run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
+        _validate_home_mount_safety(run_args)
         logger.info("Resolved run config for agent %s", run_config.agent)
         ensure_image(run_config)
-        run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
 
         if parsed.dry_run:
             print_run_command(run_args)
@@ -53,13 +53,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
 
-def _validate_home_mount_safety(run_config: RunConfig) -> None:
+def _validate_home_mount_safety(run_args: DockerRunArgs) -> None:
     home_path = _resolve_home_path()
-    if _is_parent_or_same(run_config.project_path, home_path):
+    if _is_parent_or_same(run_args.project_path, home_path):
         raise CliError(
             "Refusing to start: this would mount your home directory into the container.",
         )
-    for mount in run_config.mounts:
+    for mount in run_args.mounts:
         if _is_parent_or_same(mount.host_path, home_path):
             raise CliError(
                 "Refusing to start: this would mount your home directory into the container.",

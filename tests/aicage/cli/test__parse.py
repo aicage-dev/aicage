@@ -18,6 +18,7 @@ class ParseCliTests(TestCase):
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--bar"], parsed.agent_args)
+        self.assertEqual([], parsed.shares)
 
     def test_parse_cli_with_separator_and_docker_args(self) -> None:
         parsed = parse_cli(["--dry-run", "-v", "/run/docker.sock:/run/docker.sock", "--", "codex", "--bar"])
@@ -26,6 +27,7 @@ class ParseCliTests(TestCase):
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--bar"], parsed.agent_args)
         self.assertFalse(parsed.docker_socket)
+        self.assertEqual([], parsed.shares)
         self.assertIsNone(parsed.config_action)
 
     def test_parse_cli_without_docker_args(self) -> None:
@@ -35,6 +37,7 @@ class ParseCliTests(TestCase):
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--flag"], parsed.agent_args)
         self.assertFalse(parsed.docker_socket)
+        self.assertEqual([], parsed.shares)
         self.assertIsNone(parsed.config_action)
 
     def test_parse_cli_help_exits(self) -> None:
@@ -81,6 +84,7 @@ class ParseCliTests(TestCase):
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("", parsed.agent)
         self.assertEqual([], parsed.agent_args)
+        self.assertEqual([], parsed.shares)
 
     def test_parse_cli_config_print_alias(self) -> None:
         parsed = parse_cli(["--config", "print"])
@@ -111,3 +115,12 @@ class ParseCliTests(TestCase):
         self.assertTrue(parsed.docker_socket)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
+        self.assertEqual([], parsed.shares)
+
+    def test_parse_cli_with_share(self) -> None:
+        parsed = parse_cli(["--share", "data", "--share", "/tmp/one:ro", "--", "codex"])
+        self.assertEqual(["data", "/tmp/one:ro"], parsed.shares)
+
+    def test_parse_cli_config_rejects_share(self) -> None:
+        with self.assertRaises(CliError):
+            parse_cli(["--config", "info", "--share", "data"])

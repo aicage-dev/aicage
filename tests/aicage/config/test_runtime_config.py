@@ -86,6 +86,7 @@ class RuntimeConfigTests(TestCase):
                 agent="codex",
                 agent_args=[],
                 docker_socket=False,
+                shares=[],
                 config_action=None,
             )
             with (

@@ -8,4 +8,5 @@ class ParsedArgs:
     agent: str
     agent_args: list[str]
     docker_socket: bool
+    shares: list[str]
     config_action: str | None

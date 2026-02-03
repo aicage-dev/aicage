@@ -20,7 +20,7 @@ class ResolverTests(TestCase):
             bases=self._get_bases(),
             extensions={},
         )
-        parsed = ParsedArgs(False, "", "codex", [], False, None)
+        parsed = ParsedArgs(False, "", "codex", [], False, [], None)
         git_mount = MountSpec(host_path=Path("/tmp/git"), container_path=PurePosixPath("/git"))
         git_root_mount = MountSpec(host_path=Path("/tmp/git-root"), container_path=PurePosixPath("/git-root"))
         ssh_mount = MountSpec(host_path=Path("/tmp/ssh"), container_path=PurePosixPath("/ssh"))

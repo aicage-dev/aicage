@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aicage.config.agent.models import AgentMetadata
+from aicage.runtime._path_utils import ensure_path_exists, looks_like_file
 
 
 @dataclass
@@ -19,15 +20,4 @@ def resolve_agent_config(agent_metadata: AgentMetadata) -> AgentConfig:
 
 def _ensure_agent_path(agent_path: str) -> Path:
     expanded = Path(os.path.expanduser(agent_path)).resolve()
-    if expanded.exists():
-        return expanded
-    if _looks_like_file(agent_path):
-        expanded.parent.mkdir(parents=True, exist_ok=True)
-        expanded.touch()
-    else:
-        expanded.mkdir(parents=True, exist_ok=True)
-    return expanded
-
-
-def _looks_like_file(agent_path: str) -> bool:
-    return bool(Path(agent_path).suffix)
+    return ensure_path_exists(expanded, looks_like_file(agent_path))

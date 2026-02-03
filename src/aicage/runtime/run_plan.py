@@ -4,6 +4,7 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CONTAINER_AGENT_CONFIG_DIR
 from aicage.runtime._agent_config import AgentConfig, resolve_agent_config
+from aicage.runtime.mounts.shares import resolve_share_mounts
 from aicage.runtime.run_args import DockerRunArgs, MountSpec, merge_docker_args
 
 
@@ -17,6 +18,14 @@ def build_run_args(config: RunConfig, parsed: ParsedArgs) -> DockerRunArgs:
         parsed.docker_args,
     )
     agent_config_mounts = _build_agent_config_mounts(agent_config)
+    share_mounts = resolve_share_mounts(
+        parsed=parsed,
+        project_path=config.project_path,
+        existing_mounts=config.mounts,
+        agent_config_mounts=agent_config_mounts,
+    )
+    mounts = list(config.mounts)
+    mounts.extend(share_mounts)
     return DockerRunArgs(
         image_ref=config.selection.image_ref,
         project_path=config.project_path,
@@ -24,7 +33,7 @@ def build_run_args(config: RunConfig, parsed: ParsedArgs) -> DockerRunArgs:
         merged_docker_args=merged_docker_args,
         agent_args=parsed.agent_args,
         env=config.env,
-        mounts=config.mounts,
+        mounts=mounts,
     )
 
 

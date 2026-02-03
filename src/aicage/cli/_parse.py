@@ -22,6 +22,12 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dry-run", action="store_true", help="Print docker run command without executing.")
     parser.add_argument("--docker", action="store_true", help="Mount the host Docker socket into the container.")
+    parser.add_argument(
+        "--share",
+        action="append",
+        default=[],
+        help="Mount a host directory into the container (repeatable).",
+    )
     parser.add_argument("--config", help="Perform config actions such as 'info' or 'remove'.")
     parser.add_argument("-h", "--help", action="store_true", help="Show help message and exit.")
     pre_argv, post_argv = _split_argv(argv)
@@ -39,8 +45,8 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         usage: str = (
             "Usage:\n"
             "  aicage <agent>\n"
-            "  aicage [--dry-run] [--docker] -- <agent> [<agent-args>]\n"
-            "  aicage [--dry-run] [--docker] <docker-args> -- <agent> [<agent-args>]\n"
+            "  aicage [--dry-run] [--docker] [--share <path>...] -- <agent> [<agent-args>]\n"
+            "  aicage [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent> [<agent-args>]\n"
             "  aicage --config info\n"
             "  aicage --config remove\n"
             "  aicage --version\n\n"
@@ -62,6 +68,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "",
             [],
             opts.docker,
+            opts.share,
             config_action,
         )
 
@@ -76,6 +83,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         agent,
         agent_args,
         opts.docker,
+        opts.share,
         None,
     )
 
@@ -102,7 +110,7 @@ def _validate_config_action(
 ) -> None:
     if config_action not in _VALID_CONFIG_ACTIONS:
         raise CliError(f"Unknown config action: {raw_action}")
-    if remaining or post_argv or opts.docker or opts.dry_run:
+    if remaining or post_argv or opts.docker or opts.dry_run or opts.share:
         raise CliError("No additional arguments are allowed with --config.")
 
 

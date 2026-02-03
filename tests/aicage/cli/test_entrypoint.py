@@ -103,7 +103,7 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, "info"),
+                return_value=ParsedArgs(False, "", "", [], False, [], "info"),
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
@@ -119,7 +119,7 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, "remove"),
+                return_value=ParsedArgs(False, "", "", [], False, [], "remove"),
             ),
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
@@ -147,7 +147,7 @@ class EntrypointTests(TestCase):
             with (
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
-                    return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, None),
+                    return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
                 ),
                 mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
                 mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
@@ -176,7 +176,7 @@ class EntrypointTests(TestCase):
             with (
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
-                    return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, None),
+                    return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
                 ),
                 mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
                 mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
@@ -195,6 +195,12 @@ class EntrypointTests(TestCase):
                 home_path,
                 "ghcr.io/aicage/aicage:codex-debian",
             )
+            run_args = _build_run_args(
+                home_path,
+                "ghcr.io/aicage/aicage:codex-debian",
+                "--cli",
+                ["--flag"],
+            )
             with (
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
@@ -204,6 +210,7 @@ class EntrypointTests(TestCase):
                         "codex",
                         ["--flag"],
                         False,
+                        [],
                         None,
                     ),
                 ),
@@ -211,14 +218,14 @@ class EntrypointTests(TestCase):
                 mock.patch("aicage.cli.entrypoint.Path.home", return_value=home_path),
                 mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
                 mock.patch("aicage.cli.entrypoint.ensure_image") as ensure_mock,
-                mock.patch("aicage.cli.entrypoint.build_run_args") as build_mock,
+                mock.patch("aicage.cli.entrypoint.build_run_args", return_value=run_args) as build_mock,
                 mock.patch("aicage.cli.entrypoint.run_container") as run_mock,
             ):
                 exit_code = main([])
 
             self.assertEqual(1, exit_code)
             ensure_mock.assert_not_called()
-            build_mock.assert_not_called()
+            build_mock.assert_called_once()
             run_mock.assert_not_called()
 
     def test_main_rejects_mount_at_home(self) -> None:
@@ -240,6 +247,13 @@ class EntrypointTests(TestCase):
                     )
                 ],
             )
+            run_args = _build_run_args(
+                project_path,
+                "ghcr.io/aicage/aicage:codex-debian",
+                "--cli",
+                ["--flag"],
+            )
+            run_args.mounts = list(run_config.mounts)
             with (
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
@@ -249,6 +263,7 @@ class EntrypointTests(TestCase):
                         "codex",
                         ["--flag"],
                         False,
+                        [],
                         None,
                     ),
                 ),
@@ -256,12 +271,12 @@ class EntrypointTests(TestCase):
                 mock.patch("aicage.cli.entrypoint.Path.home", return_value=home_path),
                 mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
                 mock.patch("aicage.cli.entrypoint.ensure_image") as ensure_mock,
-                mock.patch("aicage.cli.entrypoint.build_run_args") as build_mock,
+                mock.patch("aicage.cli.entrypoint.build_run_args", return_value=run_args) as build_mock,
                 mock.patch("aicage.cli.entrypoint.run_container") as run_mock,
             ):
                 exit_code = main([])
 
             self.assertEqual(1, exit_code)
             ensure_mock.assert_not_called()
-            build_mock.assert_not_called()
+            build_mock.assert_called_once()
             run_mock.assert_not_called()
