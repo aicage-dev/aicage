@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.8] - 2026-02-03
+
+### Added
+
+- Added `--share` to mount extra host paths into the container for a single run (supports `:ro`).
+- Added Docker CLI helper and tests for running Docker commands.
+
+### Changed
+
+- Use Docker `--mount` instead of `-v/--volume` for `docker run` mounts.
+
+### Internal
+
+- Refactored Docker run helpers and expanded mount tests.
+- Updated integration coverage to exercise share mounts and run through `entrypoint.sh` via
+  `AICAGE_ENTRYPOINT_CMD`.
+
 ## [0.9.7] - 2026-01-29
 
 ### Internal
