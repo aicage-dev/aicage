@@ -38,7 +38,7 @@ def test_remote_builtin_extension_rebuilds_on_base_change(
         monkeypatch,
         tmp_path,
         "codex",
-        docker_args="--entrypoint=/bin/sh",
+        docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
     )
 
     extension_dir = custom_extensions_dir() / "marker"
@@ -49,13 +49,13 @@ def test_remote_builtin_extension_rebuilds_on_base_change(
     project_cfg = store.load_project(workspace)
     agent_cfg = project_cfg.agents["codex"]
     agent_cfg.base = "ubuntu"
-    agent_cfg.docker_args = "--entrypoint=/bin/sh"
+    agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     agent_cfg.image_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-marker"
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
 
     exit_code, output = run_cli_pty(
-        ["codex", "-c", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        ["codex", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
         env=env,
         cwd=workspace,
     )
@@ -68,7 +68,7 @@ def test_remote_builtin_extension_rebuilds_on_base_change(
     dummy_id = build_dummy_image(record.base_image, tmp_path)
 
     exit_code, output = run_cli_pty(
-        ["codex", "-c", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        ["codex", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
         env=env,
         cwd=workspace,
     )

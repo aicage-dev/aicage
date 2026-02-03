@@ -51,13 +51,25 @@ Files: `tests/aicage/integration/remote_builtin/test_run.py`,
 - `test_builtin_agent_pulls_newer_digest`
   - Uses the built-in `copilot` agent.
   - Tags a locally built dummy image with the same name:tag as the remote image.
-  - Runs `aicage copilot -c "echo ok"` with docker args preseeded to `--entrypoint=/bin/bash`, then verifies the local
-    image ID changes and a repo digest is present.
+  - Runs `aicage copilot -lc "echo ok"` with docker args preseeded to `--env AICAGE_ENTRYPOINT_CMD=bash`, then
+    verifies the local image ID changes and a repo digest is present.
 
 - `test_remote_builtin_extension_rebuilds_on_base_change`
   - Uses the built-in `codex` agent with a local `marker` extension.
   - Builds the extended image, then replaces the base image tag with a dummy image.
   - Runs the agent again and verifies the base image is pulled and the extended image is rebuilt.
+
+### Share mounts
+
+File: `tests/aicage/integration/test_share_mount.py`
+
+- `test_share_mounts_directory`
+  - Uses the built-in `copilot` agent with `AICAGE_ENTRYPOINT_CMD=bash`.
+  - Mounts a host directory using `--share` and verifies the container can write to it.
+
+- `test_share_mounts_directory_read_only`
+  - Uses the built-in `copilot` agent with `AICAGE_ENTRYPOINT_CMD=bash`.
+  - Mounts a host directory using `--share` with `:ro` and verifies writes are rejected.
 
 ### Local built-in agents
 
@@ -80,8 +92,8 @@ Files: `tests/aicage/integration/local_builtin/test_rebuild_agent_version.py`,
   - Copies the `marker` sample extension from `doc/sample/custom/extensions/marker` into the sandboxed extension
     directory.
   - Preseeds the project config with the extension and an `aicage-extended` image tag for `claude`.
-  - Runs `aicage claude -c "test -f /usr/local/share/aicage-extensions/marker.txt"` with an entrypoint override and
-    verifies the marker file exists in the container.
+  - Runs `aicage claude -lc "test -f /usr/local/share/aicage-extensions/marker.txt"` with
+    `AICAGE_ENTRYPOINT_CMD=bash` and verifies the marker file exists in the container.
 
 - `test_local_builtin_extension_rebuilds_on_agent_version`
   - Uses the built-in `claude` agent with a local `marker` extension.
@@ -118,8 +130,8 @@ Files: `tests/aicage/integration/local_custom/test_build_and_version.py`,
 - `test_local_custom_extension_builds_and_runs`
   - Copies the `forge` agent sample and the `marker` extension sample into the sandboxed custom directories.
   - Preseeds the project config with the extension and an `aicage-extended` image tag for `forge`.
-  - Runs `aicage forge -c "test -f /usr/local/share/aicage-extensions/marker.txt"` with an entrypoint override and
-    verifies the marker file exists in the container.
+  - Runs `aicage forge -lc "test -f /usr/local/share/aicage-extensions/marker.txt"` with
+    `AICAGE_ENTRYPOINT_CMD=bash` and verifies the marker file exists in the container.
 
 - `test_local_custom_extension_rebuilds_on_agent_version`
   - Uses the custom `forge` agent with a local `marker` extension.
@@ -138,8 +150,8 @@ Files: `tests/aicage/integration/extensions/test_build.py`
   - Copies the `marker` sample extension from `doc/sample/custom/extensions/marker` into the sandboxed extension
     directory.
   - Preseeds the project config with the extension and an `aicage-extended` image tag.
-  - Runs `aicage codex -c "test -f /usr/local/share/aicage-extensions/marker.txt"` with an entrypoint override
-    and verifies the marker file exists in the container.
+  - Runs `aicage codex -lc "test -f /usr/local/share/aicage-extensions/marker.txt"` with
+    `AICAGE_ENTRYPOINT_CMD=bash` and verifies the marker file exists in the container.
 
 - `test_extension_rebuilds_on_base_image_change`
   - Copies the `marker` sample extension from `doc/sample/custom/extensions/marker` into the sandboxed extension

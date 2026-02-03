@@ -82,7 +82,7 @@ def _setup_extension_workspace(
         monkeypatch,
         tmp_path,
         agent_name,
-        docker_args="--entrypoint=/bin/sh",
+        docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
     )
     extension_dir = custom_extensions_dir() / "marker"
     extension_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -92,7 +92,7 @@ def _setup_extension_workspace(
     project_cfg = store.load_project(workspace)
     agent_cfg = project_cfg.agents[agent_name]
     agent_cfg.base = "ubuntu"
-    agent_cfg.docker_args = "--entrypoint=/bin/sh"
+    agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     agent_cfg.image_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:{agent_name}-ubuntu-marker"
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
@@ -101,7 +101,7 @@ def _setup_extension_workspace(
 
 def _run_extension_check(env: dict[str, str], workspace: Path, agent_name: str) -> tuple[int, str]:
     return run_cli_pty(
-        [agent_name, "-c", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        [agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
         env=env,
         cwd=workspace,
     )

@@ -46,7 +46,7 @@ def _repo_digest_pairs() -> set[tuple[str, str]]:
 
 def test_builtin_agent_pulls_newer_digest(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     require_integration()
-    docker_args = "--entrypoint=/bin/bash"
+    docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot", docker_args=docker_args)
     bases = load_bases()
     agents = load_agents(bases)
@@ -77,7 +77,7 @@ def test_builtin_agent_cleans_old_digest_after_pull(
     tmp_path: Path,
 ) -> None:
     require_integration()
-    docker_args = "--entrypoint=/bin/bash"
+    docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot", docker_args=docker_args)
     bases = load_bases()
     agents = load_agents(bases)

@@ -26,7 +26,7 @@ _CUSTOM_BASE_NAME: str = "php"
     ("agent_name", "is_custom_agent"),
     [
         ("codex", False),
-        ("claude", False),
+        ("copilot", False),
         ("forge", True),
     ],
 )
@@ -41,7 +41,7 @@ def test_custom_base_extension_builds_and_runs(
         monkeypatch,
         tmp_path,
         agent_name,
-        docker_args="--entrypoint=/bin/sh",
+        docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
     )
     base_dir = custom_bases_dir() / _CUSTOM_BASE_NAME
     base_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -57,7 +57,7 @@ def test_custom_base_extension_builds_and_runs(
     _configure_extension(workspace, agent_name, _CUSTOM_BASE_NAME)
 
     exit_code, output = run_cli_pty(
-        [agent_name, "-c", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        [agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
         env=env,
         cwd=workspace,
     )
@@ -69,7 +69,7 @@ def _configure_extension(workspace: Path, agent_name: str, base_name: str) -> No
     project_cfg = store.load_project(workspace)
     agent_cfg = project_cfg.agents[agent_name]
     agent_cfg.base = base_name
-    agent_cfg.docker_args = "--entrypoint=/bin/sh"
+    agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     agent_cfg.image_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:{agent_name}-{base_name}-marker"
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
