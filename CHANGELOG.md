@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Unified mount resolution to map host-home paths into `/aicage/user-home`, keeping container user homes clean.
+- Centralized mount/env-var resolution across project, agent config, git, shares, and Docker socket support.
+
+### Fixed
+
+- Improve home-directory mount guard errors to include the offending host path.
+
+### Internal
+
+- Isolate tests from the real host home directory via a temporary test home.
+
 ## [0.9.8] - 2026-02-03
 
 ### Added
