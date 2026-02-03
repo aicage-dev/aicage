@@ -28,7 +28,7 @@ def test_share_mounts_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path)
         ],
         env=env,
         cwd=workspace,
-        input_data="\n\n",
+        input_data="\n\n\n",
     )
 
     assert exit_code == 0, output
@@ -54,7 +54,7 @@ def test_share_mounts_directory_read_only(monkeypatch: pytest.MonkeyPatch, tmp_p
         ],
         env=env,
         cwd=workspace,
-        input_data="\n\n",
+        input_data="\n\n\n",
     )
 
     assert exit_code != 0, output

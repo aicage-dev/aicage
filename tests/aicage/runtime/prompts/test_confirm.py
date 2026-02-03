@@ -51,6 +51,14 @@ class PromptConfirmTests(TestCase):
             default=True,
         )
 
+    def test_prompt_persist_shares_adds_shares(self) -> None:
+        with mock.patch("aicage.runtime.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
+            self.assertTrue(confirm.prompt_persist_shares(["/tmp/share"], ["/tmp/one", "/tmp/two:ro"]))
+        prompt_mock.assert_called_once_with(
+            "Persist share mounts '/tmp/share' for this project (adding to 2 existing share(s))?",
+            default=True,
+        )
+
     def test_prompt_update_aicage_delegates(self) -> None:
         with mock.patch("aicage.runtime.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
             self.assertTrue(confirm.prompt_update_aicage("0.9.4", "0.9.5"))

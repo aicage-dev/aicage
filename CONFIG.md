@@ -41,6 +41,7 @@ agents:
     docker_args: string
     image_ref: string
     extensions: [string]
+    shares: [string]
     mounts:
       gitconfig: bool
       gnupg: bool
@@ -64,6 +65,7 @@ Used under `agents.<agent>` in the project config.
 | `docker_args`      | string | Optional | Persisted `docker run` args for this agent.              |
 | `image_ref`        | string | Optional | Selected image ref (prebuilt or extended).               |
 | `extensions`       | list   | Optional | Ordered list of selected extensions for this agent.      |
+| `shares`           | list   | Optional | Persisted share mounts (`HOST` or `HOST:ro`).            |
 | `mounts`           | map    | Optional | Host resource mount preferences.                         |
 | `mounts.gitconfig` | bool   | Optional | Mount the host Git config file.                          |
 | `mounts.gnupg`     | bool   | Optional | Mount the host GnuPG home for Git signing.               |

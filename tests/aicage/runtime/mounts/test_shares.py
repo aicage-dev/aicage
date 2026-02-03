@@ -5,11 +5,34 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.errors import AicageError
 from aicage.paths import container_project_path
-from aicage.runtime.mounts.shares import resolve_share_mounts
+from aicage.runtime.mounts.shares import merge_share_values, resolve_share_mounts
 from aicage.runtime.run_args import MountSpec
 
 
 class ShareMountsTests(TestCase):
+    def test_merge_share_values_merges_cli_over_existing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cwd = Path(tmp_dir)
+            existing = [f"{cwd / 'shared'}:ro", str(cwd / 'existing')]
+            cli = ["shared", "new"]
+
+            merged, new_shares = merge_share_values(cli, existing, cwd)
+
+        self.assertEqual(
+            [str(cwd / "shared"), str(cwd / "new"), str(cwd / "existing")],
+            merged,
+        )
+        self.assertEqual([str(cwd / "new")], new_shares)
+
+    def test_merge_share_values_deduplicates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cwd = Path(tmp_dir)
+            cli = ["data", "data:ro"]
+
+            merged, new_shares = merge_share_values(cli, [], cwd)
+
+        self.assertEqual([str(cwd / "data")], merged)
+        self.assertEqual([str(cwd / "data")], new_shares)
     def test_resolve_share_mounts_resolves_relative_host(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)

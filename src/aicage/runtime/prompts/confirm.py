@@ -44,6 +44,18 @@ def prompt_persist_docker_args(new_args: str, existing_args: str | None) -> bool
     return _prompt_yes_no(question, default=True)
 
 
+def prompt_persist_shares(new_shares: list[str], existing_shares: list[str]) -> bool:
+    new_values = ", ".join(new_shares)
+    if existing_shares:
+        question = (
+            "Persist share mounts "
+            f"'{new_values}' for this project (adding to {len(existing_shares)} existing share(s))?"
+        )
+    else:
+        question = f"Persist share mounts '{new_values}' for this project?"
+    return _prompt_yes_no(question, default=True)
+
+
 def prompt_update_aicage(installed_version: str, latest_version: str) -> bool:
     question = (
         "A newer version of aicage is available "

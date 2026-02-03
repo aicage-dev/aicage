@@ -11,7 +11,8 @@ from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.resolver import resolve_docker_args
-from aicage.runtime.prompts.confirm import prompt_persist_docker_args
+from aicage.runtime.mounts.shares import merge_share_values
+from aicage.runtime.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 
@@ -52,6 +53,7 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
     mounts, env = resolve_docker_args(context, agent, parsed)
 
     _persist_docker_args(agent_cfg, parsed)
+    _persist_shares(agent_cfg, parsed, project_path)
     store.save_project(project_path, project_cfg)
 
     return RunConfig(
@@ -74,3 +76,14 @@ def _persist_docker_args(agent_cfg: AgentConfig, parsed: ParsedArgs | None) -> N
 
     if prompt_persist_docker_args(parsed.docker_args, existing):
         agent_cfg.docker_args = parsed.docker_args
+
+
+def _persist_shares(agent_cfg: AgentConfig, parsed: ParsedArgs | None, cwd: Path) -> None:
+    if parsed is None:
+        return
+    merged_shares, new_shares = merge_share_values(parsed.shares, agent_cfg.shares, cwd)
+    parsed.shares = merged_shares
+    if not new_shares:
+        return
+    if prompt_persist_shares(new_shares, agent_cfg.shares):
+        agent_cfg.shares = list(agent_cfg.shares) + list(new_shares)

@@ -42,6 +42,32 @@ def resolve_share_mounts(
     return share_mounts
 
 
+def merge_share_values(
+    cli_shares: list[str],
+    existing_shares: list[str],
+    cwd: Path,
+) -> tuple[list[str], list[str]]:
+    cli_specs = _normalize_share_specs(cli_shares, cwd)
+    existing_specs = _normalize_share_specs(existing_shares, cwd)
+    existing_hosts = {spec.host_path for spec in existing_specs}
+    cli_hosts: set[Path] = set()
+    merged: list[str] = []
+    new_shares: list[str] = []
+    for spec in cli_specs:
+        if spec.host_path in cli_hosts:
+            continue
+        share_value = _format_share_value(spec)
+        cli_hosts.add(spec.host_path)
+        merged.append(share_value)
+        if spec.host_path not in existing_hosts:
+            new_shares.append(share_value)
+    for spec in existing_specs:
+        if spec.host_path in cli_hosts:
+            continue
+        merged.append(_format_share_value(spec))
+    return merged, new_shares
+
+
 def _parse_share(raw: str, cwd: Path) -> _ShareSpec:
     if not raw:
         raise AicageError("Share value cannot be empty.")
@@ -97,3 +123,20 @@ def _collect_existing_hosts(
     for mount in agent_config_mounts:
         mounted_hosts.add(mount.host_path.resolve())
     return mounted_hosts
+
+
+def _normalize_share_specs(raw_shares: list[str], cwd: Path) -> list[_ShareSpec]:
+    specs: list[_ShareSpec] = []
+    seen: set[Path] = set()
+    for raw in raw_shares:
+        spec = _parse_share(raw, cwd)
+        if spec.host_path in seen:
+            continue
+        seen.add(spec.host_path)
+        specs.append(spec)
+    return specs
+
+
+def _format_share_value(spec: _ShareSpec) -> str:
+    host_value = str(spec.host_path)
+    return f"{host_value}:ro" if spec.read_only else host_value

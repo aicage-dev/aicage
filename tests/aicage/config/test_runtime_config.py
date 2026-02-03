@@ -157,6 +157,132 @@ class RuntimeConfigTests(TestCase):
 
         self.assertEqual("ubuntu", run_config.selection.base)
 
+    def test_load_run_config_persists_share_mounts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            projects_dir = Path(tmp_dir) / "configs"
+            project_path = Path(tmp_dir) / "project"
+            project_path.mkdir()
+
+            with mock.patch("aicage.config.config_store.PROJECTS_DIR", projects_dir):
+                store = SettingsStore()
+                project_cfg = store.load_project(project_path)
+                project_cfg.agents["codex"] = AgentConfig(base="ubuntu")
+                store.save_project(project_path, project_cfg)
+
+                def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+                    return SettingsStore()
+
+                parsed = ParsedArgs(
+                    dry_run=False,
+                    docker_args="",
+                    agent="codex",
+                    agent_args=[],
+                    docker_socket=False,
+                    shares=["data", "logs:ro"],
+                    config_action=None,
+                )
+                with (
+                    mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
+                    mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
+                    mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                    mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_bases",
+                        return_value=self._get_bases(),
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_agents",
+                        return_value=self._get_agents(),
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.select_agent_image",
+                        return_value=ImageSelection(
+                            image_ref="ref",
+                            base="ubuntu",
+                            extensions=[],
+                            base_image_ref="ref",
+                        ),
+                    ),
+                    mock.patch("aicage.config.runtime_config.prompt_persist_shares", return_value=True),
+                ):
+                    load_run_config("codex", parsed)
+
+                updated_cfg = store.load_project(project_path)
+
+        expected_data = str(project_path / "data")
+        expected_logs = f"{project_path / 'logs'}:ro"
+        self.assertEqual([expected_data, expected_logs], updated_cfg.agents["codex"].shares)
+        self.assertEqual([expected_data, expected_logs], parsed.shares)
+
+    def test_load_run_config_merges_share_mounts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            projects_dir = Path(tmp_dir) / "configs"
+            project_path = Path(tmp_dir) / "project"
+            project_path.mkdir()
+
+            with mock.patch("aicage.config.config_store.PROJECTS_DIR", projects_dir):
+                store = SettingsStore()
+                project_cfg = store.load_project(project_path)
+                project_cfg.agents["codex"] = AgentConfig(
+                    base="ubuntu",
+                    shares=[
+                        str(project_path / "existing"),
+                        f"{project_path / 'shared'}:ro",
+                    ],
+                )
+                store.save_project(project_path, project_cfg)
+
+                def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+                    return SettingsStore()
+
+                parsed = ParsedArgs(
+                    dry_run=False,
+                    docker_args="",
+                    agent="codex",
+                    agent_args=[],
+                    docker_socket=False,
+                    shares=["shared", "new"],
+                    config_action=None,
+                )
+                prompt_mock = mock.Mock(return_value=True)
+                with (
+                    mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
+                    mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
+                    mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                    mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_bases",
+                        return_value=self._get_bases(),
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_agents",
+                        return_value=self._get_agents(),
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.select_agent_image",
+                        return_value=ImageSelection(
+                            image_ref="ref",
+                            base="ubuntu",
+                            extensions=[],
+                            base_image_ref="ref",
+                        ),
+                    ),
+                    mock.patch("aicage.config.runtime_config.prompt_persist_shares", prompt_mock),
+                ):
+                    load_run_config("codex", parsed)
+
+                updated_cfg = store.load_project(project_path)
+
+        expected_shared = str(project_path / "shared")
+        expected_new = str(project_path / "new")
+        expected_existing = str(project_path / "existing")
+        self.assertEqual([expected_shared, expected_new, expected_existing], parsed.shares)
+        self.assertEqual(
+            [expected_existing, f"{expected_shared}:ro", expected_new],
+            updated_cfg.agents["codex"].shares,
+        )
+        prompt_mock.assert_called_once_with([expected_new], [expected_existing, f"{expected_shared}:ro"])
+
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:
         return {

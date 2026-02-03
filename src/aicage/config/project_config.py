@@ -12,6 +12,7 @@ _AGENT_BASE_KEY: str = "base"
 _AGENT_MOUNTS_KEY: str = "mounts"
 _AGENT_IMAGE_REF_KEY: str = "image_ref"
 _AGENT_EXTENSIONS_KEY: str = "extensions"
+_AGENT_SHARES_KEY: str = "shares"
 
 _MOUNT_GITCONFIG_KEY: str = "gitconfig"
 _MOUNT_GITROOT_KEY: str = "gitroot"
@@ -60,6 +61,7 @@ class AgentConfig:
     mounts: _AgentMounts = field(default_factory=_AgentMounts)
     image_ref: str | None = None
     extensions: list[str] = field(default_factory=list)
+    shares: list[str] = field(default_factory=list)
 
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> "AgentConfig":
@@ -70,6 +72,7 @@ class AgentConfig:
             mounts=mounts,
             image_ref=data.get(_AGENT_IMAGE_REF_KEY),
             extensions=read_str_list_or_empty(data.get(_AGENT_EXTENSIONS_KEY)),
+            shares=read_str_list_or_empty(data.get(_AGENT_SHARES_KEY)),
         )
 
     def to_mapping(self) -> dict[str, Any]:
@@ -85,6 +88,8 @@ class AgentConfig:
             payload[_AGENT_IMAGE_REF_KEY] = self.image_ref
         if self.extensions:
             payload[_AGENT_EXTENSIONS_KEY] = list(self.extensions)
+        if self.shares:
+            payload[_AGENT_SHARES_KEY] = list(self.shares)
         return payload
 
 
