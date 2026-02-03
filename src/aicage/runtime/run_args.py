@@ -18,8 +18,6 @@ class EnvVar:
 @dataclass
 class DockerRunArgs:
     image_ref: str
-    project_path: Path
-    agent_config_mounts: list[MountSpec]
     merged_docker_args: str
     agent_args: list[str]
     env: list[EnvVar] = field(default_factory=list)

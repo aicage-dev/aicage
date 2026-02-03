@@ -8,8 +8,6 @@ from aicage.docker._client import get_docker_client
 from aicage.docker._env import resolve_user_ids
 from aicage.docker._mounts import append_mount
 from aicage.docker.cli import run_docker_command
-from aicage.paths import CONTAINER_WORKSPACE_DIR, container_project_path
-from aicage.runtime.env_vars import AICAGE_WORKSPACE
 from aicage.runtime.run_args import DockerRunArgs
 
 
@@ -66,14 +64,8 @@ def _decode_container_output(output: object) -> str:
 def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
     cmd: list[str] = ["docker", "run", "--rm", "-it"]
     cmd.extend(resolve_user_ids())
-    project_container_path = container_project_path(args.project_path)
-    cmd.extend(["-e", f"{AICAGE_WORKSPACE}={project_container_path.as_posix()}"])
     for env in args.env:
         cmd.extend(["-e", f"{env.name}={env.value}"])
-    append_mount(cmd, args.project_path, CONTAINER_WORKSPACE_DIR, read_only=False)
-    append_mount(cmd, args.project_path, project_container_path, read_only=False)
-    for mount in args.agent_config_mounts:
-        append_mount(cmd, mount.host_path, mount.container_path, read_only=False)
     for mount in args.mounts:
         append_mount(cmd, mount.host_path, mount.container_path, read_only=mount.read_only)
 

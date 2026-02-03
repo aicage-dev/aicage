@@ -52,13 +52,8 @@ HOST_DOCKER_SOCKET_PATH: Path = Path("/run/docker.sock")
 
 # CONTAINER PATHS (for mounts to container)
 
-CONTAINER_WORKSPACE_DIR: PurePosixPath = PurePosixPath("/workspace")
 _WSL_MOUNT_ROOT: PurePosixPath = PurePosixPath("/mnt")
-CONTAINER_AGENT_CONFIG_DIR: PurePosixPath = PurePosixPath("/aicage/agent-config")
-CONTAINER_GITCONFIG_PATH: PurePosixPath = PurePosixPath("/aicage/host/gitconfig")
-CONTAINER_SSH_DIR: PurePosixPath = PurePosixPath("/aicage/host/ssh")
-CONTAINER_GNUPG_DIR: PurePosixPath = PurePosixPath("/aicage/host/gnupg")
-CONTAINER_DOCKER_SOCKET_PATH: PurePosixPath = PurePosixPath("/run/docker.sock")
+CONTAINER_USER_HOME_MOUNTS_DIR: PurePosixPath = PurePosixPath("/aicage/user-home")
 
 
 def container_project_path(host_path: Path) -> PurePosixPath:

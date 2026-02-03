@@ -21,4 +21,4 @@ def test_refuses_to_start_when_cwd_is_home(tmp_path: Path) -> None:
     )
 
     assert exit_code == 1
-    assert "Refusing to start: this would mount your home directory into the container." in output
+    assert "Refusing to start: this would mount your home directory into the container:" in output

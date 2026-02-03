@@ -50,10 +50,9 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
     if agent_cfg.base is None:
         agent_cfg.base = selection.base
 
-    mounts, env = resolve_docker_args(context, agent, parsed)
-
     _persist_docker_args(agent_cfg, parsed)
     _persist_shares(agent_cfg, parsed, project_path)
+    mounts, env = resolve_docker_args(context, agent, parsed)
     store.save_project(project_path, project_cfg)
 
     return RunConfig(

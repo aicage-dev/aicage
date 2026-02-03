@@ -1,0 +1,31 @@
+from pathlib import Path
+from unittest import TestCase, mock
+
+from aicage.cli_types import ParsedArgs
+from aicage.config.context import ConfigContext
+from aicage.config.project_config import ProjectConfig
+from aicage.runtime.docker_args import _project
+from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+
+
+class ProjectResolverTests(TestCase):
+    def test_resolve_returns_project_mount(self) -> None:
+        project_path = Path("/tmp/project")
+        context = ConfigContext(
+            store=mock.Mock(),
+            project_cfg=ProjectConfig(path=str(project_path), agents={}),
+            agents={},
+            bases={},
+            extensions={},
+        )
+
+        resolved = _project.resolve(context, "codex", _build_parsed())
+
+        self.assertEqual(
+            ResolvedArgs(mounts=[MountRequest(host_path=project_path.resolve())]),
+            resolved,
+        )
+
+
+def _build_parsed() -> ParsedArgs:
+    return ParsedArgs(False, "", "codex", [], False, [], None)

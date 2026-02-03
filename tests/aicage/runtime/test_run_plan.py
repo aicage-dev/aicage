@@ -8,7 +8,7 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.config.runtime_config import RunConfig
 from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime._agent_config import AgentConfig
+from aicage.runtime.run_args import EnvVar
 from aicage.runtime.run_plan import build_run_args
 
 
@@ -36,13 +36,7 @@ class RunPlanTests(TestCase):
             env=[],
         )
         parsed = ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None)
-        agent_config = AgentConfig(agent_path=["~/.codex"], agent_config_host=[Path("/tmp/.codex")])
-
-        with (
-            mock.patch("aicage.runtime.run_plan.resolve_agent_config", return_value=agent_config),
-            mock.patch("aicage.runtime.run_plan.resolve_share_mounts", return_value=[]),
-        ):
-            run_args = build_run_args(config, parsed)
+        run_args = build_run_args(config, parsed)
 
         self.assertEqual("--project --cli", run_args.merged_docker_args)
         self.assertEqual(["--flag"], run_args.agent_args)
@@ -71,20 +65,14 @@ class RunPlanTests(TestCase):
             env=[],
         )
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
-        agent_config = AgentConfig(agent_path=["~/.codex"], agent_config_host=[Path("/tmp/.codex")])
-
-        with (
-            mock.patch("aicage.runtime.run_plan.resolve_agent_config", return_value=agent_config),
-            mock.patch("aicage.runtime.run_plan.resolve_share_mounts", return_value=[]),
-        ):
-            run_args = build_run_args(config, parsed)
+        run_args = build_run_args(config, parsed)
 
         self.assertEqual([mount], run_args.mounts)
 
-    def test_build_run_args_appends_share_mounts(self) -> None:
+    def test_build_run_args_uses_env_from_config(self) -> None:
         project_path = Path("/tmp/project")
         mount = mock.Mock()
-        share_mount = mock.Mock()
+        env = [EnvVar(name="EXTRA", value="1")]
         config = RunConfig(
             project_path=project_path,
             agent="codex",
@@ -103,18 +91,13 @@ class RunPlanTests(TestCase):
             ),
             project_docker_args="",
             mounts=[mount],
-            env=[],
+            env=env,
         )
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
-        agent_config = AgentConfig(agent_path=["~/.codex"], agent_config_host=[Path("/tmp/.codex")])
+        run_args = build_run_args(config, parsed)
 
-        with (
-            mock.patch("aicage.runtime.run_plan.resolve_agent_config", return_value=agent_config),
-            mock.patch("aicage.runtime.run_plan.resolve_share_mounts", return_value=[share_mount]),
-        ):
-            run_args = build_run_args(config, parsed)
-
-        self.assertEqual([mount, share_mount], run_args.mounts)
+        self.assertEqual([mount], run_args.mounts)
+        self.assertEqual(env, run_args.env)
 
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:

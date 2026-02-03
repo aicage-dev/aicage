@@ -12,7 +12,7 @@ class EnvTests(TestCase):
             mock.patch("aicage.docker._env.os.name", "posix"),
         ):
             env_flags = resolve_user_ids()
-        self.assertEqual(["-e", "AICAGE_USER=tester"], env_flags)
+        self.assertEqual(["-e", "AICAGE_USER=tester", "-e", "AICAGE_HOST_USER=tester"], env_flags)
 
     def test_resolve_user_ids_includes_uid_gid(self) -> None:
         with (
@@ -23,7 +23,16 @@ class EnvTests(TestCase):
         ):
             env_flags = resolve_user_ids()
         self.assertEqual(
-            ["-e", "AICAGE_UID=1000", "-e", "AICAGE_GID=1001", "-e", "AICAGE_USER=tester"],
+            [
+                "-e",
+                "AICAGE_UID=1000",
+                "-e",
+                "AICAGE_GID=1001",
+                "-e",
+                "AICAGE_USER=tester",
+                "-e",
+                "AICAGE_HOST_USER=tester",
+            ],
             env_flags,
         )
 
@@ -35,4 +44,4 @@ class EnvTests(TestCase):
             mock.patch("aicage.docker._env.os.name", "nt"),
         ):
             env_flags = resolve_user_ids()
-        self.assertEqual(["-e", "AICAGE_USER=root"], env_flags)
+        self.assertEqual(["-e", "AICAGE_USER=root", "-e", "AICAGE_HOST_USER=tester"], env_flags)

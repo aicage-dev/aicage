@@ -1,4 +1,3 @@
-import os
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
@@ -6,7 +5,6 @@ from docker.errors import ContainerError, DockerException
 from docker.models.containers import Container
 
 from aicage.docker import run
-from aicage.paths import CONTAINER_AGENT_CONFIG_DIR, CONTAINER_WORKSPACE_DIR, container_project_path
 from aicage.runtime.run_args import DockerRunArgs, EnvVar, MountSpec
 
 
@@ -15,13 +13,6 @@ class RunCommandTests(TestCase):
     def test_run_container_executes_command() -> None:
         args = DockerRunArgs(
             image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-            project_path=Path("/work/project"),
-            agent_config_mounts=[
-                MountSpec(
-                    host_path=Path("/host/.codex"),
-                    container_path=CONTAINER_AGENT_CONFIG_DIR / ".codex",
-                )
-            ],
             merged_docker_args="",
             agent_args=["--flag"],
         )
@@ -37,13 +28,6 @@ class RunCommandTests(TestCase):
     def test_print_run_command_outputs_command() -> None:
         args = DockerRunArgs(
             image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-            project_path=Path("/work/project"),
-            agent_config_mounts=[
-                MountSpec(
-                    host_path=Path("/host/.codex"),
-                    container_path=CONTAINER_AGENT_CONFIG_DIR / ".codex",
-                )
-            ],
             merged_docker_args="",
             agent_args=[],
         )
@@ -99,87 +83,10 @@ class RunCommandTests(TestCase):
         self.assertEqual("", result.stdout)
         self.assertEqual("boom", result.stderr)
 
-    def test_assemble_includes_workspace_mount(self) -> None:
-        if os.name == "nt":
-            self.skipTest("posix-only path expectations")
-        with (
-            mock.patch("aicage.docker.run.resolve_user_ids", return_value=[]),
-            mock.patch("aicage.paths.os.name", "posix"),
-        ):
-            run_args = DockerRunArgs(
-                image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-                project_path=Path("/work/project"),
-                agent_config_mounts=[
-                    MountSpec(
-                        host_path=Path("/host/.codex"),
-                        container_path=CONTAINER_AGENT_CONFIG_DIR / ".codex",
-                    )
-                ],
-                merged_docker_args="--network=host",
-                agent_args=["--flag"],
-            )
-            cmd = run._assemble_docker_run(run_args)
-        host_project_path = run_args.project_path.as_posix()
-        container_project_path = PurePosixPath("/work/project").as_posix()
-        self.assertEqual(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "-it",
-                "-e",
-                f"AICAGE_WORKSPACE={container_project_path}",
-                "--mount",
-                f"type=bind,src={host_project_path},dst={CONTAINER_WORKSPACE_DIR.as_posix()}",
-                "--mount",
-                f"type=bind,src={host_project_path},dst={container_project_path}",
-                "--mount",
-                f"type=bind,src=/host/.codex,dst={CONTAINER_AGENT_CONFIG_DIR.as_posix()}/.codex",
-                "--network=host",
-                "ghcr.io/aicage/aicage:codex-ubuntu",
-                "--flag",
-            ],
-            cmd,
-        )
-
-    def test_assemble_windows_uses_container_workspace(self) -> None:
-        project_path = Path("C:/work/project")
-        agent_config_host = Path("C:/host/.codex")
-        with (
-            mock.patch("aicage.docker.run.resolve_user_ids", return_value=[]),
-            mock.patch("aicage.paths.os.name", "nt"),
-        ):
-            run_args = DockerRunArgs(
-                image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-                project_path=project_path,
-                agent_config_mounts=[
-                    MountSpec(
-                        host_path=agent_config_host,
-                        container_path=CONTAINER_AGENT_CONFIG_DIR / ".codex",
-                    )
-                ],
-                merged_docker_args="",
-                agent_args=[],
-            )
-            cmd = run._assemble_docker_run(run_args)
-            windows_workspace = container_project_path(project_path).as_posix()
-        workspace_root = CONTAINER_WORKSPACE_DIR.as_posix()
-        self.assertIn(f"AICAGE_WORKSPACE={windows_workspace}", cmd)
-        project_path_posix = project_path.as_posix()
-        self.assertIn(f"type=bind,src={project_path_posix},dst={workspace_root}", cmd)
-        self.assertIn(f"type=bind,src={project_path_posix},dst={windows_workspace}", cmd)
-
     def test_assemble_includes_env_and_mounts(self) -> None:
         with mock.patch("aicage.docker.run.resolve_user_ids", return_value=["-e", "AICAGE_USER=me"]):
             run_args = DockerRunArgs(
                 image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-                project_path=Path("/work/project"),
-                agent_config_mounts=[
-                    MountSpec(
-                        host_path=Path("/host/.codex"),
-                        container_path=CONTAINER_AGENT_CONFIG_DIR / ".codex",
-                    )
-                ],
                 merged_docker_args="--net=host",
                 agent_args=["--flag"],
                 env=[EnvVar(name="EXTRA", value="1")],
