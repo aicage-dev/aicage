@@ -66,3 +66,9 @@ npm error network 'proxy' config is set properly.  See: 'npm help config'
 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-02-03T17_38_20_318Z-debug-0.log
 PS C:\tmp\aicage-test2>
 ```
+
+## Image Cleanup 2
+
+We already delete old images when pulling new ones. But if another aicage instance is using the image, then the image
+remains. To fix this we could on exit of `docker-run` check somehow if the iamge is still used (image digest still
+tagged or such, cosign image has no tag thus special) and if not delete it.
