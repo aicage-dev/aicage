@@ -114,8 +114,8 @@ Run:
 
 ## Open approvals
 
-- Changes to `../aicage-image-base` and `../aicage.wiki` are outside this repo and will require explicit approval
-  before editing.
+- Note: The plan below is partially outdated. The second part of the change (updates in `../aicage-image-base` and
+  `../aicage.wiki`) is already done.
 
 ## Pending deltas (as of commit `ad85ddb2`)
 
