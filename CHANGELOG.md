@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.9] - 2026-02-04
+
 ### Changed
 
 - Unified mount resolution to map host-home paths into `/aicage/user-home`, keeping container user homes clean.
