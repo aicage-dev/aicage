@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.docker._env import resolve_user_ids
@@ -9,16 +10,28 @@ class EnvTests(TestCase):
             mock.patch("aicage.docker._env.os.getuid", None, create=True),
             mock.patch("aicage.docker._env.os.getgid", None, create=True),
             mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
+            mock.patch("aicage.docker._env.Path.home", return_value=Path("/home/tester")),
             mock.patch("aicage.docker._env.os.name", "posix"),
         ):
             env_flags = resolve_user_ids()
-        self.assertEqual(["-e", "AICAGE_USER=tester", "-e", "AICAGE_HOST_USER=tester"], env_flags)
+        self.assertEqual(
+            [
+                "-e",
+                "AICAGE_HOST_USER=tester",
+                "-e",
+                "AICAGE_HOME=/home/tester",
+                "-e",
+                "AICAGE_HOST_IS_LINUX=true",
+            ],
+            env_flags,
+        )
 
     def test_resolve_user_ids_includes_uid_gid(self) -> None:
         with (
             mock.patch("aicage.docker._env.os.getuid", return_value=1000, create=True),
             mock.patch("aicage.docker._env.os.getgid", return_value=1001, create=True),
             mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
+            mock.patch("aicage.docker._env.Path.home", return_value=Path("/home/tester")),
             mock.patch("aicage.docker._env.os.name", "posix"),
         ):
             env_flags = resolve_user_ids()
@@ -29,9 +42,11 @@ class EnvTests(TestCase):
                 "-e",
                 "AICAGE_GID=1001",
                 "-e",
-                "AICAGE_USER=tester",
-                "-e",
                 "AICAGE_HOST_USER=tester",
+                "-e",
+                "AICAGE_HOME=/home/tester",
+                "-e",
+                "AICAGE_HOST_IS_LINUX=true",
             ],
             env_flags,
         )
@@ -41,7 +56,14 @@ class EnvTests(TestCase):
             mock.patch("aicage.docker._env.os.getuid", side_effect=AttributeError, create=True),
             mock.patch("aicage.docker._env.os.getgid", side_effect=AttributeError, create=True),
             mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
+            mock.patch("aicage.docker._env.Path.home", return_value=Path(r"D:\Users\tester")),
             mock.patch("aicage.docker._env.os.name", "nt"),
         ):
             env_flags = resolve_user_ids()
-        self.assertEqual(["-e", "AICAGE_USER=root", "-e", "AICAGE_HOST_USER=tester"], env_flags)
+        self.assertEqual(
+            [
+                "-e",
+                "AICAGE_HOME=/mnt/d/Users/tester",
+            ],
+            env_flags,
+        )

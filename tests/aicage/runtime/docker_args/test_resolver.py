@@ -114,6 +114,56 @@ class ResolverTests(TestCase):
 
         self.assertIsInstance(project_cfg.agents["codex"], AgentConfig)
 
+    def test_resolve_docker_args_uses_host_path_for_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_path = Path(temp_dir) / "home"
+            project_path = home_path / "project"
+            home_path.mkdir()
+            project_path.mkdir()
+
+            project_cfg = ProjectConfig(path=str(project_path), agents={"codex": AgentConfig()})
+            context = ConfigContext(
+                store=mock.Mock(),
+                project_cfg=project_cfg,
+                agents=self._get_agents(),
+                bases=self._get_bases(),
+                extensions={},
+            )
+            parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+
+            with (
+                mock.patch("aicage.runtime.docker_args.resolver.resolve_git_support_prefs"),
+                mock.patch(
+                    "aicage.runtime.docker_args.resolver._project.resolve",
+                    return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),
+                ),
+                mock.patch("aicage.runtime.docker_args.resolver._agent_config.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver._git_config.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver._git_root.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver._ssh_keys.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver._gpg.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver._docker_socket.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver._shares.resolve", return_value=ResolvedArgs()),
+                mock.patch("aicage.runtime.docker_args.resolver.Path.home", return_value=home_path),
+            ):
+                mounts, env = resolver.resolve_docker_args(context, "codex", parsed)
+
+        self.assertEqual(
+            [
+                MountSpec(
+                    host_path=project_path,
+                    container_path=CONTAINER_USER_HOME_MOUNTS_DIR / PurePosixPath("project"),
+                )
+            ],
+            mounts,
+        )
+        self.assertEqual(
+            [
+                (AICAGE_WORKSPACE, container_project_path(project_path).as_posix()),
+            ],
+            [(item.name, item.value) for item in env],
+        )
+
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:
         return {

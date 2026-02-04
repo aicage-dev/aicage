@@ -84,7 +84,7 @@ class RunCommandTests(TestCase):
         self.assertEqual("boom", result.stderr)
 
     def test_assemble_includes_env_and_mounts(self) -> None:
-        with mock.patch("aicage.docker.run.resolve_user_ids", return_value=["-e", "AICAGE_USER=me"]):
+        with mock.patch("aicage.docker.run.resolve_user_ids", return_value=["-e", "AICAGE_HOST_USER=me"]):
             run_args = DockerRunArgs(
                 image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
                 merged_docker_args="--net=host",

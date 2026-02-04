@@ -1,14 +1,16 @@
 import os
+from pathlib import Path
 
-from aicage.runtime.env_vars import AICAGE_GID, AICAGE_HOST_USER, AICAGE_UID, AICAGE_USER
+from aicage.paths import container_project_path
+from aicage.runtime.env_vars import AICAGE_GID, AICAGE_HOME, AICAGE_HOST_IS_LINUX, AICAGE_HOST_USER, AICAGE_UID
 
 
 def resolve_user_ids() -> list[str]:
     env_flags: list[str] = []
-    host_user = _resolve_host_user()
+    host_home = _resolve_host_home()
+    host_home_posix = container_project_path(host_home).as_posix()
     if os.name == "nt":
-        user = "root"
-        env_flags.extend(["-e", f"{AICAGE_USER}={user}", "-e", f"{AICAGE_HOST_USER}={host_user}"])
+        env_flags.extend(["-e", f"{AICAGE_HOME}={host_home_posix}"])
         return env_flags
 
     getuid = getattr(os, "getuid", None)
@@ -16,12 +18,24 @@ def resolve_user_ids() -> list[str]:
     uid = getuid() if callable(getuid) else None
     gid = getgid() if callable(getgid) else None
 
-    user = os.environ.get("USER") or os.environ.get("USERNAME") or "aicage"
+    user = _resolve_host_user()
     if uid is not None:
         env_flags.extend(["-e", f"{AICAGE_UID}={uid}", "-e", f"{AICAGE_GID}{'='}{gid}"])
-    env_flags.extend(["-e", f"{AICAGE_USER}={user}", "-e", f"{AICAGE_HOST_USER}={user}"])
+    env_flags.extend(["-e", f"{AICAGE_HOST_USER}={user}"])
+    env_flags.extend(
+        [
+            "-e",
+            f"{AICAGE_HOME}={host_home_posix}",
+            "-e",
+            f"{AICAGE_HOST_IS_LINUX}=true",
+        ]
+    )
     return env_flags
 
 
 def _resolve_host_user() -> str:
     return os.environ.get("USERNAME") or os.environ.get("USER") or "aicage"
+
+
+def _resolve_host_home() -> Path:
+    return Path.home()

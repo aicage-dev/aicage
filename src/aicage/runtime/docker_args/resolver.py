@@ -28,7 +28,7 @@ def resolve_docker_args(
     host_home = Path.home().resolve()
     mounts = _map_mount_requests(mount_requests, host_home)
     _validate_home_mount_safety(mounts, host_home)
-    workspace_path = _resolve_container_path(project_path, host_home)
+    workspace_path = container_project_path(project_path)
     env.append(EnvVar(name=AICAGE_WORKSPACE, value=workspace_path.as_posix()))
     return mounts, env
 
