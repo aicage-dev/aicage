@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.10] - 2026-02-05
+
+### Changed
+
+- Set `AICAGE_WORKSPACE` to the host path in container form, even when the mount is routed through
+  `/aicage/user-home`.
+- Added `AICAGE_HOME` and `AICAGE_HOST_IS_LINUX` to the entrypoint env contract and removed `AICAGE_USER`.
+
+### Internal
+
+- Updated env/mount tests for the revised entrypoint env contract.
+
 ## [0.9.9] - 2026-02-04
 
 ### Changed
