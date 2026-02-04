@@ -23,9 +23,15 @@ for artifact in "${AICAGE_REPO}".tar.gz SHA256SUMS SHA256SUMS.sigstore.json; do
     "https://github.com/aicage/${AICAGE_REPO}/releases/latest/download/${artifact}"
 done
 
+echo "Ensure cosign is available or use cosign image ..." >&2
+COSIGN_CMD=cosign
+if ! command -v "${COSIGN_CMD}" >/dev/null 2>&1; then
+  COSIGN_CMD="docker run --rm -v $(pwd):/work:ro -w /work ghcr.io/sigstore/cosign/cosign:latest"
+fi
+
 echo "Verifying signature ..." >&2
 
-cosign verify-blob \
+${COSIGN_CMD} verify-blob \
   --bundle SHA256SUMS.sigstore.json \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   --certificate-identity-regexp "^https://github\.com/aicage/${AICAGE_REPO}/\.github/workflows/release\.yml@refs/tags/.*$" \
