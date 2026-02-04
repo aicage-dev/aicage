@@ -72,3 +72,15 @@ PS C:\tmp\aicage-test2>
 We already delete old images when pulling new ones. But if another aicage instance is using the image, then the image
 remains. To fix this we could on exit of `docker-run` check somehow if the iamge is still used (image digest still
 tagged or such, cosign image has no tag thus special) and if not delete it.
+
+## Don't rely on path with extension equals file
+
+For `agent_path` and `--share` mounts aicage creates files/folders on host solely on the path basename having a dot.  
+This is utterly brittle.
+
+Instead, we should extend `agent_path` to have 2 child lists: `files` and `folders` (or file/folder or files/dirs ...
+please change these 2 names to match best naming practice). Then we can partially rely on default docker behavior (which
+imho is to create folder if missing on host) and only for file mounts create an empty file.
+
+For `--share` we would no longer do such a thing meaning we let docker handle it. And the user: if it's a file and it
+does not exist yet on host ... well he will find out and create a blank file himself sooner or later.
