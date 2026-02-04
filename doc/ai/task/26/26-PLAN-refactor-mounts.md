@@ -116,3 +116,12 @@ Run:
 
 - Changes to `../aicage-image-base` and `../aicage.wiki` are outside this repo and will require explicit approval
   before editing.
+
+## Pending deltas (as of commit `ad85ddb2`)
+
+- `../aicage-image-base/scripts/entrypoint.sh` still needs updates for `/aicage/user-home` symlink fan-out and removal of
+  `/aicage/host`, `/aicage/agent-config`, and `/workspace` fallback handling.
+- `../aicage.wiki` updates are still pending (`How-It-Works.md`, `CLI-Options.md`).
+- Resolver modules live in `src/aicage/runtime/docker_args/` (private modules) rather than a dedicated
+  `resolvers/` subpackage.
+- Mounts are deduplicated; env vars are appended without deduplication.
