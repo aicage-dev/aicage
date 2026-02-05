@@ -3,8 +3,10 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
-from aicage.runtime.docker_args._docker_socket import resolve
+from aicage.runtime.docker_args._resolvers._docker_socket import resolve
 from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
+
+_MODULE = "aicage.runtime.docker_args._resolvers._docker_socket"
 
 
 class DockerSocketMountTests(TestCase):
@@ -13,8 +15,8 @@ class DockerSocketMountTests(TestCase):
         context = _build_context(agent_cfg)
         parsed = _build_parsed(docker_socket=True)
         with (
-            mock.patch("aicage.runtime.docker_args._docker_socket.os.name", "posix"),
-            mock.patch("aicage.runtime.docker_args._docker_socket.prompt_persist_docker_socket", return_value=True),
+            mock.patch(f"{_MODULE}.os.name", "posix"),
+            mock.patch(f"{_MODULE}.prompt_persist_docker_socket", return_value=True),
         ):
             resolved = resolve(context, "codex", parsed)
 
@@ -27,8 +29,8 @@ class DockerSocketMountTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts(docker=True))
         context = _build_context(agent_cfg)
         with (
-            mock.patch("aicage.runtime.docker_args._docker_socket.os.name", "posix"),
-            mock.patch("aicage.runtime.docker_args._docker_socket.prompt_persist_docker_socket") as prompt_mock,
+            mock.patch(f"{_MODULE}.os.name", "posix"),
+            mock.patch(f"{_MODULE}.prompt_persist_docker_socket") as prompt_mock,
         ):
             resolved = resolve(context, "codex", _build_parsed())
 
@@ -47,7 +49,7 @@ class DockerSocketMountTests(TestCase):
     def test_resolve_docker_socket_mount_windows_env(self) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(docker=True))
         context = _build_context(agent_cfg)
-        with mock.patch("aicage.runtime.docker_args._docker_socket.os.name", "nt"):
+        with mock.patch(f"{_MODULE}.os.name", "nt"):
             resolved = resolve(context, "codex", _build_parsed())
 
         self.assertEqual([], resolved.mounts)

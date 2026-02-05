@@ -8,10 +8,12 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig
 from aicage.paths import CONTAINER_USER_HOME_MOUNTS_DIR, container_project_path
-from aicage.runtime.docker_args import resolver
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.env_vars import AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
+
+_MODULE = "aicage.runtime.docker_args.resolve.resolver"
 
 
 class ResolverTests(TestCase):
@@ -35,28 +37,28 @@ class ResolverTests(TestCase):
             parsed = ParsedArgs(False, "", "codex", [], False, [], None)
 
             with (
-                mock.patch("aicage.runtime.docker_args.resolver.resolve_git_support_prefs") as git_support_mock,
+                mock.patch(f"{_MODULE}.resolve_git_support_prefs") as git_support_mock,
                 mock.patch(
-                    "aicage.runtime.docker_args.resolver._project.resolve",
+                    f"{_MODULE}._project.resolve",
                     return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),
                 ),
-                mock.patch("aicage.runtime.docker_args.resolver._agent_config.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._agent_config.resolve", return_value=ResolvedArgs()),
                 mock.patch(
-                    "aicage.runtime.docker_args.resolver._git_config.resolve",
+                    f"{_MODULE}._git_config.resolve",
                     return_value=ResolvedArgs(mounts=[MountRequest(host_path=git_config)]),
                 ) as git_mock,
-                mock.patch("aicage.runtime.docker_args.resolver._git_root.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._ssh_keys.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._gpg.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._git_root.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._ssh_keys.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._gpg.resolve", return_value=ResolvedArgs()),
                 mock.patch(
-                    "aicage.runtime.docker_args.resolver._docker_socket.resolve",
+                    f"{_MODULE}._docker_socket.resolve",
                     return_value=ResolvedArgs(
                         mounts=[MountRequest(host_path=docker_sock)],
                         env=[EnvVar(name="DOCKER_HOST", value="tcp://host:2375")],
                     ),
                 ) as docker_mock,
-                mock.patch("aicage.runtime.docker_args.resolver._shares.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver.Path.home", return_value=home_path),
+                mock.patch(f"{_MODULE}._shares.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}.Path.home", return_value=home_path),
             ):
                 mounts, env = resolver.resolve_docker_args(context, "codex", parsed)
 
@@ -99,16 +101,16 @@ class ResolverTests(TestCase):
         )
 
         with (
-            mock.patch("aicage.runtime.docker_args.resolver.resolve_git_support_prefs"),
-            mock.patch("aicage.runtime.docker_args.resolver._project.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._agent_config.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._git_config.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._git_root.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._ssh_keys.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._gpg.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._docker_socket.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver._shares.resolve", return_value=ResolvedArgs()),
-            mock.patch("aicage.runtime.docker_args.resolver.Path.home", return_value=Path("/tmp/home")),
+            mock.patch(f"{_MODULE}.resolve_git_support_prefs"),
+            mock.patch(f"{_MODULE}._project.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._agent_config.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._git_config.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._git_root.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._ssh_keys.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._gpg.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._docker_socket.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}._shares.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}.Path.home", return_value=Path("/tmp/home")),
         ):
             resolver.resolve_docker_args(context, "codex", None)
 
@@ -132,19 +134,19 @@ class ResolverTests(TestCase):
             parsed = ParsedArgs(False, "", "codex", [], False, [], None)
 
             with (
-                mock.patch("aicage.runtime.docker_args.resolver.resolve_git_support_prefs"),
+                mock.patch(f"{_MODULE}.resolve_git_support_prefs"),
                 mock.patch(
-                    "aicage.runtime.docker_args.resolver._project.resolve",
+                    f"{_MODULE}._project.resolve",
                     return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),
                 ),
-                mock.patch("aicage.runtime.docker_args.resolver._agent_config.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._git_config.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._git_root.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._ssh_keys.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._gpg.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._docker_socket.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver._shares.resolve", return_value=ResolvedArgs()),
-                mock.patch("aicage.runtime.docker_args.resolver.Path.home", return_value=home_path),
+                mock.patch(f"{_MODULE}._agent_config.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._git_config.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._git_root.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._ssh_keys.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._gpg.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._docker_socket.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}._shares.resolve", return_value=ResolvedArgs()),
+                mock.patch(f"{_MODULE}.Path.home", return_value=home_path),
             ):
                 mounts, env = resolver.resolve_docker_args(context, "codex", parsed)
 

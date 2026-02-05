@@ -4,7 +4,7 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.paths import HOST_DOCKER_SOCKET_PATH
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
 from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
 from aicage.runtime.prompts.confirm import prompt_persist_docker_socket
 from aicage.runtime.run_args import EnvVar

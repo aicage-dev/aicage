@@ -5,8 +5,10 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
-from aicage.runtime.docker_args import _ssh_keys
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args._resolvers import _ssh_keys
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+
+_MODULE = "aicage.runtime.docker_args._resolvers._ssh_keys"
 
 
 class SshKeyTests(TestCase):
@@ -14,7 +16,7 @@ class SshKeyTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts(ssh=True))
         context = _build_context(agent_cfg)
         with mock.patch(
-            "aicage.runtime.docker_args._ssh_keys.is_commit_signing_enabled",
+            f"{_MODULE}.is_commit_signing_enabled",
             return_value=False,
         ):
             resolved = _ssh_keys.resolve(context, "codex", _build_parsed())
@@ -25,11 +27,11 @@ class SshKeyTests(TestCase):
         context = _build_context(agent_cfg)
         with (
             mock.patch(
-                "aicage.runtime.docker_args._ssh_keys.is_commit_signing_enabled",
+                f"{_MODULE}.is_commit_signing_enabled",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.runtime.docker_args._ssh_keys.resolve_signing_format",
+                f"{_MODULE}.resolve_signing_format",
                 return_value="gpg",
             ),
         ):
@@ -41,9 +43,9 @@ class SshKeyTests(TestCase):
         context = _build_context(agent_cfg)
         ssh_dir = Path("/tmp/ssh")
         with (
-            mock.patch("aicage.runtime.docker_args._ssh_keys.is_commit_signing_enabled", return_value=True),
-            mock.patch("aicage.runtime.docker_args._ssh_keys.resolve_signing_format", return_value="ssh"),
-            mock.patch("aicage.runtime.docker_args._ssh_keys.resolve_ssh_dir", return_value=ssh_dir),
+            mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
+            mock.patch(f"{_MODULE}.resolve_signing_format", return_value="ssh"),
+            mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
         ):
             resolved = _ssh_keys.resolve(context, "codex", _build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
@@ -55,9 +57,9 @@ class SshKeyTests(TestCase):
             ssh_dir = Path(tmp_dir) / "ssh"
             ssh_dir.mkdir()
             with (
-                mock.patch("aicage.runtime.docker_args._ssh_keys.is_commit_signing_enabled", return_value=True),
-                mock.patch("aicage.runtime.docker_args._ssh_keys.resolve_signing_format", return_value="ssh"),
-                mock.patch("aicage.runtime.docker_args._ssh_keys.resolve_ssh_dir", return_value=ssh_dir),
+                mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
+                mock.patch(f"{_MODULE}.resolve_signing_format", return_value="ssh"),
+                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
             ):
                 resolved = _ssh_keys.resolve(context, "codex", _build_parsed())
         self.assertEqual(

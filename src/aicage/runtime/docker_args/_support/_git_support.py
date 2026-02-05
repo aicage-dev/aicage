@@ -6,7 +6,7 @@ from typing import Protocol
 from aicage.config.project_config import AgentConfig
 from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
 
-from ..prompts.confirm import prompt_mount_git_support
+from ...prompts.confirm import prompt_mount_git_support
 from ._exec import capture_stdout
 from ._signing import is_commit_signing_enabled, resolve_signing_format
 

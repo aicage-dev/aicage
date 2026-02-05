@@ -6,8 +6,8 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.runtime._agent_config import AgentConfig as RuntimeAgentConfig
-from aicage.runtime.docker_args import _agent_config
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args._resolvers import _agent_config
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
 
 
 class AgentConfigResolverTests(TestCase):
@@ -34,7 +34,7 @@ class AgentConfigResolverTests(TestCase):
         )
 
         with mock.patch(
-            "aicage.runtime.docker_args._agent_config.resolve_agent_config",
+            "aicage.runtime.docker_args._resolvers._agent_config.resolve_agent_config",
             return_value=agent_config,
         ):
             resolved = _agent_config.resolve(context, "codex", _build_parsed())

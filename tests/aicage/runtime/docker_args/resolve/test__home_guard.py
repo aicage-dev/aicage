@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 
 from aicage.errors import AicageError
 from aicage.paths import CONTAINER_USER_HOME_MOUNTS_DIR
-from aicage.runtime.docker_args import resolver
+from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.run_args import MountSpec
 
 
@@ -39,9 +39,9 @@ class HomeGuardTests(TestCase):
             project_path.mkdir()
 
             with (
-                mock.patch("aicage.runtime.docker_args.resolver._validate_home_mount_safety") as guard_mock,
-                mock.patch("aicage.runtime.docker_args.resolver._resolver_sequence", return_value=()),
-                mock.patch("aicage.runtime.docker_args.resolver.Path.home", return_value=home_path),
+                mock.patch("aicage.runtime.docker_args.resolve.resolver._validate_home_mount_safety") as guard_mock,
+                mock.patch("aicage.runtime.docker_args.resolve.resolver._resolver_sequence", return_value=()),
+                mock.patch("aicage.runtime.docker_args.resolve.resolver.Path.home", return_value=home_path),
             ):
                 context = mock.Mock()
                 context.project_cfg = mock.Mock(path=str(project_path))

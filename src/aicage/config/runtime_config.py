@@ -10,7 +10,7 @@ from aicage.config.extensions.loader import load_extensions
 from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
-from aicage.runtime.docker_args.resolver import resolve_docker_args
+from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
 from aicage.runtime.mounts.shares import merge_share_values
 from aicage.runtime.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
 from aicage.runtime.run_args import EnvVar, MountSpec

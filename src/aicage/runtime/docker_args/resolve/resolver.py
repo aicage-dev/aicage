@@ -6,12 +6,12 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.errors import AicageError
 from aicage.paths import CONTAINER_USER_HOME_MOUNTS_DIR, container_project_path
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs, Resolver
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs, Resolver
 from aicage.runtime.env_vars import AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
 
-from . import _agent_config, _docker_socket, _git_config, _git_root, _gpg, _project, _shares, _ssh_keys
-from ._git_support import resolve_git_support_prefs
+from .._resolvers import _agent_config, _docker_socket, _git_config, _git_root, _gpg, _project, _shares, _ssh_keys
+from .._support._git_support import resolve_git_support_prefs
 
 
 def resolve_docker_args(

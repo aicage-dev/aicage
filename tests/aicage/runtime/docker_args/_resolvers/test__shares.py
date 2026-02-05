@@ -5,8 +5,8 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
-from aicage.runtime.docker_args import _shares
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args._resolvers import _shares
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
 
 
 class ShareResolverTests(TestCase):
@@ -22,7 +22,7 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args._shares.Path.cwd", return_value=cwd):
+            with mock.patch("aicage.runtime.docker_args._resolvers._shares.Path.cwd", return_value=cwd):
                 resolved = _shares.resolve(context, "codex", parsed)
 
         expected_path = (cwd / "data").resolve()

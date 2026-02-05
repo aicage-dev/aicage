@@ -4,8 +4,10 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
-from aicage.runtime.docker_args import _git_root
-from aicage.runtime.docker_args._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args._resolvers import _git_root
+from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+
+_MODULE = "aicage.runtime.docker_args._resolvers._git_root"
 
 
 class GitRootTests(TestCase):
@@ -13,7 +15,7 @@ class GitRootTests(TestCase):
         agent_cfg = AgentConfig()
         context = _build_context(agent_cfg)
         with (
-            mock.patch("aicage.runtime.docker_args._git_root.resolve_git_root", return_value=None),
+            mock.patch(f"{_MODULE}.resolve_git_root", return_value=None),
         ):
             resolved = _git_root.resolve(context, "codex", _build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
@@ -22,7 +24,7 @@ class GitRootTests(TestCase):
         agent_cfg = AgentConfig()
         context = _build_context(agent_cfg)
         with (
-            mock.patch("aicage.runtime.docker_args._git_root.resolve_git_root", return_value=Path("/tmp/project")),
+            mock.patch(f"{_MODULE}.resolve_git_root", return_value=Path("/tmp/project")),
         ):
             resolved = _git_root.resolve(context, "codex", _build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
@@ -32,7 +34,7 @@ class GitRootTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts(gitroot=False))
         context = _build_context(agent_cfg)
         with mock.patch(
-            "aicage.runtime.docker_args._git_root.resolve_git_root",
+            f"{_MODULE}.resolve_git_root",
             return_value=git_root,
         ):
             resolved = _git_root.resolve(context, "codex", _build_parsed())
@@ -43,7 +45,7 @@ class GitRootTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts(gitroot=True))
         context = _build_context(agent_cfg)
         with mock.patch(
-            "aicage.runtime.docker_args._git_root.resolve_git_root",
+            f"{_MODULE}.resolve_git_root",
             return_value=git_root,
         ):
             resolved = _git_root.resolve(context, "codex", _build_parsed())
