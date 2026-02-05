@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.11] - 2026-02-05
+
 ### Changed
 
 - Switched `agent_path` to explicit `files` and `directories` lists and made it optional in agent definitions.
@@ -16,10 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added integration coverage for creating and mounting `agent_path` files and directories for custom agents.
 
+### Fixed
+
+- Print underlying Docker stderr when container startup fails to improve error visibility.
+
 ### Internal
 
 - Split `runtime.docker_args` into resolver implementations plus shared support/resolve helpers, and reorganized
   associated tests to match the new package layout.
+- Update integration coverage for `agent_path` to use a custom bash agent with a reusable setup helper.
 
 ## [0.9.10] - 2026-02-05
 
