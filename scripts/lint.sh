@@ -9,11 +9,6 @@ pymarkdown \
   --config .pymarkdown.json scan \
   --recurse \
   --exclude '**/.venv*/' \
-  --exclude './aicage-custom-samples/' \
-  --exclude './aicage-image/' \
-  --exclude './aicage-image-base/' \
-  --exclude './aicage-image-util/' \
-  --exclude './github-actions/' \
   .
 ruff check .
 pyright .
