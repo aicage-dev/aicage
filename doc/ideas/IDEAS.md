@@ -14,19 +14,6 @@ development. But by now this:
 - is ugly
 - the code is mature enough by now to change this
 
-## Plugins idea
-
-Aicage could have plugins in the style: Copy of RunConfig is handed to plugin, which returns RunConfig or defined parts
-of it.  
-The current features:
-
-- ask user about mounting .gitconfig and .gnupg
-- handle --docker parameter
-
-could potentially be moved to such plugins.
-
-Maybe we could even allow user added custom plugins.
-
 ## Shellcheck version.sh
 
 The `version.sh` scripts for agents are run on the users system or as fallback in the Alpine `version-check` util-image
