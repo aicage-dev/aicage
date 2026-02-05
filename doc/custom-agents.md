@@ -24,7 +24,8 @@ The `<AGENT>` directory name is the agent id used on the CLI, for example: `aica
 
 ```yaml
 agent_path:
-  - ~/.forge
+  directories:
+    - ~/.forge
 agent_full_name: Forge Code
 agent_homepage: https://forgecode.dev/
 ```
@@ -40,8 +41,10 @@ base_distro_exclude:
 
 Notes:
 
-- `agent_path` is a list of host paths used for agent config. Inside the container they are available at the same paths.
-- `base_exclude` excludes named base images. `base_distro_exclude` excludes bases by their distro name.
+- `agent_path.directories` lists directory paths to mount (missing directories are created).
+- `agent_path.files` lists file paths to mount (missing files are created).
+- `base_exclude` excludes named base images.
+- `base_distro_exclude` excludes bases by their distro name.
 - No additional keys are supported.
 
 ## install.sh

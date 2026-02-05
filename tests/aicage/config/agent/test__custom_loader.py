@@ -37,7 +37,8 @@ class CustomAgentLoaderTests(TestCase):
                 "\n".join(
                     [
                         f"{AGENT_PATH_KEY}:",
-                        "  - ~/.custom",
+                        "  directories:",
+                        "    - ~/.custom",
                         f"{AGENT_FULL_NAME_KEY}: Custom",
                         f"{AGENT_HOMEPAGE_KEY}: https://example.com",
                         f"{BASE_EXCLUDE_KEY}:",
@@ -70,7 +71,8 @@ class CustomAgentLoaderTests(TestCase):
                 "\n".join(
                     [
                         f"{AGENT_PATH_KEY}:",
-                        "  - ~/.custom",
+                        "  directories:",
+                        "    - ~/.custom",
                         f"{AGENT_FULL_NAME_KEY}: Custom",
                         f"{AGENT_HOMEPAGE_KEY}: https://example.com",
                     ]

@@ -5,6 +5,7 @@ from aicage.config.agent._metadata import build_agent_metadata
 from aicage.config.agent.models import (
     AGENT_FULL_NAME_KEY,
     AGENT_HOMEPAGE_KEY,
+    AGENT_PATH_DIRECTORIES_KEY,
     AGENT_PATH_KEY,
     BASE_EXCLUDE_KEY,
     BUILD_LOCAL_KEY,
@@ -31,7 +32,7 @@ class AgentMetadataBuilderTests(TestCase):
             ),
         }
         mapping = {
-            AGENT_PATH_KEY: ["~/.codex"],
+            AGENT_PATH_KEY: {AGENT_PATH_DIRECTORIES_KEY: ["~/.codex"]},
             AGENT_FULL_NAME_KEY: "Codex",
             AGENT_HOMEPAGE_KEY: "https://example.com",
             BUILD_LOCAL_KEY: False,

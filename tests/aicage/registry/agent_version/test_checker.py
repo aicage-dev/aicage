@@ -133,7 +133,8 @@ class AgentVersionCheckTests(TestCase):
     @staticmethod
     def _agent_metadata() -> AgentMetadata:
         return AgentMetadata(
-            agent_path=["~/.custom"],
+            agent_path_files=[],
+            agent_path_directories=["~/.custom"],
             agent_full_name="Custom",
             agent_homepage="https://example.com",
             build_local=True,

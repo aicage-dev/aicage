@@ -1,3 +1,4 @@
+import subprocess
 import sys
 from collections.abc import Sequence
 
@@ -9,6 +10,7 @@ from aicage.cli._remove_config import remove_project_config
 from aicage.cli._version_check import maybe_prompt_update
 from aicage.cli_types import ParsedArgs
 from aicage.config.runtime_config import RunConfig, load_run_config
+from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.registry.ensure_image import ensure_image
@@ -19,33 +21,47 @@ from aicage.runtime.run_plan import build_run_args
 def main(argv: Sequence[str] | None = None) -> int:
     parsed_argv: Sequence[str] = argv if argv is not None else sys.argv[1:]
     logger = get_logger()
+    exit_code = 0
     try:
         parsed: ParsedArgs = parse_cli(parsed_argv)
         maybe_prompt_update(__version__)
         if parsed.config_action == "info":
             info_project_config()
-            return 0
-        if parsed.config_action == "remove":
+        elif parsed.config_action == "remove":
             remove_project_config()
-            return 0
-        run_config: RunConfig = load_run_config(parsed.agent, parsed)
-        run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
-        logger.info("Resolved run config for agent %s", run_config.agent)
-        ensure_image(run_config)
+        else:
+            run_config: RunConfig = load_run_config(parsed.agent, parsed)
+            run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
+            logger.info("Resolved run config for agent %s", run_config.agent)
+            ensure_image(run_config)
 
-        if parsed.dry_run:
-            print_run_command(run_args)
-            logger.info("Dry-run docker command printed.")
-            return 0
-
-        run_container(run_args)
-        return 0
+            if parsed.dry_run:
+                print_run_command(run_args)
+                logger.info("Dry-run docker command printed.")
+            else:
+                run_container(run_args)
     except KeyboardInterrupt:
         print()
         logger.warning("Interrupted by user.")
-        return 130
+        exit_code = 130
+    except DockerError as exc:
+        _print_docker_error(exc)
+        logger.error("CLI error: %s", exc)
+        exit_code = 1
     except AicageError as exc:
         print(f"[aicage] {exc}", file=sys.stderr)
         logger.error("CLI error: %s", exc)
-        return 1
+        exit_code = 1
+    return exit_code
 
+
+def _print_docker_error(exc: DockerError) -> None:
+    print(f"[aicage] {exc}", file=sys.stderr)
+    cause = exc.__cause__
+    if not isinstance(cause, subprocess.CalledProcessError):
+        return
+    stderr = cause.stderr
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode("utf-8", errors="replace")
+    if stderr:
+        print(stderr.rstrip(), file=sys.stderr)

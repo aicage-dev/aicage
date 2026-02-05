@@ -72,7 +72,8 @@ def _build_agents_and_bases(
     }
     agents = {
         "codex": AgentMetadata(
-            agent_path=["~/.codex"],
+            agent_path_files=[],
+            agent_path_directories=["~/.codex"],
             agent_full_name="Codex CLI",
             agent_homepage="https://example.com",
             build_local=False,

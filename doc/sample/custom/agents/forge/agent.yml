@@ -1,4 +1,5 @@
 agent_path:
-  - ~/forge
+  directories:
+    - ~/forge
 agent_full_name: Forge Code
 agent_homepage: https://forgecode.dev/

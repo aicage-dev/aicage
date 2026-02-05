@@ -21,7 +21,8 @@ class AgentLoaderTests(TestCase):
                 "\n".join(
                     [
                         "agent_path:",
-                        "  - ~/.codex",
+                        "  directories:",
+                        "    - ~/.codex",
                         "agent_full_name: Codex",
                         "agent_homepage: https://example.com",
                         "build_local: false",
@@ -42,7 +43,8 @@ class AgentLoaderTests(TestCase):
                 )
             }
             custom_agent = AgentMetadata(
-                agent_path=["~/.custom"],
+                agent_path_files=[],
+                agent_path_directories=["~/.custom"],
                 agent_full_name="Custom",
                 agent_homepage="https://example.com",
                 build_local=True,

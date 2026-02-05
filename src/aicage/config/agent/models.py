@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 AGENT_PATH_KEY: str = "agent_path"
+AGENT_PATH_FILES_KEY: str = "files"
+AGENT_PATH_DIRECTORIES_KEY: str = "directories"
 AGENT_FULL_NAME_KEY: str = "agent_full_name"
 AGENT_HOMEPAGE_KEY: str = "agent_homepage"
 BUILD_LOCAL_KEY: str = "build_local"
@@ -11,7 +13,8 @@ BASE_DISTRO_EXCLUDE_KEY: str = "base_distro_exclude"
 
 @dataclass(frozen=True)
 class AgentMetadata:
-    agent_path: list[str]
+    agent_path_files: list[str]
+    agent_path_directories: list[str]
     agent_full_name: str
     agent_homepage: str
     build_local: bool

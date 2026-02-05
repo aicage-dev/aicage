@@ -49,7 +49,8 @@ def build_agents_and_bases(
     }
     agents = {
         "claude": AgentMetadata(
-            agent_path=["~/.claude"],
+            agent_path_files=[],
+            agent_path_directories=["~/.claude"],
             agent_full_name="Claude Code",
             agent_homepage="https://example.com",
             build_local=build_local,

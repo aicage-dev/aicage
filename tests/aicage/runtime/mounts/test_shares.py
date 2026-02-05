@@ -80,7 +80,7 @@ class ShareMountsTests(TestCase):
         self.assertEqual(1, len(mounts))
         self.assertEqual(shared_dir.resolve(), mounts[0].host_path)
 
-    def test_resolve_share_mounts_creates_missing_dir(self) -> None:
+    def test_resolve_share_mounts_does_not_create_missing_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
             parsed = ParsedArgs(False, "", "codex", [], False, ["missing"], None)
@@ -89,9 +89,9 @@ class ShareMountsTests(TestCase):
                 mounts = resolve_share_mounts(parsed, cwd)
 
             self.assertEqual(1, len(mounts))
-            self.assertTrue((cwd / "missing").is_dir())
+            self.assertFalse((cwd / "missing").exists())
 
-    def test_resolve_share_mounts_creates_missing_file(self) -> None:
+    def test_resolve_share_mounts_does_not_create_missing_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
             parsed = ParsedArgs(False, "", "codex", [], False, ["missing.txt"], None)
@@ -100,7 +100,7 @@ class ShareMountsTests(TestCase):
                 mounts = resolve_share_mounts(parsed, cwd)
 
             self.assertEqual(1, len(mounts))
-            self.assertTrue((cwd / "missing.txt").is_file())
+            self.assertFalse((cwd / "missing.txt").exists())
 
     def test_resolve_share_mounts_rejects_destination(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

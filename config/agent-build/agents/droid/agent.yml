@@ -1,5 +1,6 @@
 agent_path:
-  - ~/.factory
+  directories:
+    - ~/.factory
 agent_full_name: Factory CLI
 agent_homepage: https://factory.ai/product/cli
 # Build locally because the license does not allow redistributing prebuilt images.

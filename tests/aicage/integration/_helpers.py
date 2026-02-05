@@ -285,6 +285,48 @@ def copy_forge_sample(target_dir: Path) -> None:
     _make_executable(target_dir / "version.sh")
 
 
+def setup_custom_bash_agent(target_dir: Path) -> None:
+    target_dir.mkdir(parents=True, exist_ok=True)
+    (target_dir / "agent.yml").write_text(
+        "\n".join(
+            [
+                "agent_path:",
+                "  directories:",
+                "    - ~/.aicage-test-dir",
+                "  files:",
+                "    - ~/.aicage-test-file",
+                "    - ~/.aicage-test-file.backup",
+                "agent_full_name: Bash",
+                "agent_homepage: https://example.invalid",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (target_dir / "install.sh").write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env bash",
+                "set -euo pipefail",
+                "true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (target_dir / "version.sh").write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env bash",
+                "set -euo pipefail",
+                "printf \"%s\\n\" \"bash\"",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def custom_extensions_dir() -> Path:
     return _custom_root_dir() / "extensions"
 

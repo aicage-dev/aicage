@@ -125,7 +125,8 @@ class EnsureExtendedImageTests(TestCase):
         }
         agents = {
             "codex": AgentMetadata(
-                agent_path=["~/.codex"],
+                agent_path_files=[],
+                agent_path_directories=["~/.codex"],
                 agent_full_name="Codex",
                 agent_homepage="https://example.com",
                 build_local=build_local,

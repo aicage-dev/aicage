@@ -1,11 +1,13 @@
 from pathlib import Path
 from typing import Any
 
-from aicage.config._yaml import expect_bool, expect_string, maybe_str_list, read_str_list
+from aicage.config._yaml import expect_bool, expect_keys, expect_string, maybe_str_list, read_str_list
 from aicage.config.agent._validation import validate_agent_mapping
 from aicage.config.agent.models import (
     AGENT_FULL_NAME_KEY,
     AGENT_HOMEPAGE_KEY,
+    AGENT_PATH_DIRECTORIES_KEY,
+    AGENT_PATH_FILES_KEY,
     AGENT_PATH_KEY,
     BASE_DISTRO_EXCLUDE_KEY,
     BASE_EXCLUDE_KEY,
@@ -13,6 +15,7 @@ from aicage.config.agent.models import (
     AgentMetadata,
 )
 from aicage.config.base.models import BaseMetadata
+from aicage.config.errors import ConfigError
 from aicage.config.image_refs import local_image_ref
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY, LOCAL_IMAGE_REPOSITORY
 
@@ -24,6 +27,7 @@ def build_agent_metadata(
     definition_dir: Path,
 ) -> AgentMetadata:
     normalized_mapping = validate_agent_mapping(agent_mapping)
+    agent_path = _read_agent_path(normalized_mapping)
     base_exclude = maybe_str_list(normalized_mapping.get(BASE_EXCLUDE_KEY), BASE_EXCLUDE_KEY) or []
     base_distro_exclude = (
         maybe_str_list(normalized_mapping.get(BASE_DISTRO_EXCLUDE_KEY), BASE_DISTRO_EXCLUDE_KEY)
@@ -38,7 +42,8 @@ def build_agent_metadata(
         build_local=build_local,
     )
     return AgentMetadata(
-        agent_path=read_str_list(normalized_mapping.get(AGENT_PATH_KEY), AGENT_PATH_KEY),
+        agent_path_files=agent_path.files,
+        agent_path_directories=agent_path.directories,
         agent_full_name=expect_string(normalized_mapping.get(AGENT_FULL_NAME_KEY), AGENT_FULL_NAME_KEY),
         agent_homepage=expect_string(normalized_mapping.get(AGENT_HOMEPAGE_KEY), AGENT_HOMEPAGE_KEY),
         build_local=build_local,
@@ -47,6 +52,32 @@ def build_agent_metadata(
         base_distro_exclude=base_distro_exclude,
         local_definition_dir=definition_dir,
     )
+
+
+class _AgentPath:
+    def __init__(self, files: list[str], directories: list[str]) -> None:
+        self.files = files
+        self.directories = directories
+
+
+def _read_agent_path(mapping: dict[str, Any]) -> _AgentPath:
+    raw = mapping.get(AGENT_PATH_KEY)
+    if raw is None:
+        return _AgentPath(files=[], directories=[])
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{AGENT_PATH_KEY} must be a mapping.")
+    expect_keys(
+        raw,
+        required=set(),
+        optional={AGENT_PATH_FILES_KEY, AGENT_PATH_DIRECTORIES_KEY},
+        context=AGENT_PATH_KEY,
+    )
+    files = read_str_list(raw.get(AGENT_PATH_FILES_KEY, []), f"{AGENT_PATH_KEY}.{AGENT_PATH_FILES_KEY}")
+    directories = read_str_list(
+        raw.get(AGENT_PATH_DIRECTORIES_KEY, []),
+        f"{AGENT_PATH_KEY}.{AGENT_PATH_DIRECTORIES_KEY}",
+    )
+    return _AgentPath(files=files, directories=directories)
 
 
 def _build_valid_bases(

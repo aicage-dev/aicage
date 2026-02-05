@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Switched `agent_path` to explicit `files` and `directories` lists and made it optional in agent definitions.
+- Stop creating host paths for `--share` mounts; missing files or directories must exist on the host.
+
+### Added
+
+- Added integration coverage for creating and mounting `agent_path` files and directories for custom agents.
+
 ### Internal
 
 - Split `runtime.docker_args` into resolver implementations plus shared support/resolve helpers, and reorganized

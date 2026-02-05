@@ -83,7 +83,8 @@ class ExtensionHandlerTests(TestCase):
     @staticmethod
     def _agent_metadata(local: bool) -> AgentMetadata:
         return AgentMetadata(
-            agent_path=["~/.codex"],
+            agent_path_files=[],
+            agent_path_directories=["~/.codex"],
             agent_full_name="Codex",
             agent_homepage="https://example.com",
             build_local=local,

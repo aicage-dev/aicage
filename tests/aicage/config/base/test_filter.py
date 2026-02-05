@@ -57,7 +57,8 @@ class BaseFilterTests(TestCase):
         base_distro_exclude: list[str] | None = None,
     ) -> AgentMetadata:
         return AgentMetadata(
-            agent_path=["~/.agent"],
+            agent_path_files=[],
+            agent_path_directories=["~/.agent"],
             agent_full_name="Agent",
             agent_homepage="https://example.com",
             build_local=True,

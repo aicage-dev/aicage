@@ -1,7 +1,9 @@
 agent_path:
-  - ~/.claude
-  - ~/.claude.json
-  - ~/.claude.json.backup
+  directories:
+    - ~/.claude
+  files:
+    - ~/.claude.json
+    - ~/.claude.json.backup
 agent_full_name: Claude Code
 agent_homepage: https://claude.com/product/claude-code
 # Build locally because the license does not allow redistributing prebuilt images.

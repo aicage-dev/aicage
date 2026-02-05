@@ -3,7 +3,6 @@ from pathlib import Path, PureWindowsPath
 
 from aicage.cli_types import ParsedArgs
 from aicage.errors import AicageError
-from aicage.runtime._path_utils import ensure_path_exists, looks_like_file
 
 
 @dataclass(frozen=True)
@@ -64,10 +63,8 @@ def _parse_share(raw: str, cwd: Path) -> ShareSpec:
     if _has_destination_path(host_raw):
         raise AicageError("Share destinations are not supported. Use HOST or HOST:ro.")
     host_path = _resolve_host_path(host_raw, cwd)
-    try:
-        host_path = ensure_path_exists(host_path, looks_like_file(host_raw))
-    except ValueError as exc:
-        raise AicageError(str(exc)) from exc
+    if host_path.exists() and not host_path.is_file() and not host_path.is_dir():
+        raise AicageError(f"Path exists but is not a file or directory: {host_path}")
     return ShareSpec(host_path=host_path, read_only=read_only)
 
 

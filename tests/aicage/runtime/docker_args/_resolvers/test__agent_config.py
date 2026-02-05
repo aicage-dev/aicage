@@ -14,11 +14,13 @@ class AgentConfigResolverTests(TestCase):
     def test_resolve_maps_agent_config_paths(self) -> None:
         host_paths = [Path("/tmp/agent/.codex"), Path("/tmp/agent/.config/codex")]
         agent_config = RuntimeAgentConfig(
-            agent_path=["~/.codex", "~/.config/codex"],
+            agent_path_files=[],
+            agent_path_directories=["~/.codex", "~/.config/codex"],
             agent_config_host=host_paths,
         )
         agent_metadata = AgentMetadata(
-            agent_path=["~/.codex", "~/.config/codex"],
+            agent_path_files=[],
+            agent_path_directories=["~/.codex", "~/.config/codex"],
             agent_full_name="Codex CLI",
             agent_homepage="https://example.com",
             build_local=False,
