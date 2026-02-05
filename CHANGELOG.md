@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Internal
+
+- Split `runtime.docker_args` into resolver implementations plus shared support/resolve helpers, and reorganized
+  associated tests to match the new package layout.
+
 ## [0.9.10] - 2026-02-05
 
 ### Changed
