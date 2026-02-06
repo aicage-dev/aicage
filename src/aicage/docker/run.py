@@ -8,12 +8,19 @@ from aicage.docker._client import get_docker_client
 from aicage.docker._env import resolve_user_ids
 from aicage.docker._mounts import append_mount
 from aicage.docker.cli import run_docker_command
+from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
+from aicage.docker.refs import repository_from_image_ref
 from aicage.runtime.run_args import DockerRunArgs
 
 
 def run_container(args: DockerRunArgs) -> None:
     command = _assemble_docker_run(args)
-    run_docker_command(command, check=True)
+    repository = repository_from_image_ref(args.image_ref)
+    old_digest = get_local_repo_digest_for_repo(args.image_ref, repository)
+    try:
+        run_docker_command(command, check=True)
+    finally:
+        cleanup_old_digest(repository, old_digest, args.image_ref)
 
 
 def print_run_command(args: DockerRunArgs) -> None:
@@ -59,6 +66,7 @@ def _decode_container_output(output: object) -> str:
     if isinstance(output, str):
         return output
     return ""
+
 
 
 def _assemble_docker_run(args: DockerRunArgs) -> list[str]:

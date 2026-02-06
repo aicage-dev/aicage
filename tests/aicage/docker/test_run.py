@@ -19,10 +19,20 @@ class RunCommandTests(TestCase):
         with (
             mock.patch("aicage.docker.run._assemble_docker_run", return_value=["docker", "run"]),
             mock.patch("aicage.docker.run.run_docker_command") as run_mock,
+            mock.patch(
+                "aicage.docker.run.get_local_repo_digest_for_repo",
+                return_value="sha256:old",
+            ),
+            mock.patch("aicage.docker.run.cleanup_old_digest") as cleanup_mock,
         ):
             run.run_container(args)
 
         run_mock.assert_called_once_with(["docker", "run"], check=True)
+        cleanup_mock.assert_called_once_with(
+            "ghcr.io/aicage/aicage",
+            "sha256:old",
+            "ghcr.io/aicage/aicage:codex-ubuntu",
+        )
 
     @staticmethod
     def test_print_run_command_outputs_command() -> None:

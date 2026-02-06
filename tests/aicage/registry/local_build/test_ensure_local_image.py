@@ -138,6 +138,13 @@ class EnsureLocalImageTests(TestCase):
                     "aicage.registry.local_build.ensure_local_image.run_build"
                 ) as build_mock,
                 mock.patch(
+                    "aicage.registry.local_build.ensure_local_image.get_local_repo_digest_for_repo",
+                    return_value="sha256:old",
+                ),
+                mock.patch(
+                    "aicage.registry.local_build.ensure_local_image.cleanup_old_digest"
+                ) as cleanup_mock,
+                mock.patch(
                     "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
                 ) as checker_cls,
             ):
@@ -145,6 +152,11 @@ class EnsureLocalImageTests(TestCase):
                 ensure_local_image_module.ensure_local_image(run_config)
 
             build_mock.assert_called_once()
+            cleanup_mock.assert_called_once_with(
+                "aicage",
+                "sha256:old",
+                "aicage:claude-ubuntu",
+            )
             record_path = state_dir / "claude-ubuntu.yml"
             payload = yaml.safe_load(record_path.read_text(encoding="utf-8"))
             self.assertEqual("1.2.3", payload[_AGENT_VERSION_KEY])

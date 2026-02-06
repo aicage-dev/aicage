@@ -85,6 +85,5 @@ def cleanup_old_digest(
     if local_digest is None:
         return
     updated_digest = get_local_repo_digest_for_repo(image_ref, repository)
-    if updated_digest is None or updated_digest == local_digest:
-        return
-    _remove_old_image_digest(repository, local_digest)
+    if updated_digest and updated_digest != local_digest:
+        _remove_old_image_digest(repository, local_digest)

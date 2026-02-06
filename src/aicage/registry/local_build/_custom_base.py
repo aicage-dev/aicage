@@ -5,7 +5,11 @@ from aicage.config.base.models import BaseMetadata
 from aicage.constants import LOCAL_IMAGE_BASE_REPOSITORY
 from aicage.docker.build import run_custom_base_build
 from aicage.docker.errors import DockerError
-from aicage.docker.query import local_image_exists
+from aicage.docker.query import (
+    cleanup_old_digest,
+    get_local_repo_digest_for_repo,
+    local_image_exists,
+)
 from aicage.registry._time import now_iso
 from aicage.registry.digest.remote_digest import get_remote_digest
 
@@ -28,6 +32,7 @@ def ensure_custom_base_image(base: str, base_metadata: BaseMetadata, base_dir: P
     if not _should_build(local_exists, record, base_metadata, remote_digest):
         return
 
+    old_digest = get_local_repo_digest_for_repo(image_ref, LOCAL_IMAGE_BASE_REPOSITORY)
     log_path = custom_base_log_path(base)
     try:
         run_custom_base_build(
@@ -45,6 +50,7 @@ def ensure_custom_base_image(base: str, base_metadata: BaseMetadata, base_dir: P
             return
         raise
 
+    cleanup_old_digest(LOCAL_IMAGE_BASE_REPOSITORY, old_digest, image_ref)
     store.save(
         CustomBaseBuildRecord(
             base=base,

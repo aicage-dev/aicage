@@ -82,6 +82,13 @@ class EnsureExtendedImageTests(TestCase):
                 "aicage.registry.extension_build.ensure_extended_image.run_extended_build"
             ) as run_mock,
             mock.patch(
+                "aicage.registry.extension_build.ensure_extended_image.get_local_repo_digest_for_repo",
+                return_value="sha256:old",
+            ),
+            mock.patch(
+                "aicage.registry.extension_build.ensure_extended_image.cleanup_old_digest"
+            ) as cleanup_mock,
+            mock.patch(
                 "aicage.registry.extension_build.ensure_extended_image.build_log_path_for_image",
                 return_value=Path("/tmp/logs/build.log"),
             ),
@@ -92,6 +99,11 @@ class EnsureExtendedImageTests(TestCase):
         ):
             ensure_extended_image(run_config)
         run_mock.assert_called_once()
+        cleanup_mock.assert_called_once_with(
+            "aicage-extended",
+            "sha256:old",
+            "aicage-extended:codex-ubuntu-ext",
+        )
         store.save.assert_called_once()
         record = store.save.call_args.args[0]
         self.assertIsInstance(record, ExtendedBuildRecord)
