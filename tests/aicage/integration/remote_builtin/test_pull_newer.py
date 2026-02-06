@@ -1,6 +1,5 @@
 import subprocess
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
@@ -77,51 +76,24 @@ def test_builtin_agent_cleans_old_digest_after_pull(
     tmp_path: Path,
 ) -> None:
     require_integration()
-    docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
-    workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot", docker_args=docker_args)
+    workspace, _ = setup_workspace(monkeypatch, tmp_path, "copilot")
     bases = load_bases()
     agents = load_agents(bases)
-    image_ref = agents["copilot"].valid_bases["ubuntu"]
-    subprocess.run(["docker", "pull", image_ref], check=True, capture_output=True)
+    image_ref = agents["codex"].valid_bases["alpine"]
+    other_ref = agents["gemini"].valid_bases["alpine"]
+    subprocess.run(["docker", "pull", other_ref], check=True, capture_output=True)
     repository = f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}"
-    old_digest = get_local_repo_digest_for_repo(image_ref, repository)
+    old_digest = get_local_repo_digest_for_repo(other_ref, repository)
     assert old_digest is not None
-    subprocess.run(
-        ["docker", "pull", f"{repository}@{old_digest}"],
-        check=True,
-        capture_output=True,
-    )
+    subprocess.run(["docker", "tag", other_ref, image_ref], check=True, capture_output=True)
     before_pairs = _repo_digest_pairs()
     assert (repository, old_digest) in before_pairs
-    build_dummy_image(image_ref, tmp_path)
     try:
-        with (
-            mock.patch(
-                "aicage.registry._pull_decision.get_local_repo_digest",
-                return_value=old_digest,
-            ),
-            mock.patch(
-                "aicage.registry._pull_decision.get_remote_digest",
-                return_value="sha256:new",
-            ),
-            mock.patch(
-                "aicage.registry._image_pull.resolve_verified_digest",
-                return_value=f"{repository}@sha256:new",
-            ),
-            mock.patch(
-                "aicage.registry._image_pull.run_pull",
-                return_value=None,
-            ),
-            mock.patch(
-                "aicage.registry._image_pull.get_local_repo_digest_for_repo",
-                return_value=old_digest,
-            ),
-            mock.patch(
-                "aicage.docker.query.get_local_repo_digest_for_repo",
-                return_value="sha256:new",
-            ),
-        ):
-            image_pull.pull_image(image_ref)
+        local_digest = get_local_repo_digest_for_repo(image_ref, repository)
+        assert local_digest == old_digest, (
+            "Expected equal digest after retagging; pull test invalid."
+        )
+        image_pull.pull_image(image_ref)
         after_pairs = _repo_digest_pairs()
         assert (repository, old_digest) not in after_pairs
     finally:
