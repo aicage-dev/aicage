@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.14] - 2026-02-14
+
+### Changed
+
+- Clean up superseded image digests after `docker run` exits, including cases where cleanup could not happen during
+  pull because another process was still using the image.
+- Clean up superseded digests after local rebuilds of agent images, extension images, and custom base images.
+- Remove source image tags after successful local builds to keep local image tags cleaner while preserving reusable
+  layer content.
+
+### Added
+
+- Added integration coverage for image cleanup across pull, run, and local rebuild flows.
+
+### Internal
+
+- Refactored integration tests around cleanup scenarios to use real Docker behavior, unified helpers, and reduced
+  duplication.
+- Performed follow-up test/code cleanup (visibility alignment, static non-instance tests, fixture reuse, and naming
+  cleanups).
+
 ## [0.9.11] - 2026-02-05
 
 ### Changed
