@@ -62,8 +62,7 @@ def get_local_rootfs_layers(image_ref: str) -> list[str] | None:
     return filtered
 
 
-def _remove_old_image_digest(repository: str, old_digest: str) -> None:
-    image_ref = f"{repository}@{old_digest}"
+def _remove_image_ref(image_ref: str, target_label: str) -> None:
     logger = get_logger()
     result = run_docker_command(
         ["docker", "image", "rm", image_ref],
@@ -72,9 +71,17 @@ def _remove_old_image_digest(repository: str, old_digest: str) -> None:
         stderr=subprocess.DEVNULL,
     )
     if result.returncode != 0:
-        logger.warning("Failed to remove old image digest %s", image_ref)
+        logger.warning("Failed to remove %s %s", target_label, image_ref)
         return
-    logger.info("Removed old image digest %s", image_ref)
+    logger.info("Removed %s %s", target_label, image_ref)
+
+
+def _remove_old_image_digest(repository: str, old_digest: str) -> None:
+    _remove_image_ref(f"{repository}@{old_digest}", "old image digest")
+
+
+def cleanup_source_image_tag(source_image_ref: str) -> None:
+    _remove_image_ref(source_image_ref, "source image tag")
 
 
 def cleanup_old_digest(

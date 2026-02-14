@@ -3,7 +3,11 @@ from pathlib import Path
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.docker.build import run_build
-from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
+from aicage.docker.query import (
+    cleanup_old_digest,
+    cleanup_source_image_tag,
+    get_local_repo_digest_for_repo,
+)
 from aicage.docker.refs import repository_from_image_ref
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._time import now_iso
@@ -24,6 +28,7 @@ def ensure_local_image(run_config: RunConfig) -> None:
     base_metadata = run_config.context.bases[run_config.selection.base]
     custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
     base_image = get_base_image_ref(run_config)
+    source_image_ref = base_image
     image_ref = run_config.selection.base_image_ref
     if custom_base:
         ensure_custom_base_image(
@@ -60,6 +65,8 @@ def ensure_local_image(run_config: RunConfig) -> None:
         log_path=log_path,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
+    if not custom_base:
+        cleanup_source_image_tag(source_image_ref)
 
     store.save(
         BuildRecord(

@@ -97,6 +97,9 @@ class EnsureLocalImageTests(TestCase):
                 "aicage.registry.local_build.ensure_local_image.refresh_base_digest"
             ) as refresh_mock,
             mock.patch(
+                "aicage.registry.local_build.ensure_local_image.cleanup_source_image_tag"
+            ) as cleanup_source_mock,
+            mock.patch(
                 "aicage.registry.local_build.ensure_local_image.should_build",
                 return_value=False,
             ),
@@ -108,6 +111,7 @@ class EnsureLocalImageTests(TestCase):
             ensure_local_image_module.ensure_local_image(run_config)
         base_mock.assert_called_once()
         refresh_mock.assert_not_called()
+        cleanup_source_mock.assert_not_called()
 
     def test_ensure_local_image_builds_when_missing_image(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -143,6 +147,9 @@ class EnsureLocalImageTests(TestCase):
                     "aicage.registry.local_build.ensure_local_image.cleanup_old_digest"
                 ) as cleanup_mock,
                 mock.patch(
+                    "aicage.registry.local_build.ensure_local_image.cleanup_source_image_tag"
+                ) as cleanup_source_mock,
+                mock.patch(
                     "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
                 ) as checker_cls,
             ):
@@ -154,6 +161,9 @@ class EnsureLocalImageTests(TestCase):
                 "aicage",
                 "sha256:old",
                 "aicage:claude-ubuntu",
+            )
+            cleanup_source_mock.assert_called_once_with(
+                "ghcr.io/aicage/aicage-image-base:ubuntu",
             )
             record_path = state_dir / "claude-ubuntu.yml"
             payload = yaml.safe_load(record_path.read_text(encoding="utf-8"))

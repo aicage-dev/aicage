@@ -3,8 +3,10 @@ from unittest import TestCase, mock
 from docker.errors import ImageNotFound
 
 from aicage.docker.query import (
+    _remove_image_ref,
     _remove_old_image_digest,
     cleanup_old_digest,
+    cleanup_source_image_tag,
     get_local_repo_digest,
     get_local_repo_digest_for_repo,
     get_local_rootfs_layers,
@@ -36,6 +38,36 @@ class FakeClient:
 
 
 class LocalQueryTests(TestCase):
+    @staticmethod
+    def test_remove_image_ref_removes_image() -> None:
+        with (
+            mock.patch("aicage.docker.query.get_logger", return_value=mock.Mock()),
+            mock.patch(
+                "aicage.docker.query.run_docker_command",
+                return_value=mock.Mock(returncode=0),
+            ) as run_mock,
+        ):
+            _remove_image_ref("ghcr.io/aicage/aicage@sha256:old", "old image digest")
+        run_mock.assert_called_once_with(
+            ["docker", "image", "rm", "ghcr.io/aicage/aicage@sha256:old"],
+            check=False,
+            stdout=mock.ANY,
+            stderr=mock.ANY,
+        )
+
+    @staticmethod
+    def test_remove_image_ref_ignores_docker_errors() -> None:
+        logger = mock.Mock()
+        with (
+            mock.patch("aicage.docker.query.get_logger", return_value=logger),
+            mock.patch(
+                "aicage.docker.query.run_docker_command",
+                return_value=mock.Mock(returncode=1),
+            ),
+        ):
+            _remove_image_ref("ghcr.io/aicage/aicage@sha256:old", "old image digest")
+        logger.warning.assert_called_once()
+
     def test_get_local_repo_digest(self) -> None:
         image = ImageRefRepository(image_ref="repo:tag", repository="ghcr.io/aicage/aicage")
         with mock.patch(
@@ -111,39 +143,45 @@ class LocalQueryTests(TestCase):
 
     @staticmethod
     def test_remove_old_image_digest_removes_image() -> None:
-        with (
-            mock.patch("aicage.docker.query.get_logger", return_value=mock.Mock()),
-            mock.patch(
-                "aicage.docker.query.subprocess.run",
-                return_value=mock.Mock(returncode=0),
-            ) as run_mock,
-        ):
+        with mock.patch("aicage.docker.query._remove_image_ref") as remove_mock:
             _remove_old_image_digest(
                 repository="ghcr.io/aicage/aicage",
                 old_digest="sha256:old",
             )
-        run_mock.assert_called_once_with(
-            ["docker", "image", "rm", "ghcr.io/aicage/aicage@sha256:old"],
-            check=False,
-            stdout=mock.ANY,
-            stderr=mock.ANY,
+        remove_mock.assert_called_once_with(
+            "ghcr.io/aicage/aicage@sha256:old",
+            "old image digest",
         )
 
     @staticmethod
     def test_remove_old_image_digest_ignores_docker_errors() -> None:
-        logger = mock.Mock()
-        with (
-            mock.patch("aicage.docker.query.get_logger", return_value=logger),
-            mock.patch(
-                "aicage.docker.query.subprocess.run",
-                return_value=mock.Mock(returncode=1),
-            ),
-        ):
+        with mock.patch("aicage.docker.query._remove_image_ref") as remove_mock:
             _remove_old_image_digest(
                 repository="ghcr.io/aicage/aicage",
                 old_digest="sha256:old",
             )
-        logger.warning.assert_called_once()
+        remove_mock.assert_called_once_with(
+            "ghcr.io/aicage/aicage@sha256:old",
+            "old image digest",
+        )
+
+    @staticmethod
+    def test_cleanup_source_image_tag_removes_tag() -> None:
+        with mock.patch("aicage.docker.query._remove_image_ref") as remove_mock:
+            cleanup_source_image_tag("ghcr.io/aicage/aicage-image-base:ubuntu")
+        remove_mock.assert_called_once_with(
+            "ghcr.io/aicage/aicage-image-base:ubuntu",
+            "source image tag",
+        )
+
+    @staticmethod
+    def test_cleanup_source_image_tag_warns_on_failure() -> None:
+        with mock.patch("aicage.docker.query._remove_image_ref") as remove_mock:
+            cleanup_source_image_tag("ghcr.io/aicage/aicage-image-base:ubuntu")
+        remove_mock.assert_called_once_with(
+            "ghcr.io/aicage/aicage-image-base:ubuntu",
+            "source image tag",
+        )
 
     @staticmethod
     def test_cleanup_old_digest_skips_without_local() -> None:
