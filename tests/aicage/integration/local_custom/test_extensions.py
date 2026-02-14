@@ -10,13 +10,14 @@ from aicage.registry.extension_build._extended_store import ExtendedBuildStore
 from aicage.registry.local_build._store import BuildStore
 
 from .._helpers import (
-    assert_base_layer_present,
     assert_marker_extension_present,
+    assert_rootfs_layer_present,
     copy_forge_sample,
     copy_marker_extension_sample,
     custom_agents_dir,
     custom_extensions_dir,
     force_record_agent_version,
+    get_last_rootfs_layer,
     replace_with_dummy_image,
     require_integration,
     setup_workspace,
@@ -56,7 +57,8 @@ def test_local_custom_extension_rebuilds_on_agent_version(
 
     extended_record = ExtendedBuildStore().load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:forge-ubuntu-marker")
     assert extended_record is not None
-    assert_base_layer_present(extended_record.base_image, extended_record.image_ref)
+    expected_base_layer = get_last_rootfs_layer(extended_record.base_image)
+    assert_rootfs_layer_present(expected_base_layer, extended_record.image_ref)
 
 
 def test_local_custom_extension_rebuilds_on_base_layer(
@@ -70,13 +72,14 @@ def test_local_custom_extension_rebuilds_on_base_layer(
     record = extended_store.load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:forge-ubuntu-marker")
     assert record is not None
 
+    expected_base_layer = get_last_rootfs_layer(record.base_image)
     old_digest = replace_with_dummy_image(record.image_ref)
     old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
     assert local_image_exists(old_digest_ref)
 
     assert_marker_extension_present(env, workspace, "forge")
     assert not local_image_exists(old_digest_ref)
-    assert_base_layer_present(record.base_image, record.image_ref)
+    assert_rootfs_layer_present(expected_base_layer, record.image_ref)
 
 
 def _setup_extension_workspace(

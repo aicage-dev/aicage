@@ -5,6 +5,8 @@ import subprocess
 import sys
 import threading
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from importlib import import_module
 from pathlib import Path
 from shutil import copytree
@@ -17,8 +19,12 @@ from aicage.config import config_store as config_store_module
 from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
-from aicage.docker.query import get_local_repo_digest_for_repo, get_local_rootfs_layers
+from aicage.docker.query import (
+    get_local_repo_digest_for_repo,
+    get_local_rootfs_layers,
+)
 from aicage.docker.refs import repository_from_image_ref
+from aicage.registry.digest.remote_digest import get_remote_digest
 from aicage.registry.local_build._store import BuildRecord, BuildStore
 
 if sys.platform != "win32":
@@ -259,12 +265,43 @@ def replace_with_dummy_image(image_ref: str) -> str:
     return digest
 
 
-def assert_base_layer_present(base_image_ref: str, final_image_ref: str) -> None:
-    base_layers = get_local_rootfs_layers(base_image_ref)
-    assert base_layers is not None
-    final_layers = get_local_rootfs_layers(final_image_ref)
-    assert final_layers is not None
-    assert base_layers[-1] in final_layers
+def get_last_rootfs_layer(image_ref: str) -> str:
+    layers = get_local_rootfs_layers(image_ref)
+    assert layers is not None
+    return layers[-1]
+
+
+def resolve_remote_digest_ref(image_ref: str) -> str:
+    if "@sha256:" in image_ref:
+        return image_ref
+    repository = repository_from_image_ref(image_ref)
+    digest = get_remote_digest(image_ref)
+    assert digest is not None
+    return f"{repository}@{digest}"
+
+
+def assert_rootfs_layer_present(layer: str, image_ref: str) -> None:
+    layers = get_local_rootfs_layers(image_ref)
+    assert layers is not None
+    assert layer in layers
+
+
+@contextmanager
+def keep_pulled_image_last_rootfs_layer(image_ref: str) -> Iterator[str]:
+    assert "@sha256:" in image_ref
+    subprocess.run(
+        ["docker", "pull", image_ref],
+        check=True,
+        capture_output=True,
+    )
+    try:
+        yield get_last_rootfs_layer(image_ref)
+    finally:
+        subprocess.run(
+            ["docker", "image", "rm", image_ref],
+            check=False,
+            capture_output=True,
+        )
 
 
 def build_cli_env(home_dir: Path) -> dict[str, str]:

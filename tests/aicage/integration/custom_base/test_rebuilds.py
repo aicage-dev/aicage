@@ -14,10 +14,11 @@ from aicage.registry.local_build._custom_base_store import (
 from aicage.registry.local_build._store import BuildStore
 
 from .._helpers import (
-    assert_base_layer_present,
+    assert_rootfs_layer_present,
     copy_custom_base_sample,
     custom_bases_dir,
     force_record_agent_version,
+    get_last_rootfs_layer,
     replace_with_dummy_image,
     require_integration,
     run_agent_version,
@@ -64,22 +65,23 @@ def test_custom_base_rebuilds_on_digest_change_ghcr(
 
     run_agent_version(env, workspace, "codex")
     base_store = CustomBaseBuildStore()
-    record = base_store.load(base_name)
-    assert record is not None
-    assert record.from_image == "ghcr.io/rblaine95/debian:bookworm"
-    assert record.from_image_digest
+    base_record = base_store.load(base_name)
+    assert base_record is not None
+    assert base_record.from_image == "ghcr.io/rblaine95/debian:bookworm"
+    assert base_record.from_image_digest
 
     _update_from_image(base_dir, "ghcr.io/rblaine95/debian:bookworm-slim")
     run_agent_version(env, workspace, "codex")
-    updated = base_store.load(base_name)
-    assert updated is not None
-    assert updated.from_image == "ghcr.io/rblaine95/debian:bookworm-slim"
-    assert updated.from_image_digest
-    assert updated.from_image_digest != record.from_image_digest
+    rebuilt_base_record = base_store.load(base_name)
+    assert rebuilt_base_record is not None
+    assert rebuilt_base_record.from_image == "ghcr.io/rblaine95/debian:bookworm-slim"
+    assert rebuilt_base_record.from_image_digest
+    assert rebuilt_base_record.from_image_digest != base_record.from_image_digest
 
-    build_record = BuildStore().load("codex", base_name)
-    assert build_record is not None
-    assert_base_layer_present(updated.image_ref, build_record.image_ref)
+    final_image_record = BuildStore().load("codex", base_name)
+    assert final_image_record is not None
+    expected_base_image_layer = get_last_rootfs_layer(rebuilt_base_record.image_ref)
+    assert_rootfs_layer_present(expected_base_image_layer, final_image_record.image_ref)
 
 
 def test_custom_base_rebuilds_on_digest_change_docker(
@@ -94,8 +96,8 @@ def test_custom_base_rebuilds_on_digest_change_docker(
     copy_custom_base_sample(base_name, base_dir)
     _set_agent_base(workspace, "codex", base_name)
 
-    image_ref = custom_base_image_ref(base_name)
-    old_digest = replace_with_dummy_image(image_ref)
+    base_image_ref = custom_base_image_ref(base_name)
+    old_digest = replace_with_dummy_image(base_image_ref)
     old_digest_ref = f"{LOCAL_IMAGE_BASE_REPOSITORY}@{old_digest}"
     assert local_image_exists(old_digest_ref)
 
@@ -106,25 +108,26 @@ def test_custom_base_rebuilds_on_digest_change_docker(
             base=base_name,
             from_image=from_image,
             from_image_digest=stale_digest,
-            image_ref=image_ref,
+            image_ref=base_image_ref,
             built_at="2000-01-01T00:00:00Z",
         )
     )
 
     run_agent_version(env, workspace, "codex")
-    updated = base_store.load(base_name)
-    assert updated is not None
-    assert updated.from_image == from_image
-    assert updated.from_image_digest
-    assert updated.from_image_digest != stale_digest
-    rebuilt_digest = get_local_repo_digest_for_repo(image_ref, LOCAL_IMAGE_BASE_REPOSITORY)
-    assert rebuilt_digest is not None
-    assert rebuilt_digest != old_digest
+    rebuilt_base_record = base_store.load(base_name)
+    assert rebuilt_base_record is not None
+    assert rebuilt_base_record.from_image == from_image
+    assert rebuilt_base_record.from_image_digest
+    assert rebuilt_base_record.from_image_digest != stale_digest
+    rebuilt_base_digest = get_local_repo_digest_for_repo(base_image_ref, LOCAL_IMAGE_BASE_REPOSITORY)
+    assert rebuilt_base_digest is not None
+    assert rebuilt_base_digest != old_digest
     assert not local_image_exists(old_digest_ref)
 
-    build_record = BuildStore().load("codex", base_name)
-    assert build_record is not None
-    assert_base_layer_present(updated.image_ref, build_record.image_ref)
+    final_image_record = BuildStore().load("codex", base_name)
+    assert final_image_record is not None
+    expected_base_image_layer = get_last_rootfs_layer(rebuilt_base_record.image_ref)
+    assert_rootfs_layer_present(expected_base_image_layer, final_image_record.image_ref)
 
 
 def _set_agent_base(workspace: Path, agent_name: str, base_name: str) -> None:

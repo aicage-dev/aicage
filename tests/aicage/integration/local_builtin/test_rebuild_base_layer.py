@@ -7,7 +7,8 @@ from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.local_build._store import BuildStore
 
 from .._helpers import (
-    assert_base_layer_present,
+    assert_rootfs_layer_present,
+    keep_pulled_image_last_rootfs_layer,
     replace_with_dummy_image,
     require_integration,
     run_agent_version,
@@ -26,11 +27,12 @@ def test_local_builtin_agent_rebuilds_on_base_layer(monkeypatch: pytest.MonkeyPa
     record = store.load("claude", "ubuntu")
     assert record is not None
 
-    old_digest = replace_with_dummy_image(record.image_ref)
-    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
-    assert local_image_exists(old_digest_ref)
-    run_agent_version(env, workspace, "claude")
-    updated = store.load("claude", "ubuntu")
-    assert updated is not None
-    assert not local_image_exists(old_digest_ref)
-    assert_base_layer_present(record.base_image, record.image_ref)
+    with keep_pulled_image_last_rootfs_layer(record.base_image) as expected_base_layer:
+        old_digest = replace_with_dummy_image(record.image_ref)
+        old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
+        assert local_image_exists(old_digest_ref)
+        run_agent_version(env, workspace, "claude")
+        updated = store.load("claude", "ubuntu")
+        assert updated is not None
+        assert not local_image_exists(old_digest_ref)
+        assert_rootfs_layer_present(expected_base_layer, record.image_ref)
