@@ -15,6 +15,7 @@ from aicage import paths as paths_module
 from aicage.config import config_store as config_store_module
 from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
+from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker.query import get_local_repo_digest_for_repo, get_local_rootfs_layers
 from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.local_build._store import BuildRecord, BuildStore
@@ -163,6 +164,33 @@ def setup_workspace(
     store.save_project(workspace, project_cfg)
 
     return workspace, build_cli_env(home_dir)
+
+
+def setup_marker_extension_workspace(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    agent_name: str,
+) -> tuple[Path, dict[str, str], str]:
+    require_integration()
+    workspace, env = setup_workspace(
+        monkeypatch,
+        tmp_path,
+        agent_name,
+        docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
+    )
+    extension_dir = custom_extensions_dir() / "marker"
+    extension_dir.parent.mkdir(parents=True, exist_ok=True)
+    copy_marker_extension_sample(extension_dir)
+    image_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:{agent_name}-ubuntu-marker"
+    store = SettingsStore()
+    project_cfg = store.load_project(workspace)
+    agent_cfg = project_cfg.agents[agent_name]
+    agent_cfg.base = "ubuntu"
+    agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
+    agent_cfg.image_ref = image_ref
+    agent_cfg.extensions = ["marker"]
+    store.save_project(workspace, project_cfg)
+    return workspace, env, image_ref
 
 
 def run_agent_version(env: dict[str, str], workspace: Path, agent_name: str) -> None:

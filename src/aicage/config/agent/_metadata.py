@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
 
+from aicage.config._base_exclude import is_base_excluded, normalize_exclude
 from aicage.config._yaml import expect_bool, expect_keys, expect_string, maybe_str_list, read_str_list
 from aicage.config.agent._validation import validate_agent_mapping
 from aicage.config.agent.models import (
@@ -88,12 +89,12 @@ def _build_valid_bases(
     build_local: bool,
 ) -> dict[str, str]:
     valid_bases: dict[str, str] = {}
-    base_exclude_set = _normalize_exclude(base_exclude)
-    base_distro_exclude_set = _normalize_exclude(base_distro_exclude)
+    base_exclude_set = normalize_exclude(base_exclude)
+    base_distro_exclude_set = normalize_exclude(base_distro_exclude)
     repository = _image_repository(build_local)
     for base_name in sorted(bases):
         base_metadata = bases[base_name]
-        if _is_base_excluded(
+        if is_base_excluded(
             base_name,
             base_metadata.base_image_distro,
             base_exclude_set,
@@ -108,23 +109,3 @@ def _image_repository(build_local: bool) -> str:
     if build_local:
         return LOCAL_IMAGE_REPOSITORY
     return f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}"
-
-
-def _is_base_excluded(
-    base_name: str,
-    base_distro: str,
-    base_exclude: set[str],
-    base_distro_exclude: set[str],
-) -> bool:
-    base_name_lc = base_name.lower()
-    if base_name_lc in base_exclude:
-        return True
-    if base_distro.lower() in base_distro_exclude:
-        return True
-    return False
-
-
-def _normalize_exclude(values: list[str]) -> set[str]:
-    if not values:
-        return set()
-    return {value.lower() for value in values}

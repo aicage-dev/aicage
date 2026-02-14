@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 from aicage.registry.local_build import _plan
 from aicage.registry.local_build._store import BuildRecord
 
-from ._fixtures import build_run_config
+from ..._run_config_fixtures import build_run_config
 
 
 class LocalBuildPlanTests(TestCase):

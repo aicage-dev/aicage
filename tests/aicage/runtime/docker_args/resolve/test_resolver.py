@@ -26,15 +26,8 @@ class ResolverTests(TestCase):
             git_config = home_path / ".gitconfig"
             docker_sock = Path(temp_dir) / "docker.sock"
 
-            project_cfg = ProjectConfig(path=str(project_path), agents={"codex": AgentConfig()})
-            context = ConfigContext(
-                store=mock.Mock(),
-                project_cfg=project_cfg,
-                agents=self._get_agents(),
-                bases=self._get_bases(),
-                extensions={},
-            )
-            parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+            project_cfg, context = self._build_context(project_path)
+            parsed = self._build_parsed()
 
             with (
                 mock.patch(f"{_MODULE}.resolve_git_support_prefs") as git_support_mock,
@@ -123,15 +116,8 @@ class ResolverTests(TestCase):
             home_path.mkdir()
             project_path.mkdir()
 
-            project_cfg = ProjectConfig(path=str(project_path), agents={"codex": AgentConfig()})
-            context = ConfigContext(
-                store=mock.Mock(),
-                project_cfg=project_cfg,
-                agents=self._get_agents(),
-                bases=self._get_bases(),
-                extensions={},
-            )
-            parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+            _, context = self._build_context(project_path)
+            parsed = self._build_parsed()
 
             with (
                 mock.patch(f"{_MODULE}.resolve_git_support_prefs"),
@@ -191,3 +177,18 @@ class ResolverTests(TestCase):
                 local_definition_dir=Path("/tmp/agent"),
             )
         }
+
+    def _build_context(self, project_path: Path) -> tuple[ProjectConfig, ConfigContext]:
+        project_cfg = ProjectConfig(path=str(project_path), agents={"codex": AgentConfig()})
+        context = ConfigContext(
+            store=mock.Mock(),
+            project_cfg=project_cfg,
+            agents=self._get_agents(),
+            bases=self._get_bases(),
+            extensions={},
+        )
+        return project_cfg, context
+
+    @staticmethod
+    def _build_parsed() -> ParsedArgs:
+        return ParsedArgs(False, "", "codex", [], False, [], None)

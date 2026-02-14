@@ -75,18 +75,9 @@ def _expect_str_list(value: Any, context: str, schema_entry: dict[str, Any]) -> 
 def _expect_mapping(value: Any, context: str, schema_entry: dict[str, Any]) -> None:
     if not isinstance(value, dict):
         raise ConfigError(f"{context} must be a mapping.")
-    properties = schema_entry.get("properties", {})
-    required = set(schema_entry.get("required", []))
-    additional = schema_entry.get("additionalProperties", True)
-    missing = sorted(required - set(value))
-    if missing:
-        raise ConfigError(f"{context} missing required keys: {', '.join(missing)}.")
-    if additional is False:
-        unknown = sorted(set(value) - set(properties))
-        if unknown:
-            raise ConfigError(f"{context} contains unsupported keys: {', '.join(unknown)}.")
-    for key, item in value.items():
-        item_schema = properties.get(key)
-        if item_schema is None:
-            continue
-        _validate_value(item, item_schema, f"{context}.{key}")
+    validate_schema_mapping(
+        value,
+        schema_entry,
+        context,
+        value_validator=_validate_value,
+    )

@@ -12,12 +12,12 @@ from aicage.docker import build
 from aicage.docker.errors import DockerError
 from aicage.registry.image_selection.models import ImageSelection
 
-from ._fixtures import build_run_config
+from .._run_config_fixtures import build_run_config as _build_run_config
 
 
 class LocalBuildRunnerTests(TestCase):
     def test_run_build_invokes_docker(self) -> None:
-        run_config = build_run_config()
+        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
             with (
@@ -58,7 +58,7 @@ class LocalBuildRunnerTests(TestCase):
         )
 
     def test_run_build_raises_on_failure(self) -> None:
-        run_config = build_run_config()
+        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
             with (

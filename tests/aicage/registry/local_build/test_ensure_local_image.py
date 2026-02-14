@@ -4,10 +4,7 @@ from unittest import TestCase, mock
 
 import yaml
 
-from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
-from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._errors import RegistryError
@@ -22,12 +19,12 @@ from aicage.registry.local_build._store import (
     _IMAGE_REF_KEY,
 )
 
-from ._fixtures import build_run_config
+from ..._run_config_fixtures import build_custom_run_config, build_run_config
 
 
 class EnsureLocalImageTests(TestCase):
     def test_ensure_local_image_runs_for_custom_agent(self) -> None:
-        run_config = self._build_custom_run_config()
+        run_config = build_custom_run_config()
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_dir = Path(tmp_dir) / "state"
             with (
@@ -211,46 +208,3 @@ class EnsureLocalImageTests(TestCase):
                 ensure_local_image_module.ensure_local_image(run_config)
 
             build_mock.assert_not_called()
-
-    @staticmethod
-    def _build_custom_run_config() -> RunConfig:
-        bases = {
-            "ubuntu": BaseMetadata(
-                from_image="ubuntu:latest",
-                base_image_distro="Ubuntu",
-                base_image_description="Default",
-                build_local=False,
-                local_definition_dir=Path("/tmp/base"),
-            )
-        }
-        agents = {
-            "claude": AgentMetadata(
-                agent_path_files=[],
-                agent_path_directories=["~/.claude"],
-                agent_full_name="Claude Code",
-                agent_homepage="https://example.com",
-                build_local=True,
-                valid_bases={"ubuntu": "ghcr.io/aicage/aicage:claude-ubuntu"},
-                local_definition_dir=Path("/tmp/definition"),
-            )
-        }
-        return RunConfig(
-            project_path=Path("/tmp/project"),
-            agent="claude",
-            context=ConfigContext(
-                store=mock.Mock(),
-                project_cfg=ProjectConfig(path="/tmp/project", agents={}),
-                agents=agents,
-                bases=bases,
-                extensions={},
-            ),
-            selection=ImageSelection(
-                image_ref="aicage:claude-ubuntu",
-                base="ubuntu",
-                extensions=[],
-                base_image_ref="aicage:claude-ubuntu",
-            ),
-            project_docker_args="",
-            mounts=[],
-            env=[],
-        )
