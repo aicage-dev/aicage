@@ -4,17 +4,19 @@ import pytest
 
 from aicage.config.config_store import SettingsStore
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
+from aicage.docker.query import local_image_exists
+from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.extension_build._extended_store import ExtendedBuildStore
 from aicage.registry.local_build._store import BuildStore
 
 from .._helpers import (
     assert_base_layer_present,
+    assert_marker_extension_present,
     copy_marker_extension_sample,
     custom_extensions_dir,
     force_record_agent_version,
-    replace_final_image,
+    replace_with_dummy_image,
     require_integration,
-    run_cli_pty,
     setup_workspace,
 )
 
@@ -26,8 +28,7 @@ def test_local_builtin_extension_builds_and_runs(
 ) -> None:
     require_integration()
     workspace, env = _setup_extension_workspace(monkeypatch, tmp_path, "claude")
-    exit_code, output = _run_extension_check(env, workspace, "claude")
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "claude")
 
 
 def test_local_builtin_extension_rebuilds_on_agent_version(
@@ -35,19 +36,21 @@ def test_local_builtin_extension_rebuilds_on_agent_version(
 ) -> None:
     require_integration()
     workspace, env = _setup_extension_workspace(monkeypatch, tmp_path, "claude")
-    exit_code, output = _run_extension_check(env, workspace, "claude")
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "claude")
 
     store = BuildStore()
     record = store.load("claude", "ubuntu")
     assert record is not None
     force_record_agent_version(store, record, agent_version="0.0.0")
+    old_digest = replace_with_dummy_image(record.image_ref)
+    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
+    assert local_image_exists(old_digest_ref)
 
-    exit_code, output = _run_extension_check(env, workspace, "claude")
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "claude")
     updated = store.load("claude", "ubuntu")
     assert updated is not None
     assert updated.agent_version != "0.0.0"
+    assert not local_image_exists(old_digest_ref)
 
     extended_record = ExtendedBuildStore().load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:claude-ubuntu-marker")
     assert extended_record is not None
@@ -59,17 +62,18 @@ def test_local_builtin_extension_rebuilds_on_base_layer(
 ) -> None:
     require_integration()
     workspace, env = _setup_extension_workspace(monkeypatch, tmp_path, "claude")
-    exit_code, output = _run_extension_check(env, workspace, "claude")
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "claude")
 
     extended_store = ExtendedBuildStore()
     record = extended_store.load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:claude-ubuntu-marker")
     assert record is not None
 
-    replace_final_image(record.image_ref, tmp_path)
+    old_digest = replace_with_dummy_image(record.image_ref)
+    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
+    assert local_image_exists(old_digest_ref)
 
-    exit_code, output = _run_extension_check(env, workspace, "claude")
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "claude")
+    assert not local_image_exists(old_digest_ref)
     assert_base_layer_present(record.base_image, record.image_ref)
 
 
@@ -97,11 +101,3 @@ def _setup_extension_workspace(
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
     return workspace, env
-
-
-def _run_extension_check(env: dict[str, str], workspace: Path, agent_name: str) -> tuple[int, str]:
-    return run_cli_pty(
-        [agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )

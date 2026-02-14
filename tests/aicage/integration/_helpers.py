@@ -4,6 +4,7 @@ import stat
 import subprocess
 import sys
 import threading
+import uuid
 from pathlib import Path
 from shutil import copytree
 from typing import cast
@@ -14,7 +15,8 @@ from aicage import paths as paths_module
 from aicage.config import config_store as config_store_module
 from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
-from aicage.docker.query import get_local_rootfs_layers
+from aicage.docker.query import get_local_repo_digest_for_repo, get_local_rootfs_layers
+from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.local_build._store import BuildRecord, BuildStore
 
 if sys.platform == "win32":
@@ -176,6 +178,19 @@ def run_agent_version(env: dict[str, str], workspace: Path, agent_name: str) -> 
     assert output_lines[-1]
 
 
+def assert_marker_extension_present(
+    env: dict[str, str],
+    workspace: Path,
+    agent_name: str,
+) -> None:
+    exit_code, output = run_cli_pty(
+        [agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        env=env,
+        cwd=workspace,
+    )
+    assert exit_code == 0, output
+
+
 def force_record_agent_version(
     store: BuildStore,
     record: BuildRecord,
@@ -193,51 +208,25 @@ def force_record_agent_version(
     store.save(updated)
 
 
-def replace_final_image(image_ref: str, tmp_path: Path) -> None:
-    build_dir = tmp_path / "override"
-    build_dir.mkdir(exist_ok=True)
-    dockerfile = build_dir / "Dockerfile"
-    dockerfile.write_text("FROM alpine:latest\nRUN echo replaced\n", encoding="utf-8")
+def replace_with_dummy_image(image_ref: str) -> str:
+    nonce = uuid.uuid4().hex
     subprocess.run(
         [
             "docker",
-            "build",
-            "--no-cache",
-            "--pull",
-            "--tag",
+            "import",
+            "--change",
+            f"LABEL purpose=test nonce={nonce}",
+            "-",
             image_ref,
-            str(build_dir),
         ],
         check=True,
         capture_output=True,
+        input=b"",
     )
-
-
-def build_dummy_image(image_ref: str, tmp_path: Path) -> str:
-    context_dir = tmp_path / "dummy-image"
-    context_dir.mkdir(parents=True, exist_ok=True)
-    (context_dir / "Dockerfile").write_text(
-        "\n".join(
-            [
-                "FROM alpine:latest",
-                "RUN echo dummy > /dummy",
-                "CMD [\"/bin/bash\", \"-c\", \"echo dummy\"]",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    subprocess.run(
-        ["docker", "build", "-t", image_ref, str(context_dir)],
-        check=True,
-        capture_output=True,
-    )
-    result = subprocess.run(
-        ["docker", "image", "inspect", "-f", "{{.Id}}", image_ref],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.strip()
+    repository = repository_from_image_ref(image_ref)
+    digest = get_local_repo_digest_for_repo(image_ref, repository)
+    assert digest is not None
+    return digest
 
 
 def assert_base_layer_present(base_image_ref: str, final_image_ref: str) -> None:

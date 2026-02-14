@@ -1,33 +1,24 @@
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from aicage.config.config_store import SettingsStore
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
+from aicage.docker.query import get_local_repo_digest_for_repo, local_image_exists
+from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.extension_build._extended_store import ExtendedBuildStore
 
 from .._helpers import (
     assert_base_layer_present,
-    build_dummy_image,
+    assert_marker_extension_present,
     copy_marker_extension_sample,
     custom_extensions_dir,
+    replace_with_dummy_image,
     require_integration,
-    run_cli_pty,
     setup_workspace,
 )
 
 pytestmark = pytest.mark.integration
-
-
-def _image_id(image_ref: str) -> str:
-    result = subprocess.run(
-        ["docker", "image", "inspect", "-f", "{{.Id}}", image_ref],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.strip()
 
 
 def test_remote_builtin_extension_rebuilds_on_base_change(
@@ -54,26 +45,21 @@ def test_remote_builtin_extension_rebuilds_on_base_change(
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
 
-    exit_code, output = run_cli_pty(
-        ["codex", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "codex")
 
     extended_store = ExtendedBuildStore()
     record = extended_store.load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-marker")
     assert record is not None
 
-    dummy_id = build_dummy_image(record.base_image, tmp_path)
+    digest_after_dummy = replace_with_dummy_image(record.base_image)
+    base_repository = repository_from_image_ref(record.base_image)
+    old_digest_ref = f"{base_repository}@{digest_after_dummy}"
+    assert local_image_exists(old_digest_ref)
 
-    exit_code, output = run_cli_pty(
-        ["codex", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "codex")
 
-    local_id_after = _image_id(record.base_image)
-    assert local_id_after != dummy_id
+    digest_after_rebuild = get_local_repo_digest_for_repo(record.base_image, base_repository)
+    assert digest_after_rebuild is not None
+    assert digest_after_rebuild != digest_after_dummy
+    assert not local_image_exists(old_digest_ref)
     assert_base_layer_present(record.base_image, record.image_ref)

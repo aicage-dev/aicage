@@ -3,16 +3,17 @@ from pathlib import Path
 import pytest
 
 from aicage.config.config_store import SettingsStore
-from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
+from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME, IMAGE_REGISTRY, IMAGE_REPOSITORY
+from aicage.docker.query import local_image_exists
 from aicage.registry.extension_build._extended_store import ExtendedBuildStore
 
 from .._helpers import (
     assert_base_layer_present,
+    assert_marker_extension_present,
     copy_marker_extension_sample,
     custom_extensions_dir,
-    replace_final_image,
+    replace_with_dummy_image,
     require_integration,
-    run_cli_pty,
     setup_workspace,
 )
 
@@ -41,12 +42,14 @@ def test_extension_builds_and_runs(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
 
-    exit_code, output = run_cli_pty(
-        ["codex", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )
-    assert exit_code == 0, output
+    image_repository = f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}"
+    local_base_image_ref = f"{image_repository}:codex-ubuntu"
+    old_digest = replace_with_dummy_image(local_base_image_ref)
+    old_digest_ref = f"{image_repository}@{old_digest}"
+    assert local_image_exists(old_digest_ref)
+
+    assert_marker_extension_present(env, workspace, "codex")
+    assert not local_image_exists(old_digest_ref)
 
 
 def test_extension_rebuilds_on_base_image_change(
@@ -73,23 +76,13 @@ def test_extension_rebuilds_on_base_image_change(
     agent_cfg.extensions = ["marker"]
     store.save_project(workspace, project_cfg)
 
-    exit_code, output = run_cli_pty(
-        ["copilot", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "copilot")
 
     extended_store = ExtendedBuildStore()
     record = extended_store.load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:copilot-ubuntu-marker")
     assert record is not None
 
-    replace_final_image(record.base_image, tmp_path)
+    replace_with_dummy_image(record.base_image)
 
-    exit_code, output = run_cli_pty(
-        ["copilot", "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, "copilot")
     assert_base_layer_present(record.base_image, record.image_ref)

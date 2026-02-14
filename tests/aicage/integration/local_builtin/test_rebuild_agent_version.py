@@ -2,9 +2,17 @@ from pathlib import Path
 
 import pytest
 
+from aicage.docker.query import local_image_exists
+from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.local_build._store import BuildStore
 
-from .._helpers import force_record_agent_version, require_integration, run_agent_version, setup_workspace
+from .._helpers import (
+    force_record_agent_version,
+    replace_with_dummy_image,
+    require_integration,
+    run_agent_version,
+    setup_workspace,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -23,7 +31,11 @@ def test_local_builtin_agent_rebuilds(monkeypatch: pytest.MonkeyPatch, tmp_path:
         record,
         agent_version="0.0.0",
     )
+    old_digest = replace_with_dummy_image(record.image_ref)
+    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
+    assert local_image_exists(old_digest_ref)
     run_agent_version(env, workspace, "claude")
     updated = store.load("claude", "ubuntu")
     assert updated is not None
     assert updated.agent_version != "0.0.0"
+    assert not local_image_exists(old_digest_ref)

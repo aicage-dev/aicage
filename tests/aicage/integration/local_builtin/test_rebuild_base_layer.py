@@ -2,11 +2,13 @@ from pathlib import Path
 
 import pytest
 
+from aicage.docker.query import local_image_exists
+from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.local_build._store import BuildStore
 
 from .._helpers import (
     assert_base_layer_present,
-    replace_final_image,
+    replace_with_dummy_image,
     require_integration,
     run_agent_version,
     setup_workspace,
@@ -24,8 +26,11 @@ def test_local_builtin_agent_rebuilds_on_base_layer(monkeypatch: pytest.MonkeyPa
     record = store.load("claude", "ubuntu")
     assert record is not None
 
-    replace_final_image(record.image_ref, tmp_path)
+    old_digest = replace_with_dummy_image(record.image_ref)
+    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
+    assert local_image_exists(old_digest_ref)
     run_agent_version(env, workspace, "claude")
     updated = store.load("claude", "ubuntu")
     assert updated is not None
+    assert not local_image_exists(old_digest_ref)
     assert_base_layer_present(record.base_image, record.image_ref)

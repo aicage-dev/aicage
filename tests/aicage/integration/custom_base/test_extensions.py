@@ -6,6 +6,7 @@ from aicage.config.config_store import SettingsStore
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 
 from .._helpers import (
+    assert_marker_extension_present,
     copy_custom_base_sample,
     copy_forge_sample,
     copy_marker_extension_sample,
@@ -13,7 +14,6 @@ from .._helpers import (
     custom_bases_dir,
     custom_extensions_dir,
     require_integration,
-    run_cli_pty,
     setup_workspace,
 )
 
@@ -56,12 +56,7 @@ def test_custom_base_extension_builds_and_runs(
 
     _configure_extension(workspace, agent_name, _CUSTOM_BASE_NAME)
 
-    exit_code, output = run_cli_pty(
-        [agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
-        env=env,
-        cwd=workspace,
-    )
-    assert exit_code == 0, output
+    assert_marker_extension_present(env, workspace, agent_name)
 
 
 def _configure_extension(workspace: Path, agent_name: str, base_name: str) -> None:
