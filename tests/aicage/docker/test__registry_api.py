@@ -6,7 +6,7 @@ from aicage.docker.types import RegistryApiConfig
 
 class RemoteApiTests(TestCase):
     def test_fetch_pull_token_returns_token(self) -> None:
-        def fake_fetch_json(url: str, headers: dict[str, str] | None):
+        def fake_fetch_json(_url: str, _headers: dict[str, str] | None):
             return {"token": "abc"}, {}
 
         with mock.patch("aicage.docker._registry_api._fetch_json", fake_fetch_json):
@@ -20,7 +20,7 @@ class RemoteApiTests(TestCase):
         self.assertEqual("abc", token)
 
     def test_fetch_pull_token_missing_token(self) -> None:
-        def fake_fetch_json(url: str, headers: dict[str, str] | None):
+        def fake_fetch_json(_url: str, _headers: dict[str, str] | None):
             return {}, {}
 
         with mock.patch("aicage.docker._registry_api._fetch_json", fake_fetch_json):

@@ -29,7 +29,7 @@ class RuntimeConfigTests(TestCase):
             )
             store.save_project(project_path, project_cfg)
 
-            def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+            def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
                 return SettingsStore()
 
             mounts = [MountSpec(host_path=Path("/tmp/host"), container_path=PurePosixPath("/tmp/container"))]
@@ -77,7 +77,7 @@ class RuntimeConfigTests(TestCase):
             )
             store.save_project(project_path, project_cfg)
 
-            def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+            def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
                 return SettingsStore()
 
             parsed = ParsedArgs(
@@ -127,7 +127,7 @@ class RuntimeConfigTests(TestCase):
             project_cfg.agents["codex"] = AgentConfig()
             store.save_project(project_path, project_cfg)
 
-            def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+            def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
                 return SettingsStore()
 
             with (
@@ -169,7 +169,7 @@ class RuntimeConfigTests(TestCase):
                 project_cfg.agents["codex"] = AgentConfig(base="ubuntu")
                 store.save_project(project_path, project_cfg)
 
-                def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+                def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
                     return SettingsStore()
 
                 parsed = ParsedArgs(
@@ -232,7 +232,7 @@ class RuntimeConfigTests(TestCase):
                 )
                 store.save_project(project_path, project_cfg)
 
-                def store_factory(*args: object, **kwargs: object) -> SettingsStore:
+                def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
                     return SettingsStore()
 
                 parsed = ParsedArgs(

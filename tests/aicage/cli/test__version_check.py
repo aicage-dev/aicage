@@ -93,7 +93,8 @@ class VersionCheckTests(TestCase):
         output = stdout.getvalue()
         self.assertIn("Update with: pipx upgrade aicage", output)
 
-    def test_maybe_prompt_update_yes_runs_upgrade(self) -> None:
+    @staticmethod
+    def test_maybe_prompt_update_yes_runs_upgrade() -> None:
         with (
             mock.patch("aicage.cli._version_check._check_for_update", return_value="1.2.3"),
             mock.patch("aicage.cli._version_check.prompt_update_aicage", return_value=True),

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 from unittest import TestCase, mock
 
 from aicage.config.agent.models import AgentMetadata
@@ -85,7 +86,8 @@ class ExtendedImageSelectionTests(TestCase):
         self.assertEqual("ubuntu", agent_cfg.base)
         self.assertEqual(["ext"], agent_cfg.extensions)
         self.assertEqual(f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom", agent_cfg.image_ref)
-        context.store.save_project.assert_called_once_with(
+        save_project_mock = cast(mock.Mock, context.store.save_project)
+        save_project_mock.assert_called_once_with(
             Path(context.project_cfg.path),
             context.project_cfg,
         )

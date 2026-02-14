@@ -20,7 +20,8 @@ class HomeGuardTests(TestCase):
 
         self.assertIn("Refusing to start", str(ctx.exception))
 
-    def test_validate_home_mount_safety_allows_non_home_mount(self) -> None:
+    @staticmethod
+    def test_validate_home_mount_safety_allows_non_home_mount() -> None:
         home_path = Path("/tmp/home").resolve()
         mounts = [
             MountSpec(
@@ -31,7 +32,8 @@ class HomeGuardTests(TestCase):
 
         resolver._validate_home_mount_safety(mounts, home_path)
 
-    def test_resolve_docker_args_uses_home_guard(self) -> None:
+    @staticmethod
+    def test_resolve_docker_args_uses_home_guard() -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             home_path = Path(temp_dir) / "home"
             project_path = Path(temp_dir) / "project"

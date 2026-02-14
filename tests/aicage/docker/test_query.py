@@ -109,7 +109,8 @@ class LocalQueryTests(TestCase):
             exists = local_image_exists("aicage:claude-ubuntu")
         self.assertFalse(exists)
 
-    def test_remove_old_image_digest_removes_image(self) -> None:
+    @staticmethod
+    def test_remove_old_image_digest_removes_image() -> None:
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=mock.Mock()),
             mock.patch(
@@ -128,7 +129,8 @@ class LocalQueryTests(TestCase):
             stderr=mock.ANY,
         )
 
-    def test_remove_old_image_digest_ignores_docker_errors(self) -> None:
+    @staticmethod
+    def test_remove_old_image_digest_ignores_docker_errors() -> None:
         logger = mock.Mock()
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=logger),
@@ -143,7 +145,8 @@ class LocalQueryTests(TestCase):
             )
         logger.warning.assert_called_once()
 
-    def test_cleanup_old_digest_skips_without_local(self) -> None:
+    @staticmethod
+    def test_cleanup_old_digest_skips_without_local() -> None:
         logger = mock.Mock()
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=logger),
@@ -156,7 +159,8 @@ class LocalQueryTests(TestCase):
             )
         digest_mock.assert_not_called()
 
-    def test_cleanup_old_digest_skips_when_unchanged(self) -> None:
+    @staticmethod
+    def test_cleanup_old_digest_skips_when_unchanged() -> None:
         logger = mock.Mock()
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=logger),
@@ -173,7 +177,8 @@ class LocalQueryTests(TestCase):
             )
         remove_mock.assert_not_called()
 
-    def test_cleanup_old_digest_removes_when_updated(self) -> None:
+    @staticmethod
+    def test_cleanup_old_digest_removes_when_updated() -> None:
         logger = mock.Mock()
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=logger),

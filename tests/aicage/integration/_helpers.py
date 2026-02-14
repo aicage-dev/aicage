@@ -5,9 +5,10 @@ import subprocess
 import sys
 import threading
 import uuid
+from importlib import import_module
 from pathlib import Path
 from shutil import copytree
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -19,11 +20,6 @@ from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker.query import get_local_repo_digest_for_repo, get_local_rootfs_layers
 from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.local_build._store import BuildRecord, BuildStore
-
-if sys.platform == "win32":
-    from winpty import PtyProcess
-else:
-    PtyProcess = None
 
 if sys.platform != "win32":
     import pty
@@ -37,10 +33,10 @@ def run_cli_pty(
     input_data: str | None = None,
 ) -> tuple[int, str]:
     if sys.platform == "win32":
-        process = PtyProcess.spawn(
+        process = _spawn_winpty_process(
             [sys.executable, "-m", "aicage", *args],
-            env=env,
-            cwd=str(cwd),
+            env,
+            str(cwd),
         )
         chunks: list[str] = []
 
@@ -101,6 +97,12 @@ def run_cli_pty(
     return process.returncode, output
 
 
+def _spawn_winpty_process(cmd: list[str], env: dict[str, str], cwd: str) -> Any:
+    winpty_module = import_module("winpty")
+    pty_process_cls = winpty_module.PtyProcess
+    return pty_process_cls.spawn(cmd, env=env, cwd=cwd)
+
+
 def require_integration() -> None:
     if not os.environ.get("AICAGE_RUN_INTEGRATION"):
         pytest.skip("Set AICAGE_RUN_INTEGRATION=1 to run integration tests.")
@@ -129,18 +131,18 @@ def setup_workspace(
     monkeypatch.chdir(workspace)
     projects_dir = home_dir / ".aicage/projects"
     custom_root_dir = home_dir / ".aicage-custom"
-    custom_bases_dir = custom_root_dir / "base-images"
-    custom_agents_dir = custom_root_dir / "agents"
-    custom_extensions_dir = custom_root_dir / "extensions"
+    custom_bases_path = custom_root_dir / "base-images"
+    custom_agents_path = custom_root_dir / "agents"
+    custom_extensions_path = custom_root_dir / "extensions"
     image_build_dir = home_dir / ".aicage/state/image/build"
     extended_build_dir = home_dir / ".aicage/state/image-extended/build"
     base_image_build_dir = home_dir / ".aicage/state/base-image/build"
     version_check_dir = home_dir / ".aicage/state/agent/version-check/state"
     monkeypatch.setattr(paths_module, "PROJECTS_DIR", projects_dir)
     monkeypatch.setattr(config_store_module, "PROJECTS_DIR", projects_dir)
-    monkeypatch.setattr(paths_module, "CUSTOM_BASES_DIR", custom_bases_dir)
-    monkeypatch.setattr(paths_module, "CUSTOM_AGENTS_DIR", custom_agents_dir)
-    monkeypatch.setattr(paths_module, "CUSTOM_EXTENSIONS_DIR", custom_extensions_dir)
+    monkeypatch.setattr(paths_module, "CUSTOM_BASES_DIR", custom_bases_path)
+    monkeypatch.setattr(paths_module, "CUSTOM_AGENTS_DIR", custom_agents_path)
+    monkeypatch.setattr(paths_module, "CUSTOM_EXTENSIONS_DIR", custom_extensions_path)
     monkeypatch.setattr(paths_module, "IMAGE_BUILD_STATE_DIR", image_build_dir)
     monkeypatch.setattr(paths_module, "IMAGE_EXTENDED_BUILD_STATE_DIR", extended_build_dir)
     monkeypatch.setattr(paths_module, "BASE_IMAGE_BUILD_STATE_DIR", base_image_build_dir)

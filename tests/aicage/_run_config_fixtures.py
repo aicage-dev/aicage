@@ -6,6 +6,7 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.config.runtime_config import RunConfig
+from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry.image_selection.models import ImageSelection
 
 
@@ -21,6 +22,29 @@ def build_run_config(
 
 def build_custom_run_config() -> RunConfig:
     return _build_run_config(build_local=True, local_definition_dir=Path("/tmp/definition"))
+
+
+def build_extended_run_config() -> RunConfig:
+    return RunConfig(
+        project_path=Path("/tmp/project"),
+        agent="codex",
+        context=ConfigContext(
+            store=mock.Mock(),
+            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            agents={},
+            bases={},
+            extensions={},
+        ),
+        selection=ImageSelection(
+            image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-extra",
+            base="ubuntu",
+            extensions=["extra"],
+            base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
+        ),
+        project_docker_args="",
+        mounts=[],
+        env=[],
+    )
 
 
 def build_agents_and_bases(

@@ -25,7 +25,7 @@ class FileLockingTests(TestCase):
 
     def test_lock_project_config_uses_one_lock(self) -> None:
         @contextmanager
-        def fake_lock(path: Path):
+        def fake_lock(_path: Path):
             yield
 
         with mock.patch(

@@ -3,15 +3,11 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from unittest import TestCase, mock
 
-from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import ProjectConfig
-from aicage.config.runtime_config import RunConfig
-from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker import build
 from aicage.docker.errors import DockerError
-from aicage.registry.image_selection.models import ImageSelection
 
+from .._run_config_fixtures import build_extended_run_config
 from .._run_config_fixtures import build_run_config as _build_run_config
 
 
@@ -134,7 +130,7 @@ class LocalBuildRunnerTests(TestCase):
                 )
 
     def test_run_extended_build_builds_all_extensions(self) -> None:
-        run_config = _run_config()
+        run_config = build_extended_run_config()
         extensions = [_extension("extra"), _extension("more")]
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "build.log"
@@ -159,7 +155,7 @@ class LocalBuildRunnerTests(TestCase):
         cleanup_mock.assert_called_once()
 
     def test_run_extended_build_raises_on_failure(self) -> None:
-        run_config = _run_config()
+        run_config = build_extended_run_config()
         extension = _extension("extra")
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "build.log"
@@ -203,27 +199,4 @@ def _extension(extension_id: str) -> ExtensionMetadata:
         directory=Path("/tmp/ext"),
         scripts_dir=Path("/tmp/ext/scripts"),
         dockerfile_path=None,
-    )
-
-
-def _run_config() -> RunConfig:
-    return RunConfig(
-        project_path=Path("/tmp/project"),
-        agent="codex",
-        context=ConfigContext(
-            store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
-            agents={},
-            bases={},
-            extensions={},
-        ),
-        selection=ImageSelection(
-            image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-extra",
-            base="ubuntu",
-            extensions=["extra"],
-            base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-        ),
-        project_docker_args="",
-        mounts=[],
-        env=[],
     )

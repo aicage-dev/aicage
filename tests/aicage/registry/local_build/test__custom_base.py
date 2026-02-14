@@ -118,7 +118,8 @@ class EnsureCustomBaseImageTests(TestCase):
             ):
                 _custom_base.ensure_custom_base_image("custom", base_metadata, base_dir)
 
-    def test_ensure_custom_base_image_cleans_up_old_digest(self) -> None:
+    @staticmethod
+    def test_ensure_custom_base_image_cleans_up_old_digest() -> None:
         base_metadata = BaseMetadata(
             from_image="ubuntu:latest",
             base_image_distro="Ubuntu",

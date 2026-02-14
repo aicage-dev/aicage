@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+from typing import cast
 from unittest import TestCase, mock
 
 from aicage.config.agent.models import AgentMetadata
@@ -33,7 +34,8 @@ class ExtensionHandlerTests(TestCase):
 
             self.assertEqual("ghcr.io/aicage/aicage:codex-ubuntu", result.image_ref)
             self.assertEqual([], agent_cfg.extensions)
-            context.store.save_project.assert_called_once()
+            save_project_mock = cast(mock.Mock, context.store.save_project)
+            save_project_mock.assert_called_once()
 
     def test_handle_extension_selection_persists_selection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -66,7 +68,8 @@ class ExtensionHandlerTests(TestCase):
             self.assertEqual(f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom", result.image_ref)
             self.assertEqual(["extra"], agent_cfg.extensions)
             write_mock.assert_called_once()
-            context.store.save_project.assert_called_once()
+            save_project_mock = cast(mock.Mock, context.store.save_project)
+            save_project_mock.assert_called_once()
 
     @staticmethod
     def _extension(tmp_dir: str, extension_id: str) -> ExtensionMetadata:

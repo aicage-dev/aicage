@@ -23,7 +23,8 @@ from ..._run_config_fixtures import build_custom_run_config, build_run_config
 
 
 class EnsureLocalImageTests(TestCase):
-    def test_ensure_local_image_runs_for_custom_agent(self) -> None:
+    @staticmethod
+    def test_ensure_local_image_runs_for_custom_agent() -> None:
         run_config = build_custom_run_config()
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_dir = Path(tmp_dir) / "state"

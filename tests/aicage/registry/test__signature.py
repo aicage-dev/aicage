@@ -112,7 +112,8 @@ class SignatureVerificationTests(TestCase):
         digest_mock.assert_called_once_with(image_ref)
         cosign_mock.assert_not_called()
 
-    def test_resolve_verified_digest_pulls_cosign_image_when_missing(self) -> None:
+    @staticmethod
+    def test_resolve_verified_digest_pulls_cosign_image_when_missing() -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
         with (
             mock.patch(

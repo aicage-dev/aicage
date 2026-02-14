@@ -1,13 +1,10 @@
-from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
 from aicage.config.runtime_config import RunConfig
-from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry.extension_build._extended_plan import should_build_extended
 from aicage.registry.extension_build._extended_store import ExtendedBuildRecord
-from aicage.registry.image_selection.models import ImageSelection
+
+from ..._run_config_fixtures import build_extended_run_config
 
 
 class ExtendedPlanTests(TestCase):
@@ -95,26 +92,7 @@ class ExtendedPlanTests(TestCase):
 
     @staticmethod
     def _run_config() -> RunConfig:
-        return RunConfig(
-            project_path=Path("/tmp/project"),
-            agent="codex",
-            context=ConfigContext(
-                store=mock.Mock(),
-                project_cfg=ProjectConfig(path="/tmp/project", agents={}),
-                agents={},
-                bases={},
-                extensions={},
-            ),
-            selection=ImageSelection(
-                image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-extra",
-                base="ubuntu",
-                extensions=["extra"],
-                base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-            ),
-            project_docker_args="",
-            mounts=[],
-            env=[],
-        )
+        return build_extended_run_config()
 
     @staticmethod
     def _record(run_config: RunConfig) -> ExtendedBuildRecord:
