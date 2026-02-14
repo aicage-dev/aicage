@@ -17,12 +17,12 @@ development. But by now this:
 ## Shellcheck version.sh
 
 The `version.sh` scripts for agents are run on the users system or as fallback in the Alpine `version-check` util-image
-(from repo `aicage-image-util`). Those scripts should be strictly POSIX compliant and we should verify that with
+(from repo `aicage-image-util`). Those scripts should be strictly POSIX compliant, and we should verify that with
 `shellcheck` in a GitHub release pipeline for `aicage-image` (where those scripts are defined).
 
 ## Tune locking of ~/.aicage
 
-The implementation is from an earlier state where we had less files. New files are not locked.
+The implementation is from an earlier state where we had fewer files. New files are not locked.
 
 ## Fix config file locking
 
@@ -59,7 +59,7 @@ PS C:\tmp\aicage-test2>
 ### Delete old image after pull of update
 
 We already delete old images when pulling new ones. But if another aicage instance is using the image, then the image
-remains. To fix this we could on exit of `docker-run` check somehow if the iamge is still used (image digest still
+remains. To fix this we could on exit of `docker-run` check somehow if the image is still used (image digest still
 tagged or such, cosign image has no tag thus special) and if not delete it.
 
 ### Delete old image after local build of update

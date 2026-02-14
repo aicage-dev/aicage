@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Integration tests exercise real user flows with Docker, network access, and external installs. They are intentionally
-heavier than unit tests and aim to verify that the full `aicage` CLI workflow works with real images, real
+Integration tests exercise real user flows with Docker, network access, and external installations. They are
+intentionally heavier than unit tests and aim to verify that the full `aicage` CLI workflow works with real images, real
 version checks, and real local build behavior. The tests are opt-in via the `AICAGE_RUN_INTEGRATION` env var and run
 in a sandboxed HOME during test execution to avoid touching a developer's real `~/.aicage` state.
 
@@ -16,7 +16,7 @@ in a sandboxed HOME during test execution to avoid touching a developer's real `
 
 ## Running integration tests locally
 
-For Linux or MacOS:
+For Linux or macOS:
 
 ```bash
 AICAGE_RUN_INTEGRATION=1 pytest -m integration

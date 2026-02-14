@@ -3,7 +3,7 @@
 ## Delete old image after pull of update
 
 We already delete old images when pulling new ones. But if another aicage instance is using the image, then the image
-remains. To fix this we could on exit of `docker-run` check somehow if the iamge is still used (image digest still
+remains. To fix this we could on exit of `docker-run` check somehow if the image is still used (image digest still
 tagged or such, cosign image has no tag thus special) and if not delete it.
 
 ## Delete old image after local build of update
