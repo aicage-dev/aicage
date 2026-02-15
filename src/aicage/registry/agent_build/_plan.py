@@ -6,7 +6,7 @@ from aicage.registry._layers import base_layer_missing
 from ._store import BuildRecord
 
 
-def should_build(
+def should_rebuild(
     run_config: RunConfig,
     record: BuildRecord | None,
     agent_version: str,

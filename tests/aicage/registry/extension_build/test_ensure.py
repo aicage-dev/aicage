@@ -9,23 +9,23 @@ from aicage.config.project_config import ProjectConfig
 from aicage.config.runtime_config import RunConfig
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry._errors import RegistryError
-from aicage.registry.extension_build._extended_store import ExtendedBuildRecord
-from aicage.registry.extension_build.ensure_extended_image import ensure_extended_image
+from aicage.registry.extension_build._store import BuildRecord
+from aicage.registry.extension_build.ensure import ensure
 from aicage.registry.image_selection.models import ImageSelection
 
 
 class EnsureExtendedImageTests(TestCase):
-    def test_ensure_extended_image_raises_without_extensions(self) -> None:
+    def test_ensure_raises_without_extensions(self) -> None:
         run_config = self._run_config(extensions=[])
         with self.assertRaises(RegistryError):
-            ensure_extended_image(run_config)
+            ensure(run_config)
 
-    def test_ensure_extended_image_raises_on_missing_extension(self) -> None:
+    def test_ensure_raises_on_missing_extension(self) -> None:
         run_config = self._run_config(extensions=["missing"], available_extensions={})
         with self.assertRaises(RegistryError):
-            ensure_extended_image(run_config)
+            ensure(run_config)
 
-    def test_ensure_extended_image_skips_when_not_needed(self) -> None:
+    def test_ensure_skips_when_not_needed(self) -> None:
         extension = self._extension("ext")
         run_config = self._run_config(
             extensions=["ext"],
@@ -36,26 +36,26 @@ class EnsureExtendedImageTests(TestCase):
         store.load.return_value = None
         with (
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.ExtendedBuildStore",
+                "aicage.registry.extension_build.ensure.BuildStore",
                 return_value=store,
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.extension_hash",
+                "aicage.registry.extension_build.ensure.extension_hash",
                 return_value="hash",
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.should_build_extended",
+                "aicage.registry.extension_build.ensure.should_rebuild",
                 return_value=False,
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.run_extended_build"
+                "aicage.registry.extension_build.ensure.run_extended_build"
             ) as run_mock,
         ):
-            ensure_extended_image(run_config)
+            ensure(run_config)
         run_mock.assert_not_called()
         store.save.assert_not_called()
 
-    def test_ensure_extended_image_builds_when_needed(self) -> None:
+    def test_ensure_builds_when_needed(self) -> None:
         extension = self._extension("ext")
         run_config = self._run_config(
             extensions=["ext"],
@@ -67,37 +67,37 @@ class EnsureExtendedImageTests(TestCase):
         store.load.return_value = None
         with (
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.ExtendedBuildStore",
+                "aicage.registry.extension_build.ensure.BuildStore",
                 return_value=store,
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.extension_hash",
+                "aicage.registry.extension_build.ensure.extension_hash",
                 return_value="hash",
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.should_build_extended",
+                "aicage.registry.extension_build.ensure.should_rebuild",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.run_extended_build"
+                "aicage.registry.extension_build.ensure.run_extended_build"
             ) as run_mock,
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.get_local_repo_digest_for_repo",
+                "aicage.registry.extension_build.ensure.get_local_repo_digest_for_repo",
                 return_value="sha256:old",
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.cleanup_old_digest"
+                "aicage.registry.extension_build.ensure.cleanup_old_digest"
             ) as cleanup_mock,
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.build_log_path_for_image",
+                "aicage.registry.extension_build.ensure.build_log_path",
                 return_value=Path("/tmp/logs/build.log"),
             ),
             mock.patch(
-                "aicage.registry.extension_build.ensure_extended_image.now_iso",
+                "aicage.registry.extension_build.ensure.now_iso",
                 return_value="2024-01-01T00:00:00+00:00",
             ),
         ):
-            ensure_extended_image(run_config)
+            ensure(run_config)
         run_mock.assert_called_once()
         cleanup_mock.assert_called_once_with(
             "aicage-extended",
@@ -106,7 +106,7 @@ class EnsureExtendedImageTests(TestCase):
         )
         store.save.assert_called_once()
         record = store.save.call_args.args[0]
-        self.assertIsInstance(record, ExtendedBuildRecord)
+        self.assertIsInstance(record, BuildRecord)
 
     @staticmethod
     def _extension(extension_id: str) -> ExtensionMetadata:

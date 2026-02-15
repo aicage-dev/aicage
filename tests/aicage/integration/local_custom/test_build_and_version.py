@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from aicage import paths as paths_module
-from aicage.registry.local_build._store import BuildStore
+from aicage.registry.agent_build._store import BuildStore
 
 from .._helpers import (
     copy_forge_sample,

@@ -4,7 +4,7 @@ import pytest
 
 from aicage.docker.query import local_image_exists
 from aicage.docker.refs import repository_from_image_ref
-from aicage.registry.local_build._store import BuildStore
+from aicage.registry.agent_build._store import BuildStore
 
 from .._helpers import (
     assert_rootfs_layer_present,

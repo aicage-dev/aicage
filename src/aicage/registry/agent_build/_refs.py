@@ -2,13 +2,13 @@ from aicage.config.runtime_config import RunConfig
 from aicage.constants import IMAGE_BASE_REPOSITORY, IMAGE_REGISTRY
 from aicage.paths import CUSTOM_BASES_DIR
 
-from ._custom_base import custom_base_image_ref
+from ..base_build.ensure import image_ref as base_build_image_ref
 
 
 def get_base_image_ref(run_config: RunConfig) -> str:
     base_metadata = run_config.context.bases[run_config.selection.base]
     if base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR):
-        return custom_base_image_ref(run_config.selection.base)
+        return base_build_image_ref(run_config.selection.base)
     repository = base_repository(run_config)
     return f"{repository}:{run_config.selection.base}"
 

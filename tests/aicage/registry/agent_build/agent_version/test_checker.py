@@ -6,9 +6,9 @@ import yaml
 
 from aicage.config.agent.models import AgentMetadata
 from aicage.registry._errors import RegistryError
-from aicage.registry.agent_version import _command as command
-from aicage.registry.agent_version._store import _VERSION_KEY
-from aicage.registry.agent_version.checker import AgentVersionChecker
+from aicage.registry.agent_build.agent_version import _command as command
+from aicage.registry.agent_build.agent_version._store import _VERSION_KEY
+from aicage.registry.agent_build.agent_version.checker import AgentVersionChecker
 
 
 class AgentVersionCheckTests(TestCase):
@@ -21,11 +21,11 @@ class AgentVersionCheckTests(TestCase):
 
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                    "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
                     store_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.agent_version.checker.run_host",
+                    "aicage.registry.agent_build.agent_version.checker.run_host",
                     return_value=command._CommandResult(success=True, output="1.2.3", error=""),
                 ),
             ):
@@ -51,16 +51,16 @@ class AgentVersionCheckTests(TestCase):
 
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                    "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
                     store_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.agent_version.checker.run_host",
+                    "aicage.registry.agent_build.agent_version.checker.run_host",
                     return_value=command._CommandResult(success=False, output="", error="host failed"),
                 ),
-                mock.patch("aicage.registry.agent_version.checker.ensure_version_check_image"),
+                mock.patch("aicage.registry.agent_build.agent_version.checker.ensure_version_check_image"),
                 mock.patch(
-                    "aicage.registry.agent_version.checker.run_version_check_image",
+                    "aicage.registry.agent_build.agent_version.checker.run_version_check_image",
                     return_value=command._CommandResult(success=True, output="1.2.3", error=""),
                 ),
             ):
@@ -86,16 +86,16 @@ class AgentVersionCheckTests(TestCase):
 
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                    "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
                     store_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.agent_version.checker.run_host",
+                    "aicage.registry.agent_build.agent_version.checker.run_host",
                     return_value=command._CommandResult(success=False, output="", error="host failed"),
                 ),
-                mock.patch("aicage.registry.agent_version.checker.ensure_version_check_image"),
+                mock.patch("aicage.registry.agent_build.agent_version.checker.ensure_version_check_image"),
                 mock.patch(
-                    "aicage.registry.agent_version.checker.run_version_check_image",
+                    "aicage.registry.agent_build.agent_version.checker.run_version_check_image",
                     return_value=command._CommandResult(
                         success=False,
                         output="",
@@ -118,7 +118,7 @@ class AgentVersionCheckTests(TestCase):
             agent_dir.mkdir()
             store_dir = Path(tmp_dir) / "state"
             with mock.patch(
-                "aicage.registry.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
                 store_dir,
             ):
                 checker = AgentVersionChecker()

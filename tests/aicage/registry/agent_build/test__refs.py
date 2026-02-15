@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 from aicage.config.base.models import BaseMetadata
 from aicage.paths import CUSTOM_BASES_DIR
-from aicage.registry.local_build import _refs
+from aicage.registry.agent_build import _refs
 
 
 class LocalBuildRefsTests(TestCase):

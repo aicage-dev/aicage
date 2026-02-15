@@ -1,22 +1,22 @@
 from unittest import TestCase, mock
 
 from aicage.config.runtime_config import RunConfig
-from aicage.registry.extension_build._extended_plan import should_build_extended
-from aicage.registry.extension_build._extended_store import ExtendedBuildRecord
+from aicage.registry.extension_build._plan import should_rebuild
+from aicage.registry.extension_build._store import BuildRecord
 
 from ..._run_config_fixtures import build_extended_run_config
 
 
 class ExtendedPlanTests(TestCase):
-    def test_should_build_extended_when_local_image_missing(self) -> None:
+    def test_should_rebuild_when_local_image_missing(self) -> None:
         run_config = self._run_config()
         record = self._record(run_config)
         with mock.patch(
-            "aicage.registry.extension_build._extended_plan.local_image_exists",
+            "aicage.registry.extension_build._plan.local_image_exists",
             return_value=False,
         ):
             self.assertTrue(
-                should_build_extended(
+                should_rebuild(
                     run_config=run_config,
                     record=record,
                     base_image_ref=run_config.selection.base_image_ref,
@@ -24,12 +24,12 @@ class ExtendedPlanTests(TestCase):
                 )
             )
 
-    def test_should_build_extended_returns_false_when_layers_unknown(self) -> None:
+    def test_should_rebuild_returns_false_when_layers_unknown(self) -> None:
         run_config = self._run_config()
         record = self._record(run_config)
         with (
             mock.patch(
-                "aicage.registry.extension_build._extended_plan.local_image_exists",
+                "aicage.registry.extension_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
@@ -38,7 +38,7 @@ class ExtendedPlanTests(TestCase):
             ),
         ):
             self.assertFalse(
-                should_build_extended(
+                should_rebuild(
                     run_config=run_config,
                     record=record,
                     base_image_ref=run_config.selection.base_image_ref,
@@ -46,12 +46,12 @@ class ExtendedPlanTests(TestCase):
                 )
             )
 
-    def test_should_build_extended_when_base_layer_missing(self) -> None:
+    def test_should_rebuild_when_base_layer_missing(self) -> None:
         run_config = self._run_config()
         record = self._record(run_config)
         with (
             mock.patch(
-                "aicage.registry.extension_build._extended_plan.local_image_exists",
+                "aicage.registry.extension_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
@@ -60,7 +60,7 @@ class ExtendedPlanTests(TestCase):
             ),
         ):
             self.assertTrue(
-                should_build_extended(
+                should_rebuild(
                     run_config=run_config,
                     record=record,
                     base_image_ref=run_config.selection.base_image_ref,
@@ -68,12 +68,12 @@ class ExtendedPlanTests(TestCase):
                 )
             )
 
-    def test_should_build_extended_returns_false_when_final_layers_unknown(self) -> None:
+    def test_should_rebuild_returns_false_when_final_layers_unknown(self) -> None:
         run_config = self._run_config()
         record = self._record(run_config)
         with (
             mock.patch(
-                "aicage.registry.extension_build._extended_plan.local_image_exists",
+                "aicage.registry.extension_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
@@ -82,7 +82,7 @@ class ExtendedPlanTests(TestCase):
             ),
         ):
             self.assertFalse(
-                should_build_extended(
+                should_rebuild(
                     run_config=run_config,
                     record=record,
                     base_image_ref=run_config.selection.base_image_ref,
@@ -95,8 +95,8 @@ class ExtendedPlanTests(TestCase):
         return build_extended_run_config()
 
     @staticmethod
-    def _record(run_config: RunConfig) -> ExtendedBuildRecord:
-        return ExtendedBuildRecord(
+    def _record(run_config: RunConfig) -> BuildRecord:
+        return BuildRecord(
             agent=run_config.agent,
             base=run_config.selection.base,
             image_ref=run_config.selection.image_ref,

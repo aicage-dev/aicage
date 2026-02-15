@@ -3,12 +3,12 @@ from aicage.config.runtime_config import RunConfig
 from aicage.docker.query import local_image_exists
 from aicage.registry._layers import base_layer_missing
 
-from ._extended_store import ExtendedBuildRecord
+from ._store import BuildRecord
 
 
-def should_build_extended(
+def should_rebuild(
     run_config: RunConfig,
-    record: ExtendedBuildRecord | None,
+    record: BuildRecord | None,
     base_image_ref: str,
     extension_hash: str,
 ) -> bool:

@@ -2,25 +2,25 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.registry.local_build._custom_base_store import (
-    CustomBaseBuildRecord,
-    CustomBaseBuildStore,
+from aicage.registry.base_build._store import (
+    BuildRecord,
+    BuildStore,
 )
 
 
-class CustomBaseBuildStoreTests(TestCase):
+class BuildStoreTests(TestCase):
     def test_load_returns_none_when_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.local_build._custom_base_store.paths_module.BASE_IMAGE_BUILD_STATE_DIR",
+                "aicage.registry.base_build._store.paths_module.BASE_IMAGE_BUILD_STATE_DIR",
                 base_dir,
             ):
-                store = CustomBaseBuildStore()
+                store = BuildStore()
                 self.assertIsNone(store.load("missing"))
 
     def test_save_persists_record(self) -> None:
-        record = CustomBaseBuildRecord(
+        record = BuildRecord(
             base="custom",
             from_image="ubuntu:latest",
             from_image_digest="sha256:deadbeef",
@@ -30,10 +30,10 @@ class CustomBaseBuildStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.local_build._custom_base_store.paths_module.BASE_IMAGE_BUILD_STATE_DIR",
+                "aicage.registry.base_build._store.paths_module.BASE_IMAGE_BUILD_STATE_DIR",
                 base_dir,
             ):
-                store = CustomBaseBuildStore()
+                store = BuildStore()
 
                 path = store.save(record)
                 loaded = store.load("custom")

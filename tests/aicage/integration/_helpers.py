@@ -24,8 +24,8 @@ from aicage.docker.query import (
     get_local_rootfs_layers,
 )
 from aicage.docker.refs import repository_from_image_ref
+from aicage.registry.agent_build._store import BuildRecord, BuildStore
 from aicage.registry.digest.remote_digest import get_remote_digest
-from aicage.registry.local_build._store import BuildRecord, BuildStore
 
 if sys.platform != "win32":
     import pty

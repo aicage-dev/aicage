@@ -8,35 +8,54 @@ from aicage.docker.query import (
     get_local_repo_digest_for_repo,
 )
 from aicage.docker.refs import repository_from_image_ref
+from aicage.registry._build_flow import maybe_build
 from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
 
-from ._extended_plan import should_build_extended
-from ._extended_store import ExtendedBuildRecord, ExtendedBuildStore
-from ._logs import build_log_path_for_image
+from ._logs import build_log_path
+from ._plan import should_rebuild
+from ._store import BuildRecord, BuildStore
 
 
-def ensure_extended_image(run_config: RunConfig) -> None:
+def ensure(run_config: RunConfig) -> None:
     if not run_config.selection.extensions:
         raise RegistryError("No extensions selected for extended image build.")
 
     resolved = _resolve_extensions(run_config.selection.extensions, run_config.context.extensions)
     combined_hash = _combined_extension_hash(resolved)
-    store = ExtendedBuildStore()
-    record = store.load(run_config.selection.image_ref)
-    needs_build = should_build_extended(
-        run_config=run_config,
-        record=record,
-        base_image_ref=run_config.selection.base_image_ref,
-        extension_hash=combined_hash,
+    store = BuildStore()
+    image_ref = run_config.selection.image_ref
+    maybe_build(
+        load_record=lambda: store.load(image_ref),
+        should_rebuild=lambda record: should_rebuild(
+            run_config=run_config,
+            record=record,
+            base_image_ref=run_config.selection.base_image_ref,
+            extension_hash=combined_hash,
+        ),
+        run_build=lambda: _run_build(run_config, resolved),
+        save_record=lambda: store.save(
+            BuildRecord(
+                agent=run_config.agent,
+                base=run_config.selection.base,
+                image_ref=image_ref,
+                extensions=list(run_config.selection.extensions),
+                extension_hash=combined_hash,
+                base_image=run_config.selection.base_image_ref,
+                built_at=now_iso(),
+            )
+        ),
     )
-    if not needs_build:
-        return
 
+
+def _run_build(
+    run_config: RunConfig,
+    resolved: list[ExtensionMetadata],
+) -> None:
     image_ref = run_config.selection.image_ref
     image_repository = repository_from_image_ref(image_ref)
     old_digest = get_local_repo_digest_for_repo(image_ref, image_repository)
-    log_path = build_log_path_for_image(image_ref)
+    log_path = build_log_path(image_ref)
     run_extended_build(
         run_config=run_config,
         base_image_ref=run_config.selection.base_image_ref,
@@ -44,17 +63,6 @@ def ensure_extended_image(run_config: RunConfig) -> None:
         log_path=log_path,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
-    store.save(
-        ExtendedBuildRecord(
-            agent=run_config.agent,
-            base=run_config.selection.base,
-            image_ref=image_ref,
-            extensions=list(run_config.selection.extensions),
-            extension_hash=combined_hash,
-            base_image=run_config.selection.base_image_ref,
-            built_at=now_iso(),
-        )
-    )
 
 
 def _resolve_extensions(

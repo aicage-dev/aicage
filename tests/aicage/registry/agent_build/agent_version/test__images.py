@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.constants import VERSION_CHECK_IMAGE
-from aicage.registry.agent_version import _images
+from aicage.registry.agent_build.agent_version import _images
 
 
 class AgentVersionImagesTests(TestCase):
@@ -14,20 +14,20 @@ class AgentVersionImagesTests(TestCase):
             log_path = Path(tmp_dir) / "pull.log"
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._images.get_local_repo_digest_for_repo",
+                    "aicage.registry.agent_build.agent_version._images.get_local_repo_digest_for_repo",
                     return_value=None,
                 ) as local_mock,
-                mock.patch("aicage.registry.agent_version._images.get_remote_digest") as remote_mock,
+                mock.patch("aicage.registry.agent_build.agent_version._images.get_remote_digest") as remote_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.resolve_verified_digest",
+                    "aicage.registry.agent_build.agent_version._images.resolve_verified_digest",
                     return_value="ghcr.io/aicage/aicage-image-util@sha256:verified",
                 ) as verify_mock,
-                mock.patch("aicage.registry.agent_version._images.run_pull") as pull_mock,
+                mock.patch("aicage.registry.agent_build.agent_version._images.run_pull") as pull_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.cleanup_old_digest"
+                    "aicage.registry.agent_build.agent_version._images.cleanup_old_digest"
                 ) as cleanup_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.pull_log_path",
+                    "aicage.registry.agent_build.agent_version._images.pull_log_path",
                     return_value=log_path,
                 ),
             ):
@@ -49,23 +49,23 @@ class AgentVersionImagesTests(TestCase):
             log_path = Path(tmp_dir) / "pull.log"
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._images.get_local_repo_digest_for_repo",
+                    "aicage.registry.agent_build.agent_version._images.get_local_repo_digest_for_repo",
                     side_effect=["sha256:old", "sha256:new"],
                 ),
                 mock.patch(
-                    "aicage.registry.agent_version._images.get_remote_digest",
+                    "aicage.registry.agent_build.agent_version._images.get_remote_digest",
                     return_value="sha256:new",
                 ),
                 mock.patch(
-                    "aicage.registry.agent_version._images.resolve_verified_digest",
+                    "aicage.registry.agent_build.agent_version._images.resolve_verified_digest",
                     return_value="ghcr.io/aicage/aicage-image-util@sha256:new",
                 ),
-                mock.patch("aicage.registry.agent_version._images.run_pull") as pull_mock,
+                mock.patch("aicage.registry.agent_build.agent_version._images.run_pull") as pull_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.cleanup_old_digest"
+                    "aicage.registry.agent_build.agent_version._images.cleanup_old_digest"
                 ) as cleanup_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.pull_log_path",
+                    "aicage.registry.agent_build.agent_version._images.pull_log_path",
                     return_value=log_path,
                 ),
             ):
@@ -84,22 +84,22 @@ class AgentVersionImagesTests(TestCase):
             log_path = Path(tmp_dir) / "pull.log"
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._images.get_local_repo_digest_for_repo",
+                    "aicage.registry.agent_build.agent_version._images.get_local_repo_digest_for_repo",
                     return_value="sha256:local",
                 ),
                 mock.patch(
-                    "aicage.registry.agent_version._images.get_remote_digest",
+                    "aicage.registry.agent_build.agent_version._images.get_remote_digest",
                     return_value=None,
                 ) as remote_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.resolve_verified_digest"
+                    "aicage.registry.agent_build.agent_version._images.resolve_verified_digest"
                 ) as verify_mock,
-                mock.patch("aicage.registry.agent_version._images.run_pull") as pull_mock,
+                mock.patch("aicage.registry.agent_build.agent_version._images.run_pull") as pull_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.cleanup_old_digest"
+                    "aicage.registry.agent_build.agent_version._images.cleanup_old_digest"
                 ) as cleanup_mock,
                 mock.patch(
-                    "aicage.registry.agent_version._images.pull_log_path",
+                    "aicage.registry.agent_build.agent_version._images.pull_log_path",
                     return_value=log_path,
                 ),
             ):

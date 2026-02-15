@@ -14,7 +14,7 @@ class EnsureImageTests(TestCase):
         run_config = _run_config(build_local=False, extensions=[])
         with (
             mock.patch("aicage.registry.ensure_image.pull_image") as pull_mock,
-            mock.patch("aicage.registry.ensure_image.ensure_local_image") as local_mock,
+            mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
             mock.patch("aicage.registry.ensure_image.ensure_extended_image") as extended_mock,
         ):
             ensure_image(run_config)
@@ -33,7 +33,7 @@ class EnsureImageTests(TestCase):
         )
         with (
             mock.patch("aicage.registry.ensure_image.pull_image") as pull_mock,
-            mock.patch("aicage.registry.ensure_image.ensure_local_image") as local_mock,
+            mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
         ):
             ensure_image(run_config)
 
@@ -44,7 +44,7 @@ class EnsureImageTests(TestCase):
     def test_ensure_image_runs_extended_build() -> None:
         run_config = _run_config(build_local=True, extensions=["extra"])
         with (
-            mock.patch("aicage.registry.ensure_image.ensure_local_image") as local_mock,
+            mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
             mock.patch("aicage.registry.ensure_image.ensure_extended_image") as extended_mock,
         ):
             ensure_image(run_config)

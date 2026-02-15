@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.registry.local_build._store import BuildRecord, BuildStore, sanitize
+from aicage.registry.agent_build._store import BuildRecord, BuildStore, sanitize
 
 
 class LocalBuildStoreTests(TestCase):
@@ -10,7 +10,7 @@ class LocalBuildStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.local_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
+                "aicage.registry.agent_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
                 base_dir,
             ):
                 store = BuildStore()
@@ -31,7 +31,7 @@ class LocalBuildStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.local_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
+                "aicage.registry.agent_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
                 base_dir,
             ):
                 store = BuildStore()
@@ -43,7 +43,7 @@ class LocalBuildStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.local_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
+                "aicage.registry.agent_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
                 base_dir,
             ):
                 store = BuildStore()

@@ -6,8 +6,8 @@ from aicage.config.config_store import SettingsStore
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker.query import local_image_exists
 from aicage.docker.refs import repository_from_image_ref
-from aicage.registry.extension_build._extended_store import ExtendedBuildStore
-from aicage.registry.local_build._store import BuildStore
+from aicage.registry.agent_build._store import BuildStore as AgentBuildStore
+from aicage.registry.extension_build._store import BuildStore as ExtendedBuildStore
 
 from .._helpers import (
     assert_marker_extension_present,
@@ -39,7 +39,7 @@ def test_local_builtin_extension_rebuilds_on_agent_version(
     workspace, env = _setup_extension_workspace(monkeypatch, tmp_path, "claude")
     assert_marker_extension_present(env, workspace, "claude")
 
-    store = BuildStore()
+    store = AgentBuildStore()
     record = store.load("claude", "ubuntu")
     assert record is not None
     force_record_agent_version(store, record, agent_version="0.0.0")

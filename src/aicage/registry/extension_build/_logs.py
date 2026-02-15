@@ -5,5 +5,5 @@ from aicage.registry._sanitize import sanitize
 from aicage.registry._time import timestamp
 
 
-def build_log_path_for_image(image_ref: str) -> Path:
+def build_log_path(image_ref: str) -> Path:
     return IMAGE_EXTENDED_BUILD_LOG_DIR / f"{sanitize(image_ref)}-{timestamp()}.log"

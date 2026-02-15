@@ -4,9 +4,9 @@ from unittest import TestCase, mock
 
 import yaml
 
-from aicage.registry.extension_build._extended_store import (
-    ExtendedBuildRecord,
-    ExtendedBuildStore,
+from aicage.registry.extension_build._store import (
+    BuildRecord,
+    BuildStore,
 )
 
 
@@ -15,20 +15,20 @@ class ExtendedStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.extension_build._extended_store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
+                "aicage.registry.extension_build._store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
                 base_dir,
             ):
-                store = ExtendedBuildStore()
+                store = BuildStore()
                 self.assertIsNone(store.load("aicage:missing"))
 
     def test_load_returns_none_on_invalid_yaml(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.extension_build._extended_store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
+                "aicage.registry.extension_build._store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
                 base_dir,
             ):
-                store = ExtendedBuildStore()
+                store = BuildStore()
                 path = store._path("aicage:invalid")
                 path.write_text("- not-a-mapping\n", encoding="utf-8")
                 self.assertIsNone(store.load("aicage:invalid"))
@@ -37,10 +37,10 @@ class ExtendedStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.extension_build._extended_store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
+                "aicage.registry.extension_build._store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
                 base_dir,
             ):
-                store = ExtendedBuildStore()
+                store = BuildStore()
                 path = store._path("aicage:invalid-extensions")
                 payload = {
                     "agent": "codex",
@@ -62,11 +62,11 @@ class ExtendedStoreTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.extension_build._extended_store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
+                "aicage.registry.extension_build._store.paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR",
                 base_dir,
             ):
-                store = ExtendedBuildStore()
-                record = ExtendedBuildRecord(
+                store = BuildStore()
+                record = BuildRecord(
                     agent="codex",
                     base="ubuntu",
                     image_ref="aicage:codex-ubuntu-extra",

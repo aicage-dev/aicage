@@ -4,7 +4,7 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from unittest import TestCase, mock
 
-from aicage.registry.agent_version import _command
+from aicage.registry.agent_build.agent_version import _command
 
 
 class AgentVersionCommandTests(TestCase):
@@ -13,9 +13,9 @@ class AgentVersionCommandTests(TestCase):
             script_path = Path(tmp_dir) / "version.sh"
             script_path.write_text("echo 1.2.3\n", encoding="utf-8")
             with (
-                mock.patch("aicage.registry.agent_version._command.os.access", return_value=False),
+                mock.patch("aicage.registry.agent_build.agent_version._command.os.access", return_value=False),
                 mock.patch(
-                    "aicage.registry.agent_version._command.subprocess.run",
+                    "aicage.registry.agent_build.agent_version._command.subprocess.run",
                     return_value=CompletedProcess([], 0, stdout="1.2.3\n", stderr=""),
                 ) as run_mock,
                 mock.patch("sys.stderr", new_callable=io.StringIO),
@@ -36,7 +36,7 @@ class AgentVersionCommandTests(TestCase):
             script_path.write_text("echo 1.2.3\n", encoding="utf-8")
             with (
                 mock.patch(
-                    "aicage.registry.agent_version._command.subprocess.run",
+                    "aicage.registry.agent_build.agent_version._command.subprocess.run",
                     side_effect=FileNotFoundError("missing"),
                 ),
             ):
@@ -48,7 +48,7 @@ class AgentVersionCommandTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             definition_dir = Path(tmp_dir)
             with mock.patch(
-                "aicage.registry.agent_version._command.run_builder_version_check",
+                "aicage.registry.agent_build.agent_version._command.run_builder_version_check",
                 return_value=CompletedProcess([], 1, stdout="", stderr="failed"),
             ):
                 result = _command.run_version_check_image(

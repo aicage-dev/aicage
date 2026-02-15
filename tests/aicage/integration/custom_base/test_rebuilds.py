@@ -6,12 +6,14 @@ import yaml
 from aicage.config.config_store import SettingsStore
 from aicage.constants import LOCAL_IMAGE_BASE_REPOSITORY
 from aicage.docker.query import get_local_repo_digest_for_repo, local_image_exists
-from aicage.registry.local_build._custom_base import custom_base_image_ref
-from aicage.registry.local_build._custom_base_store import (
-    CustomBaseBuildRecord,
-    CustomBaseBuildStore,
+from aicage.registry.agent_build._store import BuildStore as AgentBuildStore
+from aicage.registry.base_build._store import (
+    BuildRecord,
 )
-from aicage.registry.local_build._store import BuildStore
+from aicage.registry.base_build._store import (
+    BuildStore as BaseBuildStore,
+)
+from aicage.registry.base_build.ensure import image_ref
 
 from .._helpers import (
     assert_rootfs_layer_present,
@@ -40,7 +42,7 @@ def test_custom_base_rebuilds_on_agent_version(
     _set_agent_base(workspace, "codex", base_name)
 
     run_agent_version(env, workspace, "codex")
-    store = BuildStore()
+    store = AgentBuildStore()
     record = store.load("codex", base_name)
     assert record is not None
 
@@ -64,7 +66,7 @@ def test_custom_base_rebuilds_on_digest_change_ghcr(
     _set_agent_base(workspace, "codex", base_name)
 
     run_agent_version(env, workspace, "codex")
-    base_store = CustomBaseBuildStore()
+    base_store = BaseBuildStore()
     base_record = base_store.load(base_name)
     assert base_record is not None
     assert base_record.from_image == "ghcr.io/rblaine95/debian:bookworm"
@@ -78,7 +80,7 @@ def test_custom_base_rebuilds_on_digest_change_ghcr(
     assert rebuilt_base_record.from_image_digest
     assert rebuilt_base_record.from_image_digest != base_record.from_image_digest
 
-    final_image_record = BuildStore().load("codex", base_name)
+    final_image_record = AgentBuildStore().load("codex", base_name)
     assert final_image_record is not None
     expected_base_image_layer = get_last_rootfs_layer(rebuilt_base_record.image_ref)
     assert_rootfs_layer_present(expected_base_image_layer, final_image_record.image_ref)
@@ -96,15 +98,15 @@ def test_custom_base_rebuilds_on_digest_change_docker(
     copy_custom_base_sample(base_name, base_dir)
     _set_agent_base(workspace, "codex", base_name)
 
-    base_image_ref = custom_base_image_ref(base_name)
+    base_image_ref = image_ref(base_name)
     old_digest = replace_with_dummy_image(base_image_ref)
     old_digest_ref = f"{LOCAL_IMAGE_BASE_REPOSITORY}@{old_digest}"
     assert local_image_exists(old_digest_ref)
 
-    base_store = CustomBaseBuildStore()
+    base_store = BaseBuildStore()
     stale_digest = "sha256:" + ("0" * 64)
     base_store.save(
-        CustomBaseBuildRecord(
+        BuildRecord(
             base=base_name,
             from_image=from_image,
             from_image_digest=stale_digest,
@@ -124,7 +126,7 @@ def test_custom_base_rebuilds_on_digest_change_docker(
     assert rebuilt_base_digest != old_digest
     assert not local_image_exists(old_digest_ref)
 
-    final_image_record = BuildStore().load("codex", base_name)
+    final_image_record = AgentBuildStore().load("codex", base_name)
     assert final_image_record is not None
     expected_base_image_layer = get_last_rootfs_layer(rebuilt_base_record.image_ref)
     assert_rootfs_layer_present(expected_base_image_layer, final_image_record.image_ref)

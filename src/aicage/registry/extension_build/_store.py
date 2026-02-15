@@ -17,7 +17,7 @@ _BUILT_AT_KEY: str = "built_at"
 
 
 @dataclass(frozen=True)
-class ExtendedBuildRecord:
+class BuildRecord:
     agent: str
     base: str
     image_ref: str
@@ -27,18 +27,18 @@ class ExtendedBuildRecord:
     built_at: str
 
 
-class ExtendedBuildStore:
+class BuildStore:
     def __init__(self) -> None:
         self._base_dir = paths_module.IMAGE_EXTENDED_BUILD_STATE_DIR
 
-    def load(self, image_ref: str) -> ExtendedBuildRecord | None:
+    def load(self, image_ref: str) -> BuildRecord | None:
         path = self._path(image_ref)
         if not path.is_file():
             return None
         payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         if not isinstance(payload, dict):
             return None
-        return ExtendedBuildRecord(
+        return BuildRecord(
             agent=str(payload.get(_AGENT_KEY, "")),
             base=str(payload.get(_BASE_KEY, "")),
             image_ref=str(payload.get(_IMAGE_REF_KEY, "")),
@@ -48,7 +48,7 @@ class ExtendedBuildStore:
             built_at=str(payload.get(_BUILT_AT_KEY, "")),
         )
 
-    def save(self, record: ExtendedBuildRecord) -> Path:
+    def save(self, record: BuildRecord) -> Path:
         self._base_dir.mkdir(parents=True, exist_ok=True)
         path = self._path(record.image_ref)
         payload = {

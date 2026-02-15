@@ -8,9 +8,8 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._errors import RegistryError
-from aicage.registry.image_selection.models import ImageSelection
-from aicage.registry.local_build import ensure_local_image as ensure_local_image_module
-from aicage.registry.local_build._store import (
+from aicage.registry.agent_build import ensure as ensure_module
+from aicage.registry.agent_build._store import (
     _AGENT_KEY,
     _AGENT_VERSION_KEY,
     _BASE_IMAGE_KEY,
@@ -18,54 +17,55 @@ from aicage.registry.local_build._store import (
     _BUILT_AT_KEY,
     _IMAGE_REF_KEY,
 )
+from aicage.registry.image_selection.models import ImageSelection
 
 from ..._run_config_fixtures import build_custom_run_config, build_run_config
 
 
 class EnsureLocalImageTests(TestCase):
     @staticmethod
-    def test_ensure_local_image_runs_for_custom_agent() -> None:
+    def test_ensure_runs_for_custom_agent() -> None:
         run_config = build_custom_run_config()
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_dir = Path(tmp_dir) / "state"
             with (
                 mock.patch(
-                    "aicage.registry.local_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
+                    "aicage.registry.agent_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
                     state_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.refresh_base_digest",
+                    "aicage.registry.agent_build.ensure.refresh_base_digest",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ) as refresh_mock,
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.should_build",
+                    "aicage.registry.agent_build.ensure.should_rebuild",
                     return_value=False,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
+                    "aicage.registry.agent_build.ensure.AgentVersionChecker"
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_local_image_module.ensure_local_image(run_config)
+                ensure_module.ensure(run_config)
             refresh_mock.assert_called_once()
 
-    def test_ensure_local_image_raises_on_version_failure(self) -> None:
+    def test_ensure_raises_on_version_failure(self) -> None:
         run_config = build_run_config()
         with (
             mock.patch(
-                "aicage.registry.local_build.ensure_local_image.refresh_base_digest",
+                "aicage.registry.agent_build.ensure.refresh_base_digest",
                 return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
             ),
             mock.patch(
-                "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
+                "aicage.registry.agent_build.ensure.AgentVersionChecker"
             ) as checker_cls,
         ):
             checker_cls.return_value.get_version.side_effect = RegistryError("version failed")
             with self.assertRaises(RegistryError):
-                ensure_local_image_module.ensure_local_image(run_config)
+                ensure_module.ensure(run_config)
 
     @staticmethod
-    def test_ensure_local_image_uses_custom_base() -> None:
+    def test_ensure_uses_custom_base() -> None:
         run_config = build_run_config()
         run_config = RunConfig(
             project_path=run_config.project_path,
@@ -91,25 +91,25 @@ class EnsureLocalImageTests(TestCase):
         run_config.context.bases["custom"] = custom_base
         with (
             mock.patch(
-                "aicage.registry.local_build.ensure_local_image.ensure_custom_base_image"
+                "aicage.registry.agent_build.ensure.ensure_base_build"
             ) as base_mock,
             mock.patch(
-                "aicage.registry.local_build.ensure_local_image.refresh_base_digest"
+                "aicage.registry.agent_build.ensure.refresh_base_digest"
             ) as refresh_mock,
             mock.patch(
-                "aicage.registry.local_build.ensure_local_image.should_build",
+                "aicage.registry.agent_build.ensure.should_rebuild",
                 return_value=False,
             ),
             mock.patch(
-                "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
+                "aicage.registry.agent_build.ensure.AgentVersionChecker"
             ) as checker_cls,
         ):
             checker_cls.return_value.get_version.return_value = "1.2.3"
-            ensure_local_image_module.ensure_local_image(run_config)
+            ensure_module.ensure(run_config)
         base_mock.assert_called_once()
         refresh_mock.assert_not_called()
 
-    def test_ensure_local_image_builds_when_missing_image(self) -> None:
+    def test_ensure_builds_when_missing_image(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_dir = Path(tmp_dir) / "state"
             log_dir = Path(tmp_dir) / "logs"
@@ -117,37 +117,37 @@ class EnsureLocalImageTests(TestCase):
 
             with (
                 mock.patch(
-                    "aicage.registry.local_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
+                    "aicage.registry.agent_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
                     state_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build._logs.IMAGE_BUILD_LOG_DIR",
+                    "aicage.registry.agent_build._logs.IMAGE_BUILD_LOG_DIR",
                     log_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build._plan.local_image_exists",
+                    "aicage.registry.agent_build._plan.local_image_exists",
                     return_value=False,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.refresh_base_digest",
+                    "aicage.registry.agent_build.ensure.refresh_base_digest",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.run_build"
+                    "aicage.registry.agent_build.ensure.run_build"
                 ) as build_mock,
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.get_local_repo_digest_for_repo",
+                    "aicage.registry.agent_build.ensure.get_local_repo_digest_for_repo",
                     return_value="sha256:old",
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.cleanup_old_digest"
+                    "aicage.registry.agent_build.ensure.cleanup_old_digest"
                 ) as cleanup_mock,
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
+                    "aicage.registry.agent_build.ensure.AgentVersionChecker"
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_local_image_module.ensure_local_image(run_config)
+                ensure_module.ensure(run_config)
 
             build_mock.assert_called_once()
             cleanup_mock.assert_called_once_with(
@@ -160,7 +160,7 @@ class EnsureLocalImageTests(TestCase):
             self.assertEqual("1.2.3", payload[_AGENT_VERSION_KEY])
 
     @staticmethod
-    def test_ensure_local_image_skips_when_up_to_date() -> None:
+    def test_ensure_skips_when_up_to_date() -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_dir = Path(tmp_dir) / "state"
             log_dir = Path(tmp_dir) / "logs"
@@ -183,29 +183,29 @@ class EnsureLocalImageTests(TestCase):
 
             with (
                 mock.patch(
-                    "aicage.registry.local_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
+                    "aicage.registry.agent_build._store.paths_module.IMAGE_BUILD_STATE_DIR",
                     state_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build._logs.IMAGE_BUILD_LOG_DIR",
+                    "aicage.registry.agent_build._logs.IMAGE_BUILD_LOG_DIR",
                     log_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build._plan.local_image_exists",
+                    "aicage.registry.agent_build._plan.local_image_exists",
                     return_value=True,
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.refresh_base_digest",
+                    "aicage.registry.agent_build.ensure.refresh_base_digest",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ),
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.run_build"
+                    "aicage.registry.agent_build.ensure.run_build"
                 ) as build_mock,
                 mock.patch(
-                    "aicage.registry.local_build.ensure_local_image.AgentVersionChecker"
+                    "aicage.registry.agent_build.ensure.AgentVersionChecker"
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_local_image_module.ensure_local_image(run_config)
+                ensure_module.ensure(run_config)
 
             build_mock.assert_not_called()

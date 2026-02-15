@@ -1,8 +1,8 @@
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._image_pull import pull_image
-from aicage.registry.extension_build.ensure_extended_image import ensure_extended_image
-from aicage.registry.local_build.ensure_local_image import ensure_local_image
+from aicage.registry.agent_build.ensure import ensure as ensure_agent_image
+from aicage.registry.extension_build.ensure import ensure as ensure_extended_image
 
 
 def ensure_image(run_config: RunConfig) -> None:
@@ -12,6 +12,6 @@ def ensure_image(run_config: RunConfig) -> None:
     if not agent_metadata.build_local and not custom_base:
         pull_image(run_config.selection.base_image_ref)
     else:
-        ensure_local_image(run_config)
+        ensure_agent_image(run_config)
     if run_config.selection.extensions:
         ensure_extended_image(run_config)

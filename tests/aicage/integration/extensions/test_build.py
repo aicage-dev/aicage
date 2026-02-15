@@ -5,7 +5,7 @@ import pytest
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.docker.query import get_local_repo_digest_for_repo, local_image_exists
 from aicage.docker.refs import repository_from_image_ref
-from aicage.registry.extension_build._extended_store import ExtendedBuildStore
+from aicage.registry.extension_build._store import BuildStore
 
 from .._helpers import (
     assert_marker_extension_present,
@@ -47,7 +47,7 @@ def test_extension_rebuilds_on_base_image_change(
 
     assert_marker_extension_present(env, workspace, "copilot")
 
-    extended_store = ExtendedBuildStore()
+    extended_store = BuildStore()
     record = extended_store.load(image_ref)
     assert record is not None
 

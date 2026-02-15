@@ -1,41 +1,41 @@
 from unittest import TestCase, mock
 
-from aicage.registry.local_build import _plan
-from aicage.registry.local_build._store import BuildRecord
+from aicage.registry.agent_build import _plan
+from aicage.registry.agent_build._store import BuildRecord
 
 from ..._run_config_fixtures import build_run_config
 
 
 class LocalBuildPlanTests(TestCase):
-    def test_should_build_when_missing_local_image(self) -> None:
+    def test_should_rebuild_when_missing_local_image(self) -> None:
         run_config = build_run_config()
         with mock.patch(
-            "aicage.registry.local_build._plan.local_image_exists",
+            "aicage.registry.agent_build._plan.local_image_exists",
             return_value=False,
         ):
-            should_build = _plan.should_build(
+            should_rebuild = _plan.should_rebuild(
                 run_config,
                 None,
                 "1.2.3",
                 "ghcr.io/aicage/aicage-image-base@sha256:base",
             )
-        self.assertTrue(should_build)
+        self.assertTrue(should_rebuild)
 
-    def test_should_build_when_record_missing(self) -> None:
+    def test_should_rebuild_when_record_missing(self) -> None:
         run_config = build_run_config()
         with mock.patch(
-            "aicage.registry.local_build._plan.local_image_exists",
+            "aicage.registry.agent_build._plan.local_image_exists",
             return_value=True,
         ):
-            should_build = _plan.should_build(
+            should_rebuild = _plan.should_rebuild(
                 run_config,
                 None,
                 "1.2.3",
                 "ghcr.io/aicage/aicage-image-base@sha256:base",
             )
-        self.assertTrue(should_build)
+        self.assertTrue(should_rebuild)
 
-    def test_should_build_when_agent_version_changes(self) -> None:
+    def test_should_rebuild_when_agent_version_changes(self) -> None:
         run_config = build_run_config()
         record = BuildRecord(
             agent="claude",
@@ -47,23 +47,23 @@ class LocalBuildPlanTests(TestCase):
         )
         with (
             mock.patch(
-                "aicage.registry.local_build._plan.local_image_exists",
+                "aicage.registry.agent_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.registry.local_build._plan.base_layer_missing",
+                "aicage.registry.agent_build._plan.base_layer_missing",
                 return_value=False,
             ),
         ):
-            should_build = _plan.should_build(
+            should_rebuild = _plan.should_rebuild(
                 run_config,
                 record,
                 "1.2.3",
                 "ghcr.io/aicage/aicage-image-base@sha256:base",
             )
-        self.assertTrue(should_build)
+        self.assertTrue(should_rebuild)
 
-    def test_should_build_when_base_layer_missing(self) -> None:
+    def test_should_rebuild_when_base_layer_missing(self) -> None:
         run_config = build_run_config()
         record = BuildRecord(
             agent="claude",
@@ -75,23 +75,23 @@ class LocalBuildPlanTests(TestCase):
         )
         with (
             mock.patch(
-                "aicage.registry.local_build._plan.local_image_exists",
+                "aicage.registry.agent_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.registry.local_build._plan.base_layer_missing",
+                "aicage.registry.agent_build._plan.base_layer_missing",
                 return_value=True,
             ),
         ):
-            should_build = _plan.should_build(
+            should_rebuild = _plan.should_rebuild(
                 run_config,
                 record,
                 "1.2.3",
                 "ghcr.io/aicage/aicage-image-base@sha256:base",
             )
-        self.assertTrue(should_build)
+        self.assertTrue(should_rebuild)
 
-    def test_should_build_skips_when_layer_data_missing(self) -> None:
+    def test_should_rebuild_skips_when_layer_data_missing(self) -> None:
         run_config = build_run_config()
         record = BuildRecord(
             agent="claude",
@@ -103,23 +103,23 @@ class LocalBuildPlanTests(TestCase):
         )
         with (
             mock.patch(
-                "aicage.registry.local_build._plan.local_image_exists",
+                "aicage.registry.agent_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.registry.local_build._plan.base_layer_missing",
+                "aicage.registry.agent_build._plan.base_layer_missing",
                 return_value=None,
             ),
         ):
-            should_build = _plan.should_build(
+            should_rebuild = _plan.should_rebuild(
                 run_config,
                 record,
                 "1.2.3",
                 "ghcr.io/aicage/aicage-image-base@sha256:base",
             )
-        self.assertFalse(should_build)
+        self.assertFalse(should_rebuild)
 
-    def test_should_build_false_when_up_to_date(self) -> None:
+    def test_should_rebuild_false_when_up_to_date(self) -> None:
         run_config = build_run_config()
         record = BuildRecord(
             agent="claude",
@@ -131,18 +131,18 @@ class LocalBuildPlanTests(TestCase):
         )
         with (
             mock.patch(
-                "aicage.registry.local_build._plan.local_image_exists",
+                "aicage.registry.agent_build._plan.local_image_exists",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.registry.local_build._plan.base_layer_missing",
+                "aicage.registry.agent_build._plan.base_layer_missing",
                 return_value=False,
             ),
         ):
-            should_build = _plan.should_build(
+            should_rebuild = _plan.should_rebuild(
                 run_config,
                 record,
                 "1.2.3",
                 "ghcr.io/aicage/aicage-image-base@sha256:base",
             )
-        self.assertFalse(should_build)
+        self.assertFalse(should_rebuild)
