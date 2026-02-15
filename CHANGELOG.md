@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.16] - 2026-02-15
+
+### Changed
+
+- Refactored registry build structure into clear packages (`agent_build`, `base_build`, `extension_build`) and moved
+  agent version checks under `agent_build.agent_version`.
+- Unified agent/base/extension ensure orchestration through a shared build flow helper.
+- Aligned build failure semantics so build errors propagate consistently across all three build flows.
+- Standardized module and method naming across the build packages for clearer responsibilities.
+
 ## [0.9.15] - 2026-02-15
 
 ### Fixed
