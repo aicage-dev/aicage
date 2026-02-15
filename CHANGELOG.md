@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.15] - 2026-02-15
+
+### Fixed
+
+- Keep source image tags after successful local builds (agent images, extension images, and custom base images) so
+  subsequent runs can reuse local tag metadata and avoid an unnecessary extra pull.
+
+### Internal
+
+- Updated integration tests around base-layer rebuild flows to assert the retained source-tag behavior.
+
 ## [0.9.14] - 2026-02-14
 
 ### Changed
