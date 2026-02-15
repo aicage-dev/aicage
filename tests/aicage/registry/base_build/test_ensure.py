@@ -74,10 +74,6 @@ class EnsureCustomBaseImageTests(TestCase):
                     return_value="sha256:remote",
                 ),
                 mock.patch(
-                    "aicage.registry.base_build.ensure.base_layer_missing",
-                    return_value=False,
-                ),
-                mock.patch(
                     "aicage.registry.base_build.ensure.run_custom_base_build"
                 ) as build_mock,
             ):
@@ -223,42 +219,17 @@ class EnsureCustomBaseImageTests(TestCase):
 
 
 class CustomBasePlanTests(TestCase):
-    def test_should_rebuild_when_base_layer_missing(self) -> None:
-        with mock.patch(
-            "aicage.registry.base_build.ensure.base_layer_missing",
-            return_value=True,
-        ):
-            should_rebuild = _ensure._should_rebuild(
-                local_exists=True,
-                record=BuildRecord(
-                    base="custom",
-                    from_image="ubuntu:latest",
-                    from_image_digest="sha256:remote",
-                    image_ref=_ensure.image_ref("custom"),
-                    built_at="2024-01-01T00:00:00+00:00",
-                ),
-                base_metadata=EnsureCustomBaseImageTests._base_metadata(),
-                source_digest="sha256:remote",
-                target_image_ref=_ensure.image_ref("custom"),
-            )
-        self.assertTrue(should_rebuild)
-
-    def test_should_rebuild_false_when_layer_data_missing(self) -> None:
-        with mock.patch(
-            "aicage.registry.base_build.ensure.base_layer_missing",
-            return_value=None,
-        ):
-            should_rebuild = _ensure._should_rebuild(
-                local_exists=True,
-                record=BuildRecord(
-                    base="custom",
-                    from_image="ubuntu:latest",
-                    from_image_digest="sha256:remote",
-                    image_ref=_ensure.image_ref("custom"),
-                    built_at="2024-01-01T00:00:00+00:00",
-                ),
-                base_metadata=EnsureCustomBaseImageTests._base_metadata(),
-                source_digest="sha256:remote",
-                target_image_ref=_ensure.image_ref("custom"),
-            )
+    def test_should_rebuild_false_when_metadata_and_digest_match(self) -> None:
+        should_rebuild = _ensure._should_rebuild(
+            local_exists=True,
+            record=BuildRecord(
+                base="custom",
+                from_image="ubuntu:latest",
+                from_image_digest="sha256:remote",
+                image_ref=_ensure.image_ref("custom"),
+                built_at="2024-01-01T00:00:00+00:00",
+            ),
+            base_metadata=EnsureCustomBaseImageTests._base_metadata(),
+            source_digest="sha256:remote",
+        )
         self.assertFalse(should_rebuild)

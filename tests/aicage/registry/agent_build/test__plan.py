@@ -91,7 +91,7 @@ class LocalBuildPlanTests(TestCase):
             )
         self.assertTrue(should_rebuild)
 
-    def test_should_rebuild_skips_when_layer_data_missing(self) -> None:
+    def test_should_rebuild_false_when_layer_data_missing(self) -> None:
         run_config = build_run_config()
         record = BuildRecord(
             agent="claude",
@@ -108,7 +108,7 @@ class LocalBuildPlanTests(TestCase):
             ),
             mock.patch(
                 "aicage.registry.agent_build._plan.base_layer_missing",
-                return_value=None,
+                return_value=False,
             ),
         ):
             should_rebuild = _plan.should_rebuild(

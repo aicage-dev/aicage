@@ -1,4 +1,3 @@
-from aicage._logging import get_logger
 from aicage.config.runtime_config import RunConfig
 from aicage.docker.query import local_image_exists
 from aicage.registry._layers import base_layer_missing
@@ -19,14 +18,4 @@ def should_rebuild(
         return True
     if record.agent_version != agent_version:
         return True
-    is_missing = base_layer_missing(base_image_ref, image_ref)
-    if is_missing is None:
-        logger = get_logger()
-        logger.warning(
-            "Skipping base image layer validation for %s; missing local layer data.",
-            image_ref,
-        )
-        return False
-    if is_missing:
-        return True
-    return False
+    return base_layer_missing(base_image_ref, image_ref)

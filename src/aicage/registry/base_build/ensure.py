@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from aicage._logging import get_logger
 from aicage.config.base.models import BaseMetadata
 from aicage.constants import LOCAL_IMAGE_BASE_REPOSITORY
 from aicage.docker.build import run_custom_base_build
@@ -10,7 +9,6 @@ from aicage.docker.query import (
     local_image_exists,
 )
 from aicage.registry._build_flow import maybe_build
-from aicage.registry._layers import base_layer_missing
 from aicage.registry._time import now_iso
 from aicage.registry.digest.remote_digest import get_remote_digest
 
@@ -35,7 +33,6 @@ def ensure(base: str, base_metadata: BaseMetadata, base_dir: Path) -> None:
             record=record,
             base_metadata=base_metadata,
             source_digest=source_digest,
-            target_image_ref=target_image_ref,
         ),
         run_build=lambda: _run_build(
             base=base,
@@ -60,7 +57,6 @@ def _should_rebuild(
     record: BuildRecord | None,
     base_metadata: BaseMetadata,
     source_digest: str | None,
-    target_image_ref: str,
 ) -> bool:
     if not local_exists or record is None:
         return True
@@ -68,15 +64,7 @@ def _should_rebuild(
         return True
     if source_digest and record.from_image_digest != source_digest:
         return True
-    is_missing = base_layer_missing(base_metadata.from_image, target_image_ref)
-    if is_missing is None:
-        logger = get_logger()
-        logger.warning(
-            "Skipping base image layer validation for %s; missing local layer data.",
-            target_image_ref,
-        )
-        return False
-    return is_missing
+    return False
 
 
 def _run_build(
