@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.18] - 2026-02-15
+
+### Added
+
+- Added the `opencode` agent definition (install/version scripts and default config/state directories) synced from
+  `aicage-image`.
+
+### Changed
+
+- Custom base rebuild checks now rely on image existence, build record metadata, and source digest changes; they no
+  longer use rootfs layer comparison against the `from_image`.
+- Simplified base-layer validation flow by making `base_layer_missing` return a boolean directly and centralizing the
+  "missing local layer data" warning inside that helper.
+- Synced bundled agent definitions with `aicage-image`, including the `goose` config directory updates.
+
 ## [0.9.16] - 2026-02-15
 
 ### Changed
