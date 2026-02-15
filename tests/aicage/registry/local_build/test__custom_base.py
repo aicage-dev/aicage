@@ -154,9 +154,6 @@ class EnsureCustomBaseImageTests(TestCase):
                 "aicage.registry.local_build._custom_base.cleanup_old_digest"
             ) as cleanup_mock,
             mock.patch(
-                "aicage.registry.local_build._custom_base.cleanup_source_image_tag"
-            ) as cleanup_source_mock,
-            mock.patch(
                 "aicage.registry.local_build._custom_base.custom_base_log_path",
                 return_value=Path("/tmp/logs/custom-base.log"),
             ),
@@ -174,7 +171,6 @@ class EnsureCustomBaseImageTests(TestCase):
             "sha256:old",
             f"{LOCAL_IMAGE_BASE_REPOSITORY}:custom",
         )
-        cleanup_source_mock.assert_called_once_with("ubuntu:latest")
 
     @staticmethod
     def _base_metadata() -> BaseMetadata:

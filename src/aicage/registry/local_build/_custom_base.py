@@ -7,7 +7,6 @@ from aicage.docker.build import run_custom_base_build
 from aicage.docker.errors import DockerError
 from aicage.docker.query import (
     cleanup_old_digest,
-    cleanup_source_image_tag,
     get_local_repo_digest_for_repo,
     local_image_exists,
 )
@@ -52,7 +51,6 @@ def ensure_custom_base_image(base: str, base_metadata: BaseMetadata, base_dir: P
         raise
 
     cleanup_old_digest(LOCAL_IMAGE_BASE_REPOSITORY, old_digest, image_ref)
-    cleanup_source_image_tag(base_metadata.from_image)
     store.save(
         CustomBaseBuildRecord(
             base=base,

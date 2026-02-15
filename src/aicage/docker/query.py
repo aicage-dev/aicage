@@ -80,10 +80,6 @@ def _remove_old_image_digest(repository: str, old_digest: str) -> None:
     _remove_image_ref(f"{repository}@{old_digest}", "old image digest")
 
 
-def cleanup_source_image_tag(source_image_ref: str) -> None:
-    _remove_image_ref(source_image_ref, "source image tag")
-
-
 def cleanup_old_digest(
     repository: str,
     local_digest: str | None,

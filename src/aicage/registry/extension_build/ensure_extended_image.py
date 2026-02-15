@@ -2,15 +2,9 @@ import hashlib
 
 from aicage.config.extensions.loader import ExtensionMetadata, extension_hash
 from aicage.config.runtime_config import RunConfig
-from aicage.constants import (
-    DEFAULT_EXTENDED_IMAGE_NAME,
-    LOCAL_IMAGE_BASE_REPOSITORY,
-    LOCAL_IMAGE_REPOSITORY,
-)
 from aicage.docker.build import run_extended_build
 from aicage.docker.query import (
     cleanup_old_digest,
-    cleanup_source_image_tag,
     get_local_repo_digest_for_repo,
 )
 from aicage.docker.refs import repository_from_image_ref
@@ -50,9 +44,6 @@ def ensure_extended_image(run_config: RunConfig) -> None:
         log_path=log_path,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
-    base_repository = repository_from_image_ref(run_config.selection.base_image_ref)
-    if not _is_local_managed_repository(base_repository):
-        cleanup_source_image_tag(run_config.selection.base_image_ref)
     store.save(
         ExtendedBuildRecord(
             agent=run_config.agent,
@@ -82,11 +73,3 @@ def _combined_extension_hash(extensions: list[ExtensionMetadata]) -> str:
         digest.update(extension.extension_id.encode("utf-8"))
         digest.update(extension_hash(extension).encode("utf-8"))
     return digest.hexdigest()
-
-
-def _is_local_managed_repository(repository: str) -> bool:
-    return repository in {
-        LOCAL_IMAGE_REPOSITORY,
-        LOCAL_IMAGE_BASE_REPOSITORY,
-        DEFAULT_EXTENDED_IMAGE_NAME,
-    }
