@@ -32,6 +32,7 @@ def test_remote_builtin_extension_rebuilds_on_base_change(
     extended_store = ExtendedBuildStore()
     record = extended_store.load(image_ref)
     assert record is not None
+    assert local_image_exists(record.base_image)
 
     base_digest_ref = resolve_remote_digest_ref(record.base_image)
     with keep_pulled_image_last_rootfs_layer(base_digest_ref) as expected_base_layer:
@@ -49,4 +50,5 @@ def test_remote_builtin_extension_rebuilds_on_base_change(
         updated_extended_digest = get_local_repo_digest_for_repo(record.image_ref, extended_repository)
         assert updated_extended_digest is not None
         assert not local_image_exists(old_digest_ref)
+        assert local_image_exists(record.base_image)
         assert_rootfs_layer_present(expected_base_layer, record.image_ref)

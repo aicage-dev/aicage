@@ -30,6 +30,8 @@ def test_custom_agent_rebuilds_on_base_layer(monkeypatch: pytest.MonkeyPatch, tm
     store = BuildStore()
     record = store.load("bash", "ubuntu")
     assert record is not None
+    source_image_ref = f"{repository_from_image_ref(record.base_image)}:ubuntu"
+    assert local_image_exists(source_image_ref)
 
     with keep_pulled_image_last_rootfs_layer(record.base_image) as expected_base_layer:
         old_digest = replace_with_dummy_image(record.image_ref)
@@ -39,4 +41,5 @@ def test_custom_agent_rebuilds_on_base_layer(monkeypatch: pytest.MonkeyPatch, tm
         updated = store.load("bash", "ubuntu")
         assert updated is not None
         assert not local_image_exists(old_digest_ref)
+        assert local_image_exists(source_image_ref)
         assert_rootfs_layer_present(expected_base_layer, record.image_ref)
