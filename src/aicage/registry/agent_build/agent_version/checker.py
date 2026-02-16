@@ -6,7 +6,6 @@ from aicage.constants import VERSION_CHECK_IMAGE
 from aicage.registry._errors import RegistryError
 
 from ._command import run_host, run_version_check_image
-from ._images import ensure_version_check_image
 from ._store import VersionCheckStore
 
 
@@ -17,7 +16,7 @@ class AgentVersionChecker:
     def get_version(
         self,
         agent_name: str,
-        _agent_metadata: AgentMetadata,
+        agent_metadata: AgentMetadata,
         definition_dir: Path,
     ) -> str:
         logger = get_logger()
@@ -39,7 +38,6 @@ class AgentVersionChecker:
         )
         errors.append(host_result.error)
 
-        ensure_version_check_image(VERSION_CHECK_IMAGE)
         image_result = run_version_check_image(VERSION_CHECK_IMAGE, definition_dir)
         if image_result.success:
             logger.info("Version check succeeded in version check image for %s", agent_name)
@@ -52,5 +50,14 @@ class AgentVersionChecker:
             image_result.error,
         )
         errors.append(image_result.error)
+
+        cached_version = self._store.load(agent_name)
+        if agent_metadata.build_local and cached_version:
+            logger.warning(
+                "Version check failed for %s; using cached version %s.",
+                agent_name,
+                cached_version,
+            )
+            return cached_version
         logger.error("Version check failed for %s: %s", agent_name, "; ".join(errors))
         raise RegistryError("; ".join(errors))

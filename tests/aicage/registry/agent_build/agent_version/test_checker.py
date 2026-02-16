@@ -58,7 +58,6 @@ class AgentVersionCheckTests(TestCase):
                     "aicage.registry.agent_build.agent_version.checker.run_host",
                     return_value=command._CommandResult(success=False, output="", error="host failed"),
                 ),
-                mock.patch("aicage.registry.agent_build.agent_version.checker.ensure_version_check_image"),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_version_check_image",
                     return_value=command._CommandResult(success=True, output="1.2.3", error=""),
@@ -93,7 +92,6 @@ class AgentVersionCheckTests(TestCase):
                     "aicage.registry.agent_build.agent_version.checker.run_host",
                     return_value=command._CommandResult(success=False, output="", error="host failed"),
                 ),
-                mock.patch("aicage.registry.agent_build.agent_version.checker.ensure_version_check_image"),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_version_check_image",
                     return_value=command._CommandResult(
@@ -107,10 +105,57 @@ class AgentVersionCheckTests(TestCase):
                 with self.assertRaises(RegistryError) as raised:
                     checker.get_version(
                         "custom",
-                        self._agent_metadata(),
+                        self._agent_metadata(build_local=False),
                         definition_dir=agent_dir,
                     )
             self.assertIn("version check failed", str(raised.exception))
+
+    def test_get_version_uses_cached_version_for_local_agent_when_offline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            agent_dir = Path(tmp_dir) / "custom"
+            agent_dir.mkdir()
+            (agent_dir / "version.sh").write_text("echo 1.2.3\n", encoding="utf-8")
+            store_dir = Path(tmp_dir) / "state"
+            cached_path = store_dir / "custom.yml"
+            cached_path.parent.mkdir(parents=True, exist_ok=True)
+            cached_path.write_text(
+                yaml.safe_dump(
+                    {
+                        "agent": "custom",
+                        "version": "9.9.9",
+                        "checked_at": "2026-01-01T00:00:00+00:00",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with (
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                    store_dir,
+                ),
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version.checker.run_host",
+                    return_value=command._CommandResult(success=False, output="", error="host failed"),
+                ),
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version.checker.run_version_check_image"
+                ) as image_check_mock,
+            ):
+                image_check_mock.return_value = command._CommandResult(
+                    success=False,
+                    output="",
+                    error="offline",
+                )
+                checker = AgentVersionChecker()
+                result = checker.get_version(
+                    "custom",
+                    self._agent_metadata(),
+                    definition_dir=agent_dir,
+                )
+
+            self.assertEqual("9.9.9", result)
+            image_check_mock.assert_called_once()
 
     def test_get_version_raises_on_missing_version_script(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -131,13 +176,13 @@ class AgentVersionCheckTests(TestCase):
             self.assertFalse((store_dir / "custom.yml").exists())
 
     @staticmethod
-    def _agent_metadata() -> AgentMetadata:
+    def _agent_metadata(build_local: bool = True) -> AgentMetadata:
         return AgentMetadata(
             agent_path_files=[],
             agent_path_directories=["~/.custom"],
             agent_full_name="Custom",
             agent_homepage="https://example.com",
-            build_local=True,
+            build_local=build_local,
             valid_bases={},
             local_definition_dir=Path("/tmp/definition"),
         )

@@ -61,9 +61,12 @@ class AgentVersionCommandTests(TestCase):
     def test_run_version_check_image_returns_error_on_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             definition_dir = Path(tmp_dir)
-            with mock.patch(
-                "aicage.registry.agent_build.agent_version._command.run_builder_version_check",
-                return_value=CompletedProcess([], 1, stdout="", stderr="failed"),
+            with (
+                mock.patch("aicage.registry.agent_build.agent_version._command.ensure_version_check_image"),
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._command.run_builder_version_check",
+                    return_value=CompletedProcess([], 1, stdout="", stderr="failed"),
+                ),
             ):
                 result = _command.run_version_check_image(
                     "ghcr.io/aicage/aicage-image-util:agent-version",
@@ -71,3 +74,23 @@ class AgentVersionCommandTests(TestCase):
                 )
             self.assertFalse(result.success)
             self.assertEqual("failed", result.error)
+
+    def test_run_version_check_image_returns_error_on_prepare_exception(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            definition_dir = Path(tmp_dir)
+            with (
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._command.ensure_version_check_image",
+                    side_effect=RuntimeError("offline"),
+                ),
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._command.run_builder_version_check"
+                ) as run_mock,
+            ):
+                result = _command.run_version_check_image(
+                    "ghcr.io/aicage/aicage-image-util:agent-version",
+                    definition_dir,
+                )
+            self.assertFalse(result.success)
+            self.assertEqual("offline", result.error)
+            run_mock.assert_not_called()

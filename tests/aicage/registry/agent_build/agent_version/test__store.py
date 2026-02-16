@@ -29,3 +29,24 @@ class VersionCheckStoreTests(TestCase):
                 self.assertEqual("custom/agent", payload[_AGENT_KEY])
                 self.assertEqual("1.2.3", payload[_VERSION_KEY])
                 self.assertIn(_CHECKED_AT_KEY, payload)
+
+    def test_load_returns_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            base_dir = Path(tmp_dir)
+            with mock.patch(
+                "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                base_dir,
+            ):
+                store = VersionCheckStore()
+                store.save("custom/agent", "1.2.3")
+                self.assertEqual("1.2.3", store.load("custom/agent"))
+
+    def test_load_returns_none_for_missing_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            base_dir = Path(tmp_dir)
+            with mock.patch(
+                "aicage.registry.agent_build.agent_version._store.paths_module.AGENT_VERSION_CHECK_STATE_DIR",
+                base_dir,
+            ):
+                store = VersionCheckStore()
+                self.assertIsNone(store.load("missing"))

@@ -7,6 +7,8 @@ from aicage._logging import get_logger
 from aicage.constants import HOST_VERSION_CHECK_TIMEOUT_SECONDS
 from aicage.docker.run import run_builder_version_check
 
+from ._images import ensure_version_check_image
+
 _VERSION_CHECK_TIMEOUT_MESSAGE: str = "Version check timed out."
 
 
@@ -18,6 +20,11 @@ class _CommandResult:
 
 
 def run_version_check_image(image_ref: str, definition_dir: Path) -> _CommandResult:
+    try:
+        ensure_version_check_image(image_ref)
+    except Exception as exc:
+        get_logger().warning("Version check image preparation failed: %s", exc)
+        return _CommandResult(success=False, output="", error=str(exc))
     process = run_builder_version_check(image_ref, definition_dir)
     return _from_process(process, "version check image")
 
@@ -28,13 +35,9 @@ def run_host(script_path: Path) -> _CommandResult:
             "version.sh at %s is not executable; running with /bin/bash.",
             script_path,
         )
-    return _run_command(["bash", str(script_path)], "host")
-
-
-def _run_command(command: list[str], context: str) -> _CommandResult:
     try:
         process = subprocess.run(
-            command,
+            ["bash", str(script_path)],
             check=False,
             capture_output=True,
             text=True,
@@ -43,9 +46,9 @@ def _run_command(command: list[str], context: str) -> _CommandResult:
     except subprocess.TimeoutExpired:
         return _CommandResult(success=False, output="", error=_VERSION_CHECK_TIMEOUT_MESSAGE)
     except Exception as exc:
-        get_logger().warning("Version check failed in %s: %s", context, exc)
+        get_logger().warning("Version check failed in host: %s", exc)
         return _CommandResult(success=False, output="", error=str(exc))
-    return _from_process(process, context)
+    return _from_process(process, "host")
 
 
 def _from_process(process: subprocess.CompletedProcess[str], context: str) -> _CommandResult:
