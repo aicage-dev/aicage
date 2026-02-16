@@ -9,13 +9,21 @@ from aicage.docker.errors import DockerError
 class DockerClientTests(TestCase):
     def setUp(self) -> None:
         _client.get_docker_client.cache_clear()
+        _client.get_docker_pull_client.cache_clear()
 
     @staticmethod
     def test_get_docker_client_uses_timeout() -> None:
         with mock.patch("aicage.docker._client.docker.from_env") as from_env:
             _client.get_docker_client()
 
-        from_env.assert_called_once_with(timeout=_client.DOCKER_REQUEST_TIMEOUT_SECONDS)
+        from_env.assert_called_once_with(timeout=_client.DOCKER_LOCAL_METADATA_TIMEOUT_SECONDS)
+
+    @staticmethod
+    def test_get_docker_pull_client_uses_timeout() -> None:
+        with mock.patch("aicage.docker._client.docker.from_env") as from_env:
+            _client.get_docker_pull_client()
+
+        from_env.assert_called_once_with(timeout=_client.DOCKER_PULL_REQUEST_TIMEOUT_SECONDS)
 
     def test_get_docker_client_raises_clean_error_when_docker_missing(self) -> None:
         with mock.patch(

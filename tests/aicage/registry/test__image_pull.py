@@ -56,7 +56,7 @@ class DockerInvocationTests(TestCase):
                     return_value="repo@sha256:verified",
                 ) as verify_mock,
                 mock.patch(
-                    "aicage.docker.pull.get_docker_client",
+                    "aicage.docker.pull.get_docker_pull_client",
                     return_value=client,
                 ),
                 mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
@@ -107,7 +107,7 @@ class DockerInvocationTests(TestCase):
                     return_value="repo@sha256:verified",
                 ) as verify_mock,
                 mock.patch(
-                    "aicage.docker.pull.get_docker_client",
+                    "aicage.docker.pull.get_docker_pull_client",
                     return_value=client,
                 ),
                 mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
@@ -139,7 +139,7 @@ class DockerInvocationTests(TestCase):
                 mock.patch(
                     "aicage.registry._image_pull.resolve_verified_digest"
                 ) as verify_mock,
-                mock.patch("aicage.docker.pull.get_docker_client") as client_mock,
+                mock.patch("aicage.docker.pull.get_docker_pull_client") as client_mock,
                 mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
                 mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
@@ -170,7 +170,7 @@ class DockerInvocationTests(TestCase):
                 mock.patch(
                     "aicage.registry._image_pull.resolve_verified_digest"
                 ) as verify_mock,
-                mock.patch("aicage.docker.pull.get_docker_client") as client_mock,
+                mock.patch("aicage.docker.pull.get_docker_pull_client") as client_mock,
                 mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
                 mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,

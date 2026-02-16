@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from aicage._logging import get_logger
-from aicage.docker._client import get_docker_client
+from aicage.docker._client import get_docker_pull_client
 
 
 def run_pull(image_ref: str, log_path: Path) -> None:
@@ -11,7 +11,7 @@ def run_pull(image_ref: str, log_path: Path) -> None:
     print(f"[aicage] Pulling image {image_ref} (logs: {log_path})...")
     logger.info("Pulling image %s (logs: %s)", image_ref, log_path)
 
-    client = get_docker_client()
+    client = get_docker_pull_client()
     with log_path.open("w", encoding="utf-8") as log_handle:
         for event in client.api.pull(image_ref, stream=True, decode=True):
             log_handle.write(f"{_format_pull_event(event)}\n")

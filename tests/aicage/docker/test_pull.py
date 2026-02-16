@@ -11,7 +11,7 @@ class DockerPullTests(TestCase):
         client.api.pull.return_value = [{"status": "downloaded"}, b"done\n"]
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
-            with mock.patch("aicage.docker.pull.get_docker_client", return_value=client):
+            with mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client):
                 run_pull("ghcr.io/aicage/aicage:latest", log_path)
 
             payload = log_path.read_text(encoding="utf-8")
