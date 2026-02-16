@@ -43,7 +43,7 @@ jobs:
           import os
           import subprocess
           tests = subprocess.check_output(
-              ["pytest", "--collect-only", "-q", "-m", "integration"],
+              ["pytest", "--collect-only", "-q", "-m", "integration and not proxy_integration"],
               text=True,
           ).splitlines()
           node_ids = [line for line in tests if "::" in line]
@@ -91,4 +91,4 @@ jobs:
       - name: Run integration test
         env:
           AICAGE_RUN_INTEGRATION: "1"
-        run: pytest -m integration ${{ matrix.test }}
+        run: pytest -m "integration and not proxy_integration" ${{ matrix.test }}

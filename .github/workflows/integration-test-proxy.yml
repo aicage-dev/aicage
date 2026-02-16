@@ -1,0 +1,99 @@
+name: Integration Tests (Proxy E2E)
+
+"on":
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  integration-proxy:
+    name: Integration proxy (${{ matrix.test }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test: tests/aicage/integration/remote_builtin/test_proxy.py::test_proxy_host_and_runtime_network
+            expected_host: api.github.com:443
+          - test: tests/aicage/integration/remote_builtin/test_proxy.py::test_proxy_custom_agent_build_and_version
+            expected_host: registry.npmjs.org:443
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.0.0
+
+      - name: Syncing metadata and agents with sub-project 'aicage-image'
+        run: |
+          scripts/sync-with-aicage-image-projects.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.1.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Validating config with schemas
+        run: |
+          scripts/validate-config-with-schemas.sh
+
+      - name: Resolve Docker bridge gateway proxy endpoint
+        run: |
+          proxy_host="$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}')"
+          if [ -z "$proxy_host" ]; then
+            echo "Unable to resolve docker bridge gateway." >&2
+            exit 1
+          fi
+          echo "PROXY_URL=http://$proxy_host:3128" >> "$GITHUB_ENV"
+
+      - name: Start Squid proxy with explicit config
+        run: |
+          cat > squid.conf <<'EOF'
+          http_port 3128
+          acl all src all
+          http_access allow all
+          access_log stdio:/var/log/squid/access.log
+          cache deny all
+          coredump_dir /var/spool/squid
+          EOF
+          docker run -d --name squid-proxy \
+            --network host \
+            -v "$PWD/squid.conf:/etc/squid/squid.conf:ro" \
+            ubuntu/squid:5.2-22.04_beta
+
+      - name: Wait for Squid proxy and validate host proxy path
+        env:
+          NO_PROXY: localhost,127.0.0.1
+        run: |
+          for i in {1..60}; do
+            if curl -fsS --proxy "$PROXY_URL" https://api.github.com >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Squid proxy did not become ready." >&2
+          docker logs squid-proxy || true
+          exit 1
+
+      - name: Run proxy integration test
+        env:
+          AICAGE_RUN_INTEGRATION: "1"
+          AICAGE_RUN_PROXY_INTEGRATION: "1"
+          HTTP_PROXY: ${{ env.PROXY_URL }}
+          HTTPS_PROXY: ${{ env.PROXY_URL }}
+          ALL_PROXY: ${{ env.PROXY_URL }}
+          NO_PROXY: localhost,127.0.0.1
+        run: |
+          pytest -m proxy_integration ${{ matrix.test }}
+
+      - name: Verify proxy traffic in Squid logs
+        run: |
+          docker logs squid-proxy > squid-access.log
+          echo "Last proxy access lines:"
+          tail -n 200 squid-access.log || true
+          grep -q '${{ matrix.expected_host }}' squid-access.log
+          grep -Eq '(ghcr.io|registry-1.docker.io|auth.docker.io):443' squid-access.log

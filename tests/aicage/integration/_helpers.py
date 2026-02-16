@@ -114,6 +114,11 @@ def require_integration() -> None:
         pytest.skip("Set AICAGE_RUN_INTEGRATION=1 to run integration tests.")
 
 
+def require_proxy_integration() -> None:
+    if not os.environ.get("AICAGE_RUN_PROXY_INTEGRATION"):
+        pytest.skip("Set AICAGE_RUN_PROXY_INTEGRATION=1 to run proxy integration tests.")
+
+
 def setup_workspace(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
