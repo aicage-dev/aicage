@@ -118,7 +118,23 @@ class EntrypointTests(TestCase):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        remove_mock.assert_called_once()
+        remove_mock.assert_called_once_with(None)
+        load_mock.assert_not_called()
+
+    def test_main_config_remove_with_agent(self) -> None:
+        with (
+            mock.patch(
+                "aicage.cli.entrypoint.parse_cli",
+                return_value=ParsedArgs(False, "", "", [], False, [], "remove", "codex"),
+            ),
+            mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
+            mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+        ):
+            exit_code = main([])
+
+        self.assertEqual(0, exit_code)
+        remove_mock.assert_called_once_with("codex")
         load_mock.assert_not_called()
 
     def test_main_uses_project_base(self) -> None:

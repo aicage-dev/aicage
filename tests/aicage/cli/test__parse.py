@@ -81,6 +81,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_info(self) -> None:
         parsed = parse_cli(["--config", "info"])
         self.assertEqual("info", parsed.config_action)
+        self.assertIsNone(parsed.config_agent)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("", parsed.agent)
         self.assertEqual([], parsed.agent_args)
@@ -97,10 +98,22 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_remove(self) -> None:
         parsed = parse_cli(["--config", "remove"])
         self.assertEqual("remove", parsed.config_action)
+        self.assertIsNone(parsed.config_agent)
 
-    def test_parse_cli_config_remove_rejects_args(self) -> None:
-        with self.assertRaises(CliError):
-            parse_cli(["--config", "remove", "codex"])
+    def test_parse_cli_config_remove_with_agent(self) -> None:
+        parsed = parse_cli(["--config", "remove", "codex"])
+        self.assertEqual("remove", parsed.config_action)
+        self.assertEqual("codex", parsed.config_agent)
+
+    def test_parse_cli_config_info_rejects_agent(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--config", "info", "codex"])
+        self.assertEqual("No agent value is allowed with '--config info'.", str(ctx.exception))
+
+    def test_parse_cli_config_rejects_too_many_values(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--config", "remove", "codex", "extra"])
+        self.assertEqual("Too many values for --config. Use '--config remove [agent]'.", str(ctx.exception))
 
     def test_parse_cli_flags_before_separator(self) -> None:
         parsed = parse_cli(

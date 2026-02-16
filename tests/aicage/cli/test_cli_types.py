@@ -22,3 +22,4 @@ class ParsedArgsTests(TestCase):
         self.assertFalse(parsed.docker_socket)
         self.assertEqual(["/tmp/one", "/tmp/two:ro"], parsed.shares)
         self.assertIsNone(parsed.config_action)
+        self.assertIsNone(parsed.config_agent)

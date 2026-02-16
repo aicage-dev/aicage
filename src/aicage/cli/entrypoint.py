@@ -28,7 +28,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if parsed.config_action == "info":
             info_project_config()
         elif parsed.config_action == "remove":
-            remove_project_config()
+            remove_project_config(parsed.config_agent)
         else:
             run_config: RunConfig = load_run_config(parsed.agent, parsed)
             run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)

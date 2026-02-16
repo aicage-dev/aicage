@@ -10,3 +10,4 @@ class ParsedArgs:
     docker_socket: bool
     shares: list[str]
     config_action: str | None
+    config_agent: str | None = None

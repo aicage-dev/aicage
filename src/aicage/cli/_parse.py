@@ -8,6 +8,7 @@ from aicage.cli._errors import CliError
 from aicage.cli_types import ParsedArgs
 
 _MIN_REMAINING_WITH_AGENT = 2
+_MAX_CONFIG_TOKENS = 2
 _CONFIG_ACTION_ALIASES: dict[str, str] = {
     "print": "info",
 }
@@ -28,7 +29,11 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         default=[],
         help="Mount a host directory into the container (repeatable).",
     )
-    parser.add_argument("--config", help="Perform config actions such as 'info' or 'remove'.")
+    parser.add_argument(
+        "--config",
+        nargs="+",
+        help="Perform config actions such as 'info' or 'remove [agent]'.",
+    )
     parser.add_argument("-h", "--help", action="store_true", help="Show help message and exit.")
     pre_argv, post_argv = _split_argv(argv)
 
@@ -48,13 +53,13 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  aicage [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
             "  aicage [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent> [<agent-args>]\n"
             "  aicage --config info\n"
-            "  aicage --config remove\n"
+            "  aicage --config remove [<agent>]\n"
             "  aicage --version\n\n"
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
             "  --docker         Mount /var/run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
-            "  --config <cmd>   Run config command: info, remove.\n"
+            "  --config <cmd>   Run config command: info, remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
@@ -67,8 +72,8 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         sys.exit(0)
 
     if opts.config:
-        config_action = _normalize_config_action(opts.config)
-        _validate_config_action(config_action, opts.config, opts, remaining, post_argv)
+        config_tokens: list[str] = opts.config
+        config_action, config_agent = _validate_config_action(config_tokens, opts, remaining, post_argv)
         return ParsedArgs(
             opts.dry_run,
             "",
@@ -77,6 +82,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             opts.docker,
             opts.share,
             config_action,
+            config_agent,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -91,6 +97,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         agent_args,
         opts.docker,
         opts.share,
+        None,
         None,
     )
 
@@ -109,16 +116,23 @@ def _normalize_config_action(action: str) -> str:
 
 
 def _validate_config_action(
-    config_action: str,
-    raw_action: str,
+    config_tokens: list[str],
     opts: argparse.Namespace,
     remaining: list[str],
     post_argv: list[str] | None,
-) -> None:
+) -> tuple[str, str | None]:
+    if len(config_tokens) > _MAX_CONFIG_TOKENS:
+        raise CliError("Too many values for --config. Use '--config remove [agent]'.")
+    raw_action = config_tokens[0]
+    config_action = _normalize_config_action(raw_action)
     if config_action not in _VALID_CONFIG_ACTIONS:
         raise CliError(f"Unknown config action: {raw_action}")
+    config_agent = config_tokens[1] if len(config_tokens) == _MAX_CONFIG_TOKENS else None
+    if config_action == "info" and config_agent is not None:
+        raise CliError("No agent value is allowed with '--config info'.")
     if remaining or post_argv or opts.docker or opts.dry_run or opts.share:
         raise CliError("No additional arguments are allowed with --config.")
+    return config_action, config_agent
 
 
 def _parse_agent_section(

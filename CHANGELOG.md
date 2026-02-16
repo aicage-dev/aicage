@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `--config remove [<agent>]` support to remove a single agent entry from a project's config file without
+  deleting the full file.
+
+### Changed
+
+- Expanded `--help` output with clearer argument descriptions and behavior notes.
+- Clarified `--` separator behavior in help: it is required only when docker args are present before the agent.
+
 ## [0.9.19] - 2026-02-16
 
 ### Fixed

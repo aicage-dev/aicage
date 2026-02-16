@@ -64,7 +64,8 @@ class EnsureLocalImageTests(TestCase):
             with self.assertRaises(RegistryError):
                 ensure_module.ensure(run_config)
 
-    def test_ensure_uses_local_agent_image_when_base_refresh_fails(self) -> None:
+    @staticmethod
+    def test_ensure_uses_local_agent_image_when_base_refresh_fails() -> None:
         run_config = build_run_config()
         with (
             mock.patch(
