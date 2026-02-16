@@ -2,13 +2,13 @@ import urllib.error
 import urllib.request
 from collections.abc import Mapping
 
-from ._timeouts import REGISTRY_REQUEST_TIMEOUT_SECONDS
+from aicage.constants import REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
 
 
 def head_request(url: str, headers: Mapping[str, str]) -> tuple[int | None, dict[str, str]]:
     request = urllib.request.Request(url, headers=dict(headers), method="HEAD")
     try:
-        with urllib.request.urlopen(request, timeout=REGISTRY_REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS) as response:
             return response.status, dict(response.headers)
     except urllib.error.HTTPError as exc:
         return exc.code, dict(exc.headers)

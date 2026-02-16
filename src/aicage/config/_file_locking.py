@@ -5,8 +5,7 @@ from pathlib import Path
 import portalocker
 
 from aicage.config.errors import ConfigError
-
-_LOCK_TIMEOUT_SECONDS = 30
+from aicage.constants import PROJECT_FILE_LOCK_TIMEOUT_SECONDS
 
 
 @contextmanager
@@ -20,4 +19,4 @@ def _lock_project_config(project_config_path: Path) -> Iterator[None]:
 
 def _lock_file(path: Path) -> portalocker.Lock:
     path.parent.mkdir(parents=True, exist_ok=True)
-    return portalocker.Lock(str(path), timeout=_LOCK_TIMEOUT_SECONDS, mode="a+")
+    return portalocker.Lock(str(path), timeout=PROJECT_FILE_LOCK_TIMEOUT_SECONDS, mode="a+")

@@ -4,7 +4,8 @@ import docker
 from docker.client import DockerClient
 from docker.errors import DockerException
 
-from ._timeouts import DOCKER_REQUEST_TIMEOUT_SECONDS
+from aicage.constants import DOCKER_REQUEST_TIMEOUT_SECONDS
+
 from .errors import DockerError
 
 

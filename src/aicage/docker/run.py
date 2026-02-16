@@ -2,14 +2,13 @@ import shlex
 import subprocess
 from pathlib import Path
 
+from aicage.constants import BUILDER_VERSION_CHECK_TIMEOUT_SECONDS
 from aicage.docker._env import resolve_user_ids
 from aicage.docker._mounts import append_mount
 from aicage.docker.cli import run_docker_command
 from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
 from aicage.docker.refs import repository_from_image_ref
 from aicage.runtime.run_args import DockerRunArgs
-
-_BUILDER_VERSION_CHECK_TIMEOUT_SECONDS: float = 20.0
 
 
 def run_container(args: DockerRunArgs) -> None:
@@ -53,7 +52,7 @@ def run_builder_version_check(image_ref: str, definition_dir: Path) -> subproces
             check=False,
             capture_output=True,
             text=True,
-            timeout=_BUILDER_VERSION_CHECK_TIMEOUT_SECONDS,
+            timeout=BUILDER_VERSION_CHECK_TIMEOUT_SECONDS,
         )
         return subprocess.CompletedProcess(
             command,

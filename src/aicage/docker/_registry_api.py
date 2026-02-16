@@ -3,7 +3,8 @@ import urllib.request
 from collections.abc import Mapping
 from typing import Any
 
-from ._timeouts import REGISTRY_REQUEST_TIMEOUT_SECONDS
+from aicage.constants import DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS
+
 from .errors import RegistryDiscoveryError
 from .types import RegistryApiConfig
 
@@ -20,7 +21,7 @@ def _fetch_pull_token_for_repository(api_config: RegistryApiConfig, repository: 
 def _fetch_json(url: str, headers: dict[str, str] | None) -> tuple[dict[str, Any], Mapping[str, str]]:
     request = urllib.request.Request(url, headers=headers or {})
     try:
-        with urllib.request.urlopen(request, timeout=REGISTRY_REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS) as response:
             payload = response.read().decode("utf-8")
             response_headers = response.headers
     except Exception as exc:  # pylint: disable=broad-except

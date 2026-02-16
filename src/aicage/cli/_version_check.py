@@ -5,10 +5,10 @@ import urllib.error
 import urllib.request
 
 from aicage._logging import get_logger
+from aicage.constants import PYPI_VERSION_CHECK_TIMEOUT_SECONDS
 from aicage.runtime.prompts.confirm import prompt_update_aicage
 
 _PYPI_URL: str = "https://pypi.org/pypi/aicage/json"
-_REQUEST_TIMEOUT_SECONDS: float = 2.5
 _UPGRADE_COMMAND: str = "pipx upgrade aicage"
 _UNKNOWN_VERSION: str = "0.0.0"
 
@@ -17,7 +17,7 @@ def _check_for_update(current_version: str) -> str | None:
     logger = get_logger()
     try:
         request = urllib.request.Request(_PYPI_URL, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(request, timeout=_REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=PYPI_VERSION_CHECK_TIMEOUT_SECONDS) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning("Version check failed: %s", exc)

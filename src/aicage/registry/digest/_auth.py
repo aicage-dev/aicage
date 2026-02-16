@@ -4,7 +4,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from ._timeouts import REGISTRY_REQUEST_TIMEOUT_SECONDS
+from aicage.constants import REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
 
 _AUTH_HEADER_SPLIT_PARTS: int = 2
 
@@ -27,7 +27,7 @@ def fetch_bearer_token(realm: str, service: str, scope: str) -> str | None:
     url = f"{realm}?{urllib.parse.urlencode(query)}"
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
-        with urllib.request.urlopen(request, timeout=REGISTRY_REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS) as response:
             payload = response.read().decode("utf-8")
     except urllib.error.URLError:
         return None

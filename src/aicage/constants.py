@@ -23,3 +23,11 @@ COSIGN_OIDC_ISSUER: str = "https://token.actions.githubusercontent.com"
 COSIGN_IDENTITY_REGEXP: str = (
     "^https://github.com/aicage/github-actions/.github/workflows/.*@refs/.*/.*$"
 )
+
+DOCKER_REQUEST_TIMEOUT_SECONDS: int = 60 * 60 * 6
+DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS: int = 60 * 60 * 6
+REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS: float = 2.0
+PYPI_VERSION_CHECK_TIMEOUT_SECONDS: float = 2.5
+PROJECT_FILE_LOCK_TIMEOUT_SECONDS: int = 30
+HOST_VERSION_CHECK_TIMEOUT_SECONDS: float = 15.0
+BUILDER_VERSION_CHECK_TIMEOUT_SECONDS: float = 20.0
