@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.19] - 2026-02-16
+
+### Fixed
+
+- Allow local agent runs to continue in offline scenarios when remote base digest verification fails but a usable
+  local image is already available (local base digest fallback and local final-agent image fallback).
+- Added explicit timeouts for host and builder-container agent version checks to prevent offline hangs.
+- For local agents, fall back to a cached agent version when host and image-based version checks fail offline, instead
+  of hard-exiting.
+
+### Changed
+
+- Centralized timeout constants in `aicage.constants`.
+- Split Docker timeouts by operation type: short timeout for local Docker metadata queries, long timeout for image
+  pulls, and short timeout for registry JSON lookups.
+
 ## [0.9.18] - 2026-02-15
 
 ### Added
