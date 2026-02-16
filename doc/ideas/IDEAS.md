@@ -53,33 +53,3 @@ npm error network 'proxy' config is set properly.  See: 'npm help config'
 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-02-03T17_38_20_318Z-debug-0.log
 PS C:\tmp\aicage-test2>
 ```
-
-## Image Cleanup
-
-### Delete old image after pull of update
-
-We already delete old images when pulling new ones. But if another aicage instance is using the image, then the image
-remains. To fix this we could on exit of `docker-run` check somehow if the image is still used (image digest still
-tagged or such, cosign image has no tag thus special) and if not delete it.
-
-### Delete old image after local build of update
-
-Similarly, when we build an image to update an existing local image, then we should delete the old image by digest after
-the build.
-
-### Smarter handling of source images
-
-Before we build an image locally, we currently pull the source image (the FROM image in Dockerfiles). This is done for:
-
-- custom bases - we pull FROM_IMAGE
-- locally built agent images: we pull aicage base-image
-- locally built images with extensions: we pull the aicage final image
-
-But actually docker-build would pull this by itself. Having a separate pull is nice towards user so he knows why he is
-kept waiting (knows without looking at log file). But the current process leaves such source images on the local PC
-forever.
-
-Here we have 2 options:
-
-- stop pulling, let docker build handle it
-- after building delete the source image (it's still on local PC as layer in the built image)
