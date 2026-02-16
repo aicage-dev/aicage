@@ -1,4 +1,5 @@
 import io
+import subprocess
 import tempfile
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -26,6 +27,7 @@ class AgentVersionCommandTests(TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
+                timeout=15.0,
             )
             self.assertTrue(result.success)
             self.assertEqual("1.2.3", result.output)
@@ -43,6 +45,18 @@ class AgentVersionCommandTests(TestCase):
                 result = _command.run_host(script_path)
             self.assertFalse(result.success)
             self.assertEqual("missing", result.error)
+
+    def test_run_host_returns_timeout_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            script_path = Path(tmp_dir) / "version.sh"
+            script_path.write_text("echo 1.2.3\n", encoding="utf-8")
+            with mock.patch(
+                "aicage.registry.agent_build.agent_version._command.subprocess.run",
+                side_effect=subprocess.TimeoutExpired(cmd=["bash"], timeout=1),
+            ):
+                result = _command.run_host(script_path)
+            self.assertFalse(result.success)
+            self.assertEqual("Version check timed out.", result.error)
 
     def test_run_version_check_image_returns_error_on_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

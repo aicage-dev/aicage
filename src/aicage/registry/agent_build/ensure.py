@@ -1,15 +1,18 @@
 from pathlib import Path
 
+from aicage._logging import get_logger
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.docker.build import run_build
 from aicage.docker.query import (
     cleanup_old_digest,
     get_local_repo_digest_for_repo,
+    local_image_exists,
 )
 from aicage.docker.refs import repository_from_image_ref
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._build_flow import maybe_build
+from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
 
 from ..base_build.ensure import ensure as ensure_base_build
@@ -37,10 +40,20 @@ def ensure(run_config: RunConfig) -> None:
         )
     else:
         base_repo = base_repository(run_config)
-        base_image = refresh_base_digest(
-            base_image_ref=base_image,
-            base_repository=base_repo,
-        )
+        try:
+            base_image = refresh_base_digest(
+                base_image_ref=base_image,
+                base_repository=base_repo,
+            )
+        except RegistryError:
+            if not local_image_exists(image_ref):
+                raise
+            logger = get_logger()
+            logger.warning(
+                "Base image refresh failed; using local agent image %s.",
+                image_ref,
+            )
+            return
 
     store = BuildStore()
     agent_version = _get_agent_version(run_config, agent_metadata, definition_dir)

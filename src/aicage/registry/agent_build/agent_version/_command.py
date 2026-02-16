@@ -6,6 +6,9 @@ from pathlib import Path
 from aicage._logging import get_logger
 from aicage.docker.run import run_builder_version_check
 
+_VERSION_CHECK_TIMEOUT_SECONDS: float = 15.0
+_VERSION_CHECK_TIMEOUT_MESSAGE: str = "Version check timed out."
+
 
 @dataclass(frozen=True)
 class _CommandResult:
@@ -30,7 +33,15 @@ def run_host(script_path: Path) -> _CommandResult:
 
 def _run_command(command: list[str], context: str) -> _CommandResult:
     try:
-        process = subprocess.run(command, check=False, capture_output=True, text=True)
+        process = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=_VERSION_CHECK_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return _CommandResult(success=False, output="", error=_VERSION_CHECK_TIMEOUT_MESSAGE)
     except Exception as exc:
         get_logger().warning("Version check failed in %s: %s", context, exc)
         return _CommandResult(success=False, output="", error=str(exc))

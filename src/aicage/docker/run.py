@@ -2,15 +2,14 @@ import shlex
 import subprocess
 from pathlib import Path
 
-from docker.errors import ContainerError, DockerException, ImageNotFound
-
-from aicage.docker._client import get_docker_client
 from aicage.docker._env import resolve_user_ids
 from aicage.docker._mounts import append_mount
 from aicage.docker.cli import run_docker_command
 from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
 from aicage.docker.refs import repository_from_image_ref
 from aicage.runtime.run_args import DockerRunArgs
+
+_BUILDER_VERSION_CHECK_TIMEOUT_SECONDS: float = 20.0
 
 
 def run_container(args: DockerRunArgs) -> None:
@@ -37,35 +36,35 @@ def run_builder_version_check(image_ref: str, definition_dir: Path) -> subproces
         "&& chmod +x /tmp/version.sh "
         "&& /bin/bash /tmp/version.sh",
     ]
-    volume_src = str(definition_dir.resolve())
-    client = get_docker_client()
+    run_command = [
+        "docker",
+        "run",
+        "--rm",
+        "-v",
+        f"{str(definition_dir.resolve())}:/agent:ro",
+        "-w",
+        "/agent",
+        image_ref,
+        *command,
+    ]
     try:
-        output = client.containers.run(
-            image=image_ref,
-            command=command,
-            volumes={volume_src: {"bind": "/agent", "mode": "ro"}},
-            working_dir="/agent",
-            remove=True,
-            stdout=True,
-            stderr=True,
+        process = subprocess.run(
+            run_command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=_BUILDER_VERSION_CHECK_TIMEOUT_SECONDS,
         )
-        if isinstance(output, bytes):
-            output = output.decode("utf-8", errors="replace")
-        return subprocess.CompletedProcess(command, 0, stdout=output, stderr="")
-    except ContainerError as exc:
-        stdout = _decode_container_output(getattr(exc, "stdout", ""))
-        stderr = _decode_container_output(getattr(exc, "stderr", ""))
-        return subprocess.CompletedProcess(command, exc.exit_status, stdout=stdout, stderr=stderr)
-    except (ImageNotFound, DockerException) as exc:
+        return subprocess.CompletedProcess(
+            command,
+            process.returncode,
+            stdout=process.stdout,
+            stderr=process.stderr,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(command, 124, stdout="", stderr="Version check timed out.")
+    except Exception as exc:
         return subprocess.CompletedProcess(command, 1, stdout="", stderr=str(exc))
-
-
-def _decode_container_output(output: object) -> str:
-    if isinstance(output, bytes):
-        return output.decode("utf-8", errors="replace")
-    if isinstance(output, str):
-        return output
-    return ""
 
 
 

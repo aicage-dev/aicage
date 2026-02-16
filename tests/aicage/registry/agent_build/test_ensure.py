@@ -64,6 +64,44 @@ class EnsureLocalImageTests(TestCase):
             with self.assertRaises(RegistryError):
                 ensure_module.ensure(run_config)
 
+    def test_ensure_uses_local_agent_image_when_base_refresh_fails(self) -> None:
+        run_config = build_run_config()
+        with (
+            mock.patch(
+                "aicage.registry.agent_build.ensure.refresh_base_digest",
+                side_effect=RegistryError("offline"),
+            ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.local_image_exists",
+                return_value=True,
+            ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.AgentVersionChecker"
+            ) as checker_cls,
+            mock.patch(
+                "aicage.registry.agent_build.ensure.run_build"
+            ) as build_mock,
+        ):
+            ensure_module.ensure(run_config)
+        checker_cls.assert_not_called()
+        build_mock.assert_not_called()
+
+    def test_ensure_raises_when_base_refresh_fails_and_agent_image_missing(self) -> None:
+        run_config = build_run_config()
+        with (
+            mock.patch(
+                "aicage.registry.agent_build.ensure.refresh_base_digest",
+                side_effect=RegistryError("offline"),
+            ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.local_image_exists",
+                return_value=False,
+            ),
+        ):
+            with self.assertRaises(RegistryError) as raised:
+                ensure_module.ensure(run_config)
+        self.assertIn("offline", str(raised.exception))
+
     @staticmethod
     def test_ensure_uses_custom_base() -> None:
         run_config = build_run_config()

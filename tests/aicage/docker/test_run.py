@@ -1,8 +1,6 @@
+import subprocess
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
-
-from docker.errors import ContainerError, DockerException
-from docker.models.containers import Container
 
 from aicage.docker import run
 from aicage.runtime.run_args import DockerRunArgs, EnvVar, MountSpec
@@ -50,9 +48,10 @@ class RunCommandTests(TestCase):
         print_mock.assert_called_once_with("docker run image")
 
     def test_run_builder_version_check_returns_output(self) -> None:
-        client = mock.Mock()
-        client.containers.run.return_value = b"1.2.3\n"
-        with mock.patch("aicage.docker.run.get_docker_client", return_value=client):
+        with mock.patch(
+            "aicage.docker.run.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="1.2.3\n", stderr=""),
+        ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
                 Path("/tmp/agent"),
@@ -61,18 +60,11 @@ class RunCommandTests(TestCase):
         self.assertEqual("1.2.3\n", result.stdout)
         self.assertEqual("", result.stderr)
 
-    def test_run_builder_version_check_handles_container_error(self) -> None:
-        error = ContainerError(
-            container=mock.Mock(spec=Container),
-            exit_status=2,
-            command=["/bin/bash", "/agent/version.sh"],
-            image="ghcr.io/aicage/aicage-image-util:agent-version",
-            stderr="failed",
-        )
-        error.stdout = b"partial"
-        client = mock.Mock()
-        client.containers.run.side_effect = error
-        with mock.patch("aicage.docker.run.get_docker_client", return_value=client):
+    def test_run_builder_version_check_handles_command_error(self) -> None:
+        with mock.patch(
+            "aicage.docker.run.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 2, stdout="partial", stderr="failed"),
+        ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
                 Path("/tmp/agent"),
@@ -81,10 +73,24 @@ class RunCommandTests(TestCase):
         self.assertEqual("partial", result.stdout)
         self.assertEqual("failed", result.stderr)
 
-    def test_run_builder_version_check_handles_docker_error(self) -> None:
-        client = mock.Mock()
-        client.containers.run.side_effect = DockerException("boom")
-        with mock.patch("aicage.docker.run.get_docker_client", return_value=client):
+    def test_run_builder_version_check_handles_timeout(self) -> None:
+        with mock.patch(
+            "aicage.docker.run.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd=["docker"], timeout=1),
+        ):
+            result = run.run_builder_version_check(
+                "ghcr.io/aicage/aicage-image-util:agent-version",
+                Path("/tmp/agent"),
+            )
+        self.assertEqual(124, result.returncode)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("Version check timed out.", result.stderr)
+
+    def test_run_builder_version_check_handles_command_exception(self) -> None:
+        with mock.patch(
+            "aicage.docker.run.subprocess.run",
+            side_effect=RuntimeError("boom"),
+        ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
                 Path("/tmp/agent"),

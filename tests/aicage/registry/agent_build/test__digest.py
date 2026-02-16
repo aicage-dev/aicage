@@ -7,6 +7,49 @@ from aicage.registry.agent_build import _digest
 
 
 class LocalBuildDigestTests(TestCase):
+    def test_refresh_base_digest_verify_failure_uses_local_digest(self) -> None:
+        with (
+            mock.patch(
+                "aicage.registry.agent_build._digest.get_local_repo_digest_for_repo",
+                return_value="sha256:local",
+            ),
+            mock.patch(
+                "aicage.registry.agent_build._digest.resolve_verified_digest",
+                side_effect=RegistryError("offline"),
+            ),
+            mock.patch("aicage.registry.agent_build._digest.run_pull") as run_mock,
+            mock.patch(
+                "aicage.registry.agent_build._digest.cleanup_old_digest"
+            ) as cleanup_mock,
+        ):
+            digest = _digest.refresh_base_digest(
+                base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                base_repository="ghcr.io/aicage/aicage-image-base",
+            )
+        self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", digest)
+        run_mock.assert_not_called()
+        cleanup_mock.assert_not_called()
+
+    def test_refresh_base_digest_verify_failure_without_local_raises(self) -> None:
+        with (
+            mock.patch(
+                "aicage.registry.agent_build._digest.get_local_repo_digest_for_repo",
+                return_value=None,
+            ),
+            mock.patch(
+                "aicage.registry.agent_build._digest.resolve_verified_digest",
+                side_effect=RegistryError("offline"),
+            ),
+            mock.patch("aicage.registry.agent_build._digest.run_pull") as run_mock,
+        ):
+            with self.assertRaises(RegistryError) as exc:
+                _digest.refresh_base_digest(
+                    base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                    base_repository="ghcr.io/aicage/aicage-image-base",
+                )
+        self.assertIn("offline", str(exc.exception))
+        run_mock.assert_not_called()
+
     def test_refresh_base_digest_skips_pull_when_local_matches_remote(self) -> None:
         with (
             mock.patch(

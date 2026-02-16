@@ -12,7 +12,13 @@ def refresh_base_digest(
 ) -> str:
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
-    digest_ref = resolve_verified_digest(base_image_ref)
+    try:
+        digest_ref = resolve_verified_digest(base_image_ref)
+    except RegistryError:
+        if not local_digest:
+            raise
+        logger.warning("Base image digest check failed; using local base image.")
+        return f"{base_repository}@{local_digest}"
     remote_digest = digest_ref.split("@", 1)[1]
     if remote_digest == local_digest:
         return digest_ref
