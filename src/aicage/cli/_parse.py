@@ -45,15 +45,22 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         usage: str = (
             "Usage:\n"
             "  aicage <agent>\n"
-            "  aicage [--dry-run] [--docker] [--share <path>...] -- <agent> [<agent-args>]\n"
+            "  aicage [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
             "  aicage [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent> [<agent-args>]\n"
             "  aicage --config info\n"
             "  aicage --config remove\n"
             "  aicage --version\n\n"
-            "Any arguments between aicage and the agent require a '--' separator before the agent.\n"
-            "<docker-args> are any arguments not recognized by aicage.\n"
-            "These arguments are forwarded verbatim to docker run.\n"
-            "<agent-args> are passed verbatim to the agent.\n"
+            "Arguments:\n"
+            "  --dry-run        Print the generated docker run command and exit.\n"
+            "  --docker         Mount /var/run/docker.sock into the container.\n"
+            "  --share <path>   Mount a host path into the container. Repeatable.\n"
+            "  --config <cmd>   Run config command: info, remove.\n"
+            "  -v, --version    Print aicage version and exit.\n"
+            "  -h, --help       Show this help and exit.\n\n"
+            "Behavior:\n"
+            "  - <docker-args> are forwarded verbatim to docker run.\n"
+            "  - If docker args are present, use '--' before <agent>.\n"
+            "  - <agent-args> are forwarded verbatim to the agent.\n"
         )
         print(usage)
         get_logger().info("Displayed CLI usage help.")
