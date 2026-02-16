@@ -5,6 +5,7 @@ import urllib.error
 import urllib.request
 
 from aicage._logging import get_logger
+from aicage._network import classify_network_failure, host_from_url
 from aicage.constants import PYPI_VERSION_CHECK_TIMEOUT_SECONDS
 from aicage.runtime.prompts.confirm import prompt_update_aicage
 
@@ -15,12 +16,21 @@ _UNKNOWN_VERSION: str = "0.0.0"
 
 def _check_for_update(current_version: str) -> str | None:
     logger = get_logger()
+    host = host_from_url(_PYPI_URL)
     try:
         request = urllib.request.Request(_PYPI_URL, headers={"Accept": "application/json"})
         with urllib.request.urlopen(request, timeout=PYPI_VERSION_CHECK_TIMEOUT_SECONDS) as response:
             payload = json.loads(response.read().decode("utf-8"))
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        logger.warning("Version check failed: %s", exc)
+    except (urllib.error.URLError, TimeoutError) as exc:
+        logger.warning(
+            "Version check failed (operation=pypi_version_check, host=%s, category=%s): %s",
+            host,
+            classify_network_failure(exc),
+            exc,
+        )
+        return None
+    except json.JSONDecodeError as exc:
+        logger.warning("Version check failed (operation=pypi_version_check, host=%s): %s", host, exc)
         return None
 
     latest_version = str(payload.get("info", {}).get("version", "")).strip()

@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 
 from aicage._logging import get_logger
+from aicage._proxy import proxy_build_args_from_host
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.resources import find_packaged_path
 from aicage.config.runtime_config import RunConfig
@@ -38,6 +39,7 @@ def run_build(
         image_ref,
         str(build_root),
     ]
+    command.extend(proxy_build_args_from_host())
     with log_path.open("w", encoding="utf-8") as log_handle:
         result = run_docker_command(
             command,
@@ -68,6 +70,7 @@ def run_extended_build(
     dockerfile_builtin = find_packaged_path("extension-build/Dockerfile")
     current_image_ref = base_image_ref
     intermediate_refs: list[str] = []
+    proxy_build_args = proxy_build_args_from_host()
     with log_path.open("w", encoding="utf-8") as log_handle:
         for idx, extension in enumerate(extensions):
             target_ref = (
@@ -94,6 +97,7 @@ def run_extended_build(
                 target_ref,
                 str(extension.directory),
             ]
+            command.extend(proxy_build_args)
             result = run_docker_command(
                 command,
                 check=False,
@@ -138,6 +142,7 @@ def run_custom_base_build(
         image_ref,
         str(build_root),
     ]
+    command.extend(proxy_build_args_from_host())
     with log_path.open("w", encoding="utf-8") as log_handle:
         result = run_docker_command(
             command,

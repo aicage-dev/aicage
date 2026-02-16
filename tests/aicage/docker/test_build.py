@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -17,6 +18,7 @@ class LocalBuildRunnerTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
             with (
+                mock.patch.dict(os.environ, {}, clear=True),
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
                     return_value=Path("/tmp/build/Dockerfile"),
@@ -80,10 +82,13 @@ class LocalBuildRunnerTests(TestCase):
             log_path = Path(tmp_dir) / "logs" / "build.log"
             dockerfile_path = Path(tmp_dir) / "Dockerfile"
             dockerfile_path.write_text("FROM ubuntu:latest\n", encoding="utf-8")
-            with mock.patch(
-                "aicage.docker.build.subprocess.run",
-                return_value=CompletedProcess([], 0),
-            ) as run_mock:
+            with (
+                mock.patch.dict(os.environ, {}, clear=True),
+                mock.patch(
+                    "aicage.docker.build.subprocess.run",
+                    return_value=CompletedProcess([], 0),
+                ) as run_mock,
+            ):
                 build.run_custom_base_build(
                     dockerfile_path=dockerfile_path,
                     build_root=Path(tmp_dir),
@@ -108,6 +113,36 @@ class LocalBuildRunnerTests(TestCase):
             ],
             command,
         )
+
+    def test_run_build_includes_proxy_build_args(self) -> None:
+        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "logs" / "build.log"
+            with (
+                mock.patch.dict(
+                    os.environ,
+                    {"HTTP_PROXY": "http://proxy-http:8080"},
+                    clear=True,
+                ),
+                mock.patch(
+                    "aicage.docker.build.find_packaged_path",
+                    return_value=Path("/tmp/build/Dockerfile"),
+                ),
+                mock.patch(
+                    "aicage.docker.build.subprocess.run",
+                    return_value=mock.Mock(returncode=0),
+                ) as run_mock,
+            ):
+                build.run_build(
+                    run_config=run_config,
+                    base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                    image_ref="aicage:claude-ubuntu",
+                    log_path=log_path,
+                )
+
+        command = run_mock.call_args.args[0]
+        self.assertIn("--build-arg", command)
+        self.assertIn("HTTP_PROXY=http://proxy-http:8080", command)
 
     def test_run_custom_base_build_raises_on_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

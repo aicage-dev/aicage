@@ -2,6 +2,7 @@ import shlex
 import subprocess
 from pathlib import Path
 
+from aicage._proxy import proxy_run_env_args_from_host
 from aicage.constants import BUILDER_VERSION_CHECK_TIMEOUT_SECONDS
 from aicage.docker._env import resolve_user_ids
 from aicage.docker._mounts import append_mount
@@ -39,6 +40,7 @@ def run_builder_version_check(image_ref: str, definition_dir: Path) -> subproces
         "docker",
         "run",
         "--rm",
+        *proxy_run_env_args_from_host(),
         "-v",
         f"{str(definition_dir.resolve())}:/agent:ro",
         "-w",

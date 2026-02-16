@@ -1,8 +1,10 @@
 import json
+import urllib.error
 import urllib.request
 from collections.abc import Mapping
 from typing import Any
 
+from aicage._network import classify_network_failure, host_from_url
 from aicage.constants import DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS
 
 from .errors import RegistryDiscoveryError
@@ -24,8 +26,16 @@ def _fetch_json(url: str, headers: dict[str, str] | None) -> tuple[dict[str, Any
         with urllib.request.urlopen(request, timeout=DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS) as response:
             payload = response.read().decode("utf-8")
             response_headers = response.headers
-    except Exception as exc:  # pylint: disable=broad-except
-        raise RegistryDiscoveryError(f"Failed to query registry endpoint {url}: {exc}") from exc
+    except urllib.error.HTTPError as exc:
+        category = classify_network_failure(exc)
+        host = host_from_url(url)
+        message = f"Failed to query registry endpoint {url} (host={host}, category={category}): {exc}"
+        raise RegistryDiscoveryError(message) from exc
+    except urllib.error.URLError as exc:
+        category = classify_network_failure(exc)
+        host = host_from_url(url)
+        message = f"Failed to query registry endpoint {url} (host={host}, category={category}): {exc}"
+        raise RegistryDiscoveryError(message) from exc
 
     try:
         data = json.loads(payload)

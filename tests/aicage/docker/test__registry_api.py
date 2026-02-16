@@ -1,3 +1,4 @@
+import urllib.error
 from unittest import TestCase, mock
 
 from aicage.docker import _registry_api
@@ -36,7 +37,7 @@ class RemoteApiTests(TestCase):
     def test_fetch_json_raises_on_request_failure(self) -> None:
         with mock.patch(
             "aicage.docker._registry_api.urllib.request.urlopen",
-            side_effect=Exception("boom"),
+            side_effect=urllib.error.URLError("boom"),
         ):
             with self.assertRaises(_registry_api.RegistryDiscoveryError):
                 _registry_api._fetch_json("https://example.test/api", None)

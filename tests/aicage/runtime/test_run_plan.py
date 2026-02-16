@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest import TestCase, mock
 
@@ -36,7 +37,8 @@ class RunPlanTests(TestCase):
             env=[],
         )
         parsed = ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None)
-        run_args = build_run_args(config, parsed)
+        with mock.patch.dict(os.environ, {}, clear=True):
+            run_args = build_run_args(config, parsed)
 
         self.assertEqual("--project --cli", run_args.merged_docker_args)
         self.assertEqual(["--flag"], run_args.agent_args)
@@ -65,7 +67,8 @@ class RunPlanTests(TestCase):
             env=[],
         )
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
-        run_args = build_run_args(config, parsed)
+        with mock.patch.dict(os.environ, {}, clear=True):
+            run_args = build_run_args(config, parsed)
 
         self.assertEqual([mount], run_args.mounts)
 
@@ -94,10 +97,54 @@ class RunPlanTests(TestCase):
             env=env,
         )
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
-        run_args = build_run_args(config, parsed)
+        with mock.patch.dict(os.environ, {}, clear=True):
+            run_args = build_run_args(config, parsed)
 
         self.assertEqual([mount], run_args.mounts)
         self.assertEqual(env, run_args.env)
+
+    def test_build_run_args_appends_proxy_env_from_host(self) -> None:
+        project_path = Path("/tmp/project")
+        config = RunConfig(
+            project_path=project_path,
+            agent="codex",
+            context=ConfigContext(
+                store=mock.Mock(),
+                project_cfg=ProjectConfig(path=str(project_path), agents={}),
+                agents=self._get_agents(),
+                bases=self._get_bases(),
+                extensions={},
+            ),
+            selection=ImageSelection(
+                image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
+                base="ubuntu",
+                extensions=[],
+                base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
+            ),
+            project_docker_args="",
+            mounts=[],
+            env=[EnvVar(name="EXTRA", value="1")],
+        )
+        parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+        with mock.patch.dict(
+            os.environ,
+            {
+                "HTTP_PROXY": "http://proxy-http:8080",
+                "HTTPS_PROXY": "http://proxy-https:8080",
+                "http_proxy": "http://ignored:8080",
+            },
+            clear=True,
+        ):
+            run_args = build_run_args(config, parsed)
+
+        self.assertEqual(
+            [
+                EnvVar(name="EXTRA", value="1"),
+                EnvVar(name="HTTP_PROXY", value="http://proxy-http:8080"),
+                EnvVar(name="HTTPS_PROXY", value="http://proxy-https:8080"),
+            ],
+            run_args.env,
+        )
 
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:

@@ -4,6 +4,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from aicage._logging import get_logger
+from aicage._network import classify_network_failure, host_from_url
 from aicage.constants import REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
 
 _AUTH_HEADER_SPLIT_PARTS: int = 2
@@ -23,13 +25,19 @@ def parse_auth_header(value: str) -> tuple[str, dict[str, str]]:
 def fetch_bearer_token(realm: str, service: str, scope: str) -> str | None:
     if not realm:
         return None
+    logger = get_logger()
     query = {"service": service, "scope": scope} if service else {"scope": scope}
     url = f"{realm}?{urllib.parse.urlencode(query)}"
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
         with urllib.request.urlopen(request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS) as response:
             payload = response.read().decode("utf-8")
-    except urllib.error.URLError:
+    except urllib.error.URLError as exc:
+        logger.warning(
+            "Network request failed (operation=registry_token_request, host=%s, category=%s).",
+            host_from_url(url),
+            classify_network_failure(exc),
+        )
         return None
     try:
         data = json.loads(payload)

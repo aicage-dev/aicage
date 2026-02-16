@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
@@ -48,9 +49,12 @@ class RunCommandTests(TestCase):
         print_mock.assert_called_once_with("docker run image")
 
     def test_run_builder_version_check_returns_output(self) -> None:
-        with mock.patch(
-            "aicage.docker.run.subprocess.run",
-            return_value=subprocess.CompletedProcess([], 0, stdout="1.2.3\n", stderr=""),
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch(
+                "aicage.docker.run.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, stdout="1.2.3\n", stderr=""),
+            ),
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
@@ -61,9 +65,12 @@ class RunCommandTests(TestCase):
         self.assertEqual("", result.stderr)
 
     def test_run_builder_version_check_handles_command_error(self) -> None:
-        with mock.patch(
-            "aicage.docker.run.subprocess.run",
-            return_value=subprocess.CompletedProcess([], 2, stdout="partial", stderr="failed"),
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch(
+                "aicage.docker.run.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 2, stdout="partial", stderr="failed"),
+            ),
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
@@ -74,9 +81,12 @@ class RunCommandTests(TestCase):
         self.assertEqual("failed", result.stderr)
 
     def test_run_builder_version_check_handles_timeout(self) -> None:
-        with mock.patch(
-            "aicage.docker.run.subprocess.run",
-            side_effect=subprocess.TimeoutExpired(cmd=["docker"], timeout=1),
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch(
+                "aicage.docker.run.subprocess.run",
+                side_effect=subprocess.TimeoutExpired(cmd=["docker"], timeout=1),
+            ),
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
@@ -87,9 +97,12 @@ class RunCommandTests(TestCase):
         self.assertEqual("Version check timed out.", result.stderr)
 
     def test_run_builder_version_check_handles_command_exception(self) -> None:
-        with mock.patch(
-            "aicage.docker.run.subprocess.run",
-            side_effect=RuntimeError("boom"),
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch(
+                "aicage.docker.run.subprocess.run",
+                side_effect=RuntimeError("boom"),
+            ),
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
@@ -98,6 +111,27 @@ class RunCommandTests(TestCase):
         self.assertEqual(1, result.returncode)
         self.assertEqual("", result.stdout)
         self.assertEqual("boom", result.stderr)
+
+    def test_run_builder_version_check_includes_proxy_env_args(self) -> None:
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"HTTPS_PROXY": "http://proxy-https:8080"},
+                clear=True,
+            ),
+            mock.patch(
+                "aicage.docker.run.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, stdout="ok", stderr=""),
+            ) as run_mock,
+        ):
+            run.run_builder_version_check(
+                "ghcr.io/aicage/aicage-image-util:agent-version",
+                Path("/tmp/agent"),
+            )
+
+        command = run_mock.call_args.args[0]
+        self.assertIn("-e", command)
+        self.assertIn("HTTPS_PROXY=http://proxy-https:8080", command)
 
     def test_assemble_includes_env_and_mounts(self) -> None:
         with mock.patch("aicage.docker.run.resolve_user_ids", return_value=["-e", "AICAGE_HOST_USER=me"]):
