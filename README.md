@@ -28,6 +28,7 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
   aicage claude
   aicage codex
   aicage copilot
+  aicage crush
   aicage droid
   aicage gemini
   aicage goose
@@ -52,11 +53,12 @@ All base images have the same stack of tools installed.
 | claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)   |
 | codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
 | copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
+| crush    | Crush              | [https://github.com/charmbracelet/crush](https://github.com/charmbracelet/crush)   |
 | droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
 | gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                     |
 | goose    | Goose CLI          | [https://block.github.io/goose](https://block.github.io/goose)                     |
-| opencode | OpenCode           | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
-| qwen     | Qwen Code          | [https://opencode.ai](https://opencode.ai)                                         |
+| opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
+| qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
 
 Your existing CLI config for each agent is mounted inside the container so you can keep using your
 preferences and credentials.
