@@ -79,6 +79,7 @@ Image updates are handled automatically; see [Updates](https://github.com/aicage
 - `--docker` mounts `/run/docker.sock` into the container to enable Docker-in-Docker workflows.
 - `--share <path>` mounts a host path into the container at the same path. Repeatable; add `:ro` for read-only.
 - `--config info` prints the project config path and its contents.
+- `--config remove [<agent>]` removes the full project config or only one agent entry.
 
 Configuration file formats are documented in [CONFIG.md](CONFIG.md). Extension authoring is documented in
 [doc/extensions.md](doc/extensions.md).
