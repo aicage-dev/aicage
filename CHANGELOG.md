@@ -7,15 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.20] - 2026-02-17
+
 ### Added
 
 - Added `--config remove [<agent>]` support to remove a single agent entry from a project's config file without
   deleting the full file.
+- Added host proxy env forwarding for image builds and runtime (`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`,
+  `NO_PROXY`) to improve support behind corporate proxies.
 
 ### Changed
 
 - Expanded `--help` output with clearer argument descriptions and behavior notes.
-- Clarified `--` separator behavior in help: it is required only when docker args are present before the agent.
+- Clarified `--` separator behavior in help: it is required only when Docker args are present before the agent.
+- Improved network failure diagnostics for version and registry checks with structured categories (for example DNS,
+  TLS, and proxy auth failures).
+
+### Internal
+
+- Added proxy integration tests and CI coverage.
 
 ## [0.9.19] - 2026-02-16
 
