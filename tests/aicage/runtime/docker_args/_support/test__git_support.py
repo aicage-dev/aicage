@@ -100,7 +100,10 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
-                mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=True),
+                mock.patch(
+                    f"{_MODULE}.prompt_mount_git_support",
+                    return_value=["gitconfig", "gitroot", "gnupg"],
+                ),
             ):
                 _git_support.resolve_git_support_prefs(project_path, agent_cfg)
 
@@ -125,11 +128,36 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value=None),
-                mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=True),
+                mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=["gnupg"]),
             ):
                 _git_support.resolve_git_support_prefs(project_path, agent_cfg)
 
         self.assertTrue(agent_cfg.mounts.gnupg)
+
+    def test_resolve_git_support_prefs_sets_unselected_values_false(self) -> None:
+        agent_cfg = AgentConfig(mounts=_AgentMounts())
+        project_path = Path("/repo")
+        git_root = Path("/repo/root")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            git_config = Path(tmp_dir) / ".gitconfig"
+            git_config.write_text("user.name = tester", encoding="utf-8")
+            gpg_home = Path(tmp_dir) / "gnupg"
+            gpg_home.mkdir()
+
+            with (
+                mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=git_config),
+                mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
+                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
+                mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
+                mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
+                mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=["gitconfig"]),
+            ):
+                _git_support.resolve_git_support_prefs(project_path, agent_cfg)
+
+        self.assertTrue(agent_cfg.mounts.gitconfig)
+        self.assertFalse(agent_cfg.mounts.gitroot)
+        self.assertFalse(agent_cfg.mounts.gnupg)
 
     @staticmethod
     def test_resolve_git_support_prefs_skips_when_no_items() -> None:

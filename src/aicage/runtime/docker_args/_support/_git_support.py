@@ -114,13 +114,13 @@ def resolve_git_support_prefs(project_path: Path, agent_cfg: AgentConfig) -> Non
     if not items:
         return
 
-    should_mount = prompt_mount_git_support(_format_prompt_items(items))
+    selected = set(prompt_mount_git_support(_format_prompt_items(items)))
     for item in items:
-        _set_mount_pref(mounts_cfg, item.key, should_mount)
+        _set_mount_pref(mounts_cfg, item.key, item.key in selected)
 
 
-def _format_prompt_items(items: Iterable[_GitSupportPromptItem]) -> list[tuple[str, Path]]:
-    return [(item.label, item.path) for item in items]
+def _format_prompt_items(items: Iterable[_GitSupportPromptItem]) -> list[tuple[str, str, Path]]:
+    return [(item.key, item.label, item.path) for item in items]
 
 
 def _set_mount_pref(mounts_cfg: _MountPrefs, key: str, value: bool) -> None:

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reworked the Git support mount prompt to allow selecting specific mount targets via comma-separated option numbers,
+  with Enter applying the default `all` selection.
+
+### Internal
+
+- Updated Git support prompt and resolver unit tests for per-mount selection behavior.
+
 ## [0.9.20] - 2026-02-17
 
 ### Added

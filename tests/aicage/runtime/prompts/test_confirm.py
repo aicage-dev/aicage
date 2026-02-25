@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
+from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.prompts import confirm
 
 
@@ -28,20 +29,40 @@ class PromptConfirmTests(TestCase):
             default=True,
         )
 
-    def test_prompt_mount_git_support_delegates(self) -> None:
+    def test_prompt_mount_git_support_defaults_to_all(self) -> None:
         items = [
-            ("Git config (name/email)", Path("/tmp/gitconfig")),
-            ("Git root (repository access)", Path("/tmp/root")),
+            ("gitconfig", "Git config (name/email)", Path("/tmp/gitconfig")),
+            ("gitroot", "Git root (repository access)", Path("/tmp/root")),
         ]
-        with mock.patch("aicage.runtime.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
-            self.assertTrue(confirm.prompt_mount_git_support(items))
-        prompt_mock.assert_called_once_with(
-            "Enable Git support in the container by mounting:\n"
-            f"  - Git config (name/email): {Path('/tmp/gitconfig')}\n"
-            f"  - Git root (repository access): {Path('/tmp/root')}\n"
-            "Proceed?",
-            default=True,
-        )
+        with (
+            mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt"),
+            mock.patch("builtins.input", return_value=""),
+        ):
+            selected = confirm.prompt_mount_git_support(items)
+        self.assertEqual(["gitconfig", "gitroot"], selected)
+
+    def test_prompt_mount_git_support_accepts_selection(self) -> None:
+        items = [
+            ("gitconfig", "Git config (name/email)", Path("/tmp/gitconfig")),
+            ("gnupg", "GnuPG keys (for Git signing)", Path("/tmp/gnupg")),
+            ("ssh", "SSH keys (for Git signing)", Path("/tmp/ssh")),
+        ]
+        with (
+            mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt"),
+            mock.patch("builtins.input", return_value="1,3"),
+        ):
+            selected = confirm.prompt_mount_git_support(items)
+        self.assertEqual(["gitconfig", "ssh"], selected)
+
+    def test_parse_number_selection_rejects_invalid_value(self) -> None:
+        with self.assertRaises(RuntimeExecutionError) as context:
+            confirm._parse_number_selection("0", 3)
+        self.assertIn("Pick a number between 1 and 3.", str(context.exception))
+
+    def test_parse_number_selection_rejects_duplicates(self) -> None:
+        with self.assertRaises(RuntimeExecutionError) as context:
+            confirm._parse_number_selection("2,2", 3)
+        self.assertIn("Duplicate selection '2' is not allowed.", str(context.exception))
 
     def test_prompt_persist_docker_args_replaces_existing(self) -> None:
         with mock.patch("aicage.runtime.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:

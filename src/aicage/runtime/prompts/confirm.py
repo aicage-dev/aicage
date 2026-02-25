@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from aicage._logging import get_logger
+from aicage.runtime._errors import RuntimeExecutionError
 
 from ._tty import ensure_tty_for_prompt
 
@@ -27,13 +28,39 @@ def prompt_persist_docker_socket() -> bool:
     return _prompt_yes_no("Persist mounting the Docker socket for this project?", default=True)
 
 
-def prompt_mount_git_support(items: list[tuple[str, Path]]) -> bool:
-    details = "\n".join(
-        f"  - {label}: {path}"
-        for label, path in items
-    )
-    question = f"Enable Git support in the container by mounting:\n{details}\nProceed?"
-    return _prompt_yes_no(question, default=True)
+def prompt_mount_git_support(items: list[tuple[str, str, Path]]) -> list[str]:
+    ensure_tty_for_prompt()
+    logger = get_logger()
+    print("Enable Git support in the container by mounting:")
+    for idx, (_, label, path) in enumerate(items, start=1):
+        print(f"  {idx}) {label}: {path}")
+    response = input("Select mounts (comma-separated numbers) [all, default on Enter]: ").strip()
+    if not response:
+        selected = set(range(1, len(items) + 1))
+    else:
+        selected = _parse_number_selection(response, len(items))
+    selected_keys = [items[idx - 1][0] for idx in sorted(selected)]
+    logger.info("Prompt git support mounts selected -> %s", selected_keys)
+    return selected_keys
+
+
+def _parse_number_selection(response: str, max_value: int) -> set[int]:
+    selected: set[int] = set()
+    tokens = [item.strip() for item in response.split(",") if item.strip()]
+    if not tokens:
+        raise RuntimeExecutionError("Invalid selection ''. Provide comma-separated numbers, e.g. 1,2.")
+    for token in tokens:
+        if not token.isdigit():
+            raise RuntimeExecutionError(f"Invalid selection '{token}'. Use numbers between 1 and {max_value}.")
+        value = int(token)
+        if value < 1 or value > max_value:
+            raise RuntimeExecutionError(
+                f"Invalid selection '{token}'. Pick a number between 1 and {max_value}."
+            )
+        if value in selected:
+            raise RuntimeExecutionError(f"Duplicate selection '{token}' is not allowed.")
+        selected.add(value)
+    return selected
 
 
 def prompt_persist_docker_args(new_args: str, existing_args: str | None) -> bool:
