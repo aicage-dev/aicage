@@ -4,9 +4,9 @@ from aicage._logging import get_logger
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.filter import filter_bases
 from aicage.config.context import ConfigContext
-from aicage.constants import DEFAULT_IMAGE_BASE
 from aicage.runtime._errors import RuntimeExecutionError
 
+from ._default_base import resolve_default_base
 from ._tty import ensure_tty_for_prompt
 from .mode import assume_yes_enabled
 
@@ -25,26 +25,27 @@ class BaseOption:
 
 
 def prompt_for_base(request: BaseSelectionRequest) -> str:
+    bases = base_options(request.context, request.agent_metadata)
+    default_base = resolve_default_base(available_bases(bases))
     if assume_yes_enabled():
-        get_logger().info("Selected base '%s' for agent '%s' (assume-yes)", DEFAULT_IMAGE_BASE, request.agent)
-        return DEFAULT_IMAGE_BASE
+        get_logger().info("Selected base '%s' for agent '%s' (assume-yes)", default_base, request.agent)
+        return default_base
     ensure_tty_for_prompt()
     logger = get_logger()
     title = f"Select base image for '{request.agent}' (runtime to use inside the container):"
-    bases = base_options(request.context, request.agent_metadata)
 
     if bases:
         print(title)
         for idx, option in enumerate(bases, start=1):
-            suffix = " (default)" if option.base == DEFAULT_IMAGE_BASE else ""
+            suffix = " (default)" if option.base == default_base else ""
             print(f"  {idx}) {option.base}: {option.description}{suffix}")
-        prompt = f"Enter number or name [{DEFAULT_IMAGE_BASE}]: "
+        prompt = f"Enter number or name [{default_base}]: "
     else:
-        prompt = f"{title} [{DEFAULT_IMAGE_BASE}]: "
+        prompt = f"{title} [{default_base}]: "
 
     response = input(prompt).strip()
     if not response:
-        choice = DEFAULT_IMAGE_BASE
+        choice = default_base
     elif response.isdigit() and bases:
         idx = int(response)
         if idx < 1 or idx > len(bases):

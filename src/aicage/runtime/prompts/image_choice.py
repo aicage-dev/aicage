@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from aicage._logging import get_logger
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.context import ConfigContext
-from aicage.constants import DEFAULT_IMAGE_BASE
 from aicage.runtime._errors import RuntimeExecutionError
 
+from ._default_base import resolve_default_base
 from ._tty import ensure_tty_for_prompt
 from .base import BaseOption, available_bases, base_options
 from .mode import assume_yes_enabled
@@ -35,18 +35,19 @@ class ImageChoice:
 
 
 def prompt_for_image_choice(request: ImageChoiceRequest) -> ImageChoice:
+    bases = base_options(request.context, request.agent_metadata)
+    default_base = resolve_default_base(available_bases(bases))
     if assume_yes_enabled():
-        choice = ImageChoice(kind="base", value=DEFAULT_IMAGE_BASE)
+        choice = ImageChoice(kind="base", value=default_base)
         get_logger().info("Selected %s '%s' for agent '%s' (assume-yes)", choice.kind, choice.value, request.agent)
         return choice
     ensure_tty_for_prompt()
     logger = get_logger()
-    bases = base_options(request.context, request.agent_metadata)
     extended = request.extended_options
     options = _build_image_options(bases, extended)
-    prompt = _render_image_prompt(request, options)
+    prompt = _render_image_prompt(request, options, default_base)
     response = input(prompt).strip()
-    choice = _parse_image_choice_response(response, bases, extended, options)
+    choice = _parse_image_choice_response(response, bases, extended, options, default_base)
     logger.info("Selected %s '%s' for agent '%s'", choice.kind, choice.value, request.agent)
     return choice
 
@@ -71,17 +72,18 @@ def _build_image_options(
 def _render_image_prompt(
     request: ImageChoiceRequest,
     options: list[tuple[str, ImageChoice]],
+    default_base: str,
 ) -> str:
     title = f"Select image for '{request.agent}' (runtime to use inside the container):"
     if not options:
-        return f"{title} [{DEFAULT_IMAGE_BASE}]: "
+        return f"{title} [{default_base}]: "
     print(title)
     for idx, (label, choice) in enumerate(options, start=1):
         suffix = ""
-        if choice.kind == "base" and choice.value == DEFAULT_IMAGE_BASE:
+        if choice.kind == "base" and choice.value == default_base:
             suffix = " (default)"
         print(f"  {idx}) {label}{suffix}")
-    return f"Enter number or name [{DEFAULT_IMAGE_BASE}]: "
+    return f"Enter number or name [{default_base}]: "
 
 
 def _parse_image_choice_response(
@@ -89,9 +91,10 @@ def _parse_image_choice_response(
     bases: list[BaseOption],
     extended: list[ExtendedImageOption],
     options: list[tuple[str, ImageChoice]],
+    default_base: str,
 ) -> ImageChoice:
     if not response:
-        return ImageChoice(kind="base", value=DEFAULT_IMAGE_BASE)
+        return ImageChoice(kind="base", value=default_base)
     if response.isdigit() and options:
         idx = int(response)
         if idx < 1 or idx > len(options):

@@ -85,6 +85,7 @@ class PromptImageChoiceTests(TestCase):
         )
         with (
             mock.patch("aicage.runtime.prompts.image_choice.assume_yes_enabled", return_value=True),
+            mock.patch("aicage.runtime.prompts.image_choice.resolve_default_base", return_value="ubuntu"),
             mock.patch("aicage.runtime.prompts.image_choice.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
@@ -101,7 +102,7 @@ class PromptImageChoiceTests(TestCase):
             agent_metadata=self._agent_metadata(),
             extended_options=[],
         )
-        prompt = _render_image_prompt(request, [])
+        prompt = _render_image_prompt(request, [], "ubuntu")
         self.assertEqual("Select image for 'codex' (runtime to use inside the container): [ubuntu]: ", prompt)
 
     def test_parse_image_choice_accepts_base_name(self) -> None:
@@ -114,7 +115,7 @@ class PromptImageChoiceTests(TestCase):
         )
         bases = base_options(context, request.agent_metadata)
         options = _build_image_options(bases, [])
-        choice = _parse_image_choice_response("ubuntu", bases, [], options)
+        choice = _parse_image_choice_response("ubuntu", bases, [], options, "ubuntu")
         self.assertEqual("base", choice.kind)
         self.assertEqual("ubuntu", choice.value)
 
@@ -137,7 +138,7 @@ class PromptImageChoiceTests(TestCase):
         )
         bases = base_options(context, request.agent_metadata)
         options = _build_image_options(bases, extended)
-        choice = _parse_image_choice_response("custom", bases, extended, options)
+        choice = _parse_image_choice_response("custom", bases, extended, options, "ubuntu")
         self.assertEqual("extended", choice.kind)
         self.assertEqual("custom", choice.value)
 
@@ -152,7 +153,21 @@ class PromptImageChoiceTests(TestCase):
         bases = base_options(context, request.agent_metadata)
         options = _build_image_options(bases, [])
         with self.assertRaises(RuntimeExecutionError):
-            _parse_image_choice_response("99", bases, [], options)
+            _parse_image_choice_response("99", bases, [], options, "ubuntu")
+
+    def test_parse_image_choice_uses_resolved_default_on_empty(self) -> None:
+        context = self._context()
+        request = ImageChoiceRequest(
+            agent="codex",
+            context=context,
+            agent_metadata=self._agent_metadata(),
+            extended_options=[],
+        )
+        bases = base_options(context, request.agent_metadata)
+        options = _build_image_options(bases, [])
+        choice = _parse_image_choice_response("", bases, [], options, "fedora")
+        self.assertEqual("base", choice.kind)
+        self.assertEqual("fedora", choice.value)
 
     @staticmethod
     def _context() -> ConfigContext:
