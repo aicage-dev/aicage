@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated Git support prompt and resolver unit tests for per-mount selection behavior.
 - Added prompt unit coverage for host-aware default-base resolution and prompt default propagation.
+- Hardened integration tests against Docker daemon differences where local replacement images may not expose
+  `RepoDigests` for the retagged repository, by using replacement-reference-aware assertions.
 
 ## [0.9.20] - 2026-02-17
 

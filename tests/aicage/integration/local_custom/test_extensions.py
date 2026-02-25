@@ -5,12 +5,12 @@ import pytest
 from aicage.config.config_store import SettingsStore
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker.query import local_image_exists
-from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.agent_build._store import BuildStore as AgentBuildStore
 from aicage.registry.extension_build._store import BuildStore as ExtendedBuildStore
 
 from .._helpers import (
     assert_marker_extension_present,
+    assert_old_image_replaced,
     assert_rootfs_layer_present,
     copy_forge_sample,
     copy_marker_extension_sample,
@@ -45,15 +45,14 @@ def test_local_custom_extension_rebuilds_on_agent_version(
     record = store.load("forge", "ubuntu")
     assert record is not None
     force_record_agent_version(store, record, agent_version="0.0.0")
-    old_digest = replace_with_dummy_image(record.image_ref)
-    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
-    assert local_image_exists(old_digest_ref)
+    old_image_ref = replace_with_dummy_image(record.image_ref)
+    assert local_image_exists(old_image_ref)
 
     assert_marker_extension_present(env, workspace, "forge")
     updated = store.load("forge", "ubuntu")
     assert updated is not None
     assert updated.agent_version != "0.0.0"
-    assert not local_image_exists(old_digest_ref)
+    assert_old_image_replaced(old_image_ref, record.image_ref)
 
     extended_record = ExtendedBuildStore().load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:forge-ubuntu-marker")
     assert extended_record is not None
@@ -73,12 +72,11 @@ def test_local_custom_extension_rebuilds_on_base_layer(
     assert record is not None
 
     expected_base_layer = get_last_rootfs_layer(record.base_image)
-    old_digest = replace_with_dummy_image(record.image_ref)
-    old_digest_ref = f"{repository_from_image_ref(record.image_ref)}@{old_digest}"
-    assert local_image_exists(old_digest_ref)
+    old_image_ref = replace_with_dummy_image(record.image_ref)
+    assert local_image_exists(old_image_ref)
 
     assert_marker_extension_present(env, workspace, "forge")
-    assert not local_image_exists(old_digest_ref)
+    assert_old_image_replaced(old_image_ref, record.image_ref)
     assert_rootfs_layer_present(expected_base_layer, record.image_ref)
 
 

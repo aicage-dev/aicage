@@ -3,12 +3,12 @@ from pathlib import Path
 import pytest
 
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
-from aicage.docker.query import get_local_repo_digest_for_repo, local_image_exists
-from aicage.docker.refs import repository_from_image_ref
+from aicage.docker.query import local_image_exists
 from aicage.registry.extension_build._store import BuildStore
 
 from .._helpers import (
     assert_marker_extension_present,
+    assert_old_image_replaced,
     assert_rootfs_layer_present,
     keep_pulled_image_last_rootfs_layer,
     replace_with_dummy_image,
@@ -28,12 +28,11 @@ def test_extension_builds_and_runs(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
 
     image_repository = f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}"
     local_base_image_ref = f"{image_repository}:codex-ubuntu"
-    old_digest = replace_with_dummy_image(local_base_image_ref)
-    old_digest_ref = f"{image_repository}@{old_digest}"
-    assert local_image_exists(old_digest_ref)
+    old_image_ref = replace_with_dummy_image(local_base_image_ref)
+    assert local_image_exists(old_image_ref)
 
     assert_marker_extension_present(env, workspace, "codex")
-    assert not local_image_exists(old_digest_ref)
+    assert_old_image_replaced(old_image_ref, local_base_image_ref)
 
 
 def test_extension_rebuilds_on_base_image_change(
@@ -53,14 +52,9 @@ def test_extension_rebuilds_on_base_image_change(
 
     base_digest_ref = resolve_remote_digest_ref(record.base_image)
     with keep_pulled_image_last_rootfs_layer(base_digest_ref) as expected_base_layer:
-        base_repository = repository_from_image_ref(record.base_image)
-        extended_repository = repository_from_image_ref(record.image_ref)
-        old_base_digest = replace_with_dummy_image(record.base_image)
-        old_base_digest_ref = f"{base_repository}@{old_base_digest}"
-        assert local_image_exists(old_base_digest_ref)
+        old_base_image_ref = replace_with_dummy_image(record.base_image)
+        assert local_image_exists(old_base_image_ref)
 
         assert_marker_extension_present(env, workspace, "copilot")
-        new_extended_digest = get_local_repo_digest_for_repo(record.image_ref, extended_repository)
-        assert new_extended_digest is not None
-        assert not local_image_exists(old_base_digest_ref)
+        assert_old_image_replaced(old_base_image_ref, record.base_image)
         assert_rootfs_layer_present(expected_base_layer, record.image_ref)

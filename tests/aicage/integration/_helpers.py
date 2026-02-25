@@ -4,7 +4,6 @@ import stat
 import subprocess
 import sys
 import threading
-import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import import_module
@@ -22,6 +21,7 @@ from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker.query import (
     get_local_repo_digest_for_repo,
     get_local_rootfs_layers,
+    local_image_exists,
 )
 from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.agent_build._store import BuildRecord, BuildStore
@@ -250,13 +250,10 @@ def force_record_agent_version(
 
 
 def replace_with_dummy_image(image_ref: str) -> str:
-    nonce = uuid.uuid4().hex
     subprocess.run(
         [
             "docker",
             "import",
-            "--change",
-            f"LABEL purpose=test nonce={nonce}",
             "-",
             image_ref,
         ],
@@ -266,8 +263,33 @@ def replace_with_dummy_image(image_ref: str) -> str:
     )
     repository = repository_from_image_ref(image_ref)
     digest = get_local_repo_digest_for_repo(image_ref, repository)
-    assert digest is not None
-    return digest
+    if digest is not None:
+        return f"{repository}@{digest}"
+
+    inspect = subprocess.run(
+        ["docker", "image", "inspect", image_ref, "--format", "{{.Id}}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    image_id = inspect.stdout.strip()
+    assert image_id.startswith("sha256:")
+    assert local_image_exists(image_id)
+    return image_id
+
+
+def assert_old_image_replaced(old_image_ref: str, image_ref: str) -> None:
+    if old_image_ref.startswith("sha256:"):
+        inspect = subprocess.run(
+            ["docker", "image", "inspect", image_ref, "--format", "{{.Id}}"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        updated_id = inspect.stdout.strip()
+        assert updated_id != old_image_ref
+        return
+    assert not local_image_exists(old_image_ref)
 
 
 def get_last_rootfs_layer(image_ref: str) -> str:

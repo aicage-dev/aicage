@@ -4,8 +4,7 @@ import pytest
 import yaml
 
 from aicage.config.config_store import SettingsStore
-from aicage.constants import LOCAL_IMAGE_BASE_REPOSITORY
-from aicage.docker.query import get_local_repo_digest_for_repo, local_image_exists
+from aicage.docker.query import local_image_exists
 from aicage.registry.agent_build._store import BuildStore as AgentBuildStore
 from aicage.registry.base_build._store import (
     BuildRecord,
@@ -16,6 +15,7 @@ from aicage.registry.base_build._store import (
 from aicage.registry.base_build.ensure import image_ref
 
 from .._helpers import (
+    assert_old_image_replaced,
     assert_rootfs_layer_present,
     copy_custom_base_sample,
     custom_bases_dir,
@@ -99,9 +99,8 @@ def test_custom_base_rebuilds_on_digest_change_docker(
     _set_agent_base(workspace, "codex", base_name)
 
     base_image_ref = image_ref(base_name)
-    old_digest = replace_with_dummy_image(base_image_ref)
-    old_digest_ref = f"{LOCAL_IMAGE_BASE_REPOSITORY}@{old_digest}"
-    assert local_image_exists(old_digest_ref)
+    old_image_ref = replace_with_dummy_image(base_image_ref)
+    assert local_image_exists(old_image_ref)
 
     base_store = BaseBuildStore()
     stale_digest = "sha256:" + ("0" * 64)
@@ -121,10 +120,7 @@ def test_custom_base_rebuilds_on_digest_change_docker(
     assert rebuilt_base_record.from_image == from_image
     assert rebuilt_base_record.from_image_digest
     assert rebuilt_base_record.from_image_digest != stale_digest
-    rebuilt_base_digest = get_local_repo_digest_for_repo(base_image_ref, LOCAL_IMAGE_BASE_REPOSITORY)
-    assert rebuilt_base_digest is not None
-    assert rebuilt_base_digest != old_digest
-    assert not local_image_exists(old_digest_ref)
+    assert_old_image_replaced(old_image_ref, base_image_ref)
 
     final_image_record = AgentBuildStore().load("codex", base_name)
     assert final_image_record is not None
