@@ -14,6 +14,7 @@ from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.registry.ensure_image import ensure_image
+from aicage.runtime.prompts.mode import set_assume_yes
 from aicage.runtime.run_args import DockerRunArgs
 from aicage.runtime.run_plan import build_run_args
 
@@ -24,6 +25,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     exit_code = 0
     try:
         parsed: ParsedArgs = parse_cli(parsed_argv)
+        set_assume_yes(parsed.yes)
         maybe_prompt_update(__version__)
         if parsed.config_action == "info":
             info_project_config()

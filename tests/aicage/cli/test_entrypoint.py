@@ -93,15 +93,17 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, [], "info"),
+                return_value=ParsedArgs(False, "", "", [], False, [], "info", None, True),
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+            mock.patch("aicage.cli.entrypoint.set_assume_yes") as set_assume_yes_mock,
         ):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
+        set_assume_yes_mock.assert_called_once_with(True)
         info_mock.assert_called_once()
         load_mock.assert_not_called()
 

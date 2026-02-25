@@ -21,6 +21,17 @@ class PromptConfirmTests(TestCase):
         ):
             self.assertTrue(confirm._prompt_yes_no("Continue?", default=False))
 
+    def test__prompt_yes_no_uses_default_when_assume_yes(self) -> None:
+        with (
+            mock.patch("aicage.runtime.prompts.confirm.assume_yes_enabled", return_value=True),
+            mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt") as tty_mock,
+            mock.patch("builtins.input") as input_mock,
+        ):
+            choice = confirm._prompt_yes_no("Continue?", default=True)
+        self.assertTrue(choice)
+        tty_mock.assert_not_called()
+        input_mock.assert_not_called()
+
     def test_prompt_persist_docker_socket_delegates(self) -> None:
         with mock.patch("aicage.runtime.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
             self.assertTrue(confirm.prompt_persist_docker_socket())
@@ -53,6 +64,21 @@ class PromptConfirmTests(TestCase):
         ):
             selected = confirm.prompt_mount_git_support(items)
         self.assertEqual(["gitconfig", "ssh"], selected)
+
+    def test_prompt_mount_git_support_uses_all_when_assume_yes(self) -> None:
+        items = [
+            ("gitconfig", "Git config (name/email)", Path("/tmp/gitconfig")),
+            ("gnupg", "GnuPG keys (for Git signing)", Path("/tmp/gnupg")),
+        ]
+        with (
+            mock.patch("aicage.runtime.prompts.confirm.assume_yes_enabled", return_value=True),
+            mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt") as tty_mock,
+            mock.patch("builtins.input") as input_mock,
+        ):
+            selected = confirm.prompt_mount_git_support(items)
+        self.assertEqual(["gitconfig", "gnupg"], selected)
+        tty_mock.assert_not_called()
+        input_mock.assert_not_called()
 
     def test_parse_number_selection_rejects_invalid_value(self) -> None:
         with self.assertRaises(RuntimeExecutionError) as context:

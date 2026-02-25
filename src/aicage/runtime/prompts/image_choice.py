@@ -8,6 +8,7 @@ from aicage.runtime._errors import RuntimeExecutionError
 
 from ._tty import ensure_tty_for_prompt
 from .base import BaseOption, available_bases, base_options
+from .mode import assume_yes_enabled
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,10 @@ class ImageChoice:
 
 
 def prompt_for_image_choice(request: ImageChoiceRequest) -> ImageChoice:
+    if assume_yes_enabled():
+        choice = ImageChoice(kind="base", value=DEFAULT_IMAGE_BASE)
+        get_logger().info("Selected %s '%s' for agent '%s' (assume-yes)", choice.kind, choice.value, request.agent)
+        return choice
     ensure_tty_for_prompt()
     logger = get_logger()
     bases = base_options(request.context, request.agent_metadata)

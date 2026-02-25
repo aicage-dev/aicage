@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `-y/--yes` to apply default answers for all prompts in non-interactive runs.
+
 ### Changed
 
 - Reworked the Git support mount prompt to allow selecting specific mount targets via comma-separated option numbers,
   with Enter applying the default `all` selection.
+- Prompt flows now auto-select defaults without rendering interactive questions when `-y/--yes` is set.
 
 ### Internal
 

@@ -8,6 +8,7 @@ from aicage.constants import DEFAULT_IMAGE_BASE
 from aicage.runtime._errors import RuntimeExecutionError
 
 from ._tty import ensure_tty_for_prompt
+from .mode import assume_yes_enabled
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,9 @@ class BaseOption:
 
 
 def prompt_for_base(request: BaseSelectionRequest) -> str:
+    if assume_yes_enabled():
+        get_logger().info("Selected base '%s' for agent '%s' (assume-yes)", DEFAULT_IMAGE_BASE, request.agent)
+        return DEFAULT_IMAGE_BASE
     ensure_tty_for_prompt()
     logger = get_logger()
     title = f"Select base image for '{request.agent}' (runtime to use inside the container):"

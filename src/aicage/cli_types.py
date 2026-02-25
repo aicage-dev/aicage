@@ -11,3 +11,4 @@ class ParsedArgs:
     shares: list[str]
     config_action: str | None
     config_agent: str | None = None
+    yes: bool = False

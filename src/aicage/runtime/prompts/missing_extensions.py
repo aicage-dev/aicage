@@ -1,6 +1,11 @@
 from pathlib import Path
 
+from aicage._logging import get_logger
+
 from ._tty import ensure_tty_for_prompt
+from .mode import assume_yes_enabled
+
+_DEFAULT_MISSING_EXTENSIONS_CHOICE: str = "exit"
 
 
 def prompt_for_missing_extensions(
@@ -10,6 +15,13 @@ def prompt_for_missing_extensions(
     project_config_path: Path,
     other_projects: list[tuple[str, Path]],
 ) -> str:
+    if assume_yes_enabled():
+        get_logger().info(
+            "Missing extensions prompt choice for '%s' -> %s (assume-yes)",
+            agent,
+            _DEFAULT_MISSING_EXTENSIONS_CHOICE,
+        )
+        return _DEFAULT_MISSING_EXTENSIONS_CHOICE
     ensure_tty_for_prompt()
     print(f"[aicage] Missing extensions for '{agent}': {', '.join(sorted(missing))}.")
     if stored_image_ref:

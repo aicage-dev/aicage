@@ -15,6 +15,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_with_separator(self) -> None:
         parsed = parse_cli(["--dry-run", "--", "codex", "--bar"])
         self.assertTrue(parsed.dry_run)
+        self.assertFalse(parsed.yes)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--bar"], parsed.agent_args)
@@ -23,6 +24,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_with_separator_and_docker_args(self) -> None:
         parsed = parse_cli(["--dry-run", "-v", "/run/docker.sock:/run/docker.sock", "--", "codex", "--bar"])
         self.assertTrue(parsed.dry_run)
+        self.assertFalse(parsed.yes)
         self.assertEqual("-v /run/docker.sock:/run/docker.sock", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--bar"], parsed.agent_args)
@@ -33,6 +35,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_without_docker_args(self) -> None:
         parsed = parse_cli(["codex", "--flag"])
         self.assertFalse(parsed.dry_run)
+        self.assertFalse(parsed.yes)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--flag"], parsed.agent_args)
@@ -134,6 +137,15 @@ class ParseCliTests(TestCase):
         parsed = parse_cli(["--share", "data", "--share", "/tmp/one:ro", "--", "codex"])
         self.assertEqual(["data", "/tmp/one:ro"], parsed.shares)
 
+    def test_parse_cli_with_yes(self) -> None:
+        parsed = parse_cli(["--yes", "codex"])
+        self.assertTrue(parsed.yes)
+        self.assertEqual("codex", parsed.agent)
+
     def test_parse_cli_config_rejects_share(self) -> None:
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "--share", "data"])
+
+    def test_parse_cli_config_rejects_yes(self) -> None:
+        with self.assertRaises(CliError):
+            parse_cli(["--config", "info", "--yes"])

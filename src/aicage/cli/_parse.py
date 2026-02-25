@@ -22,6 +22,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dry-run", action="store_true", help="Print docker run command without executing.")
+    parser.add_argument("-y", "--yes", action="store_true", help="Use defaults for all prompts.")
     parser.add_argument("--docker", action="store_true", help="Mount the host Docker socket into the container.")
     parser.add_argument(
         "--share",
@@ -52,11 +53,13 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  aicage <agent>\n"
             "  aicage [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
             "  aicage [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent> [<agent-args>]\n"
+            "  aicage -y [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
             "  aicage --config info\n"
             "  aicage --config remove [<agent>]\n"
             "  aicage --version\n\n"
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
+            "  -y, --yes        Use default answers for all prompts.\n"
             "  --docker         Mount /var/run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --config <cmd>   Run config command: info, remove [agent].\n"
@@ -83,6 +86,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             opts.share,
             config_action,
             config_agent,
+            opts.yes,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -99,6 +103,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         opts.share,
         None,
         None,
+        opts.yes,
     )
 
 
@@ -130,7 +135,7 @@ def _validate_config_action(
     config_agent = config_tokens[1] if len(config_tokens) == _MAX_CONFIG_TOKENS else None
     if config_action == "info" and config_agent is not None:
         raise CliError("No agent value is allowed with '--config info'.")
-    if remaining or post_argv or opts.docker or opts.dry_run or opts.share:
+    if remaining or post_argv or opts.docker or opts.dry_run or opts.share or opts.yes:
         raise CliError("No additional arguments are allowed with --config.")
     return config_action, config_agent
 

@@ -76,6 +76,7 @@ Image updates are handled automatically; see [Updates](https://github.com/aicage
 ## aicage options
 
 - `--dry-run` prints the composed `docker run` command without executing it.
+- `-y`, `--yes` applies default answers for all prompts and suppresses prompt output.
 - `--docker` mounts `/run/docker.sock` into the container to enable Docker-in-Docker workflows.
 - `--share <path>` mounts a host path into the container at the same path. Repeatable; add `:ro` for read-only.
 - `--config info` prints the project config path and its contents.

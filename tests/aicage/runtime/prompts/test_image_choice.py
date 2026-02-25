@@ -75,6 +75,25 @@ class PromptImageChoiceTests(TestCase):
             with self.assertRaises(RuntimeExecutionError):
                 prompt_for_image_choice(request)
 
+    def test_prompt_for_image_choice_uses_default_when_assume_yes(self) -> None:
+        context = self._context()
+        request = ImageChoiceRequest(
+            agent="codex",
+            context=context,
+            agent_metadata=self._agent_metadata(),
+            extended_options=[],
+        )
+        with (
+            mock.patch("aicage.runtime.prompts.image_choice.assume_yes_enabled", return_value=True),
+            mock.patch("aicage.runtime.prompts.image_choice.ensure_tty_for_prompt") as tty_mock,
+            mock.patch("builtins.input") as input_mock,
+        ):
+            choice = prompt_for_image_choice(request)
+        self.assertEqual("base", choice.kind)
+        self.assertEqual("ubuntu", choice.value)
+        tty_mock.assert_not_called()
+        input_mock.assert_not_called()
+
     def test_render_image_prompt_uses_default_when_no_options(self) -> None:
         request = ImageChoiceRequest(
             agent="codex",
