@@ -22,6 +22,12 @@ def head_request(url: str, headers: Mapping[str, str]) -> tuple[int | None, dict
             classify_network_failure(exc),
         )
         return None, {}
+    except TimeoutError:
+        logger.warning(
+            "Network request failed (operation=registry_digest_head, host=%s, category=timeout).",
+            host_from_url(url),
+        )
+        return None, {}
 
 
 def get_header(headers: Mapping[str, str], key: str) -> str | None:

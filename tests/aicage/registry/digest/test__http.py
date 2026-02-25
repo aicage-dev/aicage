@@ -18,3 +18,12 @@ class DigestHttpTests(TestCase):
             status, headers = _http.head_request("https://example.test", {"Accept": "x"})
         self.assertIsNone(status)
         self.assertEqual({}, headers)
+
+    def test_head_request_returns_none_on_timeout_error(self) -> None:
+        with mock.patch(
+            "aicage.registry.digest._http.urllib.request.urlopen",
+            side_effect=TimeoutError("timed out"),
+        ):
+            status, headers = _http.head_request("https://example.test", {"Accept": "x"})
+        self.assertIsNone(status)
+        self.assertEqual({}, headers)
