@@ -5,7 +5,7 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
 
-from .._support._git_support import resolve_ssh_dir
+from .._support._git_support import resolve_ssh_dir, uses_ssh_remotes
 from .._support._signing import is_commit_signing_enabled, resolve_signing_format
 
 
@@ -17,9 +17,10 @@ def resolve(
     _ = parsed
     project_path = Path(context.project_cfg.path)
     agent_cfg: AgentConfig = context.project_cfg.agents[agent]
-    if not is_commit_signing_enabled(project_path):
-        return ResolvedArgs()
-    if resolve_signing_format(project_path) != "ssh":
+    signing_enabled = is_commit_signing_enabled(project_path)
+    signing_format = resolve_signing_format(project_path) if signing_enabled else None
+    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(project_path)
+    if not ssh_needed:
         return ResolvedArgs()
 
     ssh_dir = resolve_ssh_dir()

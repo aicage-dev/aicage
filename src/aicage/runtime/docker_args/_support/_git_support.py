@@ -10,6 +10,9 @@ from ...prompts.confirm import prompt_mount_git_support
 from ._exec import capture_stdout
 from ._signing import is_commit_signing_enabled, resolve_signing_format
 
+_REMOTE_WITH_URL_FIELD_COUNT: int = 2
+_REMOTE_URL_INDEX: int = 1
+
 
 @dataclass(frozen=True)
 class _GitSupportPromptItem:
@@ -75,6 +78,20 @@ def resolve_ssh_dir() -> Path:
     return HOST_SSH_DIR
 
 
+def uses_ssh_remotes(project_path: Path) -> bool:
+    stdout = capture_stdout(["git", "remote", "-v"], cwd=project_path)
+    if not stdout:
+        return False
+    for line in stdout.splitlines():
+        fields = line.split()
+        if len(fields) < _REMOTE_WITH_URL_FIELD_COUNT:
+            continue
+        remote_url = fields[_REMOTE_URL_INDEX]
+        if remote_url.startswith("ssh://") or "@" in remote_url:
+            return True
+    return False
+
+
 def resolve_git_support_prefs(project_path: Path, agent_cfg: AgentConfig) -> None:
     mounts_cfg = agent_cfg.mounts
     items: list[_GitSupportPromptItem] = []
@@ -89,14 +106,15 @@ def resolve_git_support_prefs(project_path: Path, agent_cfg: AgentConfig) -> Non
 
     signing_enabled = is_commit_signing_enabled(project_path)
     signing_format = resolve_signing_format(project_path) if signing_enabled else None
+    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(project_path)
 
-    if signing_enabled and signing_format == "ssh" and mounts_cfg.ssh is None:
+    if ssh_needed and mounts_cfg.ssh is None:
         ssh_dir = resolve_ssh_dir()
         if ssh_dir.exists():
             items.append(
                 _GitSupportPromptItem(
                     "ssh",
-                    "SSH keys (for Git signing)",
+                    "SSH keys (for Git SSH/signing)",
                     ssh_dir,
                 )
             )

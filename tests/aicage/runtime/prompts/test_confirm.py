@@ -56,7 +56,7 @@ class PromptConfirmTests(TestCase):
         items = [
             ("gitconfig", "Git config (name/email)", Path("/tmp/gitconfig")),
             ("gnupg", "GnuPG keys (for Git signing)", Path("/tmp/gnupg")),
-            ("ssh", "SSH keys (for Git signing)", Path("/tmp/ssh")),
+            ("ssh", "SSH keys (for Git SSH/signing)", Path("/tmp/ssh")),
         ]
         with (
             mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt"),

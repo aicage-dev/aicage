@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Expanded SSH key mount detection and prompting to cover repositories with SSH Git remotes, not only SSH-based
+  commit signing.
+- Updated SSH mount prompt/config wording to reflect Git SSH access (push/fetch) in addition to signing.
+
 ## [0.9.21] - 2026-02-26
 
 ### Added

@@ -12,12 +12,12 @@ _MODULE = "aicage.runtime.docker_args._resolvers._ssh_keys"
 
 
 class SshKeyTests(TestCase):
-    def test_resolve_ssh_mount_skips_when_signing_disabled(self) -> None:
+    def test_resolve_ssh_mount_skips_when_not_needed(self) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(ssh=True))
         context = build_context(agent_cfg)
-        with mock.patch(
-            f"{_MODULE}.is_commit_signing_enabled",
-            return_value=False,
+        with (
+            mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
+            mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
         ):
             resolved = _ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
@@ -34,6 +34,7 @@ class SshKeyTests(TestCase):
                 f"{_MODULE}.resolve_signing_format",
                 return_value="gpg",
             ),
+            mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
         ):
             resolved = _ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
@@ -45,6 +46,7 @@ class SshKeyTests(TestCase):
         with (
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
             mock.patch(f"{_MODULE}.resolve_signing_format", return_value="ssh"),
+            mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
             mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
         ):
             resolved = _ssh_keys.resolve(context, "codex", build_parsed())
@@ -59,6 +61,24 @@ class SshKeyTests(TestCase):
             with (
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="ssh"),
+                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
+                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
+            ):
+                resolved = _ssh_keys.resolve(context, "codex", build_parsed())
+        self.assertEqual(
+            ResolvedArgs(mounts=[MountRequest(host_path=ssh_dir)]),
+            resolved,
+        )
+
+    def test_resolve_ssh_mount_uses_ssh_remotes(self) -> None:
+        agent_cfg = AgentConfig(mounts=_AgentMounts(ssh=True))
+        context = build_context(agent_cfg)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            ssh_dir = Path(tmp_dir) / "ssh"
+            ssh_dir.mkdir()
+            with (
+                mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
+                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
             ):
                 resolved = _ssh_keys.resolve(context, "codex", build_parsed())
