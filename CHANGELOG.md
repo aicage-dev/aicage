@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.24] - 2026-02-26
+
+### Changed
+
+- Mount host paths directly to their target container paths (including paths under host home) instead of routing
+  through `/aicage/user-home`.
+- Added nested mount de-duplication in Docker mount resolution so parent mounts take precedence over overlapping child
+  mounts.
+
+### Internal
+
+- Refactored mount mapping/dedup logic into `runtime.docker_args.resolve._mounts` and kept resolver orchestration
+  focused on provider composition.
+- Added integration coverage for direct home mounts, parent-path ownership behavior, and nested mount de-duplication.
+
 ## [0.9.22] - 2026-02-26
 
 ### Changed
