@@ -10,7 +10,7 @@ Their built-in safety checks are naturally limited.
 Running agents in containers gives a hard boundary - while the experience stays the same.
 See [Why cage agents?](#why-cage-agents) for the full rationale.
 
-## Quickstart
+## Quickstart (first run)
 
 - Prerequisites:
   - Docker
@@ -22,24 +22,82 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
   ```
   
 - Navigate to your project directory.
-- Use one of these commands:
+- Fastest start (accept defaults, no setup prompts):
 
   ```bash
-  aicage claude
-  aicage codex
-  aicage copilot
-  aicage crush
-  aicage droid
-  aicage gemini
-  aicage goose
-  aicage opencode
-  aicage qwen
+  aicage --yes <agent>
   ```
+
+  This is the quickest way to get started the first time.
+
+- Built-in agent examples:
+
+  ```bash
+  aicage --yes claude
+  aicage --yes codex
+  aicage --yes copilot
+  aicage --yes crush
+  aicage --yes droid
+  aicage --yes gemini
+  aicage --yes goose
+  aicage --yes opencode
+  aicage --yes qwen
+  ```
+
+## Full setup (optional)
+
+If you want to review and re-run full interactive setup:
+
+1. Print the current project config:
+
+   ```bash
+   aicage --config info
+   ```
+
+2. If needed, remove saved config for the project or one agent:
+
+   ```bash
+   aicage --config remove
+   aicage --config remove <agent>
+   ```
+
+3. Run again without `--yes` to go through all prompts:
+
+   ```bash
+   aicage <agent>
+   ```
+
+4. Screenshot placeholder: full interactive setup flow.
 
 ## Full documentation
 
 The complete user documentation lives in the wiki:
 [aicage.wiki](https://github.com/aicage/aicage/wiki)
+
+## Common scenarios
+
+- Pass arguments to the agent:
+  - `aicage <agent> resume <session-id>`
+- Share additional host folders:
+  - `aicage --share ~/.m2 <agent>`
+  - `aicage --share /path/to/data:ro <agent>`
+- Let the agent use Docker:
+  - `aicage --docker <agent>`
+- Set environment variables:
+  - `aicage -e FOO=bar -- <agent>`
+- Use proxies:
+  - `aicage` forwards `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY`.
+  - See [CLI options](https://github.com/aicage/aicage/wiki/CLI-Options).
+- Use host networking or custom networks:
+  - See [Host networking](https://github.com/aicage/aicage/wiki/Host-Networking).
+- On Windows with a Linux container/WSL workspace:
+  - set `git config --global core.autocrlf true` on the Windows host to avoid line-ending diffs.
+- Run into first-use setup issues:
+  - See [Known hiccups](https://github.com/aicage/aicage/wiki/Known-Hiccups).
+- Add custom tools/agents/base images:
+  - [Extensions](https://github.com/aicage/aicage/wiki/Customization-Extensions)
+  - [Custom agents](https://github.com/aicage/aicage/wiki/Customization-Agents)
+  - [Custom base images](https://github.com/aicage/aicage/wiki/Customization-Base-Images)
 
 ## Base images
 
