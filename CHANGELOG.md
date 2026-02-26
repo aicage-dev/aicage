@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.22] - 2026-02-26
+
 ### Changed
 
 - Expanded SSH key mount detection and prompting to cover repositories with SSH Git remotes, not only SSH-based
