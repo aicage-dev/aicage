@@ -10,7 +10,7 @@ Their built-in safety checks are naturally limited.
 Running agents in containers gives a hard boundary - while the experience stays the same.
 See [Why cage agents?](#why-cage-agents) for the full rationale.
 
-## Quickstart (first run)
+## First-time quick start
 
 - Prerequisites:
   - Docker
@@ -21,14 +21,13 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
   pipx install aicage
   ```
   
-- Navigate to your project directory.
-- Fastest start (accept defaults, no setup prompts):
+- Navigate to your project directory and run:
 
   ```bash
   aicage --yes <agent>
   ```
 
-  This is the quickest way to get started the first time.
+`--yes` accepts suggested defaults and skips setup prompts. This is the fastest first run.
 
 - Built-in agent examples:
 
@@ -46,28 +45,28 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
 
 ## Full setup (optional)
 
-If you want to review and re-run full interactive setup:
+If you want full interactive setup instead of defaults:
 
-1. Print the current project config:
+1. Show project config path and contents:
 
    ```bash
    aicage --config info
    ```
 
-2. If needed, remove saved config for the project or one agent:
+2. Remove config if needed:
 
    ```bash
    aicage --config remove
    aicage --config remove <agent>
    ```
 
-3. Run again without `--yes` to go through all prompts:
+3. Run again without `--yes`:
 
    ```bash
    aicage <agent>
    ```
 
-4. Screenshot placeholder: full interactive setup flow.
+4. Screenshot placeholder: full setup prompt flow.
 
 ## Full documentation
 
@@ -99,12 +98,7 @@ The complete user documentation lives in the wiki:
   - [Custom agents](https://github.com/aicage/aicage/wiki/Customization-Agents)
   - [Custom base images](https://github.com/aicage/aicage/wiki/Customization-Base-Images)
 
-## Base images
-
-The first run asks which base image to use; pick Ubuntu or whatever matches your Linux distro.  
-All base images have the same stack of tools installed.
-
-## Agents
+## Built-in agents
 
 | CLI      | Agent              | Homepage                                                                           |
 |----------|--------------------|------------------------------------------------------------------------------------|
@@ -123,7 +117,29 @@ preferences and credentials.
 
 ## Customization
 
-You can customize images at three levels: extensions, agents, and base images.
+`aicage` lets you customize images at three levels: extensions, agents, and base images. The sample repo is a fast
+way to see working examples and copy a template.
+
+Quick start:
+
+```bash
+git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom
+```
+
+Then run any agent:
+
+```bash
+aicage <agent>
+```
+
+These are only samples. Use them to learn the structure, then replace or edit them with your own definitions.
+`aicage` detects whatever you place under `~/.aicage-custom` and offers it during selection.
+
+After adding or changing custom definitions, restart `aicage`.
+
+If your project is already configured for an agent, `aicage` will keep using the saved config. To reconfigure (and
+see new bases/agents/extensions), run `aicage --config remove` and start `aicage` again. To reset only one agent
+entry, use `aicage --config remove <agent>`. Use `aicage --config info` to inspect the current config.
 
 - Extensions: [Customization-Extensions](https://github.com/aicage/aicage/wiki/Customization-Extensions)
 - Custom agents: [Customization-Agents](https://github.com/aicage/aicage/wiki/Customization-Agents)
