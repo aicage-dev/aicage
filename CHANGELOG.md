@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.21] - 2026-02-26
+
 ### Added
 
 - Added `-y/--yes` to apply default answers for all prompts in non-interactive runs.
