@@ -12,6 +12,7 @@ from aicage.runtime.run_args import EnvVar, MountSpec
 
 from .._resolvers import _agent_config, _docker_socket, _git_config, _git_root, _gpg, _project, _shares, _ssh_keys
 from .._support._git_support import resolve_git_support_prefs
+from ._mounts import map_mount_requests
 
 
 def resolve_docker_args(
@@ -58,22 +59,7 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
 def _map_mount_requests(
     requests: list[MountRequest],
 ) -> list[MountSpec]:
-    mounts: list[MountSpec] = []
-    seen_hosts: set[Path] = set()
-    for request in requests:
-        host_path = request.host_path.resolve()
-        if host_path in seen_hosts:
-            continue
-        seen_hosts.add(host_path)
-        container_path = container_project_path(host_path)
-        mounts.append(
-            MountSpec(
-                host_path=host_path,
-                container_path=container_path,
-                read_only=request.read_only,
-            )
-        )
-    return mounts
+    return map_mount_requests(requests)
 
 
 def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> None:

@@ -152,6 +152,32 @@ class ResolverTests(TestCase):
             [(item.name, item.value) for item in env],
         )
 
+    def test_map_mount_requests_deduplicates_nested_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root_path = Path(temp_dir).resolve()
+            parent_path = root_path / "parent"
+            child_path = parent_path / "child"
+            parent_path.mkdir()
+            child_path.mkdir()
+
+            mounts = resolver._map_mount_requests(
+                [
+                    MountRequest(host_path=child_path, read_only=False),
+                    MountRequest(host_path=parent_path, read_only=False),
+                ]
+            )
+
+        self.assertEqual(
+            [
+                MountSpec(
+                    host_path=parent_path,
+                    container_path=container_project_path(parent_path),
+                    read_only=False,
+                )
+            ],
+            mounts,
+        )
+
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:
         return {
