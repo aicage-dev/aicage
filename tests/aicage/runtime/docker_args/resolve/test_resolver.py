@@ -1,5 +1,5 @@
 import tempfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
@@ -7,7 +7,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig
-from aicage.paths import CONTAINER_USER_HOME_MOUNTS_DIR, container_project_path
+from aicage.paths import container_project_path
 from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
 from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.env_vars import AICAGE_WORKSPACE
@@ -63,7 +63,7 @@ class ResolverTests(TestCase):
                 ),
                 MountSpec(
                     host_path=git_config,
-                    container_path=CONTAINER_USER_HOME_MOUNTS_DIR / PurePosixPath(".gitconfig"),
+                    container_path=container_project_path(git_config),
                 ),
                 MountSpec(
                     host_path=docker_sock,
@@ -140,7 +140,7 @@ class ResolverTests(TestCase):
             [
                 MountSpec(
                     host_path=project_path,
-                    container_path=CONTAINER_USER_HOME_MOUNTS_DIR / PurePosixPath("project"),
+                    container_path=container_project_path(project_path),
                 )
             ],
             mounts,

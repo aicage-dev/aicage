@@ -2,8 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from aicage.paths import CONTAINER_USER_HOME_MOUNTS_DIR
-
 from .._helpers import (
     custom_agents_dir,
     require_integration,
@@ -31,12 +29,9 @@ def test_agent_path_files_and_directories_create_and_mount(
             "--",
             "bash",
             "-lc",
-            "test -L ~/.aicage-test-dir "
-            "&& test -L ~/.aicage-test-file "
-            "&& test -L ~/.aicage-test-file.backup "
-            f"&& test -d {CONTAINER_USER_HOME_MOUNTS_DIR}/.aicage-test-dir "
-            f"&& test -f {CONTAINER_USER_HOME_MOUNTS_DIR}/.aicage-test-file "
-            f"&& test -f {CONTAINER_USER_HOME_MOUNTS_DIR}/.aicage-test-file.backup",
+            "test -d ~/.aicage-test-dir "
+            "&& test -f ~/.aicage-test-file "
+            "&& test -f ~/.aicage-test-file.backup",
         ],
         env=env,
         cwd=workspace,

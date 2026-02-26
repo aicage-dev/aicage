@@ -1,9 +1,9 @@
 import tempfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.errors import AicageError
-from aicage.paths import CONTAINER_USER_HOME_MOUNTS_DIR
+from aicage.paths import container_project_path
 from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.run_args import MountSpec
 
@@ -12,7 +12,7 @@ class HomeGuardTests(TestCase):
     def test_validate_home_mount_safety_rejects_home_mount(self) -> None:
         home_path = Path("/tmp/home").resolve()
         mounts = [
-            MountSpec(host_path=home_path, container_path=CONTAINER_USER_HOME_MOUNTS_DIR),
+            MountSpec(host_path=home_path, container_path=container_project_path(home_path)),
         ]
 
         with self.assertRaises(AicageError) as ctx:
@@ -26,7 +26,7 @@ class HomeGuardTests(TestCase):
         mounts = [
             MountSpec(
                 host_path=Path("/tmp/project"),
-                container_path=CONTAINER_USER_HOME_MOUNTS_DIR / PurePosixPath("project"),
+                container_path=container_project_path(Path("/tmp/project")),
             ),
         ]
 

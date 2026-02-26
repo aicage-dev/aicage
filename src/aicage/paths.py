@@ -53,7 +53,6 @@ HOST_DOCKER_SOCKET_PATH: Path = Path("/run/docker.sock")
 # CONTAINER PATHS (for mounts to container)
 
 _WSL_MOUNT_ROOT: PurePosixPath = PurePosixPath("/mnt")
-CONTAINER_USER_HOME_MOUNTS_DIR: PurePosixPath = PurePosixPath("/aicage/user-home")
 
 
 def container_project_path(host_path: Path) -> PurePosixPath:
