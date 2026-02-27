@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.26] - 2026-02-27
+
+### Changed
+
+- Documentation refresh release: updated user-facing `README.md` content and examples (including setup flow and
+  screenshots) for improved first-use guidance on PyPI.
+
 ## [0.9.25] - 2026-02-27
 
 ### Fixed
