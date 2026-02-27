@@ -118,7 +118,9 @@ def resolve_git_support_prefs(project_path: Path, agent_cfg: AgentConfig) -> Non
                     ssh_dir,
                 )
             )
-    elif signing_enabled and mounts_cfg.gnupg is None:
+
+    needs_gnupg = signing_enabled and signing_format != "ssh"
+    if needs_gnupg and mounts_cfg.gnupg is None:
         gpg_home = resolve_gpg_home()
         if gpg_home and gpg_home.exists():
             items.append(

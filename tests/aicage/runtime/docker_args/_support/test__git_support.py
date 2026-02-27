@@ -222,3 +222,32 @@ class GitSupportTests(TestCase):
                 _git_support.resolve_git_support_prefs(project_path, agent_cfg)
 
         self.assertTrue(agent_cfg.mounts.ssh)
+
+    def test_resolve_git_support_prefs_includes_ssh_and_gnupg_when_both_needed(self) -> None:
+        agent_cfg = AgentConfig(mounts=_AgentMounts())
+        project_path = Path("/repo")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            ssh_dir = Path(tmp_dir) / "ssh"
+            ssh_dir.mkdir()
+            gpg_home = Path(tmp_dir) / "gnupg"
+            gpg_home.mkdir()
+
+            with (
+                mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=None),
+                mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
+                mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
+                mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
+                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
+                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
+                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
+                mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=["ssh", "gnupg"]) as prompt_mock,
+            ):
+                _git_support.resolve_git_support_prefs(project_path, agent_cfg)
+
+        items = prompt_mock.call_args.args[0]
+        keys = [item[0] for item in items]
+        self.assertIn("ssh", keys)
+        self.assertIn("gnupg", keys)
+        self.assertTrue(agent_cfg.mounts.ssh)
+        self.assertTrue(agent_cfg.mounts.gnupg)
