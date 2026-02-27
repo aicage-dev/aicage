@@ -49,8 +49,9 @@ class VersionCheckTests(TestCase):
             mock.patch("aicage.cli._version_check.subprocess.run", side_effect=FileNotFoundError("missing")),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            version_check._run_upgrade()
+            upgraded = version_check._run_upgrade()
 
+        self.assertFalse(upgraded)
         self.assertIn("Unable to run 'pipx upgrade aicage'", stdout.getvalue())
 
     def test_run_upgrade_handles_failure(self) -> None:
@@ -59,8 +60,9 @@ class VersionCheckTests(TestCase):
             mock.patch("aicage.cli._version_check.subprocess.run", return_value=result),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            version_check._run_upgrade()
+            upgraded = version_check._run_upgrade()
 
+        self.assertFalse(upgraded)
         self.assertIn("Upgrade failed. Please run 'pipx upgrade aicage' manually.", stdout.getvalue())
 
     def test_maybe_prompt_update_skips_unknown_version(self) -> None:
@@ -68,8 +70,9 @@ class VersionCheckTests(TestCase):
             mock.patch("aicage.cli._version_check._check_for_update") as check_mock,
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            version_check.maybe_prompt_update(version_check._UNKNOWN_VERSION)
+            updated = version_check.maybe_prompt_update(version_check._UNKNOWN_VERSION)
 
+        self.assertFalse(updated)
         check_mock.assert_not_called()
         self.assertEqual("", stdout.getvalue())
 
@@ -78,8 +81,9 @@ class VersionCheckTests(TestCase):
             mock.patch("aicage.cli._version_check._check_for_update", return_value=None),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            version_check.maybe_prompt_update("0.1.0")
+            updated = version_check.maybe_prompt_update("0.1.0")
 
+        self.assertFalse(updated)
         self.assertEqual("", stdout.getvalue())
 
     def test_maybe_prompt_update_non_tty(self) -> None:
@@ -88,8 +92,9 @@ class VersionCheckTests(TestCase):
             mock.patch("aicage.cli._version_check.prompt_update_aicage", return_value=False),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            version_check.maybe_prompt_update("1.0.0")
+            updated = version_check.maybe_prompt_update("1.0.0")
 
+        self.assertFalse(updated)
         output = stdout.getvalue()
         self.assertIn("Update with: pipx upgrade aicage", output)
 
@@ -98,8 +103,9 @@ class VersionCheckTests(TestCase):
         with (
             mock.patch("aicage.cli._version_check._check_for_update", return_value="1.2.3"),
             mock.patch("aicage.cli._version_check.prompt_update_aicage", return_value=True),
-            mock.patch("aicage.cli._version_check._run_upgrade") as upgrade_mock,
+            mock.patch("aicage.cli._version_check._run_upgrade", return_value=True) as upgrade_mock,
         ):
-            version_check.maybe_prompt_update("1.0.0")
+            updated = version_check.maybe_prompt_update("1.0.0")
 
+        assert updated
         upgrade_mock.assert_called_once()

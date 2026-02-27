@@ -43,20 +43,20 @@ def _check_for_update(current_version: str) -> str | None:
     return None
 
 
-def maybe_prompt_update(current_version: str) -> None:
+def maybe_prompt_update(current_version: str) -> bool:
     if current_version == _UNKNOWN_VERSION:
-        return
+        return False
     latest_version = _check_for_update(current_version)
     if not latest_version:
-        return
+        return False
 
     if prompt_update_aicage(current_version, latest_version):
-        _run_upgrade()
-    else:
-        print(f"Update with: {_UPGRADE_COMMAND}")
+        return _run_upgrade()
+    print(f"Update with: {_UPGRADE_COMMAND}")
+    return False
 
 
-def _run_upgrade() -> None:
+def _run_upgrade() -> bool:
     logger = get_logger()
     try:
         result = subprocess.run(
@@ -68,7 +68,7 @@ def _run_upgrade() -> None:
     except FileNotFoundError as exc:
         logger.error("Upgrade command failed: %s", exc)
         print(f"Unable to run '{_UPGRADE_COMMAND}'. Please run it manually.")
-        return
+        return False
 
     if result.returncode != 0:
         logger.error(
@@ -77,6 +77,8 @@ def _run_upgrade() -> None:
             result.stderr.strip(),
         )
         print(f"Upgrade failed. Please run '{_UPGRADE_COMMAND}' manually.")
+        return False
+    return True
 
 
 def _is_newer(latest_version: str, current_version: str) -> bool:

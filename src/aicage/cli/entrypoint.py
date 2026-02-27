@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -26,7 +27,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         parsed: ParsedArgs = parse_cli(parsed_argv)
         set_assume_yes(parsed.yes)
-        maybe_prompt_update(__version__)
+        if maybe_prompt_update(__version__):
+            _restart_with_current_args(parsed_argv)
         if parsed.config_action == "info":
             info_project_config()
         elif parsed.config_action == "remove":
@@ -67,3 +69,7 @@ def _print_docker_error(exc: DockerError) -> None:
         stderr = stderr.decode("utf-8", errors="replace")
     if stderr:
         print(stderr.rstrip(), file=sys.stderr)
+
+
+def _restart_with_current_args(parsed_argv: Sequence[str]) -> None:
+    os.execv(sys.executable, [sys.executable, "-m", "aicage", *parsed_argv])

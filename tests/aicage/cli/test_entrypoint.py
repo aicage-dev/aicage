@@ -89,6 +89,25 @@ def _build_agents_and_bases(
 
 
 class EntrypointTests(TestCase):
+    def test_main_restarts_when_update_succeeds(self) -> None:
+        with (
+            mock.patch(
+                "aicage.cli.entrypoint.parse_cli",
+                return_value=ParsedArgs(False, "", "", [], False, [], "info", None, True),
+            ),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=True),
+            mock.patch(
+                "aicage.cli.entrypoint._restart_with_current_args",
+                side_effect=SystemExit(0),
+            ) as restart_mock,
+            mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
+        ):
+            with self.assertRaises(SystemExit):
+                main(["--config", "info"])
+
+        restart_mock.assert_called_once_with(["--config", "info"])
+        info_mock.assert_not_called()
+
     def test_main_config_info(self) -> None:
         with (
             mock.patch(
@@ -97,7 +116,7 @@ class EntrypointTests(TestCase):
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
             mock.patch("aicage.cli.entrypoint.set_assume_yes") as set_assume_yes_mock,
         ):
             exit_code = main([])
@@ -115,7 +134,7 @@ class EntrypointTests(TestCase):
             ),
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
         ):
             exit_code = main([])
 
@@ -131,7 +150,7 @@ class EntrypointTests(TestCase):
             ),
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
         ):
             exit_code = main([])
 
@@ -156,7 +175,7 @@ class EntrypointTests(TestCase):
                     "aicage.cli.entrypoint.parse_cli",
                     return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
                 ),
-                mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+                mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
                 mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
                 mock.patch("aicage.cli.entrypoint.ensure_image"),
                 mock.patch("aicage.cli.entrypoint.build_run_args", return_value=run_args),
@@ -184,7 +203,7 @@ class EntrypointTests(TestCase):
                     "aicage.cli.entrypoint.parse_cli",
                     return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
                 ),
-                mock.patch("aicage.cli.entrypoint.maybe_prompt_update"),
+                mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
                 mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
                 mock.patch("aicage.cli.entrypoint.ensure_image"),
                 mock.patch("aicage.cli.entrypoint.build_run_args", return_value=run_args),
