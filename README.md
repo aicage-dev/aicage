@@ -43,6 +43,10 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
   aicage --yes qwen
   ```
 
+Example output of first run with agent `codex`:
+
+[![Example output of first run with agent codex](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes-thumb.png)](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes.png)
+
 ## Full setup (optional)
 
 If you want full interactive setup instead of defaults:
@@ -66,7 +70,9 @@ If you want full interactive setup instead of defaults:
    aicage <agent>
    ```
 
-4. Screenshot placeholder: full setup prompt flow.
+Example output of full setup prompt flow:
+
+[![Example output of full setup prompt flow](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/02-full-config-start-thumb.png)](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/02-full-config-start.png)
 
 ## Full documentation
 
