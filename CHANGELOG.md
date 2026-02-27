@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.27] - 2026-02-27
+
+### Changed
+
+- Clarified base image selection prompts to explicitly say that pressing Enter accepts the default selection.
+
 ## [0.9.26] - 2026-02-27
 
 ### Changed
