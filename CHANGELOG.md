@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.28] - 2026-02-27
+
+### Fixed
+
+- After a successful `aicage` self-update, the CLI now restarts with the same arguments so the updated version runs
+  immediately in the current invocation.
+
 ## [0.9.27] - 2026-02-27
 
 ### Changed
