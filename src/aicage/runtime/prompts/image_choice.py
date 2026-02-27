@@ -83,7 +83,7 @@ def _render_image_prompt(
         if choice.kind == "base" and choice.value == default_base:
             suffix = " (default)"
         print(f"  {idx}) {label}{suffix}")
-    return f"Enter number or name [{default_base}]: "
+    return f"Enter number or name (press Enter for default) [{default_base}]: "
 
 
 def _parse_image_choice_response(

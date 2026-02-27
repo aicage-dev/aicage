@@ -39,7 +39,7 @@ def prompt_for_base(request: BaseSelectionRequest) -> str:
         for idx, option in enumerate(bases, start=1):
             suffix = " (default)" if option.base == default_base else ""
             print(f"  {idx}) {option.base}: {option.description}{suffix}")
-        prompt = f"Enter number or name [{default_base}]: "
+        prompt = f"Enter number or name (press Enter for default) [{default_base}]: "
     else:
         prompt = f"{title} [{default_base}]: "
 
