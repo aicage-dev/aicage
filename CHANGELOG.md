@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.25] - 2026-02-27
+
+### Fixed
+
+- Allow mounting `~/.ssh` and `~/.gnupg` together when both are needed (for example SSH remotes plus GPG commit
+  signing), instead of treating them as mutually exclusive in Git support mount preference resolution.
+
 ## [0.9.24] - 2026-02-26
 
 ### Changed
