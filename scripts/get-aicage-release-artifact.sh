@@ -34,7 +34,7 @@ echo "Verifying signature ..." >&2
 ${COSIGN_CMD} verify-blob \
   --bundle SHA256SUMS.sigstore.json \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-  --certificate-identity-regexp "^https://github\.com/aicage/${AICAGE_REPO}/\.github/workflows/release\.yml@refs/tags/.*$" \
+  --certificate-identity-regexp "^https://github\.com/aicage/${AICAGE_REPO}/\.github/workflows/release\.yml@(?:refs/tags/.*|[0-9a-f]{40})$" \
   SHA256SUMS \
    >&2
 
