@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.29] - 2026-03-17
+
+### Internal
+
+- Added Dependabot version update configuration and explicit dependency version ranges for runtime and development
+  dependencies.
+- Pinned GitHub Actions to commit digests and refreshed the GitHub Actions dependency set.
+- Split the reusable test suite from the release workflow so pull requests run change validation separately while
+  releases remain gated by tests.
+
 ## [0.9.28] - 2026-02-27
 
 ### Fixed
