@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.40] - 2026-03-18
+
+### Fixed
+
+- Allow verification of images produced by `aicage/github-actions` reusable workflows referenced by commit digest, not
+  only by `refs/...` identities.
+
 ## [0.9.29] - 2026-03-17
 
 ### Internal
