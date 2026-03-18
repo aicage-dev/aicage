@@ -8,7 +8,7 @@ yamllint .
 pymarkdown \
   --config .pymarkdown.json scan \
   --recurse \
-  --exclude '**/.venv*/' \
+  --exclude '**/.venv*/**' \
   .
 ruff check .
 pyright .
