@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.42] - 2026-03-19
+
+### Fixed
+
+- Allow verification of images signed by GitHub Actions workflows from any repository in the `aicage` org, not only
+  `aicage/github-actions`.
+
 ## [0.9.41] - 2026-03-18
 
 ### Fixed
