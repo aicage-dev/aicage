@@ -27,15 +27,13 @@ def prompt_for_extensions(options: list[ExtensionOption]) -> list[str]:
     if not response:
         return []
     requested = [item.strip() for item in response.split(",") if item.strip()]
-    selection: list[str] = []
     seen: set[str] = set()
     for item in requested:
         extension_id = _resolve_extension_choice(item, options)
         if extension_id in seen:
             raise RuntimeExecutionError(f"Duplicate extension '{extension_id}' selected.")
         seen.add(extension_id)
-        selection.append(extension_id)
-    return selection
+    return [option.name for option in options if option.name in seen]
 
 
 def _resolve_extension_choice(response: str, options: list[ExtensionOption]) -> str:

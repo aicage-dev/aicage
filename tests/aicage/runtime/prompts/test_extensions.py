@@ -18,7 +18,21 @@ class PromptExtensionsTests(TestCase):
             mock.patch("builtins.input", return_value="2,one"),
         ):
             selection = prompt_for_extensions(options)
-        self.assertEqual(["two", "one"], selection)
+        self.assertEqual(["one", "two"], selection)
+
+    def test_prompt_for_extensions_returns_prompt_order_for_custom_input_order(self) -> None:
+        options = [
+            ExtensionOption(name="act", description="Act"),
+            ExtensionOption(name="cosign", description="Cosign"),
+            ExtensionOption(name="gh", description="GitHub CLI"),
+            ExtensionOption(name="regctl", description="regctl"),
+        ]
+        with (
+            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("builtins.input", return_value="4,3,2,1"),
+        ):
+            selection = prompt_for_extensions(options)
+        self.assertEqual(["act", "cosign", "gh", "regctl"], selection)
 
     def test_prompt_for_extensions_returns_empty_on_blank_input(self) -> None:
         options = [
