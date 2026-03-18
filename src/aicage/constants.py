@@ -21,7 +21,7 @@ _COSIGN_IMAGE_DIGEST: str = "sha256:be924970ba7438c22e18067dec5637946d6566eac711
 COSIGN_IMAGE_REF: str = f"{_COSIGN_IMAGE_NAME}@{_COSIGN_IMAGE_DIGEST}"
 COSIGN_OIDC_ISSUER: str = "https://token.actions.githubusercontent.com"
 COSIGN_IDENTITY_REGEXP: str = (
-    "^https://github.com/aicage/github-actions/.github/workflows/.*@(?:refs/.*/.*|[0-9a-f]{40})$"
+    "^https://github.com/aicage/[^/]+/.github/workflows/.*@(?:refs/.*/.*|[0-9a-f]{40})$"
 )
 
 DOCKER_LOCAL_METADATA_TIMEOUT_SECONDS: int = 30
