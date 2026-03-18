@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.41] - 2026-03-18
+
+### Fixed
+
+- Normalize interactive extension selections to prompt order so the same selected extensions produce the same default
+  extended image name regardless of input order.
+
 ## [0.9.40] - 2026-03-18
 
 ### Fixed
