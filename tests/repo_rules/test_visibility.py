@@ -27,7 +27,7 @@ class VisibilityRulesTests(TestCase):
             current_package = _current_package(module_name, path)
             tree = _parse_tree(path)
             for imported in _iter_imported_modules(tree, current_package):
-                if imported == "aicage._version" and module_name == "aicage":
+                if _is_root_version_import(module_name, imported):
                     continue
                 if _has_private_segment(imported):
                     violations.append(f"{path.relative_to(repo_root)}:{imported}")
@@ -144,6 +144,10 @@ def _current_package(module_name: str, path: Path) -> list[str]:
     if path.name == "__init__.py":
         return parts
     return parts[:-1]
+
+
+def _is_root_version_import(module_name: str, imported: str) -> bool:
+    return "." not in module_name and imported == f"{module_name}._version"
 
 
 def _parse_tree(path: Path) -> ast.AST:
@@ -423,8 +427,6 @@ def _register_module_usage(
 ) -> None:
     if imported_module in module_names:
         usage[imported_module].add(module_name)
-
-
 
 
 def _collect_import_aliases(
