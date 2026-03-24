@@ -29,3 +29,14 @@ Integration tests are opt-in because they require Docker and network access. Run
 ```bash
 AICAGE_RUN_INTEGRATION=1 pytest -m integration
 ```
+
+## Hosted runner coverage
+
+GitHub-hosted macOS runners are only used for a small manual smoke subset. The full integration suite should stay on
+Linux.
+
+- macOS: use the dedicated hosted workflow for occasional smoke verification of interactive startup, local agent
+  builds, extension builds, and `--docker` behavior on a non-Linux host.
+- Windows: verify manually on a local machine with the intended Docker Desktop + WSL2 setup.
+- Full integration suite: keep it on Linux. Several tests assert Linux-only details such as `/proc/self/mountinfo`,
+  `mountpoint`, and `stat -c`, so broad cross-platform execution would add noise without adding much signal.

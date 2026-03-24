@@ -1,0 +1,146 @@
+name: Integration Tests (macOS Hosted)
+
+"on":
+  workflow_dispatch:
+    inputs:
+      upload_logs_on_success:
+        description: Upload aicage logs even when the smoke test succeeds.
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  integration-macos:
+    name: macOS hosted integration smoke (${{ matrix.test }})
+    runs-on: macos-26-intel
+    env:
+      AICAGE_TEST_IMAGE_REF: ghcr.io/aicage/aicage:copilot-ubuntu
+      COSIGN_IMAGE_REF: ghcr.io/sigstore/cosign/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test: tests/aicage/integration/remote_builtin/test_run.py::test_builtin_agent_runs
+          - test: tests/aicage/integration/local_builtin/test_rebuild_base_layer.py::test_local_builtin_agent_rebuilds_on_base_layer
+          - test: tests/aicage/integration/local_builtin/test_rebuild_agent_version.py::test_local_builtin_agent_rebuilds
+          - test: tests/aicage/integration/test_docker_in_container.py::test_docker_socket_runs_hello_world_in_container
+          - test: tests/aicage/integration/local_builtin/test_extensions.py::test_local_builtin_extension_builds_and_runs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22  # v4.1.0
+
+      - name: Syncing metadata and agents with sub-project 'aicage-image'
+        run: |
+          scripts/sync-with-aicage-image-projects.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Validating config with schemas
+        run: |
+          scripts/validate-config-with-schemas.sh
+
+      - name: Install Docker runtime
+        run: |
+          curl -L https://desktop.docker.com/mac/main/amd64/Docker.dmg -o Docker.dmg
+          sudo hdiutil attach Docker.dmg
+          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license --user="$USER"
+          sudo hdiutil detach /Volumes/Docker
+
+      - name: Launch Docker Desktop
+        run: |
+          docker_app="/Applications/Docker.app"
+          if [ ! -d "$docker_app" ]; then
+            docker_app="$HOME/Applications/Docker.app"
+          fi
+          if [ ! -d "$docker_app" ]; then
+            echo "Docker.app not found." >&2
+            ls -la /Applications || true
+            ls -la "$HOME/Applications" || true
+            exit 1
+          fi
+          for i in {1..60}; do
+            if open "$docker_app"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Docker Desktop could not be launched." >&2
+          exit 1
+
+      - name: Wait for Docker Desktop readiness
+        run: |
+          for i in {1..60}; do
+            if docker desktop status && docker info; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Docker Desktop did not become ready in time." >&2
+          exit 1
+
+      - name: Validate Docker engine
+        run: docker run --rm hello-world
+
+      - name: Print Docker CLI diagnostics
+        run: |
+          which docker
+          docker version
+          docker info
+          docker context ls
+          docker buildx version
+          docker buildx inspect
+          ls -la /usr/local/bin/docker*
+          ls -la "$HOME/.docker/bin" || true
+          ls -la "$HOME/.docker/cli-plugins" || true
+
+      - name: Probe docker build backend
+        run: |
+          probe_dir="$(mktemp -d)"
+          cat > "$probe_dir/Dockerfile" <<'EOF'
+          FROM alpine:3.20
+          RUN --mount=type=bind,source=.,target=/src,readonly true
+          EOF
+          docker build -f "$probe_dir/Dockerfile" "$probe_dir"
+
+      - name: Pull cosign image
+        run: docker pull "$COSIGN_IMAGE_REF"
+
+      - name: Pull aicage test image
+        run: docker pull "$AICAGE_TEST_IMAGE_REF"
+
+      - name: Run macOS hosted smoke tests
+        env:
+          AICAGE_RUN_INTEGRATION: "1"
+        run: pytest ${{ matrix.test }}
+
+      - name: Collect aicage logs
+        if: failure() || inputs.upload_logs_on_success
+        run: |
+          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          mkdir -p "$artifact_dir"
+          if [ -d "$HOME/.aicage" ]; then
+            mkdir -p "$artifact_dir/$HOME"
+            cp -R "$HOME/.aicage" "$artifact_dir/$HOME/"
+            printf 'Collected log directory:\n  %s\n' "$HOME/.aicage"
+          else
+            echo "Expected macOS integration logs at $HOME/.aicage, but that directory does not exist." >&2
+          fi
+
+      - name: Upload aicage logs
+        if: failure() || inputs.upload_logs_on_success
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808  # v4.3.3
+        with:
+          name: aicage-logs-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/aicage-logs-${{ strategy.job-index }}
+          if-no-files-found: ignore

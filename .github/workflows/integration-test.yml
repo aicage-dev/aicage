@@ -92,3 +92,25 @@ jobs:
         env:
           AICAGE_RUN_INTEGRATION: "1"
         run: pytest -m "integration and not proxy_integration" ${{ matrix.test }}
+
+      - name: "On failure: Collect aicage logs"
+        if: failure()
+        run: |
+          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          mkdir -p "$artifact_dir"
+          while IFS= read -r path; do
+            rel_path="${path#/}"
+            target_dir="$artifact_dir/$(dirname "$rel_path")"
+            mkdir -p "$target_dir"
+            cp -R "$path" "$target_dir/"
+          done < <(
+            find "${TMPDIR:-/tmp}" -type d -path "*/pytest-of-${USER}/*/.aicage" 2>/dev/null | sort
+          )
+
+      - name: "On failure: Upload aicage logs"
+        if: failure()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808  # v4.3.3
+        with:
+          name: aicage-logs-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/aicage-logs-${{ strategy.job-index }}
+          if-no-files-found: ignore

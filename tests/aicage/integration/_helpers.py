@@ -126,12 +126,15 @@ def setup_workspace(
     *,
     docker_args: str | None = None,
 ) -> tuple[Path, dict[str, str]]:
-    home_dir = tmp_path / "home"
+    original_home = Path.home().resolve()
+    home_dir = original_home if sys.platform == "darwin" else tmp_path / "home"
     workspace = tmp_path / "workspace"
-    home_dir.mkdir()
+    if sys.platform != "darwin":
+        home_dir.mkdir()
     workspace.mkdir()
     workspace = workspace.resolve()
-    monkeypatch.setenv("HOME", str(home_dir))
+    if sys.platform != "darwin":
+        monkeypatch.setenv("HOME", str(home_dir))
     if sys.platform == "win32":
         home_str = str(home_dir)
         drive, tail = os.path.splitdrive(home_str)
@@ -333,7 +336,8 @@ def keep_pulled_image_last_rootfs_layer(image_ref: str) -> Iterator[str]:
 
 def build_cli_env(home_dir: Path) -> dict[str, str]:
     env = dict(os.environ)
-    env["HOME"] = str(home_dir)
+    if sys.platform != "darwin":
+        env["HOME"] = str(home_dir)
     if sys.platform == "win32":
         home_str = str(home_dir)
         drive, tail = os.path.splitdrive(home_str)
