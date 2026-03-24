@@ -58,16 +58,16 @@ class ResolverTests(TestCase):
         self.assertEqual(
             [
                 MountSpec(
+                    host_path=docker_sock,
+                    container_path=container_project_path(docker_sock),
+                ),
+                MountSpec(
                     host_path=project_path,
                     container_path=container_project_path(project_path),
                 ),
                 MountSpec(
                     host_path=git_config,
                     container_path=container_project_path(git_config),
-                ),
-                MountSpec(
-                    host_path=docker_sock,
-                    container_path=container_project_path(docker_sock),
                 ),
             ],
             mounts,
