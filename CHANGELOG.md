@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Genericized `_version.py` references in repository rule docs and lint helpers.
 - Emptied package `__init__.py` files in `tests` to keep them marker-only.
 
+## [0.9.48] - 2026-03-24
+
+### Fixed
+
+- Preserve nested child mounts when they override the parent mount access mode, so child `:ro` or read-write
+  mounts are no longer dropped when the parent path is also mounted.
+
 ## [0.9.42] - 2026-03-19
 
 ### Fixed
