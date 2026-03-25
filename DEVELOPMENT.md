@@ -39,8 +39,10 @@ config.
 GitHub-hosted macOS runners are only used for a small manual smoke subset. The full integration suite should stay on
 Linux.
 
-- macOS: use the dedicated hosted workflow for occasional smoke verification of interactive startup, local agent
-  builds, extension builds, and `--docker` behavior on a non-Linux host.
+- macOS: use the dedicated hosted workflow for occasional smoke verification of remote builtin startup, local builtin
+  rebuild flows, extension builds, and `--docker` behavior on a non-Linux host.
+  The workflow installs Docker Desktop, starts it explicitly from `Docker.app`, and uploads `~/.aicage` logs on
+  failure. Use the workflow-dispatch input to upload logs on success when debugging.
 - Windows: verify manually on a local machine with the intended Docker Desktop + WSL2 setup.
 - Full integration suite: keep it on Linux. Several tests assert Linux-only details such as `/proc/self/mountinfo`,
   `mountpoint`, and `stat -c`, so broad cross-platform execution would add noise without adding much signal.

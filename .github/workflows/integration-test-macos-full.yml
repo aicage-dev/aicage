@@ -1,0 +1,178 @@
+name: Integration Tests (macOS Full)
+
+"on":
+  workflow_dispatch:
+    inputs:
+      pytest_filter:
+        description: Optional extra pytest arguments, for example a test path or -k expression.
+        required: false
+        default: ""
+        type: string
+      upload_logs_on_success:
+        description: Upload aicage logs even when the test succeeds.
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  integration-discover:
+    name: Discover Integration Tests
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.collect.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22  # v4.1.0
+
+      - name: Syncing metadata and agents with sub-project 'aicage-image'
+        run: |
+          scripts/sync-with-aicage-image-projects.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Validating config with schemas
+        run: |
+          scripts/validate-config-with-schemas.sh
+
+      - id: collect
+        name: Collect integration tests
+        env:
+          PYTEST_FILTER: ${{ inputs.pytest_filter }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          import subprocess
+
+          command = [
+              "pytest",
+              "--collect-only",
+              "-q",
+              "-m",
+              "integration and not proxy_integration",
+          ]
+          extra = os.environ["PYTEST_FILTER"].strip()
+          if extra:
+              command.extend(shlex.split(extra))
+          tests = subprocess.check_output(command, text=True).splitlines()
+          node_ids = [line for line in tests if "::" in line]
+          matrix = {"include": [{"test": test} for test in node_ids]}
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"matrix={json.dumps(matrix)}\n")
+          PY
+
+      - name: Print integration matrix
+        run: |
+          echo '${{ steps.collect.outputs.matrix }}' | python -m json.tool
+
+  integration-macos:
+    name: macOS full integration (${{ matrix.test }})
+    runs-on: macos-26-intel
+    needs: integration-discover
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.integration-discover.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22  # v4.1.0
+
+      - name: Syncing metadata and agents with sub-project 'aicage-image'
+        run: |
+          scripts/sync-with-aicage-image-projects.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Validating config with schemas
+        run: |
+          scripts/validate-config-with-schemas.sh
+
+      - name: Install Docker runtime
+        run: |
+          curl -L https://desktop.docker.com/mac/main/amd64/Docker.dmg -o Docker.dmg
+          sudo hdiutil attach Docker.dmg
+          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license --user="$USER"
+          sudo hdiutil detach /Volumes/Docker
+
+      - name: Launch Docker Desktop
+        run: |
+          docker_app="/Applications/Docker.app"
+          if [ ! -d "$docker_app" ]; then
+            docker_app="$HOME/Applications/Docker.app"
+          fi
+          if [ ! -d "$docker_app" ]; then
+            echo "Docker.app not found." >&2
+            ls -la /Applications || true
+            ls -la "$HOME/Applications" || true
+            exit 1
+          fi
+          for i in {1..60}; do
+            if open "$docker_app"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Docker Desktop could not be launched." >&2
+          exit 1
+
+      - name: Wait for Docker Desktop readiness
+        run: |
+          for i in {1..60}; do
+            if docker desktop status && docker info; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Docker Desktop did not become ready in time." >&2
+          exit 1
+
+      - name: Validate Docker engine
+        run: docker run --rm hello-world
+
+      - name: Run macOS full integration test
+        env:
+          AICAGE_RUN_INTEGRATION: "1"
+        run: pytest -m "integration and not proxy_integration" ${{ matrix.test }}
+
+      - name: Collect aicage logs
+        if: failure() || inputs.upload_logs_on_success
+        run: |
+          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          mkdir -p "$artifact_dir"
+          if [ -d "$HOME/.aicage" ]; then
+            mkdir -p "$artifact_dir/$HOME"
+            cp -R "$HOME/.aicage" "$artifact_dir/$HOME/"
+            printf 'Collected log directory:\n  %s\n' "$HOME/.aicage"
+          else
+            echo "Expected macOS integration logs at $HOME/.aicage, but that directory does not exist." >&2
+          fi
+
+      - name: Upload aicage logs
+        if: failure() || inputs.upload_logs_on_success
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808  # v4.3.3
+        with:
+          name: aicage-logs-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/aicage-logs-${{ strategy.job-index }}
+          if-no-files-found: ignore
