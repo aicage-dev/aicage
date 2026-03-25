@@ -1,0 +1,170 @@
+name: Integration Tests (Proxy E2E macOS Hosted)
+
+"on":
+  workflow_dispatch:
+
+jobs:
+
+  integration-proxy-macos:
+    name: Integration proxy macOS (${{ matrix.test }})
+    runs-on: macos-26-intel
+    env:
+      AICAGE_TEST_IMAGE_REF: ghcr.io/aicage/aicage:codex-ubuntu
+      AICAGE_BASE_IMAGE_REF: ghcr.io/aicage/aicage-image-base:ubuntu
+      COSIGN_IMAGE_REF: ghcr.io/sigstore/cosign/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb
+      VERSION_CHECK_IMAGE_REF: ghcr.io/aicage/aicage-image-util:agent-version
+      HOST_PROXY_URL: http://localhost:3128
+      CONTAINER_PROXY_URL: http://host.docker.internal:3128
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test: tests/aicage/integration/remote_builtin/test_proxy.py::test_proxy_host_and_runtime_network
+            expected_host: api.github.com:443
+          - test: tests/aicage/integration/remote_builtin/test_proxy.py::test_proxy_custom_agent_build_and_version
+            expected_host: registry.npmjs.org:443
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22  # v4.1.0
+
+      - name: Syncing metadata and agents with sub-project 'aicage-image'
+        run: |
+          scripts/sync-with-aicage-image-projects.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Validating config with schemas
+        run: |
+          scripts/validate-config-with-schemas.sh
+
+      - name: Install Docker runtime
+        run: |
+          curl -L https://desktop.docker.com/mac/main/amd64/Docker.dmg -o Docker.dmg
+          sudo hdiutil attach Docker.dmg
+          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license --user="$USER"
+          sudo hdiutil detach /Volumes/Docker
+
+      - name: Launch Docker Desktop
+        run: |
+          docker_app="/Applications/Docker.app"
+          if [ ! -d "$docker_app" ]; then
+            docker_app="$HOME/Applications/Docker.app"
+          fi
+          if [ ! -d "$docker_app" ]; then
+            echo "Docker.app not found." >&2
+            ls -la /Applications || true
+            ls -la "$HOME/Applications" || true
+            exit 1
+          fi
+          for i in {1..60}; do
+            if open "$docker_app"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Docker Desktop could not be launched." >&2
+          exit 1
+
+      - name: Wait for Docker Desktop readiness
+        run: |
+          for i in {1..60}; do
+            if docker desktop status && docker info; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Docker Desktop did not become ready in time." >&2
+          exit 1
+
+      - name: Validate Docker engine
+        run: docker run --rm hello-world
+
+      - name: Start Squid proxy with published port
+        run: |
+          cat > squid.conf <<'EOF'
+          http_port 3128
+          acl all src all
+          http_access allow all
+          access_log stdio:/var/log/squid/access.log
+          cache deny all
+          coredump_dir /var/spool/squid
+          EOF
+          docker run -d --name squid-proxy \
+            -p 127.0.0.1:3128:3128 \
+            -v "$PWD/squid.conf:/etc/squid/squid.conf:ro" \
+            ubuntu/squid:5.2-22.04_beta
+
+      - name: Wait for Squid proxy and validate host proxy path
+        env:
+          NO_PROXY: localhost,127.0.0.1
+        run: |
+          for i in {1..60}; do
+            if curl -fsS --proxy "$HOST_PROXY_URL" https://api.github.com >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Squid proxy did not become ready." >&2
+          docker logs squid-proxy || true
+          exit 1
+
+      - name: Pull cosign image
+        run: docker pull "$COSIGN_IMAGE_REF"
+
+      - name: Pull aicage test image
+        run: docker pull "$AICAGE_TEST_IMAGE_REF"
+
+      - name: Pull aicage base image
+        run: docker pull "$AICAGE_BASE_IMAGE_REF"
+
+      - name: Pull version check image
+        run: docker pull "$VERSION_CHECK_IMAGE_REF"
+
+      - name: Run proxy integration test
+        env:
+          AICAGE_RUN_INTEGRATION: "1"
+          AICAGE_RUN_PROXY_INTEGRATION: "1"
+          HTTP_PROXY: ${{ env.CONTAINER_PROXY_URL }}
+          HTTPS_PROXY: ${{ env.CONTAINER_PROXY_URL }}
+          ALL_PROXY: ${{ env.CONTAINER_PROXY_URL }}
+          NO_PROXY: localhost,127.0.0.1,host.docker.internal
+        run: |
+          pytest -m proxy_integration ${{ matrix.test }}
+
+      - name: "On failure: Collect aicage logs"
+        if: failure()
+        run: |
+          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          mkdir -p "$artifact_dir"
+          if [ -d "$HOME/.aicage" ]; then
+            mkdir -p "$artifact_dir/$HOME"
+            cp -R "$HOME/.aicage" "$artifact_dir/$HOME/"
+          fi
+
+      - name: "On failure: Upload aicage logs"
+        if: failure()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808  # v4.3.3
+        with:
+          name: aicage-logs-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/aicage-logs-${{ strategy.job-index }}
+          if-no-files-found: ignore
+
+      - name: Verify proxy traffic in Squid logs
+        if: always()
+        run: |
+          docker logs squid-proxy > squid-access.log
+          echo "Last proxy access lines:"
+          tail -n 200 squid-access.log || true
+          grep -q '${{ matrix.expected_host }}' squid-access.log
+
