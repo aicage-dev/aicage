@@ -126,22 +126,10 @@ def setup_workspace(
     *,
     docker_args: str | None = None,
 ) -> tuple[Path, dict[str, str]]:
-    original_home = Path.home().resolve()
-    home_dir = original_home if sys.platform == "darwin" else tmp_path / "home"
+    home_dir = Path.home().resolve()
     workspace = tmp_path / "workspace"
-    if sys.platform != "darwin":
-        home_dir.mkdir()
     workspace.mkdir()
     workspace = workspace.resolve()
-    if sys.platform != "darwin":
-        monkeypatch.setenv("HOME", str(home_dir))
-    if sys.platform == "win32":
-        home_str = str(home_dir)
-        drive, tail = os.path.splitdrive(home_str)
-        monkeypatch.setenv("USERPROFILE", home_str)
-        if drive:
-            monkeypatch.setenv("HOMEDRIVE", drive)
-            monkeypatch.setenv("HOMEPATH", tail or "\\")
     monkeypatch.chdir(workspace)
     projects_dir = home_dir / ".aicage/projects"
     custom_root_dir = home_dir / ".aicage-custom"
@@ -336,8 +324,6 @@ def keep_pulled_image_last_rootfs_layer(image_ref: str) -> Iterator[str]:
 
 def build_cli_env(home_dir: Path) -> dict[str, str]:
     env = dict(os.environ)
-    if sys.platform != "darwin":
-        env["HOME"] = str(home_dir)
     if sys.platform == "win32":
         home_str = str(home_dir)
         drive, tail = os.path.splitdrive(home_str)

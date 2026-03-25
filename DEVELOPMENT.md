@@ -30,6 +30,10 @@ Integration tests are opt-in because they require Docker and network access. Run
 AICAGE_RUN_INTEGRATION=1 pytest -m integration
 ```
 
+Integration tests use a fake temp home on Linux and Windows so local runs do not write into the real user home.
+macOS integration tests keep the real home because Docker Desktop on hosted macOS runners needs the real Docker user
+config.
+
 ## Hosted runner coverage
 
 GitHub-hosted macOS runners are only used for a small manual smoke subset. The full integration suite should stay on

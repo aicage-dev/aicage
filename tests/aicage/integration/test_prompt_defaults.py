@@ -20,7 +20,7 @@ def test_git_support_prompt_persists_selected_mounts(
     project_dir = workspace / "project"
     project_dir.mkdir()
     _init_git_repo(workspace)
-    _write_global_gitconfig(tmp_path / "home")
+    _write_global_gitconfig(Path(env["HOME"]))
     _save_project_config(project_dir, mounts=_AgentMounts())
 
     exit_code, output = run_cli_pty(
@@ -46,7 +46,7 @@ def test_yes_uses_default_mount_selection_without_prompt_output(
     project_dir = workspace / "project"
     project_dir.mkdir()
     _init_git_repo(workspace)
-    _write_global_gitconfig(tmp_path / "home")
+    _write_global_gitconfig(Path(env["HOME"]))
     _save_project_config(project_dir, mounts=_AgentMounts())
 
     exit_code, output = run_cli_pty(
@@ -64,6 +64,7 @@ def test_yes_uses_default_mount_selection_without_prompt_output(
 
 
 def _write_global_gitconfig(home_dir: Path) -> None:
+    home_dir.mkdir(parents=True, exist_ok=True)
     gitconfig = home_dir / ".gitconfig"
     gitconfig.write_text(
         "\n".join(
