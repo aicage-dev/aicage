@@ -26,6 +26,7 @@ def test_agent_path_files_and_directories_create_and_mount(
 
     exit_code, output = run_cli_pty(
         [
+            "--yes",
             "--",
             "bash",
             "-lc",
@@ -35,7 +36,6 @@ def test_agent_path_files_and_directories_create_and_mount(
         ],
         env=env,
         cwd=workspace,
-        input_data="\n\n\n",
     )
 
     assert exit_code == 0, output

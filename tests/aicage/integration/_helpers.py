@@ -199,10 +199,9 @@ def setup_marker_extension_workspace(
 
 def run_agent_version(env: dict[str, str], workspace: Path, agent_name: str) -> None:
     exit_code, output = run_cli_pty(
-        [agent_name, "--version"],
+        ["--yes", agent_name, "--version"],
         env=env,
         cwd=workspace,
-        input_data="\n\n",
     )
     assert exit_code == 0, output
     output_lines = [line.strip() for line in output.splitlines() if line.strip()]

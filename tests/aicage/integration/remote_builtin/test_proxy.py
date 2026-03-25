@@ -39,10 +39,9 @@ def test_proxy_host_and_runtime_network(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert local_image_exists(old_image_ref)
 
     exit_code, output = run_cli_pty(
-        ["codex", "-lc", "curl -fsS https://api.github.com >/dev/null"],
+        ["--yes", "codex", "-lc", "curl -fsS https://api.github.com >/dev/null"],
         env=env,
         cwd=workspace,
-        input_data="\n\n",
     )
     assert exit_code == 0, output
     local_digest_after = get_local_repo_digest_for_repo(image_ref, repository)

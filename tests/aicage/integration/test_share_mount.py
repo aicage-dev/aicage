@@ -17,6 +17,7 @@ def test_share_mounts_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path)
     container_path = container_project_path(share_dir).as_posix()
     exit_code, output = run_cli_pty(
         [
+            "--yes",
             "--share",
             str(share_dir),
             "--env",
@@ -28,7 +29,6 @@ def test_share_mounts_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path)
         ],
         env=env,
         cwd=workspace,
-        input_data="\n\n\n",
     )
 
     assert exit_code == 0, output
@@ -43,6 +43,7 @@ def test_share_mounts_directory_read_only(monkeypatch: pytest.MonkeyPatch, tmp_p
     container_path = container_project_path(share_dir).as_posix()
     exit_code, output = run_cli_pty(
         [
+            "--yes",
             "--share",
             f"{share_dir}:ro",
             "--env",
@@ -54,7 +55,6 @@ def test_share_mounts_directory_read_only(monkeypatch: pytest.MonkeyPatch, tmp_p
         ],
         env=env,
         cwd=workspace,
-        input_data="\n\n\n",
     )
 
     assert exit_code != 0, output
