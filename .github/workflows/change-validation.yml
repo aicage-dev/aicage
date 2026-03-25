@@ -7,6 +7,10 @@ name: Change Validation
       - main
   workflow_dispatch:
 
+concurrency:
+  group: change-validation-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   test-suite:
     uses: ./.github/workflows/test-suite.yml
