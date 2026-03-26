@@ -12,5 +12,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-suite:
-    uses: ./.github/workflows/test-suite.yml
+  lint-and-test:
+    uses: ./.github/workflows/lint-and-test.yml
+
+  integration-test:
+    if: github.event_name != 'push'
+    uses: ./.github/workflows/integration-test.yml
+
+  integration-test-proxy:
+    if: github.event_name != 'push'
+    uses: ./.github/workflows/integration-test-proxy.yml
