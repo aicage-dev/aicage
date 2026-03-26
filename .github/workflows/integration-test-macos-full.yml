@@ -109,47 +109,10 @@ jobs:
         run: |
           scripts/validate-config-with-schemas.sh
 
-      - name: Install Docker runtime
-        run: |
-          curl -L https://desktop.docker.com/mac/main/amd64/Docker.dmg -o Docker.dmg
-          sudo hdiutil attach Docker.dmg
-          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license --user="$USER"
-          sudo hdiutil detach /Volumes/Docker
-
-      - name: Launch Docker Desktop
-        run: |
-          docker_app="/Applications/Docker.app"
-          if [ ! -d "$docker_app" ]; then
-            docker_app="$HOME/Applications/Docker.app"
-          fi
-          if [ ! -d "$docker_app" ]; then
-            echo "Docker.app not found." >&2
-            ls -la /Applications || true
-            ls -la "$HOME/Applications" || true
-            exit 1
-          fi
-          for i in {1..60}; do
-            if open "$docker_app"; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "Docker Desktop could not be launched." >&2
-          exit 1
-
-      - name: Wait for Docker Desktop readiness
-        run: |
-          for i in {1..60}; do
-            if docker desktop status && docker info; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "Docker Desktop did not become ready in time." >&2
-          exit 1
-
-      - name: Validate Docker engine
-        run: docker run --rm hello-world
+      - name: Set up Docker Desktop
+        uses: gh-workflow/setup-docker-desktop-macos@0.0.2
+        with:
+          print_diagnostics: false
 
       - name: Run macOS full integration test
         env:
