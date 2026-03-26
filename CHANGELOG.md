@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Genericized `_version.py` references in repository rule docs and lint helpers.
 - Emptied package `__init__.py` files in `tests` to keep them marker-only.
 
+## [1.0.0] - 2026-03-26
+
+### Changed
+
+- Confirmed macOS support by GitHub-hosted integration tests.
+
 ## [0.9.48] - 2026-03-24
 
 ### Fixed
