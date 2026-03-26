@@ -15,6 +15,7 @@ jobs:
       VERSION_CHECK_IMAGE_REF: ghcr.io/aicage/aicage-image-util:agent-version
       HOST_PROXY_URL: http://localhost:3128
       CONTAINER_PROXY_URL: http://host.docker.internal:3128
+      AICAGE_TEST_CONTAINER_PROXY_URL: http://host.docker.internal:3128
     strategy:
       fail-fast: false
       matrix:
@@ -135,10 +136,10 @@ jobs:
         env:
           AICAGE_RUN_INTEGRATION: "1"
           AICAGE_RUN_PROXY_INTEGRATION: "1"
-          HTTP_PROXY: ${{ env.CONTAINER_PROXY_URL }}
-          HTTPS_PROXY: ${{ env.CONTAINER_PROXY_URL }}
-          ALL_PROXY: ${{ env.CONTAINER_PROXY_URL }}
-          NO_PROXY: localhost,127.0.0.1,host.docker.internal
+          HTTP_PROXY: http://localhost:3128
+          HTTPS_PROXY: http://localhost:3128
+          ALL_PROXY: http://localhost:3128
+          NO_PROXY: localhost,127.0.0.1
         run: |
           pytest -m proxy_integration ${{ matrix.test }}
 
@@ -167,4 +168,3 @@ jobs:
           echo "Last proxy access lines:"
           tail -n 200 squid-access.log || true
           grep -q '${{ matrix.expected_host }}' squid-access.log
-

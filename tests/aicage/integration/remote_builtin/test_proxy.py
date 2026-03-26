@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -29,7 +30,7 @@ def test_proxy_host_and_runtime_network(monkeypatch: pytest.MonkeyPatch, tmp_pat
         monkeypatch,
         tmp_path,
         "codex",
-        docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
+        docker_args=_container_proxy_docker_args(),
     )
     bases = load_bases()
     agents = load_agents(bases)
@@ -56,3 +57,16 @@ def test_proxy_custom_agent_build_and_version(monkeypatch: pytest.MonkeyPatch, t
     copy_forge_sample(custom_agents_dir() / "forge")
 
     run_agent_version(env, workspace, "forge")
+
+
+def _container_proxy_docker_args() -> str:
+    proxy_url = os.environ.get("AICAGE_TEST_CONTAINER_PROXY_URL", "").strip()
+    if not proxy_url:
+        return "--env AICAGE_ENTRYPOINT_CMD=bash"
+    return (
+        "--env AICAGE_ENTRYPOINT_CMD=bash "
+        f"--env HTTP_PROXY={proxy_url} "
+        f"--env HTTPS_PROXY={proxy_url} "
+        f"--env ALL_PROXY={proxy_url} "
+        "--env NO_PROXY=localhost,127.0.0.1,host.docker.internal"
+    )
