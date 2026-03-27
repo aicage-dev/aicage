@@ -1,6 +1,18 @@
 version: 2
 
 updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -9,33 +21,6 @@ updates:
     labels:
       - "dependencies"
     groups:
-      python-runtime:
-        patterns:
-          - "docker"
-          - "portalocker"
-          - "PyYAML"
-      python-dev:
-        patterns:
-          - "check-jsonschema"
-          - "pyright"
-          - "pymarkdownlnt"
-          - "pytest"
-          - "pytest-cov"
-          - "pywinpty"
-          - "ruff"
-          - "yamllint"
-          - "yq"
-          - "hatchling"
-          - "hatch-vcs"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-    groups:
-      github-actions:
+      pip:
         patterns:
           - "*"
