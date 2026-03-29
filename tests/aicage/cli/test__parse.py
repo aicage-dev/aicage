@@ -90,6 +90,15 @@ class ParseCliTests(TestCase):
         self.assertEqual([], parsed.agent_args)
         self.assertEqual([], parsed.shares)
 
+    def test_parse_cli_config_defaults_to_info(self) -> None:
+        parsed = parse_cli(["--config"])
+        self.assertEqual("info", parsed.config_action)
+        self.assertIsNone(parsed.config_agent)
+        self.assertEqual("", parsed.docker_args)
+        self.assertEqual("", parsed.agent)
+        self.assertEqual([], parsed.agent_args)
+        self.assertEqual([], parsed.shares)
+
     def test_parse_cli_config_print_alias(self) -> None:
         parsed = parse_cli(["--config", "print"])
         self.assertEqual("info", parsed.config_action)
@@ -149,3 +158,12 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_rejects_yes(self) -> None:
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "--yes"])
+
+    def test_parse_cli_help_shows_config_default(self) -> None:
+        with mock.patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            with self.assertRaises(SystemExit):
+                parse_cli(["--help"])
+
+        output = stdout.getvalue()
+        self.assertIn("aicage --config\n", output)
+        self.assertIn("--config [<cmd>] Run config command: default info, or remove [agent].", output)

@@ -32,8 +32,8 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     )
     parser.add_argument(
         "--config",
-        nargs="+",
-        help="Perform config actions such as 'info' or 'remove [agent]'.",
+        nargs="*",
+        help="Perform config actions such as the default info or 'remove [agent]'.",
     )
     parser.add_argument("-h", "--help", action="store_true", help="Show help message and exit.")
     pre_argv, post_argv = _split_argv(argv)
@@ -54,6 +54,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  aicage [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
             "  aicage [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent> [<agent-args>]\n"
             "  aicage -y [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
+            "  aicage --config\n"
             "  aicage --config info\n"
             "  aicage --config remove [<agent>]\n"
             "  aicage --version\n\n"
@@ -62,7 +63,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  -y, --yes        Use default answers for all prompts.\n"
             "  --docker         Mount /var/run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
-            "  --config <cmd>   Run config command: info, remove [agent].\n"
+            "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
@@ -74,7 +75,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         get_logger().info("Displayed CLI usage help.")
         sys.exit(0)
 
-    if opts.config:
+    if opts.config is not None:
         config_tokens: list[str] = opts.config
         config_action, config_agent = _validate_config_action(config_tokens, opts, remaining, post_argv)
         return ParsedArgs(
@@ -126,6 +127,8 @@ def _validate_config_action(
     remaining: list[str],
     post_argv: list[str] | None,
 ) -> tuple[str, str | None]:
+    if not config_tokens:
+        config_tokens = ["info"]
     if len(config_tokens) > _MAX_CONFIG_TOKENS:
         raise CliError("Too many values for --config. Use '--config remove [agent]'.")
     raw_action = config_tokens[0]
