@@ -65,7 +65,8 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [
-  "E", "F",        # correctness
+  "E",        # errors
+  "F",        # correctness
   "I",             # imports
   "UP",            # pyupgrade
   "B",             # bugbear
