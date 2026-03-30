@@ -174,7 +174,7 @@ def setup_marker_extension_workspace(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     agent_name: str,
-) -> tuple[Path, dict[str, str], str]:
+) -> tuple[Path, dict[str, str], str, Path]:
     require_integration()
     workspace, env = setup_workspace(
         monkeypatch,
@@ -182,6 +182,8 @@ def setup_marker_extension_workspace(
         agent_name,
         docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
     )
+    share_dir = marker_shared_extension_dir(Path(env["HOME"]))
+    share_dir.mkdir(parents=True, exist_ok=True)
     extension_dir = custom_extensions_dir() / "marker"
     extension_dir.parent.mkdir(parents=True, exist_ok=True)
     copy_marker_extension_sample(extension_dir)
@@ -193,8 +195,9 @@ def setup_marker_extension_workspace(
     agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     agent_cfg.image_ref = image_ref
     agent_cfg.extensions = ["marker"]
+    agent_cfg.extension_mounts["marker"] = True
     store.save_project(workspace, project_cfg)
-    return workspace, env, image_ref
+    return workspace, env, image_ref, share_dir
 
 
 def run_agent_version(env: dict[str, str], workspace: Path, agent_name: str) -> None:
@@ -209,10 +212,12 @@ def run_agent_version(env: dict[str, str], workspace: Path, agent_name: str) -> 
     assert output_lines[-1]
 
 
-def assert_marker_extension_present(
+def assert_marker_extension_ready(
     env: dict[str, str],
     workspace: Path,
     agent_name: str,
+    *,
+    share_dir: Path | None = None,
 ) -> None:
     exit_code, output = run_cli_pty(
         [agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
@@ -220,6 +225,15 @@ def assert_marker_extension_present(
         cwd=workspace,
     )
     assert exit_code == 0, output
+
+    if share_dir is not None:
+        container_path = paths_module.container_project_path(share_dir).as_posix()
+        exit_code, output = run_cli_pty(
+            [agent_name, "-lc", f"test -d {container_path}"],
+            env=env,
+            cwd=workspace,
+        )
+        assert exit_code == 0, output
 
 
 def force_record_agent_version(
@@ -405,6 +419,10 @@ def custom_extensions_dir() -> Path:
 
 def custom_bases_dir() -> Path:
     return _custom_root_dir() / "base-images"
+
+
+def marker_shared_extension_dir(home_dir: Path) -> Path:
+    return home_dir / ".aicage-test-share"
 
 
 def copy_custom_base_sample(sample_name: str, target_dir: Path) -> None:

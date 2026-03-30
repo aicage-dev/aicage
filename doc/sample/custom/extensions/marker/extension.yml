@@ -1,2 +1,4 @@
 name: "Marker extension"
-description: "Creates a marker file in the image."
+description: "Creates a marker file in the image and mounts a test share."
+shares:
+  - ~/.aicage-test-share

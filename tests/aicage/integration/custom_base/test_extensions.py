@@ -6,13 +6,14 @@ from aicage.config.config_store import SettingsStore
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 
 from .._helpers import (
-    assert_marker_extension_present,
+    assert_marker_extension_ready,
     copy_custom_base_sample,
     copy_forge_sample,
     copy_marker_extension_sample,
     custom_agents_dir,
     custom_bases_dir,
     custom_extensions_dir,
+    marker_shared_extension_dir,
     require_integration,
     setup_workspace,
 )
@@ -43,6 +44,8 @@ def test_custom_base_extension_builds_and_runs(
         agent_name,
         docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
     )
+    share_dir = marker_shared_extension_dir(Path(env["HOME"]))
+    share_dir.mkdir(parents=True, exist_ok=True)
     base_dir = custom_bases_dir() / _CUSTOM_BASE_NAME
     base_dir.parent.mkdir(parents=True, exist_ok=True)
     copy_custom_base_sample(_CUSTOM_BASE_NAME, base_dir)
@@ -56,7 +59,7 @@ def test_custom_base_extension_builds_and_runs(
 
     _configure_extension(workspace, agent_name, _CUSTOM_BASE_NAME)
 
-    assert_marker_extension_present(env, workspace, agent_name)
+    assert_marker_extension_ready(env, workspace, agent_name, share_dir=share_dir)
 
 
 def _configure_extension(workspace: Path, agent_name: str, base_name: str) -> None:
@@ -67,4 +70,5 @@ def _configure_extension(workspace: Path, agent_name: str, base_name: str) -> No
     agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
     agent_cfg.image_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:{agent_name}-{base_name}-marker"
     agent_cfg.extensions = ["marker"]
+    agent_cfg.extension_mounts["marker"] = True
     store.save_project(workspace, project_cfg)
