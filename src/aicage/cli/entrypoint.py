@@ -14,6 +14,7 @@ from aicage.config.runtime_config import RunConfig, load_run_config
 from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
+from aicage.paths import GLOBAL_LOG_PATH
 from aicage.registry.ensure_image import ensure_image
 from aicage.runtime.prompts.mode import set_assume_yes
 from aicage.runtime.run_args import DockerRunArgs
@@ -56,6 +57,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"[aicage] {exc}", file=sys.stderr)
         logger.error("CLI error: %s", exc)
         exit_code = 1
+    except Exception as exc:
+        _print_unexpected_error(exc)
+        logger.exception("Unhandled exception during CLI execution")
+        exit_code = 1
     return exit_code
 
 
@@ -69,6 +74,18 @@ def _print_docker_error(exc: DockerError) -> None:
         stderr = stderr.decode("utf-8", errors="replace")
     if stderr:
         print(stderr.rstrip(), file=sys.stderr)
+
+
+def _print_unexpected_error(exc: Exception) -> None:
+    print(f"[aicage] {_format_unexpected_error(exc)}", file=sys.stderr)
+    print(f"[aicage] More details in log: {GLOBAL_LOG_PATH}", file=sys.stderr)
+
+
+def _format_unexpected_error(exc: Exception) -> str:
+    message = str(exc).strip()
+    if not message:
+        return exc.__class__.__name__
+    return f"{exc.__class__.__name__}: {message}"
 
 
 def _restart_with_current_args(parsed_argv: Sequence[str]) -> None:

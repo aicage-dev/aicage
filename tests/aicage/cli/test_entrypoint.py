@@ -1,3 +1,4 @@
+import io
 import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
@@ -212,3 +213,49 @@ class EntrypointTests(TestCase):
                 exit_code = main([])
 
             self.assertEqual(0, exit_code)
+
+    def test_main_handles_unexpected_exception(self) -> None:
+        logger = mock.Mock()
+        with (
+            mock.patch(
+                "aicage.cli.entrypoint.parse_cli",
+                return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
+            ),
+            mock.patch("aicage.cli.entrypoint.get_logger", return_value=logger),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch(
+                "aicage.cli.entrypoint.load_run_config",
+                side_effect=TimeoutError("The read operation timed out"),
+            ),
+            mock.patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main([])
+
+        self.assertEqual(1, exit_code)
+        self.assertIn(
+            "[aicage] TimeoutError: The read operation timed out",
+            stderr.getvalue(),
+        )
+        self.assertIn(
+            "[aicage] More details in log: ",
+            stderr.getvalue(),
+        )
+        logger.exception.assert_called_once_with("Unhandled exception during CLI execution")
+
+    def test_main_handles_unexpected_exception_without_message(self) -> None:
+        logger = mock.Mock()
+        with (
+            mock.patch(
+                "aicage.cli.entrypoint.parse_cli",
+                return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
+            ),
+            mock.patch("aicage.cli.entrypoint.get_logger", return_value=logger),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch("aicage.cli.entrypoint.load_run_config", side_effect=RuntimeError()),
+            mock.patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main([])
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("[aicage] RuntimeError", stderr.getvalue())
+        logger.exception.assert_called_once_with("Unhandled exception during CLI execution")
