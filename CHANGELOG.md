@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-04-08
+
+### Fixed
+
+- Print a short error message for unexpected CLI exceptions and write the full traceback to the log.
+
+### Changed
+
+- Require expected OCI manifest annotations when verifying official remote `aicage` images.
+
 ## [1.0.1] - 2026-03-30
 
 ### Changed
