@@ -5,6 +5,7 @@ ROOT="${1:-.}"
 
 # Groups "_name" and "name" together by treating leading "_" as optional.
 # Special case: dunder methods like "__init__" are kept intact.
+# shellcheck disable=SC2016
 find "$ROOT" -type f -name '*.py' -print0 |
   xargs -0 awk '
     {

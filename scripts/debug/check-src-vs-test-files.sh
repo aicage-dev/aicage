@@ -5,7 +5,7 @@ SRC_DIR="${1:-src}"
 TESTS_DIR="${2:-tests}"
 had_errors=0
 
-for module_path in $(find "${SRC_DIR}" -type f -name '*.py' -not -path '*/.venv/*'); do
+while IFS= read -r -d '' module_path; do
   module_dir="$(dirname "${module_path}")"
   module_name="$(basename "${module_path}")"
 
@@ -27,7 +27,7 @@ for module_path in $(find "${SRC_DIR}" -type f -name '*.py' -not -path '*/.venv/
     fi
     shopt -u extglob
   fi
-done
+done < <(find "${SRC_DIR}" -type f -name '*.py' -not -path '*/.venv/*' -print0)
 
 if [[ "${had_errors}" -ne 0 ]]; then
   echo
