@@ -4,20 +4,29 @@ set -euo pipefail
 repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
 
+# YAML
 yamllint .
+
+# Markdown
 pymarkdown \
   --config .pymarkdown.json scan \
   --recurse \
   --exclude '**/.venv*/**' \
   .
+
+# ruff (Python)
 ruff check .
+
+# pyright (Python)
 pyright .
+
 # Ignore generated version metadata from setuptools-scm.
 if rg -n --glob '*.py' --glob '!src/*/_version.py' '__all__' src; then
   echo "Found __all__ usage in src; remove it to satisfy visibility checks."
   exit 1
 fi
 
+# Shellcheck
 mapfile -t shell_scripts < <(find . -type f -name '*.sh' -not -path './.venv/*' | sort)
 
 if [[ ${#shell_scripts[@]} -gt 0 ]]; then
