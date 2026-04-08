@@ -1,3 +1,4 @@
+import json
 import subprocess
 
 from aicage._logging import get_logger
@@ -12,6 +13,21 @@ from aicage.docker.query import (
 from aicage.registry._errors import RegistryError
 from aicage.registry._logs import pull_log_path
 from aicage.registry.digest.remote_digest import get_remote_digest
+
+_OFFICIAL_IMAGE_ANNOTATIONS: dict[str, dict[str, str]] = {
+    "ghcr.io/aicage/aicage": {
+        "org.opencontainers.image.source": "https://github.com/aicage/aicage-image",
+        "org.opencontainers.image.title": "aicage",
+    },
+    "ghcr.io/aicage/aicage-image-base": {
+        "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-base",
+        "org.opencontainers.image.title": "aicage-image-base",
+    },
+    "ghcr.io/aicage/aicage-image-util": {
+        "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-util",
+        "org.opencontainers.image.title": "aicage-image-util",
+    },
+}
 
 
 def resolve_verified_digest(image_ref: str) -> str:
@@ -28,6 +44,7 @@ def resolve_verified_digest(image_ref: str) -> str:
     if result.returncode == 0:
         if output:
             logger.info("Image signature verification output for %s:\n%s", digest_ref, output)
+        _verify_manifest_annotations(digest_ref)
         logger.info("Image signature verification succeeded for %s", digest_ref)
         return digest_ref
     if output:
@@ -63,6 +80,56 @@ def _run_cosign_verify(image_ref: str) -> subprocess.CompletedProcess[str]:
         check=False,
         text=True,
     )
+
+
+def _verify_manifest_annotations(image_ref: str) -> None:
+    expected_annotations = _OFFICIAL_IMAGE_ANNOTATIONS.get(_repository_for_image(image_ref))
+    if expected_annotations is None:
+        return
+
+    annotations = _manifest_annotations(image_ref)
+    for key, expected_value in expected_annotations.items():
+        actual_value = annotations.get(key)
+        if actual_value != expected_value:
+            raise RegistryError(
+                f"Image manifest annotation {key} mismatch for {image_ref}: "
+                f"expected {expected_value!r}, got {actual_value!r}."
+            )
+
+
+def _manifest_annotations(image_ref: str) -> dict[str, str]:
+    result = run_docker_command_capture(
+        [
+            "docker",
+            "buildx",
+            "imagetools",
+            "inspect",
+            "--raw",
+            image_ref,
+        ],
+        check=False,
+        text=True,
+    )
+    if result.returncode != 0:
+        output = _format_cosign_output(result)
+        raise RegistryError(
+            f"Failed to inspect image manifest for {image_ref}.\nDocker output:\n{output}"
+        )
+
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RegistryError(f"Invalid manifest JSON returned for {image_ref}.") from exc
+
+    annotations = payload.get("annotations")
+    if not isinstance(annotations, dict):
+        raise RegistryError(f"Image manifest for {image_ref} is missing annotations.")
+
+    filtered_annotations: dict[str, str] = {}
+    for key, value in annotations.items():
+        if isinstance(key, str) and isinstance(value, str):
+            filtered_annotations[key] = value
+    return filtered_annotations
 
 
 def _format_cosign_output(result: subprocess.CompletedProcess[str]) -> str:

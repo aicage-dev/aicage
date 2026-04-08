@@ -31,10 +31,14 @@ class SignatureVerificationTests(TestCase):
                     stderr="",
                 ),
             ) as cosign_mock,
+            mock.patch(
+                "aicage.registry._signature._verify_manifest_annotations"
+            ) as annotation_mock,
         ):
             digest_ref = _signature.resolve_verified_digest(image_ref)
         self.assertEqual("ghcr.io/aicage/aicage@sha256:abc", digest_ref)
         cosign_mock.assert_called_once_with("ghcr.io/aicage/aicage@sha256:abc")
+        annotation_mock.assert_called_once_with("ghcr.io/aicage/aicage@sha256:abc")
 
     def test_resolve_verified_digest_raises_on_invalid_signature(self) -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
@@ -60,9 +64,13 @@ class SignatureVerificationTests(TestCase):
                     stderr="no signatures found",
                 ),
             ),
+            mock.patch(
+                "aicage.registry._signature._verify_manifest_annotations"
+            ) as annotation_mock,
         ):
             with self.assertRaises(RegistryError):
                 _signature.resolve_verified_digest(image_ref)
+        annotation_mock.assert_not_called()
 
     def test_resolve_verified_digest_raises_on_unknown_error(self) -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
@@ -88,9 +96,13 @@ class SignatureVerificationTests(TestCase):
                     stderr="",
                 ),
             ),
+            mock.patch(
+                "aicage.registry._signature._verify_manifest_annotations"
+            ) as annotation_mock,
         ):
             with self.assertRaises(RegistryError):
                 _signature.resolve_verified_digest(image_ref)
+        annotation_mock.assert_not_called()
 
     def test_resolve_verified_digest_raises_when_digest_missing(self) -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
@@ -147,6 +159,9 @@ class SignatureVerificationTests(TestCase):
                     stderr="",
                 ),
             ),
+            mock.patch(
+                "aicage.registry._signature._verify_manifest_annotations"
+            ),
         ):
             _signature.resolve_verified_digest(image_ref)
         log_mock.assert_called_once_with(constants.COSIGN_IMAGE_REF)
@@ -156,3 +171,117 @@ class SignatureVerificationTests(TestCase):
             None,
             constants.COSIGN_IMAGE_REF,
         )
+
+    def test__verify_manifest_annotations_skips_non_aicage_repository(self) -> None:
+        image_ref = "ghcr.io/other/test@sha256:abc"
+        with mock.patch(
+            "aicage.registry._signature._manifest_annotations"
+        ) as annotations_mock:
+            _signature._verify_manifest_annotations(image_ref)
+        annotations_mock.assert_not_called()
+
+    def test__verify_manifest_annotations_accepts_expected_official_annotations(self) -> None:
+        image_ref = "ghcr.io/aicage/aicage-image-util@sha256:abc"
+        annotations = {
+            "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-util",
+            "org.opencontainers.image.title": "aicage-image-util",
+        }
+        with mock.patch(
+            "aicage.registry._signature._manifest_annotations",
+            return_value=annotations,
+        ):
+            _signature._verify_manifest_annotations(image_ref)
+
+    def test__verify_manifest_annotations_raises_when_expected_annotation_mismatches(self) -> None:
+        image_ref = "ghcr.io/aicage/aicage@sha256:abc"
+        annotations = {
+            "org.opencontainers.image.source": "https://github.com/aicage/wrong",
+            "org.opencontainers.image.title": "aicage",
+        }
+        with mock.patch(
+            "aicage.registry._signature._manifest_annotations",
+            return_value=annotations,
+        ):
+            with self.assertRaises(RegistryError) as raised:
+                _signature._verify_manifest_annotations(image_ref)
+        self.assertIn("org.opencontainers.image.source mismatch", str(raised.exception))
+
+    def test__manifest_annotations_returns_annotation_map(self) -> None:
+        image_ref = "ghcr.io/aicage/aicage@sha256:abc"
+        with mock.patch(
+            "aicage.registry._signature.run_docker_command_capture",
+            return_value=subprocess.CompletedProcess(
+                args=["docker"],
+                returncode=0,
+                stdout=(
+                    '{"annotations":{"org.opencontainers.image.source":"'
+                    'https://github.com/aicage/aicage-image","org.opencontainers.image.title":"aicage"}}'
+                ),
+                stderr="",
+            ),
+        ) as docker_mock:
+            annotations = _signature._manifest_annotations(image_ref)
+        self.assertEqual(
+            {
+                "org.opencontainers.image.source": "https://github.com/aicage/aicage-image",
+                "org.opencontainers.image.title": "aicage",
+            },
+            annotations,
+        )
+        docker_mock.assert_called_once_with(
+            [
+                "docker",
+                "buildx",
+                "imagetools",
+                "inspect",
+                "--raw",
+                image_ref,
+            ],
+            check=False,
+            text=True,
+        )
+
+    def test__manifest_annotations_raises_when_inspect_fails(self) -> None:
+        image_ref = "ghcr.io/aicage/aicage@sha256:abc"
+        with mock.patch(
+            "aicage.registry._signature.run_docker_command_capture",
+            return_value=subprocess.CompletedProcess(
+                args=["docker"],
+                returncode=1,
+                stdout="",
+                stderr="boom",
+            ),
+        ):
+            with self.assertRaises(RegistryError) as raised:
+                _signature._manifest_annotations(image_ref)
+        self.assertIn("Failed to inspect image manifest", str(raised.exception))
+
+    def test__manifest_annotations_raises_when_json_is_invalid(self) -> None:
+        image_ref = "ghcr.io/aicage/aicage@sha256:abc"
+        with mock.patch(
+            "aicage.registry._signature.run_docker_command_capture",
+            return_value=subprocess.CompletedProcess(
+                args=["docker"],
+                returncode=0,
+                stdout="{not json",
+                stderr="",
+            ),
+        ):
+            with self.assertRaises(RegistryError) as raised:
+                _signature._manifest_annotations(image_ref)
+        self.assertIn("Invalid manifest JSON", str(raised.exception))
+
+    def test__manifest_annotations_raises_when_annotations_missing(self) -> None:
+        image_ref = "ghcr.io/aicage/aicage@sha256:abc"
+        with mock.patch(
+            "aicage.registry._signature.run_docker_command_capture",
+            return_value=subprocess.CompletedProcess(
+                args=["docker"],
+                returncode=0,
+                stdout="{}",
+                stderr="",
+            ),
+        ):
+            with self.assertRaises(RegistryError) as raised:
+                _signature._manifest_annotations(image_ref)
+        self.assertIn("missing annotations", str(raised.exception))
