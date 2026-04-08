@@ -1,4 +1,4 @@
-# aicage: tests on MacOS
+# aicage: tests on macOS
 
 ---
 
@@ -6,9 +6,9 @@
 
 ### Prerequisites
 
-Make sure these tools are installed:
+Make sure these tools are installed and working:
 
-- docker
+- Docker Desktop
 - Python 3.10+ and `pipx`
 
 ### Installation
@@ -23,18 +23,23 @@ pipx install aicage
 
 ## Tests
 
-Create a new blank folder in `/tmp/aicage-test` and open a terminal in it.  
+Create a new blank folder in `/tmp/aicage-test` and open a terminal in it.
 For the rest of this document we call that the _project folder_.
+
+Run this once in the project folder before starting the tests:
+
+```shell
+mkdir -p /tmp/aicage-test
+cd /tmp/aicage-test
+```
 
 ### Test 1: Builtin agent works (docker pull and run)
 
 In the project folder, run this:
 
 ```shell
-aicage codex
+aicage --yes codex
 ```
-
-Then select base "Ubuntu" and answer other questions with yes (or press Enter).
 
 #### Expectation
 
@@ -51,10 +56,8 @@ Press Ctrl-C repeatedly to exit.
 In the project folder, run this:
 
 ```shell
-aicage claude
+aicage --yes claude
 ```
-
-Then select base "Ubuntu" and answer other questions with yes (or press Enter).
 
 #### Expectation
 
@@ -70,10 +73,8 @@ Press Ctrl-C repeatedly to exit.
 In the project folder, run this:
 
 ```shell
-aicage --docker -e AICAGE_ENTRYPOINT_CMD=bash -- codex -lc 'docker run --rm hello-world'
+aicage --yes --docker -e AICAGE_ENTRYPOINT_CMD=bash -- codex -lc 'docker run --rm hello-world'
 ```
-
-Select base "Ubuntu" and answer other questions with yes (or press Enter).
 
 #### Expectation
 
@@ -96,27 +97,30 @@ git clone https://github.com/aicage/aicage-custom-samples.git ~/.aicage-custom
 Then, in the project folder, run this:
 
 ```shell
+aicage --config remove gemini
 aicage gemini
 ```
 
-Select base "Ubuntu" and when asked to select extensions pick `marker`.  
-Confirm defaults for other choices.
+When asked:
 
-> If you accidentally did not select an extension, just delete the `Project config path` file with:  
-> `aicage --config remove`
+1. Select base `Ubuntu`.
+2. For extensions, pick `php`.
+3. Accept the default answers for the remaining questions.
+
+> If you accidentally skip the extension, run `aicage --config remove gemini` and start Test 4 again.
 
 #### Expectation
 
-1. `aicage` should locally build the image `aicage:gemini-ubuntu-marker`.
+1. `aicage` should locally build the image `aicage:gemini-ubuntu-php`.
 2. You should see the start screen of `gemini`.
 
 Press Ctrl-C repeatedly to exit.
 
 ---
 
-### Test Logs: Send logs and local config to me
+### Optional: Send logs and local config if something failed
 
-`aicage` locally stores config and logs in `~/.aicage`. I would like to see that folder.
+If a test fails and you are comfortable sharing local test logs, `aicage` stores config and logs in `~/.aicage`.
 
 Run:
 
@@ -124,7 +128,14 @@ Run:
 tar -C "$HOME" -czf /tmp/aicage-on-Mac.tar.gz .aicage
 ```
 
-and send me the file `/tmp/aicage-on-Mac.tar.gz` please.
+You can then send me the file `/tmp/aicage-on-Mac.tar.gz`.
+
+If any test failed, please also send me:
+
+```shell
+docker version
+aicage --config
+```
 
 ---
 
