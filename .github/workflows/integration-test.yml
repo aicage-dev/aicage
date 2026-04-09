@@ -104,7 +104,10 @@ jobs:
             mkdir -p "$target_dir"
             cp -R "$path" "$target_dir/"
           done < <(
-            find "${TMPDIR:-/tmp}" -type d -path "*/pytest-of-${USER}/*/.aicage" 2>/dev/null | sort
+            find "${TMPDIR:-/tmp}" \
+              \( -type d -path "*/pytest-of-${USER}/*/.aicage" \
+              -o -type d -path "*/aicage-test-home-*/.aicage" \) \
+              2>/dev/null | sort -u
           )
 
       - name: "On failure: Upload aicage logs"
