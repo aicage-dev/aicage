@@ -21,9 +21,15 @@ ruff check .
 pyright .
 
 # Ignore generated version metadata from setuptools-scm.
-if rg -n --glob '*.py' --glob '!src/*/_version.py' '__all__' src; then
+if rg_output=$(rg -n --glob '*.py' --glob '!src/*/_version.py' '__all__' src); then
+  printf '%s\n' "$rg_output"
   echo "Found __all__ usage in src; remove it to satisfy visibility checks."
   exit 1
+else
+  rg_status=$?
+  if [[ $rg_status -ne 1 ]]; then
+    exit $rg_status
+  fi
 fi
 
 # Shellcheck

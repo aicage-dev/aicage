@@ -26,10 +26,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install shellcheck
+      - name: Install shellcheck and ripgrep
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck
+          sudo apt-get install -y shellcheck ripgrep
 
       - name: Install dependencies
         run: |
