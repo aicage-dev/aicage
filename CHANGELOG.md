@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-19
+
+### Changed
+
+- Pass the host timezone into container runs via `TZ`, with host timezone detection split into a dedicated runtime
+  module and covered by focused tests.
+
+### Internal
+
+- Bumped `actions/upload-artifact` from `7.0.0` to `7.0.1` in the GitHub Actions integration workflows.
+
 ## [1.0.11] - 2026-04-09
 
 ### Internal
