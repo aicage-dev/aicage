@@ -6,3 +6,5 @@ agent_path:
 agent_full_name: OpenCode
 agent_homepage: https://opencode.ai/
 build_local: false
+base_distro_exclude:
+  - Alpine
