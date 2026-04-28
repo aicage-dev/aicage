@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-04-28
+
+### Changed
+
+- Prompt before pulling a newer remote `aicage` or `aicage-image-base` image when a local image is already
+  available, and show the full image reference in the prompt text.
+
 ## [1.1.0] - 2026-04-19
 
 ### Changed
