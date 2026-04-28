@@ -14,7 +14,8 @@ if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   curl_args+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
 
+echo "Fetching Goose release from https://api.github.com/repos/aaif-goose/goose/releases/latest" >&2
 curl \
   "${curl_args[@]}" \
-  https://api.github.com/repos/block/goose/releases/latest \
+  https://api.github.com/repos/aaif-goose/goose/releases/latest \
   | jq -r '.name | ltrimstr("v")'

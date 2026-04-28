@@ -7,7 +7,7 @@ curl \
   --retry-all-errors \
   --retry-delay 2 \
   --max-time 300 \
-  https://github.com/block/goose/releases/download/stable/download_cli.sh | \
+  https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | \
   GOOSE_BIN_DIR=/usr/local/bin \
   CONFIGURE=false \
   bash

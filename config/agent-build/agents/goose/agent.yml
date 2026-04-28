@@ -3,7 +3,7 @@ agent_path:
     - ~/.config/goose
     - ~/.local/share/goose/
 agent_full_name: Goose CLI
-agent_homepage: https://block.github.io/goose
+agent_homepage: https://goose-docs.ai
 build_local: false
 base_exclude:
   - alpine
