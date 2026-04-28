@@ -127,3 +127,11 @@ class PromptConfirmTests(TestCase):
             "A newer version of aicage is available (installed: 0.9.4, latest: 0.9.5). Update now?",
             default=True,
         )
+
+    def test_prompt_update_image_delegates(self) -> None:
+        with mock.patch("aicage.runtime.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
+            self.assertTrue(confirm.prompt_update_image("ghcr.io/aicage/aicage:codex-fedora"))
+        prompt_mock.assert_called_once_with(
+            "A newer version of Docker image 'ghcr.io/aicage/aicage:codex-fedora' is available. Pull now?",
+            default=True,
+        )

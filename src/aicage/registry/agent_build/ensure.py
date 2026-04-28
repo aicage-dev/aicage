@@ -16,9 +16,9 @@ from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
 
 from ..base_build.ensure import ensure as ensure_base_build
-from ._digest import refresh_base_digest
 from ._logs import build_log_path
 from ._plan import should_rebuild
+from ._refresh import refresh_base_image
 from ._refs import base_repository, get_base_image_ref
 from ._store import BuildRecord, BuildStore
 from .agent_version.checker import AgentVersionChecker
@@ -41,7 +41,7 @@ def ensure(run_config: RunConfig) -> None:
     else:
         base_repo = base_repository(run_config)
         try:
-            base_image = refresh_base_digest(
+            base_image = refresh_base_image(
                 base_image_ref=base_image,
                 base_repository=base_repo,
             )

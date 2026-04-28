@@ -34,7 +34,7 @@ class EnsureLocalImageTests(TestCase):
                     state_dir,
                 ),
                 mock.patch(
-                    "aicage.registry.agent_build.ensure.refresh_base_digest",
+                    "aicage.registry.agent_build.ensure.refresh_base_image",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ) as refresh_mock,
                 mock.patch(
@@ -53,7 +53,7 @@ class EnsureLocalImageTests(TestCase):
         run_config = build_run_config()
         with (
             mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_digest",
+                "aicage.registry.agent_build.ensure.refresh_base_image",
                 return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
             ),
             mock.patch(
@@ -69,7 +69,7 @@ class EnsureLocalImageTests(TestCase):
         run_config = build_run_config()
         with (
             mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_digest",
+                "aicage.registry.agent_build.ensure.refresh_base_image",
                 side_effect=RegistryError("offline"),
             ),
             mock.patch(
@@ -91,7 +91,7 @@ class EnsureLocalImageTests(TestCase):
         run_config = build_run_config()
         with (
             mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_digest",
+                "aicage.registry.agent_build.ensure.refresh_base_image",
                 side_effect=RegistryError("offline"),
             ),
             mock.patch(
@@ -133,7 +133,7 @@ class EnsureLocalImageTests(TestCase):
                 "aicage.registry.agent_build.ensure.ensure_base_build"
             ) as base_mock,
             mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_digest"
+                "aicage.registry.agent_build.ensure.refresh_base_image"
             ) as refresh_mock,
             mock.patch(
                 "aicage.registry.agent_build.ensure.should_rebuild",
@@ -168,7 +168,7 @@ class EnsureLocalImageTests(TestCase):
                     return_value=False,
                 ),
                 mock.patch(
-                    "aicage.registry.agent_build.ensure.refresh_base_digest",
+                    "aicage.registry.agent_build.ensure.refresh_base_image",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ),
                 mock.patch(
@@ -234,7 +234,7 @@ class EnsureLocalImageTests(TestCase):
                     return_value=True,
                 ),
                 mock.patch(
-                    "aicage.registry.agent_build.ensure.refresh_base_digest",
+                    "aicage.registry.agent_build.ensure.refresh_base_image",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ),
                 mock.patch(

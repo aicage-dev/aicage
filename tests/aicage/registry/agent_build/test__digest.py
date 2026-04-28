@@ -7,7 +7,7 @@ from aicage.registry.agent_build import _digest
 
 
 class LocalBuildDigestTests(TestCase):
-    def test_refresh_base_digest_verify_failure_uses_local_digest(self) -> None:
+    def test_resolve_base_digest_verify_failure_uses_local_digest(self) -> None:
         with (
             mock.patch(
                 "aicage.registry.agent_build._digest.get_local_repo_digest_for_repo",
@@ -22,7 +22,7 @@ class LocalBuildDigestTests(TestCase):
                 "aicage.registry.agent_build._digest.cleanup_old_digest"
             ) as cleanup_mock,
         ):
-            digest = _digest.refresh_base_digest(
+            digest = _digest.resolve_base_digest(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
             )
@@ -30,7 +30,7 @@ class LocalBuildDigestTests(TestCase):
         run_mock.assert_not_called()
         cleanup_mock.assert_not_called()
 
-    def test_refresh_base_digest_verify_failure_without_local_raises(self) -> None:
+    def test_resolve_base_digest_verify_failure_without_local_raises(self) -> None:
         with (
             mock.patch(
                 "aicage.registry.agent_build._digest.get_local_repo_digest_for_repo",
@@ -43,14 +43,14 @@ class LocalBuildDigestTests(TestCase):
             mock.patch("aicage.registry.agent_build._digest.run_pull") as run_mock,
         ):
             with self.assertRaises(RegistryError) as exc:
-                _digest.refresh_base_digest(
+                _digest.resolve_base_digest(
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                     base_repository="ghcr.io/aicage/aicage-image-base",
                 )
         self.assertIn("offline", str(exc.exception))
         run_mock.assert_not_called()
 
-    def test_refresh_base_digest_skips_pull_when_local_matches_remote(self) -> None:
+    def test_resolve_base_digest_skips_pull_when_local_matches_remote(self) -> None:
         with (
             mock.patch(
                 "aicage.registry.agent_build._digest.get_local_repo_digest_for_repo",
@@ -65,7 +65,7 @@ class LocalBuildDigestTests(TestCase):
                 "aicage.registry.agent_build._digest.cleanup_old_digest"
             ) as cleanup_mock,
         ):
-            digest = _digest.refresh_base_digest(
+            digest = _digest.resolve_base_digest(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
             )
@@ -73,7 +73,7 @@ class LocalBuildDigestTests(TestCase):
         run_mock.assert_not_called()
         cleanup_mock.assert_not_called()
 
-    def test_refresh_base_digest_pull_failure_uses_local_digest(self) -> None:
+    def test_resolve_base_digest_pull_failure_uses_local_digest(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with (
                 mock.patch(
@@ -93,14 +93,14 @@ class LocalBuildDigestTests(TestCase):
                 ) as cleanup_mock,
                 mock.patch("aicage.registry.agent_build._digest.pull_log_path", return_value=Path(tmp_dir)),
             ):
-                digest = _digest.refresh_base_digest(
+                digest = _digest.resolve_base_digest(
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                     base_repository="ghcr.io/aicage/aicage-image-base",
                 )
             self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", digest)
             cleanup_mock.assert_not_called()
 
-    def test_refresh_base_digest_pull_failure_without_local_raises(self) -> None:
+    def test_resolve_base_digest_pull_failure_without_local_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with (
                 mock.patch(
@@ -121,14 +121,14 @@ class LocalBuildDigestTests(TestCase):
                 mock.patch("aicage.registry.agent_build._digest.pull_log_path", return_value=Path(tmp_dir)),
             ):
                 with self.assertRaises(RegistryError) as exc:
-                    _digest.refresh_base_digest(
+                    _digest.resolve_base_digest(
                         base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                         base_repository="ghcr.io/aicage/aicage-image-base",
                     )
             self.assertIn("docker pull failed", str(exc.exception))
             cleanup_mock.assert_not_called()
 
-    def test_refresh_base_digest_pull_success_updates_digest(self) -> None:
+    def test_resolve_base_digest_pull_success_updates_digest(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with (
                 mock.patch(
@@ -148,7 +148,7 @@ class LocalBuildDigestTests(TestCase):
                 ) as cleanup_mock,
                 mock.patch("aicage.registry.agent_build._digest.pull_log_path", return_value=Path(tmp_dir)),
             ):
-                digest = _digest.refresh_base_digest(
+                digest = _digest.resolve_base_digest(
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                     base_repository="ghcr.io/aicage/aicage-image-base",
                 )

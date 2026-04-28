@@ -2,6 +2,7 @@ from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.docker.query import get_local_repo_digest
 from aicage.docker.types import ImageRefRepository
 from aicage.registry.digest.remote_digest import get_remote_digest
+from aicage.runtime.prompts.confirm import prompt_update_image
 
 
 def decide_pull(image_ref: str) -> bool:
@@ -20,4 +21,6 @@ def decide_pull(image_ref: str) -> bool:
     if remote_digest is None:
         return False
 
-    return local_digest != remote_digest
+    if local_digest == remote_digest:
+        return False
+    return prompt_update_image(image_ref)
