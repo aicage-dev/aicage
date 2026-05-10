@@ -22,6 +22,7 @@ for workflows.
 
 I come from Java and greatly value `Clean Code` and `Separation/Encapsulation`.  
 Meaning:
+
 - I want to see datatypes explicitly.
 - I want clean capsulation with private/public visibility. Default is always private and visibility is only increased
   when needed - for files, classes, methods, variables ... everywhere. If this is violated I stop my review immediately
@@ -51,6 +52,7 @@ Meaning:
 ## Linting
 
 Linters
+
 - use `scripts/lint.sh`
 
 ## Tests
