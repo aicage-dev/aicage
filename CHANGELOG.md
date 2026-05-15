@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.8] - 2026-05-15
+
+### Fixed
+
+- Improved Goose agent image compatibility by installing the required Vulkan loader during agent setup and by
+  excluding `node` bases whose bundled glibc is too old for current Goose releases.
+
+### Internal
+
+- Hardened CI to fail workflows that reference GitHub Actions by mutable refs instead of immutable commit digests.
+- Bumped development tool versions for `check-jsonschema`, `pyright`, `pymarkdownlnt`, and `ruff`.
+
 ## [1.1.1] - 2026-04-28
 
 ### Changed
