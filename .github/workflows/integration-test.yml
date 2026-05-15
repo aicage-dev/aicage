@@ -4,6 +4,9 @@ name: Integration Tests
   workflow_call:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   integration-discover:
     name: Discover Integration Tests

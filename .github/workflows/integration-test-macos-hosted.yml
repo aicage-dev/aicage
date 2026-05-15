@@ -9,6 +9,9 @@ name: Integration Tests (macOS Hosted)
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 jobs:
   integration-macos:
     name: macOS hosted integration smoke (${{ matrix.test }})

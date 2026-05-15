@@ -3,6 +3,9 @@ name: Integration Tests (Windows Single Job)
 "on":
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   integration-windows:
     name: Integration tests on windows-latest

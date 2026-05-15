@@ -3,6 +3,9 @@ name: Integration Tests (Proxy E2E macOS Hosted)
 "on":
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
 
   integration-proxy-macos:

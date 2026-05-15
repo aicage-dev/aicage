@@ -4,6 +4,9 @@ name: Integration Tests (Proxy E2E)
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   integration-proxy:
     name: Integration proxy (${{ matrix.test }})
