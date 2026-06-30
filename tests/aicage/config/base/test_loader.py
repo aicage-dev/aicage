@@ -22,6 +22,9 @@ class BaseLoaderTests(TestCase):
                         "from_image: ubuntu:latest",
                         "base_image_distro: Ubuntu",
                         "base_image_description: Default",
+                        "architectures:",
+                        "  - amd64",
+                        "  - arm64",
                     ]
                 ),
                 encoding="utf-8",
@@ -35,6 +38,9 @@ class BaseLoaderTests(TestCase):
                         "from_image: debian:latest",
                         "base_image_distro: Debian",
                         "base_image_description: Default",
+                        "architectures:",
+                        "  - amd64",
+                        "  - arm64",
                     ]
                 ),
                 encoding="utf-8",
@@ -44,6 +50,7 @@ class BaseLoaderTests(TestCase):
                 from_image="custom:latest",
                 base_image_distro="Custom",
                 base_image_description="Custom base",
+                architectures=["amd64", "arm64"],
                 build_local=True,
                 local_definition_dir=Path("/tmp/custom"),
             )
@@ -61,3 +68,4 @@ class BaseLoaderTests(TestCase):
 
         self.assertEqual(custom_base, bases["ubuntu"])
         self.assertFalse(bases["debian"].build_local)
+        self.assertEqual(["amd64", "arm64"], bases["debian"].architectures)

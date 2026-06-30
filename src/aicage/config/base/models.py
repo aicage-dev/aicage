@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+ARCHITECTURES_KEY: str = "architectures"
 BUILD_LOCAL_KEY: str = "build_local"
 
 
@@ -11,3 +12,4 @@ class BaseMetadata:
     base_image_description: str
     build_local: bool
     local_definition_dir: Path
+    architectures: list[str]

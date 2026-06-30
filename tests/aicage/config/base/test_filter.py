@@ -25,6 +25,22 @@ class BaseFilterTests(TestCase):
 
         self.assertEqual({"alpine"}, filtered)
 
+    def test_filter_bases_excludes_unsupported_host_architecture(self) -> None:
+        context = self._context()
+        context.bases["arch"] = BaseMetadata(
+            from_image="archlinux:latest",
+            base_image_distro="Arch Linux",
+            base_image_description="Rolling",
+            architectures=["amd64"],
+            build_local=False,
+            local_definition_dir=Path("/tmp/arch"),
+        )
+
+        with mock.patch("aicage.config.base.architecture.platform.machine", return_value="aarch64"):
+            filtered = filter_bases(context, self._agent_metadata())
+
+        self.assertEqual({"alpine", "ubuntu"}, filtered)
+
     @staticmethod
     def _context() -> ConfigContext:
         bases = {
@@ -32,6 +48,7 @@ class BaseFilterTests(TestCase):
                 from_image="ubuntu:latest",
                 base_image_distro="Ubuntu",
                 base_image_description="Default",
+                architectures=["amd64", "arm64"],
                 build_local=False,
                 local_definition_dir=Path("/tmp/ubuntu"),
             ),
@@ -39,6 +56,7 @@ class BaseFilterTests(TestCase):
                 from_image="alpine:latest",
                 base_image_distro="Alpine",
                 base_image_description="Minimal",
+                architectures=["amd64", "arm64"],
                 build_local=False,
                 local_definition_dir=Path("/tmp/alpine"),
             ),

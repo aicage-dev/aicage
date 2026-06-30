@@ -50,6 +50,7 @@ class CustomBaseLoaderTests(TestCase):
         self.assertEqual("debian:latest", base.from_image)
         self.assertEqual("Debian", base.base_image_distro)
         self.assertEqual("Custom Debian", base.base_image_description)
+        self.assertEqual(["amd64", "arm64"], base.architectures)
         self.assertTrue(base.build_local)
         self.assertEqual(base_dir, base.local_definition_dir)
 
@@ -85,6 +86,9 @@ class CustomBaseLoaderTests(TestCase):
                     f"from_image: {from_image}",
                     f"base_image_distro: {base_image_distro}",
                     f"base_image_description: {base_image_description}",
+                    "architectures:",
+                    "  - amd64",
+                    "  - arm64",
                 ]
             ),
             encoding="utf-8",

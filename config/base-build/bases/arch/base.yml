@@ -1,0 +1,5 @@
+from_image: archlinux:latest
+base_image_distro: Arch Linux
+base_image_description: Rolling-release option for Arch users
+architectures:
+  - amd64

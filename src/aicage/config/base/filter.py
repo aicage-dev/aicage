@@ -1,5 +1,6 @@
 from aicage.config._base_exclude import is_base_excluded, normalize_exclude
 from aicage.config.agent.models import AgentMetadata
+from aicage.config.base.architecture import base_supports_host_architecture
 from aicage.config.context import ConfigContext
 
 
@@ -14,6 +15,8 @@ def filter_bases(context: ConfigContext, agent_metadata: AgentMetadata) -> set[s
             base_exclude,
             base_distro_exclude,
         ):
+            continue
+        if not base_supports_host_architecture(base_metadata.architectures):
             continue
         filtered.add(base_name)
     return filtered

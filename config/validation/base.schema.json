@@ -5,7 +5,8 @@
   "required": [
     "from_image",
     "base_image_distro",
-    "base_image_description"
+    "base_image_description",
+    "architectures"
   ],
   "properties": {
     "from_image": {
@@ -19,6 +20,18 @@
     "base_image_description": {
       "type": "string",
       "pattern": ".*\\S.*"
+    },
+    "architectures": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "amd64",
+          "arm64"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1
     },
     "build_local": {
       "type": "boolean",

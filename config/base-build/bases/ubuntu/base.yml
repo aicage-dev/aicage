@@ -1,3 +1,6 @@
 from_image: ubuntu:latest
 base_image_distro: Ubuntu
 base_image_description: Good default for most users
+architectures:
+  - amd64
+  - arm64

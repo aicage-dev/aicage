@@ -25,12 +25,16 @@ The `<BASE>` directory name is the base id used for selection.
 from_image: debian:bookworm
 base_image_distro: Debian
 base_image_description: "Debian base image"
+architectures:
+  - amd64
+  - arm64
 ```
 
 Notes:
 
 - `from_image` is used both as the Docker build arg and for update checks.
 - `base_image_distro` is used for agent filtering (`base_distro_exclude`).
+- `architectures` limits which host CPU architectures may use the base.
 - No additional keys are supported.
 
 ## Dockerfile

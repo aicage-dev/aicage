@@ -15,6 +15,7 @@ from aicage.config.agent.models import (
     BUILD_LOCAL_KEY,
     AgentMetadata,
 )
+from aicage.config.base.architecture import base_supports_host_architecture
 from aicage.config.base.models import BaseMetadata
 from aicage.config.errors import ConfigError
 from aicage.config.image_refs import local_image_ref
@@ -100,6 +101,8 @@ def _build_valid_bases(
             base_exclude_set,
             base_distro_exclude_set,
         ):
+            continue
+        if not base_supports_host_architecture(base_metadata.architectures):
             continue
         valid_bases[base_name] = local_image_ref(repository, agent_name, base_name)
     return valid_bases

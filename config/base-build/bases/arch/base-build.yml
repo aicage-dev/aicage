@@ -1,0 +1,2 @@
+os_installer: distro/arch/install.sh
+test_suite: default

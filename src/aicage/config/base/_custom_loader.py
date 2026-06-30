@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from aicage.config._yaml import expect_string
+from aicage.config._yaml import expect_string, read_str_list
 from aicage.config.base._validation import validate_base_mapping
-from aicage.config.base.models import BaseMetadata
+from aicage.config.base.models import ARCHITECTURES_KEY, BaseMetadata
 from aicage.config.errors import ConfigError
 from aicage.config.yaml_loader import load_yaml
 from aicage.paths import CUSTOM_BASE_DEFINITION_FILES, CUSTOM_BASES_DIR
@@ -40,6 +40,7 @@ def _load_custom_base(base_name: str) -> BaseMetadata:
             mapping.get(_BASE_IMAGE_DESCRIPTION_KEY),
             _BASE_IMAGE_DESCRIPTION_KEY,
         ),
+        architectures=read_str_list(mapping.get(ARCHITECTURES_KEY), ARCHITECTURES_KEY),
         build_local=True,
         local_definition_dir=base_dir,
     )

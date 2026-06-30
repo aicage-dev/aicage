@@ -1,3 +1,6 @@
 from_image: fedora:latest
 base_image_distro: Fedora
 base_image_description: For RedHat/Fedora users
+architectures:
+  - amd64
+  - arm64

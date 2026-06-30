@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from aicage.config.agent._metadata import build_agent_metadata
 from aicage.config.agent.models import (
@@ -20,6 +20,7 @@ class AgentMetadataBuilderTests(TestCase):
                 from_image="ubuntu:latest",
                 base_image_distro="Ubuntu",
                 base_image_description="Default",
+                architectures=["amd64", "arm64"],
                 build_local=False,
                 local_definition_dir=Path("/tmp/ubuntu"),
             ),
@@ -27,6 +28,7 @@ class AgentMetadataBuilderTests(TestCase):
                 from_image="alpine:latest",
                 base_image_distro="Alpine",
                 base_image_description="Minimal",
+                architectures=["amd64", "arm64"],
                 build_local=False,
                 local_definition_dir=Path("/tmp/alpine"),
             ),
@@ -45,6 +47,44 @@ class AgentMetadataBuilderTests(TestCase):
             bases=bases,
             definition_dir=Path("/tmp/agent"),
         )
+
+        self.assertEqual(
+            {"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
+            metadata.valid_bases,
+        )
+
+    def test_build_agent_metadata_excludes_bases_for_unsupported_host_architecture(self) -> None:
+        bases = {
+            "arch": BaseMetadata(
+                from_image="archlinux:latest",
+                base_image_distro="Arch Linux",
+                base_image_description="Rolling",
+                architectures=["amd64"],
+                build_local=False,
+                local_definition_dir=Path("/tmp/arch"),
+            ),
+            "ubuntu": BaseMetadata(
+                from_image="ubuntu:latest",
+                base_image_distro="Ubuntu",
+                base_image_description="Default",
+                architectures=["amd64", "arm64"],
+                build_local=False,
+                local_definition_dir=Path("/tmp/ubuntu"),
+            ),
+        }
+        mapping = {
+            AGENT_FULL_NAME_KEY: "Codex",
+            AGENT_HOMEPAGE_KEY: "https://example.com",
+            BUILD_LOCAL_KEY: False,
+        }
+
+        with mock.patch("aicage.config.base.architecture.platform.machine", return_value="aarch64"):
+            metadata = build_agent_metadata(
+                agent_name="codex",
+                agent_mapping=mapping,
+                bases=bases,
+                definition_dir=Path("/tmp/agent"),
+            )
 
         self.assertEqual(
             {"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},

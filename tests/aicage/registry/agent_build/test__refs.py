@@ -17,6 +17,7 @@ class LocalBuildRefsTests(TestCase):
                 from_image="ubuntu:latest",
                 base_image_distro="Ubuntu",
                 base_image_description="Custom",
+                architectures=["amd64", "arm64"],
                 build_local=True,
                 local_definition_dir=CUSTOM_BASES_DIR / "custom",
             )
@@ -35,6 +36,7 @@ class LocalBuildRefsTests(TestCase):
                 from_image="ubuntu:latest",
                 base_image_distro="Ubuntu",
                 base_image_description="Default",
+                architectures=["amd64", "arm64"],
                 build_local=False,
                 local_definition_dir=Path("/tmp/ubuntu"),
             )
