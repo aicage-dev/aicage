@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-07-01
+
+### Added
+
+- Added Arch Linux as a built-in base image option on `amd64` hosts.
+
+### Changed
+
+- Base selection now respects per-base CPU architecture support, so incompatible bases are hidden on unsupported
+  hosts.
+- Custom base definitions now require an `architectures` list in `base.yml` or `base.yaml` using `amd64` and/or
+  `arm64`.
+
 ## [1.2.5] - 2026-06-05
 
 ### Added
