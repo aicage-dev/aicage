@@ -18,7 +18,39 @@ class HomeGuardTests(TestCase):
         with self.assertRaises(AicageError) as ctx:
             resolver._validate_home_mount_safety(mounts, home_path)
 
-        self.assertIn("Refusing to start", str(ctx.exception))
+        self.assertEqual(
+            "Refusing to start: this would expose your home directory to the container via "
+            f"{home_path}.\n"
+            "Use one of these safer options instead:\n"
+            "- Start aicage from the project repository directory. If needed, add folders "
+            "outside it with `--share <path>`.\n"
+            "- For multi-project setups, keep repositories under a folder such as "
+            "~/workspace and start aicage from there.",
+            str(ctx.exception),
+        )
+
+    def test_validate_home_mount_safety_rejects_parent_of_home_mount(self) -> None:
+        home_path = Path("/tmp/home/user").resolve()
+        mounts = [
+            MountSpec(
+                host_path=home_path.parent,
+                container_path=container_project_path(home_path.parent),
+            ),
+        ]
+
+        with self.assertRaises(AicageError) as ctx:
+            resolver._validate_home_mount_safety(mounts, home_path)
+
+        self.assertEqual(
+            "Refusing to start: this would expose your home directory to the container via "
+            f"{home_path.parent}.\n"
+            "Use one of these safer options instead:\n"
+            "- Start aicage from the project repository directory. If needed, add folders "
+            "outside it with `--share <path>`.\n"
+            "- For multi-project setups, keep repositories under a folder such as "
+            "~/workspace and start aicage from there.",
+            str(ctx.exception),
+        )
 
     @staticmethod
     def test_validate_home_mount_safety_allows_non_home_mount() -> None:
