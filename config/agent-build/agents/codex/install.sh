@@ -4,6 +4,9 @@ set -euo pipefail
 # Codex warns if /usr/bin/bwrap is missing on Windows-hosted runs.
 if command -v apk >/dev/null 2>&1; then
   apk add --no-cache bubblewrap
+elif command -v pacman >/dev/null 2>&1; then
+  pacman -Sy --noconfirm --needed bubblewrap
+  rm -rf /var/cache/pacman/pkg/* /var/lib/pacman/sync/*
 elif command -v dpkg >/dev/null 2>&1; then
   apt-get update
   apt-get install -y --no-install-recommends bubblewrap
