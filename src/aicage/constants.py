@@ -2,12 +2,12 @@
 
 # For images built by forks, edit these constants below as needed
 
-IMAGE_REPOSITORY: str = "aicage/aicage"
-IMAGE_BASE_REPOSITORY: str = "aicage/aicage-image-base"
-IMAGE_UTIL_REPOSITORY: str = "aicage/aicage-image-util"
+IMAGE_REPOSITORY: str = "aicage-dev/aicage"
+IMAGE_BASE_REPOSITORY: str = "aicage-dev/aicage-image-base"
+IMAGE_UTIL_REPOSITORY: str = "aicage-dev/aicage-image-util"
 
-IMAGE_SOURCE_URL: str = "https://github.com/aicage/aicage-image"
-IMAGE_BASE_SOURCE_URL: str = "https://github.com/aicage/aicage-image-base"
+IMAGE_SOURCE_URL: str = "https://github.com/aicage-dev/aicage-image"
+IMAGE_BASE_SOURCE_URL: str = "https://github.com/aicage-dev/aicage-image-base"
 IMAGE_UTIL_SOURCE_URL: str = "https://github.com/aicage/aicage-image-util"
 
 VERSION_CHECK_IMAGE: str = "ghcr.io/aicage/aicage-image-util:agent-version"
