@@ -2,23 +2,23 @@
 
 # For images built by forks, edit these constants below as needed
 
-IMAGE_REPOSITORY: str = "aicage/aicage"
-IMAGE_BASE_REPOSITORY: str = "aicage/aicage-image-base"
-IMAGE_UTIL_REPOSITORY: str = "aicage/aicage-image-util"
+IMAGE_REPOSITORY: str = "aicage-dev/aicage"
+IMAGE_BASE_REPOSITORY: str = "aicage-dev/aicage-image-base"
+IMAGE_UTIL_REPOSITORY: str = "aicage-dev/aicage-image-util"
 
-IMAGE_SOURCE_URL: str = "https://github.com/aicage/aicage-image"
-IMAGE_BASE_SOURCE_URL: str = "https://github.com/aicage/aicage-image-base"
-IMAGE_UTIL_SOURCE_URL: str = "https://github.com/aicage/aicage-image-util"
+IMAGE_SOURCE_URL: str = "https://github.com/aicage-dev/aicage-image"
+IMAGE_BASE_SOURCE_URL: str = "https://github.com/aicage-dev/aicage-image-base"
+IMAGE_UTIL_SOURCE_URL: str = "https://github.com/aicage-dev/aicage-image-util"
 
-VERSION_CHECK_IMAGE: str = "ghcr.io/aicage/aicage-image-util:agent-version"
+VERSION_CHECK_IMAGE: str = "ghcr.io/aicage-dev/aicage-image-util:agent-version"
 
 # ### END: FORK IMAGES ###
 
-LOCAL_IMAGE_BASE_REPOSITORY: str = "aicage-image-base"
-LOCAL_IMAGE_REPOSITORY: str = "aicage"
+LOCAL_IMAGE_BASE_REPOSITORY: str = "aicage-image-base-dev"
+LOCAL_IMAGE_REPOSITORY: str = "aicage-dev"
 
 DEFAULT_IMAGE_BASE: str = "ubuntu"
-DEFAULT_EXTENDED_IMAGE_NAME: str = "aicage-extended"
+DEFAULT_EXTENDED_IMAGE_NAME: str = "aicage-extended-dev"
 
 IMAGE_REGISTRY: str = "ghcr.io"
 _IMAGE_REGISTRY_API_URL: str = "https://ghcr.io/v2"
