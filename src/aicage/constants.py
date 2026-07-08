@@ -1,17 +1,30 @@
+# ### START: FORK IMAGES ###
+
+# For images built by forks, edit these constants below as needed
+
+IMAGE_REPOSITORY: str = "aicage/aicage"
+IMAGE_BASE_REPOSITORY: str = "aicage/aicage-image-base"
+IMAGE_UTIL_REPOSITORY: str = "aicage/aicage-image-util"
+
+IMAGE_SOURCE_URL: str = "https://github.com/aicage/aicage-image"
+IMAGE_BASE_SOURCE_URL: str = "https://github.com/aicage/aicage-image-base"
+IMAGE_UTIL_SOURCE_URL: str = "https://github.com/aicage/aicage-image-util"
+
+VERSION_CHECK_IMAGE: str = "ghcr.io/aicage/aicage-image-util:agent-version"
+
+# ### END: FORK IMAGES ###
+
+LOCAL_IMAGE_BASE_REPOSITORY: str = "aicage-image-base"
+LOCAL_IMAGE_REPOSITORY: str = "aicage"
+
+DEFAULT_IMAGE_BASE: str = "ubuntu"
+DEFAULT_EXTENDED_IMAGE_NAME: str = "aicage-extended"
+
 IMAGE_REGISTRY: str = "ghcr.io"
 _IMAGE_REGISTRY_API_URL: str = "https://ghcr.io/v2"
 _IMAGE_REGISTRY_API_TOKEN_URL: str = (
     "https://ghcr.io/token?service=ghcr.io&scope=repository"
 )
-IMAGE_REPOSITORY: str = "aicage/aicage"
-IMAGE_BASE_REPOSITORY: str = "aicage/aicage-image-base"
-DEFAULT_IMAGE_BASE: str = "ubuntu"
-VERSION_CHECK_IMAGE: str = "ghcr.io/aicage/aicage-image-util:agent-version"
-
-LOCAL_IMAGE_BASE_REPOSITORY: str = "aicage-image-base"
-LOCAL_IMAGE_REPOSITORY: str = "aicage"
-
-DEFAULT_EXTENDED_IMAGE_NAME: str = "aicage-extended"
 
 _COSIGN_IMAGE_NAME: str = "ghcr.io/sigstore/cosign/cosign"
 # _COSIGN_IMAGE_DIGEST holds the digest of
@@ -20,8 +33,8 @@ _COSIGN_IMAGE_NAME: str = "ghcr.io/sigstore/cosign/cosign"
 _COSIGN_IMAGE_DIGEST: str = "sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb"
 COSIGN_IMAGE_REF: str = f"{_COSIGN_IMAGE_NAME}@{_COSIGN_IMAGE_DIGEST}"
 COSIGN_OIDC_ISSUER: str = "https://token.actions.githubusercontent.com"
-COSIGN_IDENTITY_REGEXP: str = (
-    "^https://github.com/aicage/[^/]+/.github/workflows/.*@(?:refs/.*/.*|[0-9a-f]{40})$"
+COSIGN_IDENTITY_REGEXP_TEMPLATE: str = (
+    r"^https://github.com/{owner}/[^/]+/.github/workflows/.*@(?:refs/.*/.*|[0-9a-f]{{40}})$"
 )
 
 DOCKER_LOCAL_METADATA_TIMEOUT_SECONDS: int = 30

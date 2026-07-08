@@ -198,6 +198,7 @@ class SignatureVerificationTests(TestCase):
             "org.opencontainers.image.source": "https://github.com/aicage/wrong",
             "org.opencontainers.image.title": "aicage",
         }
+        image_ref = f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_REPOSITORY}@sha256:abc"
         with mock.patch(
             "aicage.registry._signature._manifest_annotations",
             return_value=annotations,

@@ -22,6 +22,20 @@ advanced/power users who want to tweak or extend things.
 
 Run `scripts/lint.sh` from an active virtualenv with `requirements-dev.txt` installed.
 
+## Fork Setup
+
+To test this repo from a fork:
+
+1. Fork the repository.
+2. Run `aicage` locally from source instead of trying to publish a forked package.
+3. If you want to test against images from forks, update the fork-image block in `src/aicage/constants.py` so it
+   points to the forked image repos and image sources.
+4. Create and activate a virtualenv, then install `requirements-dev.txt`.
+5. Run the CLI and tests locally from that source checkout.
+
+Do not use the release flow of this repo as the fork test path. Releases here are for publishing the Python package,
+which forks cannot do.
+
 ## Integration tests
 
 Integration tests are opt-in because they require Docker and network access. Run them with:

@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.config.base.models import BaseMetadata
+from aicage.constants import IMAGE_BASE_REPOSITORY, IMAGE_REGISTRY
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry.agent_build import _refs
 
@@ -43,11 +44,11 @@ class LocalBuildRefsTests(TestCase):
         }
         ref = _refs.get_base_image_ref(run_config)
 
-        self.assertEqual("ghcr.io/aicage/aicage-image-base:ubuntu", ref)
+        self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_BASE_REPOSITORY}:ubuntu", ref)
 
     def test_base_repository_includes_registry(self) -> None:
         run_config = mock.Mock()
 
         repository = _refs.base_repository(run_config)
 
-        self.assertEqual("ghcr.io/aicage/aicage-image-base", repository)
+        self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_BASE_REPOSITORY}", repository)

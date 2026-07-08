@@ -12,10 +12,6 @@ jobs:
     name: Integration proxy macOS (${{ matrix.test }})
     runs-on: macos-26-intel
     env:
-      AICAGE_TEST_IMAGE_REF: ghcr.io/aicage/aicage:codex-ubuntu
-      AICAGE_BASE_IMAGE_REF: ghcr.io/aicage/aicage-image-base:ubuntu
-      COSIGN_IMAGE_REF: ghcr.io/sigstore/cosign/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb
-      VERSION_CHECK_IMAGE_REF: ghcr.io/aicage/aicage-image-util:agent-version
       HOST_PROXY_URL: http://localhost:3128
       CONTAINER_PROXY_URL: http://host.docker.internal:3128
       AICAGE_TEST_CONTAINER_PROXY_URL: http://host.docker.internal:3128
@@ -47,6 +43,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
+
+      - name: Resolve image refs from repo config
+        run: |
+          PYTHONPATH=src python - <<'PY' >> "$GITHUB_ENV"
+          from aicage.constants import (
+              COSIGN_IMAGE_REF,
+              IMAGE_BASE_REPOSITORY,
+              IMAGE_REGISTRY,
+              IMAGE_REPOSITORY,
+              VERSION_CHECK_IMAGE,
+          )
+
+          print(f"AICAGE_TEST_IMAGE_REF={IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu")
+          print(f"AICAGE_BASE_IMAGE_REF={IMAGE_REGISTRY}/{IMAGE_BASE_REPOSITORY}:ubuntu")
+          print(f"COSIGN_IMAGE_REF={COSIGN_IMAGE_REF}")
+          print(f"VERSION_CHECK_IMAGE_REF={VERSION_CHECK_IMAGE}")
+          PY
 
       - name: Validating config with schemas
         run: |

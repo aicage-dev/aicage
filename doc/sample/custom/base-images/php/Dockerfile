@@ -23,10 +23,8 @@ LABEL org.opencontainers.image.title="Custom aicage-image-base" \
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    AICAGE_USER=aicage \
     AICAGE_UID=1000 \
     AICAGE_GID=1000 \
-    AICAGE_WORKSPACE=/workspace \
     NPM_CONFIG_PREFIX=/usr/local \
     PIPX_HOME=/opt/pipx \
     PIPX_BIN_DIR=/opt/pipx/bin \
@@ -54,12 +52,14 @@ RUN --mount=type=bind,source=helpers,target=/tmp/aicage/helpers,readonly \
     /tmp/aicage/helpers-run/get-aicage-release-artifact.sh aicage-image-base "${AICAGE_IMAGE_BASE_DIR}" && \
     \
     echo "Install: Running os-installer scripts for distro '${AICAGE_INSTALL_DISTRO}' ..." && \
-    "${AICAGE_IMAGE_BASE_DIR}/os-installers/distro/${AICAGE_INSTALL_DISTRO}/install.sh" && \
+    "${AICAGE_IMAGE_BASE_DIR}/scripts/os-installers/distro/${AICAGE_INSTALL_DISTRO}/install.sh" && \
     \
     echo "Install: Copy aicage entrypoint.sh ..." && \
-    cp "${AICAGE_IMAGE_BASE_DIR}"/entrypoint.sh /usr/local/bin/entrypoint.sh && \
+    cp "${AICAGE_IMAGE_BASE_DIR}"/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh && \
     \
     echo "Clean up: Remove downloaded files ..." && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* && \
     rm -rf "${AICAGE_IMAGE_BASE_DIR}" && \
     rm -rf /tmp/aicage/helpers-run
 

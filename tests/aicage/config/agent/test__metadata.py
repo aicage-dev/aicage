@@ -11,6 +11,7 @@ from aicage.config.agent.models import (
     BUILD_LOCAL_KEY,
 )
 from aicage.config.base.models import BaseMetadata
+from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 
 
 class AgentMetadataBuilderTests(TestCase):
@@ -49,7 +50,7 @@ class AgentMetadataBuilderTests(TestCase):
         )
 
         self.assertEqual(
-            {"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
+            {"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
             metadata.valid_bases,
         )
 
@@ -87,6 +88,6 @@ class AgentMetadataBuilderTests(TestCase):
             )
 
         self.assertEqual(
-            {"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
+            {"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
             metadata.valid_bases,
         )
