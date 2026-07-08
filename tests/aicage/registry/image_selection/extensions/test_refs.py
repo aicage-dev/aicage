@@ -5,7 +5,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
-from aicage.constants import LOCAL_IMAGE_REPOSITORY
+from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY, LOCAL_IMAGE_REPOSITORY
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry.image_selection.extensions.refs import base_image_ref
 
@@ -19,7 +19,7 @@ class ExtensionRefsTests(TestCase):
             agent_full_name="Codex",
             agent_homepage="https://example.com",
             build_local=True,
-            valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
+            valid_bases={"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
             local_definition_dir=Path("/tmp/def"),
         )
 
@@ -35,13 +35,13 @@ class ExtensionRefsTests(TestCase):
             agent_full_name="Codex",
             agent_homepage="https://example.com",
             build_local=False,
-            valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
+            valid_bases={"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
             local_definition_dir=Path("/tmp/def"),
         )
 
         result = base_image_ref(agent_metadata, "codex", "ubuntu", context)
 
-        self.assertEqual("ghcr.io/aicage/aicage:codex-ubuntu", result)
+        self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu", result)
 
     def test_base_image_ref_uses_local_for_custom_base(self) -> None:
         context = self._context()
@@ -51,7 +51,7 @@ class ExtensionRefsTests(TestCase):
             agent_full_name="Codex",
             agent_homepage="https://example.com",
             build_local=False,
-            valid_bases={"custom": "ghcr.io/aicage/aicage:codex-custom"},
+            valid_bases={"custom": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-custom"},
             local_definition_dir=Path("/tmp/def"),
         )
         context.bases["custom"] = BaseMetadata(

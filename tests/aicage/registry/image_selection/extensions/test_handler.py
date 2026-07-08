@@ -8,7 +8,7 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.project_config import AgentConfig, ProjectConfig
-from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
+from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME, IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.registry.image_selection.extensions.context import ExtensionSelectionContext
 from aicage.registry.image_selection.extensions.handler import handle_extension_selection
 
@@ -32,7 +32,7 @@ class ExtensionHandlerTests(TestCase):
             ):
                 result = handle_extension_selection(selection)
 
-            self.assertEqual("ghcr.io/aicage/aicage:codex-ubuntu", result.image_ref)
+            self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu", result.image_ref)
             self.assertEqual([], agent_cfg.extensions)
             save_project_mock = cast(mock.Mock, context.store.save_project)
             save_project_mock.assert_called_once()
@@ -92,7 +92,7 @@ class ExtensionHandlerTests(TestCase):
             agent_full_name="Codex",
             agent_homepage="https://example.com",
             build_local=local,
-            valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
+            valid_bases={"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
             local_definition_dir=Path("/tmp/def"),
         )
 

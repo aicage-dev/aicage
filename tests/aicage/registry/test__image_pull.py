@@ -6,6 +6,7 @@ from unittest import TestCase, mock
 
 from docker.errors import DockerException
 
+from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.registry import _image_pull as image_pull
 
 
@@ -67,7 +68,7 @@ class DockerInvocationTests(TestCase):
             remote_mock.assert_not_called()
             verify_mock.assert_called_once_with(image_ref)
             cleanup_mock.assert_called_once_with(
-                "ghcr.io/aicage/aicage",
+                f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}",
                 "sha256:old",
                 image_ref,
             )

@@ -6,6 +6,7 @@ from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.registry._errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
@@ -27,7 +28,7 @@ class ImageSelectionTests(TestCase):
             context.project_cfg.agents["codex"] = AgentConfig(base="debian")
             selection = select_agent_image("codex", context)
 
-            self.assertEqual("ghcr.io/aicage/aicage:codex-debian", selection.image_ref)
+            self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-debian", selection.image_ref)
             store.save_project.assert_called_once_with(project_path, context.project_cfg)
 
     def test_select_agent_image_prompts_and_marks_dirty(self) -> None:
@@ -100,7 +101,7 @@ class ImageSelectionTests(TestCase):
                 image_ref="aicage:codex-ubuntu",
                 base="ubuntu",
                 extensions=[],
-                base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
+                base_image_ref=f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu",
             ),
         ) as fresh_mock:
             select_agent_image("codex", context)
@@ -122,7 +123,7 @@ class ImageSelectionTests(TestCase):
                     image_ref="aicage:codex-ubuntu",
                     base="ubuntu",
                     extensions=[],
-                    base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
+                    base_image_ref=f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu",
                 ),
             ) as fresh_mock,
         ):

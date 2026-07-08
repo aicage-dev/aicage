@@ -2,7 +2,18 @@ import json
 import subprocess
 
 from aicage._logging import get_logger
-from aicage.constants import COSIGN_IDENTITY_REGEXP, COSIGN_IMAGE_REF, COSIGN_OIDC_ISSUER
+from aicage.constants import (
+    COSIGN_IDENTITY_REGEXP_TEMPLATE,
+    COSIGN_IMAGE_REF,
+    COSIGN_OIDC_ISSUER,
+    IMAGE_BASE_REPOSITORY,
+    IMAGE_BASE_SOURCE_URL,
+    IMAGE_REGISTRY,
+    IMAGE_REPOSITORY,
+    IMAGE_SOURCE_URL,
+    IMAGE_UTIL_REPOSITORY,
+    IMAGE_UTIL_SOURCE_URL,
+)
 from aicage.docker.cli import run_docker_command_capture
 from aicage.docker.pull import run_pull
 from aicage.docker.query import (
@@ -15,19 +26,20 @@ from aicage.registry._logs import pull_log_path
 from aicage.registry.digest.remote_digest import get_remote_digest
 
 _OFFICIAL_IMAGE_ANNOTATIONS: dict[str, dict[str, str]] = {
-    "ghcr.io/aicage/aicage": {
-        "org.opencontainers.image.source": "https://github.com/aicage/aicage-image",
+    f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}": {
+        "org.opencontainers.image.source": IMAGE_SOURCE_URL,
         "org.opencontainers.image.title": "aicage",
     },
-    "ghcr.io/aicage/aicage-image-base": {
-        "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-base",
+    f"{IMAGE_REGISTRY}/{IMAGE_BASE_REPOSITORY}": {
+        "org.opencontainers.image.source": IMAGE_BASE_SOURCE_URL,
         "org.opencontainers.image.title": "aicage-image-base",
     },
-    "ghcr.io/aicage/aicage-image-util": {
-        "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-util",
+    f"{IMAGE_REGISTRY}/{IMAGE_UTIL_REPOSITORY}": {
+        "org.opencontainers.image.source": IMAGE_UTIL_SOURCE_URL,
         "org.opencontainers.image.title": "aicage-image-util",
     },
 }
+_REPOSITORY_PARTS_WITH_OWNER: int = 3
 
 
 def resolve_verified_digest(image_ref: str) -> str:
@@ -72,7 +84,7 @@ def _run_cosign_verify(image_ref: str) -> subprocess.CompletedProcess[str]:
         "--certificate-oidc-issuer",
         COSIGN_OIDC_ISSUER,
         "--certificate-identity-regexp",
-        COSIGN_IDENTITY_REGEXP,
+        _cosign_identity_regexp_for_image(image_ref),
         image_ref,
     ]
     return run_docker_command_capture(
@@ -80,6 +92,15 @@ def _run_cosign_verify(image_ref: str) -> subprocess.CompletedProcess[str]:
         check=False,
         text=True,
     )
+
+
+def _cosign_identity_regexp_for_image(image_ref: str) -> str:
+    repository = _repository_for_image(image_ref)
+    parts = repository.split("/", 2)
+    if len(parts) < _REPOSITORY_PARTS_WITH_OWNER:
+        raise RegistryError(f"Image ref '{image_ref}' does not contain a registry owner.")
+    owner = parts[1]
+    return COSIGN_IDENTITY_REGEXP_TEMPLATE.format(owner=owner)
 
 
 def _verify_manifest_annotations(image_ref: str) -> None:
