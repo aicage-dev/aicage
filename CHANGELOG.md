@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-07-10
+
+### Changed
+
+- `aicage` now works correctly from forked repositories by accepting fork-owned image signatures and matching forked
+  image source metadata during verification.
+- Show a TTY pull progress bar while Docker images download, so large first-time pulls no longer look idle and
+  still keep the raw pull event log unchanged.
+
 ## [1.3.2] - 2026-07-02
 
 ### Changed
