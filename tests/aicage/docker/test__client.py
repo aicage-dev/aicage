@@ -13,22 +13,40 @@ class DockerClientTests(TestCase):
 
     @staticmethod
     def test_get_docker_client_uses_timeout() -> None:
-        with mock.patch("aicage.docker._client.docker.from_env") as from_env:
+        host = mock.Mock(host="unix:///run/docker.sock")
+        with (
+            mock.patch("aicage.docker._client.get_active_docker_host", return_value=host),
+            mock.patch("aicage.docker._client.docker.DockerClient") as client_ctor,
+        ):
             _client.get_docker_client()
 
-        from_env.assert_called_once_with(timeout=_client.DOCKER_LOCAL_METADATA_TIMEOUT_SECONDS)
+        client_ctor.assert_called_once_with(
+            base_url="unix:///run/docker.sock",
+            timeout=_client.DOCKER_LOCAL_METADATA_TIMEOUT_SECONDS,
+        )
 
     @staticmethod
     def test_get_docker_pull_client_uses_timeout() -> None:
-        with mock.patch("aicage.docker._client.docker.from_env") as from_env:
+        host = mock.Mock(host="unix:///run/docker.sock")
+        with (
+            mock.patch("aicage.docker._client.get_active_docker_host", return_value=host),
+            mock.patch("aicage.docker._client.docker.DockerClient") as client_ctor,
+        ):
             _client.get_docker_pull_client()
 
-        from_env.assert_called_once_with(timeout=_client.DOCKER_PULL_REQUEST_TIMEOUT_SECONDS)
+        client_ctor.assert_called_once_with(
+            base_url="unix:///run/docker.sock",
+            timeout=_client.DOCKER_PULL_REQUEST_TIMEOUT_SECONDS,
+        )
 
     def test_get_docker_client_raises_clean_error_when_docker_missing(self) -> None:
-        with mock.patch(
-            "aicage.docker._client.docker.from_env",
-            side_effect=DockerException("boom"),
+        host = mock.Mock(host="unix:///run/docker.sock")
+        with (
+            mock.patch("aicage.docker._client.get_active_docker_host", return_value=host),
+            mock.patch(
+                "aicage.docker._client.docker.DockerClient",
+                side_effect=DockerException("boom"),
+            ),
         ):
             with self.assertRaises(DockerError) as raised:
                 _client.get_docker_client()

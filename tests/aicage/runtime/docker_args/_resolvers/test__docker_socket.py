@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
@@ -17,6 +18,10 @@ class DockerSocketMountTests(TestCase):
         with (
             mock.patch(f"{_MODULE}.os.name", "posix"),
             mock.patch(f"{_MODULE}.prompt_persist_docker_socket", return_value=True),
+            mock.patch(
+                f"{_MODULE}.get_active_docker_host",
+                return_value=mock.Mock(host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")),
+            ),
         ):
             resolved = resolve(context, "codex", parsed)
 
@@ -31,6 +36,10 @@ class DockerSocketMountTests(TestCase):
         with (
             mock.patch(f"{_MODULE}.os.name", "posix"),
             mock.patch(f"{_MODULE}.prompt_persist_docker_socket") as prompt_mock,
+            mock.patch(
+                f"{_MODULE}.get_active_docker_host",
+                return_value=mock.Mock(host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")),
+            ),
         ):
             resolved = resolve(context, "codex", _build_parsed())
 
