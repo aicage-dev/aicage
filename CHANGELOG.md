@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.4] - 2026-07-11
+
+### Changed
+
+- Adapted the runtime environment passed into `entrypoint.sh` to a simplified contract.
+- Added rootless Docker daemon support, including automatic runtime detection and correct Docker endpoint/socket
+  handling, so `aicage` can run cleanly in setups that prefer a more locked-down container environment.
+
 ## [1.3.3] - 2026-07-10
 
 ### Changed
