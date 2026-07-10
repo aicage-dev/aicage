@@ -9,5 +9,5 @@ class EnvVarsTests(TestCase):
         self.assertEqual("AICAGE_GID", env_vars.AICAGE_GID)
         self.assertEqual("AICAGE_HOST_USER", env_vars.AICAGE_HOST_USER)
         self.assertEqual("AICAGE_HOME", env_vars.AICAGE_HOME)
-        self.assertEqual("AICAGE_HOST_IS_LINUX", env_vars.AICAGE_HOST_IS_LINUX)
+        self.assertEqual("AICAGE_MOUNT_HOME", env_vars.AICAGE_MOUNT_HOME)
         self.assertEqual("AICAGE_WORKSPACE", env_vars.AICAGE_WORKSPACE)
