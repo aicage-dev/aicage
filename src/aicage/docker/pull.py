@@ -1,12 +1,15 @@
 import json
+import time
 from pathlib import Path
 
 from aicage._logging import get_logger
 from aicage.docker._client import get_docker_pull_client
+from aicage.docker._pull_progress import PullProgress
 
 
 def run_pull(image_ref: str, log_path: Path) -> None:
     logger = get_logger()
+    progress = PullProgress()
     log_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"[aicage] Pulling image {image_ref} (logs: {log_path})...")
     logger.info("Pulling image %s (logs: %s)", image_ref, log_path)
@@ -16,6 +19,9 @@ def run_pull(image_ref: str, log_path: Path) -> None:
         for event in client.api.pull(image_ref, stream=True, decode=True):
             log_handle.write(f"{_format_pull_event(event)}\n")
             log_handle.flush()
+            progress.consume_event(event, time.monotonic())
+
+    progress.finish()
 
     logger.info("Image pull succeeded for %s", image_ref)
 
