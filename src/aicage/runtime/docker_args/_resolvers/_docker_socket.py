@@ -3,6 +3,7 @@ import os
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
+from aicage.docker.runtime import get_active_docker_host
 from aicage.paths import HOST_DOCKER_SOCKET_PATH
 from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
 from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
@@ -26,8 +27,9 @@ def resolve(
         mounts: list[MountRequest] = []
         env = [EnvVar(name=DOCKER_HOST, value=WINDOWS_DOCKER_HOST)]
     else:
-        mounts = [MountRequest(host_path=HOST_DOCKER_SOCKET_PATH)]
-        env = []
+        docker_host = get_active_docker_host()
+        mounts = [MountRequest(host_path=docker_host.socket_path)] if docker_host.socket_path is not None else []
+        env = [EnvVar(name=DOCKER_HOST, value=docker_host.host)] if docker_host.socket_path != HOST_DOCKER_SOCKET_PATH else []
 
     if cli_docker_socket and mounts_cfg.docker is None:
         if prompt_persist_docker_socket():
