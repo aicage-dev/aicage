@@ -6,6 +6,7 @@ ARG IMAGE_SOURCE_URL
 FROM ${BASE_IMAGE} AS runtime
 
 ARG AGENT
+ARG IMAGE_SOURCE_URL
 
 LABEL org.opencontainers.image.title="aicage" \
       org.opencontainers.image.description="Multi-base build for agentic developer CLIs" \
@@ -18,7 +19,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=bind,source=agents/,target=/tmp/agents,readonly \
     mkdir -p /tmp/agents-run/${AGENT} && \
     cp -R /tmp/agents/${AGENT}/. /tmp/agents-run/${AGENT}/ && \
-    for script in /tmp/agents-run/${AGENT}/*.sh; do \
+    for script in "/tmp/agents-run/${AGENT}"/*.sh; do \
       sed -i 's/\r$//' "$script"; \
       chmod +x "$script"; \
     done && \
