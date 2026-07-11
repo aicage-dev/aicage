@@ -2,57 +2,38 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.config.config_store import SettingsStore
-from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry._errors import RegistryError
 from aicage.registry.image_selection import _fresh_selection
 from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime.prompts.image_choice import ExtendedImageOption, ImageChoice
 
 from ._fixtures import build_context
 
 
 class ImageSelectionFreshTests(TestCase):
-    def test_fresh_selection_accepts_extended_choice(self) -> None:
+    def test_fresh_selection_prompts_for_base(self) -> None:
         context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])
-        extended = [
-            ExtendedImageOption(
-                name="custom",
-                base="ubuntu",
-                description="Custom",
-                extensions=["extra"],
-                image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-extra",
-            )
-        ]
         with (
             mock.patch(
-                "aicage.registry.image_selection._fresh_selection.load_extended_image_options",
-                return_value=extended,
+                "aicage.registry.image_selection._fresh_selection.prompt_for_base",
+                return_value="ubuntu",
             ),
             mock.patch(
-                "aicage.registry.image_selection._fresh_selection.prompt_for_image_choice",
-                return_value=ImageChoice(kind="extended", value="custom"),
-            ),
-            mock.patch(
-                "aicage.registry.image_selection._fresh_selection.resolve_extended_image",
-                return_value=extended[0],
-            ),
-            mock.patch(
-                "aicage.registry.image_selection._fresh_selection.apply_extended_selection",
+                "aicage.registry.image_selection._fresh_selection.handle_extension_selection",
                 return_value=ImageSelection(
-                    image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-extra",
+                    image_ref="aicage:codex-ubuntu",
                     base="ubuntu",
-                    extensions=["extra"],
+                    extensions=[],
                     base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
                 ),
-            ) as apply_mock,
+            ) as handle_mock,
         ):
             selection = _fresh_selection.fresh_selection(
                 agent="codex",
                 context=context,
                 extensions={},
             )
-        self.assertEqual(f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-extra", selection.image_ref)
-        apply_mock.assert_called_once()
+        self.assertEqual("aicage:codex-ubuntu", selection.image_ref)
+        handle_mock.assert_called_once()
 
     def test_fresh_selection_raises_on_empty_bases(self) -> None:
         context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])

@@ -19,14 +19,14 @@ class BaseSelectionRequest:
 
 
 @dataclass(frozen=True)
-class BaseOption:
+class _BaseOption:
     base: str
     description: str
 
 
 def prompt_for_base(request: BaseSelectionRequest) -> str:
-    bases = base_options(request.context, request.agent_metadata)
-    default_base = resolve_default_base(available_bases(bases))
+    bases = _base_options(request.context, request.agent_metadata)
+    default_base = resolve_default_base(_available_bases(bases))
     if assume_yes_enabled():
         get_logger().info("Selected base '%s' for agent '%s' (assume-yes)", default_base, request.agent)
         return default_base
@@ -56,17 +56,17 @@ def prompt_for_base(request: BaseSelectionRequest) -> str:
     else:
         choice = response
 
-    if bases and choice not in available_bases(bases):
-        options = ", ".join(available_bases(bases))
+    if bases and choice not in _available_bases(bases):
+        options = ", ".join(_available_bases(bases))
         raise RuntimeExecutionError(f"Invalid base '{choice}'. Valid options: {options}")
     logger.info("Selected base '%s' for agent '%s'", choice, request.agent)
     return choice
 
 
-def base_options(context: ConfigContext, agent_metadata: AgentMetadata) -> list[BaseOption]:
+def _base_options(context: ConfigContext, agent_metadata: AgentMetadata) -> list[_BaseOption]:
     bases = filter_bases(context, agent_metadata)
     return [
-        BaseOption(
+        _BaseOption(
             base=base,
             description=context.bases[base].base_image_description,
         )
@@ -74,5 +74,5 @@ def base_options(context: ConfigContext, agent_metadata: AgentMetadata) -> list[
     ]
 
 
-def available_bases(options: list[BaseOption]) -> list[str]:
+def _available_bases(options: list[_BaseOption]) -> list[str]:
     return [option.base for option in options]

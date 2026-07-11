@@ -6,7 +6,7 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.runtime._errors import RuntimeExecutionError
-from aicage.runtime.prompts.base import BaseSelectionRequest, available_bases, base_options, prompt_for_base
+from aicage.runtime.prompts.base import BaseSelectionRequest, _available_bases, _base_options, prompt_for_base
 
 
 class PromptTests(TestCase):
@@ -101,12 +101,12 @@ class PromptTests(TestCase):
 
     def test_base_options_returns_descriptions(self) -> None:
         context = self._build_context(["ubuntu"])
-        options = base_options(context, self._agent_metadata(["ubuntu"]))
+        options = _base_options(context, self._agent_metadata(["ubuntu"]))
         self.assertEqual([("ubuntu", "Default")], [(option.base, option.description) for option in options])
 
     def test_base_options_filters_excluded_bases(self) -> None:
         context = self._build_context(["alpine", "ubuntu"])
-        options = base_options(
+        options = _base_options(
             context,
             self._agent_metadata(["alpine", "ubuntu"], base_exclude=["alpine"]),
         )
@@ -114,8 +114,8 @@ class PromptTests(TestCase):
 
     def test_available_bases_returns_list(self) -> None:
         context = self._build_context(["ubuntu", "alpine"])
-        options = base_options(context, self._agent_metadata(["ubuntu", "alpine"]))
-        self.assertEqual(["alpine", "ubuntu"], available_bases(options))
+        options = _base_options(context, self._agent_metadata(["ubuntu", "alpine"]))
+        self.assertEqual(["alpine", "ubuntu"], _available_bases(options))
 
     @staticmethod
     def _build_context(bases: list[str]) -> ConfigContext:

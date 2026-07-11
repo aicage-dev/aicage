@@ -40,7 +40,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 "aicage.config.extended_images.IMAGE_EXTENDED_STATE_DIR",
                 Path(images_dir),
             ):
-                configs = extended_images_module.load_extended_images(set())
+                configs = extended_images_module._load_extended_images(set())
 
         self.assertEqual({}, configs)
 
@@ -53,7 +53,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 "aicage.config.extended_images.IMAGE_EXTENDED_STATE_DIR",
                 Path(images_dir),
             ):
-                configs = extended_images_module.load_extended_images(set())
+                configs = extended_images_module._load_extended_images(set())
 
         self.assertEqual({}, configs)
 
@@ -76,7 +76,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 "aicage.config.extended_images.IMAGE_EXTENDED_STATE_DIR",
                 Path(images_dir),
             ):
-                configs = extended_images_module.load_extended_images({"marker"})
+                configs = extended_images_module._load_extended_images({"marker"})
 
         self.assertIn("custom", configs)
         self.assertEqual("codex", configs["custom"].agent)
@@ -91,7 +91,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images(set())
+                    extended_images_module._load_extended_images(set())
 
     def test_load_extended_images_rejects_invalid_yaml(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -105,7 +105,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images({"marker"})
+                    extended_images_module._load_extended_images({"marker"})
 
     def test_load_extended_images_reports_read_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -134,7 +134,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images(set())
+                    extended_images_module._load_extended_images(set())
 
     def test_load_extended_images_rejects_blank_values(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -156,7 +156,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images(set())
+                    extended_images_module._load_extended_images(set())
 
     def test_load_extended_images_rejects_invalid_extensions_list(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -180,7 +180,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images(set())
+                    extended_images_module._load_extended_images(set())
 
     def test_load_extended_images_rejects_blank_extension_items(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -205,7 +205,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images(set())
+                    extended_images_module._load_extended_images(set())
 
     def test_load_extended_images_requires_required_keys(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -228,7 +228,7 @@ class ExtendedImagesLoaderTests(TestCase):
                 Path(images_dir),
             ):
                 with self.assertRaises(ConfigError):
-                    extended_images_module.load_extended_images(set())
+                    extended_images_module._load_extended_images(set())
 
     def test_write_extended_image_config_writes_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

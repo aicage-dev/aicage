@@ -25,7 +25,7 @@ class ExtendedImageConfig:
     path: Path
 
 
-def load_extended_images(available_extensions: set[str]) -> dict[str, ExtendedImageConfig]:
+def _load_extended_images(available_extensions: set[str]) -> dict[str, ExtendedImageConfig]:
     images_dir = IMAGE_EXTENDED_STATE_DIR
     if not images_dir.is_dir():
         return {}
