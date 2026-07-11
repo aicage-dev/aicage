@@ -145,7 +145,7 @@ def _progress_int(progress_detail: dict[str, object], key: str) -> int | None:
 
 
 def _is_complete(layer: _LayerProgress) -> bool:
-    return layer.total > 0 and layer.current >= layer.total
+    return 0 < layer.total <= layer.current
 
 
 def _render_bar(percent: int) -> str:
