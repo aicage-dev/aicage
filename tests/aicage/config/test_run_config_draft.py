@@ -136,7 +136,6 @@ class RunConfigDraftTests(TestCase):
         self.assertIsNone(draft.agent_cfg.image_ref)
         self.assertEqual({"one": True}, draft.agent_cfg.extension_mounts)
 
-
 def _build_draft(
     agent_cfg: AgentConfig,
     docker_args: str = "",

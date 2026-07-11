@@ -8,6 +8,7 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.config.runtime_config import RunConfig, load_run_config
+from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.run_args import MountSpec
 
@@ -291,6 +292,65 @@ class RuntimeConfigTests(TestCase):
         )
         prompt_mock.assert_called_once_with([expected_new], [expected_existing, f"{expected_shared}:ro"])
 
+    def test_load_run_config_interactive_uses_overview_values_for_current_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project_path = Path(tmp_dir) / "project"
+            project_path.mkdir()
+
+            store = SettingsStore()
+            project_cfg = store.load_project(project_path)
+            project_cfg.agents["codex"] = AgentConfig(
+                base="ubuntu",
+                docker_args="--existing",
+            )
+            store.save_project(project_path, project_cfg)
+
+            def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
+                return SettingsStore()
+
+            parsed = ParsedArgs(
+                dry_run=False,
+                docker_args="--new",
+                agent="codex",
+                agent_args=[],
+                docker_socket=True,
+                shares=["logs"],
+                config_action=None,
+            )
+
+            def overview_side_effect(draft: object, _context: object) -> tuple[ImageSelection, str]:
+                typed_draft = draft
+                typed_draft.prefill_for_overview()
+                typed_draft.consume_overview_prefill()
+                return (
+                    ImageSelection(
+                        image_ref="ref",
+                        base="ubuntu",
+                        extensions=[],
+                        base_image_ref="ref",
+                    ),
+                    "--new",
+                )
+
+            with (
+                mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
+                mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
+                mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+                mock.patch("aicage.config.runtime_config.load_bases", return_value=self._get_bases()),
+                mock.patch("aicage.config.runtime_config.load_agents", return_value=self._get_agents()),
+                mock.patch(
+                    "aicage.config.runtime_config.edit_draft_with_textual_app",
+                    side_effect=overview_side_effect,
+                ),
+            ):
+                run_config = load_run_config("codex", parsed)
+
+        self.assertEqual("--new", run_config.project_docker_args)
+        self.assertEqual("", parsed.docker_args)
+        self.assertEqual([], parsed.shares)
+        self.assertFalse(parsed.docker_socket)
+
     def test_load_run_config_applies_mount_preferences_before_runtime_resolution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project_path = Path(tmp_dir) / "project"
@@ -334,6 +394,41 @@ class RuntimeConfigTests(TestCase):
                 load_run_config("codex", parsed)
 
         apply_mount_preferences_mock.assert_called_once()
+
+    def test_load_run_config_rejects_unknown_config_agent_before_overview(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project_path = Path(tmp_dir) / "project"
+            project_path.mkdir()
+
+            def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
+                return SettingsStore()
+
+            parsed = ParsedArgs(
+                dry_run=False,
+                docker_args="",
+                agent="config",
+                agent_args=[],
+                docker_socket=False,
+                shares=[],
+                config_action=None,
+                menu="textual",
+            )
+            with (
+                mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
+                mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
+                mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+                mock.patch("aicage.config.runtime_config.load_bases", return_value=self._get_bases()),
+                mock.patch("aicage.config.runtime_config.load_agents", return_value=self._get_agents()),
+                mock.patch("aicage.config.runtime_config.edit_draft_with_textual_app") as overview_mock,
+            ):
+                with self.assertRaises(RegistryError) as raised:
+                    load_run_config("config", parsed)
+
+        self.assertEqual(
+            "Unknown agent 'config'. Use '--config' for config commands.",
+            str(raised.exception),
+        )
+        overview_mock.assert_not_called()
 
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:
