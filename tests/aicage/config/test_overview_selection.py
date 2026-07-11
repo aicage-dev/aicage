@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
-from aicage.config import _overview_selection
+from aicage.config import overview_selection
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
@@ -45,8 +45,8 @@ class OverviewSelectionTests(TestCase):
             extensions={},
         )
 
-        with mock.patch("aicage.config._overview_selection.base_image_ref", return_value="repo:ubuntu"):
-            selection = _overview_selection.resolve_overview_selection(draft, context)
+        with mock.patch("aicage.config.overview_selection.base_image_ref", return_value="repo:ubuntu"):
+            selection = overview_selection.resolve_overview_selection(draft, context)
 
         self.assertEqual("ubuntu", selection.base)
         self.assertEqual("repo:ubuntu", selection.image_ref)
@@ -89,10 +89,10 @@ class OverviewSelectionTests(TestCase):
         )
 
         with (
-            mock.patch("aicage.config._overview_selection.ensure_extensions_exist", return_value=False),
-            mock.patch("aicage.config._overview_selection.write_extended_image_config"),
-            mock.patch("aicage.config._overview_selection.base_image_ref", return_value="repo:ubuntu"),
+            mock.patch("aicage.config.overview_selection.ensure_extensions_exist", return_value=False),
+            mock.patch("aicage.config.overview_selection.write_extended_image_config"),
+            mock.patch("aicage.config.overview_selection.base_image_ref", return_value="repo:ubuntu"),
         ):
-            selection = _overview_selection.resolve_overview_selection(draft, context)
+            selection = overview_selection.resolve_overview_selection(draft, context)
 
         self.assertEqual("aicage-extended:codex-ubuntu-alpha-zeta", selection.image_ref)

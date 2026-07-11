@@ -15,6 +15,7 @@ from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
 from aicage.runtime.menu.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
+from aicage.runtime.menu.textual.entry import edit_draft_with_textual_app
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 
@@ -43,12 +44,15 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
         bases=bases,
         extensions=load_extensions(),
     )
-    selection = select_agent_image(agent, context)
-    draft.apply_selection(selection)
-    _persist_docker_args(draft)
-    _persist_shares(draft)
-    apply_mount_preferences(context, agent, parsed)
-    project_docker_args = draft.existing_project_docker_args
+    if parsed is not None and parsed.menu == "textual":
+        selection, project_docker_args = edit_draft_with_textual_app(draft, context)
+    else:
+        selection = select_agent_image(agent, context)
+        draft.apply_selection(selection)
+        _persist_docker_args(draft)
+        _persist_shares(draft)
+        apply_mount_preferences(context, agent, parsed)
+        project_docker_args = draft.existing_project_docker_args
     mounts, env = resolve_docker_args(context, agent, parsed)
     store.save_project(project_path, draft.project_cfg)
 
