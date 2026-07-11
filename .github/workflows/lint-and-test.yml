@@ -37,6 +37,11 @@ jobs:
         run: |
           scripts/sync-with-aicage-image-projects.sh
 
+      - name: "Test: Lint Dockerfile"
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5  # v3.3.0
+        with:
+          recursive: "true"
+
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
