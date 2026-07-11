@@ -25,7 +25,7 @@ class RuntimeConfigTests(TestCase):
             project_cfg.agents["codex"] = AgentConfig(
                 base="ubuntu",
                 docker_args="--project",
-                        mounts=_AgentMounts(gitconfig=True),
+                mounts=_AgentMounts(gitconfig=True),
             )
             store.save_project(project_path, project_cfg)
 
@@ -38,6 +38,7 @@ class RuntimeConfigTests(TestCase):
                 mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
                 mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
                 mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=(mounts, env)),
+                mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                 mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
                 mock.patch(
                     "aicage.config.runtime_config.load_bases",
@@ -88,11 +89,13 @@ class RuntimeConfigTests(TestCase):
                 docker_socket=False,
                 shares=[],
                 config_action=None,
+                yes=True,
             )
             with (
                 mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
                 mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
                 mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                 mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
                 mock.patch(
                     "aicage.config.runtime_config.load_bases",
@@ -134,6 +137,7 @@ class RuntimeConfigTests(TestCase):
                 mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
                 mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
                 mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                 mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
                 mock.patch(
                     "aicage.config.runtime_config.load_bases",
@@ -180,11 +184,13 @@ class RuntimeConfigTests(TestCase):
                     docker_socket=False,
                     shares=["data", "logs:ro"],
                     config_action=None,
+                    yes=True,
                 )
                 with (
                     mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
                     mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
                     mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                    mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                     mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
                     mock.patch(
                         "aicage.config.runtime_config.load_bases",
@@ -243,12 +249,14 @@ class RuntimeConfigTests(TestCase):
                     docker_socket=False,
                     shares=["shared", "new"],
                     config_action=None,
+                    yes=True,
                 )
                 prompt_mock = mock.Mock(return_value=True)
                 with (
                     mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
                     mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
                     mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                    mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                     mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
                     mock.patch(
                         "aicage.config.runtime_config.load_bases",
@@ -282,6 +290,50 @@ class RuntimeConfigTests(TestCase):
             updated_cfg.agents["codex"].shares,
         )
         prompt_mock.assert_called_once_with([expected_new], [expected_existing, f"{expected_shared}:ro"])
+
+    def test_load_run_config_applies_mount_preferences_before_runtime_resolution(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project_path = Path(tmp_dir) / "project"
+            project_path.mkdir()
+
+            def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
+                return SettingsStore()
+
+            parsed = ParsedArgs(
+                dry_run=False,
+                docker_args="",
+                agent="codex",
+                agent_args=[],
+                docker_socket=False,
+                shares=[],
+                config_action=None,
+                yes=True,
+            )
+            apply_mount_preferences_mock = mock.Mock()
+            with (
+                mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
+                mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
+                mock.patch("aicage.config.runtime_config.resolve_docker_args", return_value=([], [])),
+                mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+                mock.patch("aicage.config.runtime_config.load_bases", return_value=self._get_bases()),
+                mock.patch("aicage.config.runtime_config.load_agents", return_value=self._get_agents()),
+                mock.patch(
+                    "aicage.config.runtime_config.select_agent_image",
+                    return_value=ImageSelection(
+                        image_ref="ref",
+                        base="ubuntu",
+                        extensions=[],
+                        base_image_ref="ref",
+                    ),
+                ),
+                mock.patch(
+                    "aicage.config.runtime_config.apply_mount_preferences",
+                    apply_mount_preferences_mock,
+                ),
+            ):
+                load_run_config("codex", parsed)
+
+        apply_mount_preferences_mock.assert_called_once()
 
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:

@@ -15,11 +15,11 @@ _AGENT_EXTENSIONS_KEY: str = "extensions"
 _AGENT_SHARES_KEY: str = "shares"
 _AGENT_EXTENSION_MOUNTS_KEY: str = "extension_mounts"
 
-_MOUNT_GITCONFIG_KEY: str = "gitconfig"
-_MOUNT_GITROOT_KEY: str = "gitroot"
-_MOUNT_GNUPG_KEY: str = "gnupg"
-_MOUNT_SSH_KEY: str = "ssh"
-_MOUNT_DOCKER_KEY: str = "docker"
+MOUNT_GITCONFIG_KEY: str = "gitconfig"
+MOUNT_GITROOT_KEY: str = "gitroot"
+MOUNT_GNUPG_KEY: str = "gnupg"
+MOUNT_SSH_KEY: str = "ssh"
+MOUNT_DOCKER_KEY: str = "docker"
 
 
 @dataclass
@@ -33,25 +33,25 @@ class _AgentMounts:
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> "_AgentMounts":
         return cls(
-            gitconfig=data.get(_MOUNT_GITCONFIG_KEY),
-            gitroot=data.get(_MOUNT_GITROOT_KEY),
-            gnupg=data.get(_MOUNT_GNUPG_KEY),
-            ssh=data.get(_MOUNT_SSH_KEY),
-            docker=data.get(_MOUNT_DOCKER_KEY),
+            gitconfig=data.get(MOUNT_GITCONFIG_KEY),
+            gitroot=data.get(MOUNT_GITROOT_KEY),
+            gnupg=data.get(MOUNT_GNUPG_KEY),
+            ssh=data.get(MOUNT_SSH_KEY),
+            docker=data.get(MOUNT_DOCKER_KEY),
         )
 
     def to_mapping(self) -> dict[str, bool]:
         payload: dict[str, bool] = {}
         if self.gitconfig is not None:
-            payload[_MOUNT_GITCONFIG_KEY] = self.gitconfig
+            payload[MOUNT_GITCONFIG_KEY] = self.gitconfig
         if self.gitroot is not None:
-            payload[_MOUNT_GITROOT_KEY] = self.gitroot
+            payload[MOUNT_GITROOT_KEY] = self.gitroot
         if self.gnupg is not None:
-            payload[_MOUNT_GNUPG_KEY] = self.gnupg
+            payload[MOUNT_GNUPG_KEY] = self.gnupg
         if self.ssh is not None:
-            payload[_MOUNT_SSH_KEY] = self.ssh
+            payload[MOUNT_SSH_KEY] = self.ssh
         if self.docker is not None:
-            payload[_MOUNT_DOCKER_KEY] = self.docker
+            payload[MOUNT_DOCKER_KEY] = self.docker
         return payload
 
 

@@ -2,7 +2,13 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.config.project_config import _AgentMounts
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+    _AgentMounts,
+)
 from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
 from aicage.runtime.docker_args._support import _git_support
 
@@ -111,7 +117,7 @@ class GitSupportTests(TestCase):
     def test_git_support_prompt_items(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
-        git_items = [("gitconfig", "Git config (name/email): /tmp/gitconfig")]
+        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig")]
 
         with (
             mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=Path("/tmp/gitconfig")),
@@ -145,7 +151,7 @@ class GitSupportTests(TestCase):
             ):
                 items = _git_support.git_support_prompt_items(project_path, mounts_cfg)
 
-        self.assertEqual(["gitconfig", "gitroot", "gnupg"], [item[0] for item in items])
+        self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY], [item[0] for item in items])
 
     def test_git_support_prompt_items_default_to_gpg_when_format_missing(self) -> None:
         mounts_cfg = _AgentMounts()
@@ -168,7 +174,7 @@ class GitSupportTests(TestCase):
             ):
                 items = _git_support.git_support_prompt_items(project_path, mounts_cfg)
 
-        self.assertIn("gnupg", [item[0] for item in items])
+        self.assertIn(MOUNT_GNUPG_KEY, [item[0] for item in items])
 
     def test_git_support_prompt_items_skip_when_no_items(self) -> None:
         mounts_cfg = _AgentMounts(gitconfig=True, gitroot=False, gnupg=False, ssh=False)
@@ -201,7 +207,7 @@ class GitSupportTests(TestCase):
             ):
                 items = _git_support.git_support_prompt_items(project_path, mounts_cfg)
 
-        self.assertIn("ssh", [item[0] for item in items])
+        self.assertIn(MOUNT_SSH_KEY, [item[0] for item in items])
 
     def test_git_support_prompt_items_include_ssh_and_gnupg_when_both_needed(self) -> None:
         mounts_cfg = _AgentMounts()
@@ -225,5 +231,5 @@ class GitSupportTests(TestCase):
                 items = _git_support.git_support_prompt_items(project_path, mounts_cfg)
 
         keys = [item[0] for item in items]
-        self.assertIn("ssh", keys)
-        self.assertIn("gnupg", keys)
+        self.assertIn(MOUNT_SSH_KEY, keys)
+        self.assertIn(MOUNT_GNUPG_KEY, keys)

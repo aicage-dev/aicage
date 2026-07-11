@@ -27,7 +27,6 @@ def ensure_extensions_exist(
     )
     if choice == "fresh":
         context.project_cfg.agents.pop(agent, None)
-        context.store.save_project(Path(context.project_cfg.path), context.project_cfg)
         return True
     if choice == "exit":
         raise RegistryError("Invalid extension configuration; run aborted.")

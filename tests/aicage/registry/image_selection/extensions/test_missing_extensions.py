@@ -1,6 +1,5 @@
 import tempfile
 from pathlib import Path
-from typing import cast
 from unittest import TestCase, mock
 
 from aicage.config.context import ConfigContext
@@ -56,11 +55,7 @@ class MissingExtensionsTests(TestCase):
 
             self.assertTrue(result)
             self.assertNotIn("codex", context.project_cfg.agents)
-            save_project_mock = cast(mock.Mock, context.store.save_project)
-            save_project_mock.assert_called_once_with(
-                Path(context.project_cfg.path),
-                context.project_cfg,
-            )
+            context.store.save_project.assert_not_called()
 
     def test_ensure_extensions_exist_raises_on_exit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

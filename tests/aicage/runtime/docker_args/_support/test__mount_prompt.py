@@ -3,7 +3,13 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import AgentConfig, _AgentMounts
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    AgentConfig,
+    _AgentMounts,
+)
 from aicage.runtime.docker_args._support import _mount_prompt
 
 _MODULE = "aicage.runtime.docker_args._support._mount_prompt"
@@ -14,18 +20,21 @@ class MountPromptTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts())
         project_path = Path("/repo")
         git_items = [
-            ("gitconfig", "Git config (name/email): /tmp/gitconfig"),
-            ("gitroot", "Git root (repository access): /tmp/root"),
-            ("gnupg", "GnuPG keys (for Git signing): /tmp/gnupg"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
+            (MOUNT_GITROOT_KEY, "Git root (repository access): /tmp/root"),
+            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
         ]
 
         with (
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=git_items),
-            mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=["gitconfig", "gitroot", "gnupg"]),
+            mock.patch(
+                f"{_MODULE}.prompt_mount_git_support",
+                return_value=[MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY],
+            ),
         ):
             prefs = _mount_prompt.resolve_mount_prompt_prefs(project_path, agent_cfg, {})
 
-        self.assertEqual({"gitconfig", "gitroot", "gnupg"}, prefs.git_mounts)
+        self.assertEqual({MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY}, prefs.git_mounts)
         self.assertEqual({}, prefs.extension_mounts)
 
     def test_resolve_mount_prompt_prefs_skips_when_no_items(self) -> None:
@@ -54,19 +63,22 @@ class MountPromptTests(TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            git_items = [("gitconfig", f"Git config (name/email): {Path(tmp_dir) / '.gitconfig'}")]
+            git_items = [(MOUNT_GITCONFIG_KEY, f"Git config (name/email): {Path(tmp_dir) / '.gitconfig'}")]
             with (
                 mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=git_items),
-                mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=["gitconfig", "gh"]) as prompt_mock,
+                mock.patch(
+                    f"{_MODULE}.prompt_mount_git_support",
+                    return_value=[MOUNT_GITCONFIG_KEY, "gh"],
+                ) as prompt_mock,
             ):
                 prefs = _mount_prompt.resolve_mount_prompt_prefs(project_path, agent_cfg, {"gh": extension})
 
         git_prompt_items = prompt_mock.call_args.args[0]
         extension_prompt_items = prompt_mock.call_args.args[1]
-        self.assertEqual("gitconfig", git_prompt_items[0][0])
+        self.assertEqual(MOUNT_GITCONFIG_KEY, git_prompt_items[0][0])
         self.assertEqual("gh", extension_prompt_items[0][0])
         self.assertIn("Extension gh shares:", extension_prompt_items[0][1])
-        self.assertEqual({"gitconfig"}, prefs.git_mounts)
+        self.assertEqual({MOUNT_GITCONFIG_KEY}, prefs.git_mounts)
         self.assertEqual({"gh": True}, prefs.extension_mounts)
 
     def test_resolve_mount_prompt_prefs_returns_unselected_extension_group_false(self) -> None:

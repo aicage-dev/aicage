@@ -1,5 +1,6 @@
 from unittest import TestCase, mock
 
+from aicage.config.project_config import MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY, MOUNT_SSH_KEY
 from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.prompts import confirm
 
@@ -41,33 +42,33 @@ class PromptConfirmTests(TestCase):
 
     def test_prompt_mount_git_support_defaults_to_all(self) -> None:
         git_items = [
-            ("gitconfig", "Git config (name/email): /tmp/gitconfig"),
-            ("gitroot", "Git root (repository access): /tmp/root"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
+            (MOUNT_GITROOT_KEY, "Git root (repository access): /tmp/root"),
         ]
         with (
             mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value=""),
         ):
             selected = confirm.prompt_mount_git_support(git_items, [])
-        self.assertEqual(["gitconfig", "gitroot"], selected)
+        self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY], selected)
 
     def test_prompt_mount_git_support_accepts_selection(self) -> None:
         git_items = [
-            ("gitconfig", "Git config (name/email): /tmp/gitconfig"),
-            ("gnupg", "GnuPG keys (for Git signing): /tmp/gnupg"),
-            ("ssh", "SSH keys (for Git SSH/signing): /tmp/ssh"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
+            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
+            (MOUNT_SSH_KEY, "SSH keys (for Git SSH/signing): /tmp/ssh"),
         ]
         with (
             mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="1,3"),
         ):
             selected = confirm.prompt_mount_git_support(git_items, [])
-        self.assertEqual(["gitconfig", "ssh"], selected)
+        self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_SSH_KEY], selected)
 
     def test_prompt_mount_git_support_uses_all_when_assume_yes(self) -> None:
         git_items = [
-            ("gitconfig", "Git config (name/email): /tmp/gitconfig"),
-            ("gnupg", "GnuPG keys (for Git signing): /tmp/gnupg"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
+            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
         ]
         with (
             mock.patch("aicage.runtime.prompts.confirm.assume_yes_enabled", return_value=True),
@@ -75,12 +76,12 @@ class PromptConfirmTests(TestCase):
             mock.patch("builtins.input") as input_mock,
         ):
             selected = confirm.prompt_mount_git_support(git_items, [])
-        self.assertEqual(["gitconfig", "gnupg"], selected)
+        self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_GNUPG_KEY], selected)
         tty_mock.assert_not_called()
         input_mock.assert_not_called()
 
     def test_prompt_mount_git_support_renders_extension_section(self) -> None:
-        git_items = [("gitconfig", "Git config (name/email): /tmp/gitconfig")]
+        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig")]
         extension_items = [("gh", "Extension gh shares: /tmp/gh")]
         with (
             mock.patch("aicage.runtime.prompts.confirm.ensure_tty_for_prompt"),
@@ -89,7 +90,7 @@ class PromptConfirmTests(TestCase):
         ):
             selected = confirm.prompt_mount_git_support(git_items, extension_items)
 
-        self.assertEqual(["gitconfig", "gh"], selected)
+        self.assertEqual([MOUNT_GITCONFIG_KEY, "gh"], selected)
         printed_lines = [args[0] if args else "" for args, _ in print_mock.call_args_list]
         self.assertIn("Enable Git support in the container by mounting:", printed_lines)
         self.assertIn("Mounts from extensions:", printed_lines)

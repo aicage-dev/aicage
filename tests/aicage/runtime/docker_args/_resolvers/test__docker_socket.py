@@ -11,13 +11,12 @@ _MODULE = "aicage.runtime.docker_args._resolvers._docker_socket"
 
 
 class DockerSocketMountTests(TestCase):
-    def test_resolve_docker_socket_mount_persists_socket(self) -> None:
+    def test_resolve_docker_socket_mount_uses_cli_socket_without_persisting(self) -> None:
         agent_cfg = AgentConfig()
         context = _build_context(agent_cfg)
         parsed = _build_parsed(docker_socket=True)
         with (
             mock.patch(f"{_MODULE}.os.name", "posix"),
-            mock.patch(f"{_MODULE}.prompt_persist_docker_socket", return_value=True),
             mock.patch(
                 f"{_MODULE}.get_active_docker_host",
                 return_value=mock.Mock(host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")),
@@ -25,7 +24,7 @@ class DockerSocketMountTests(TestCase):
         ):
             resolved = resolve(context, "codex", parsed)
 
-        self.assertTrue(agent_cfg.mounts.docker)
+        self.assertIsNone(agent_cfg.mounts.docker)
         self.assertEqual(1, len(resolved.mounts))
         self.assertEqual("/run/docker.sock", resolved.mounts[0].host_path.as_posix())
         self.assertEqual([], resolved.env)
@@ -35,7 +34,6 @@ class DockerSocketMountTests(TestCase):
         context = _build_context(agent_cfg)
         with (
             mock.patch(f"{_MODULE}.os.name", "posix"),
-            mock.patch(f"{_MODULE}.prompt_persist_docker_socket") as prompt_mock,
             mock.patch(
                 f"{_MODULE}.get_active_docker_host",
                 return_value=mock.Mock(host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")),
@@ -43,7 +41,6 @@ class DockerSocketMountTests(TestCase):
         ):
             resolved = resolve(context, "codex", _build_parsed())
 
-        prompt_mock.assert_not_called()
         self.assertEqual(1, len(resolved.mounts))
         self.assertEqual([], resolved.env)
 

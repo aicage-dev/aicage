@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from aicage.config.extended_images import (
     ExtendedImageConfig,
     extended_image_config_path,
@@ -49,10 +47,6 @@ def handle_extension_selection(selection: ExtensionSelectionContext) -> ImageSel
             selection.base,
             selection.context,
         )
-    selection.context.store.save_project(
-        Path(selection.context.project_cfg.path),
-        selection.context.project_cfg,
-    )
     return ImageSelection(
         image_ref=agent_cfg.image_ref or "",
         base=selection.base,

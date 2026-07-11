@@ -2,6 +2,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+)
 from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
 
 from ._exec import capture_stdout
@@ -97,11 +103,11 @@ def git_support_prompt_items(
 
     git_config = resolve_git_config_path()
     if git_config and git_config.exists() and mounts_cfg.gitconfig is None:
-        git_items.append(_GitSupportPromptItem("gitconfig", "Git config (name/email)", git_config))
+        git_items.append(_GitSupportPromptItem(MOUNT_GITCONFIG_KEY, "Git config (name/email)", git_config))
 
     git_root = resolve_git_root(project_path)
     if git_root and git_root != project_path and mounts_cfg.gitroot is None:
-        git_items.append(_GitSupportPromptItem("gitroot", "Git root (repository access)", git_root))
+        git_items.append(_GitSupportPromptItem(MOUNT_GITROOT_KEY, "Git root (repository access)", git_root))
 
     signing_enabled = is_commit_signing_enabled(project_path)
     signing_format = resolve_signing_format(project_path) if signing_enabled else None
@@ -112,7 +118,7 @@ def git_support_prompt_items(
         if ssh_dir.exists():
             git_items.append(
                 _GitSupportPromptItem(
-                    "ssh",
+                    MOUNT_SSH_KEY,
                     "SSH keys (for Git SSH/signing)",
                     ssh_dir,
                 )
@@ -124,7 +130,7 @@ def git_support_prompt_items(
         if gpg_home and gpg_home.exists():
             git_items.append(
                 _GitSupportPromptItem(
-                    "gnupg",
+                    MOUNT_GNUPG_KEY,
                     "GnuPG keys (for Git signing)",
                     gpg_home,
                 )

@@ -9,6 +9,21 @@ prompt-driven config handling to a single in-memory draft flow for one invocatio
 
 This keeps the current behavior available while creating a clean seam for a future overview/edit UI.
 
+## Confirmed decisions
+
+The following points are agreed for the current direction:
+
+- refactor first, no immediate Textual dependency
+- first editable scope covers:
+  - base
+  - extensions
+  - shares
+  - extras
+- agent selection stays fixed from CLI in the first increment
+- the overview UI should be shown on every start once introduced
+- CLI args should prefill the UI
+- `--yes` should suppress the new UI
+
 ## Current problem
 
 Current configuration handling is spread across several modules:
@@ -102,7 +117,7 @@ Expected result:
 - no intended user-visible behavior change
 - better test coverage around config assembly and persistence
 
-### Phase 2: Experimental overview UI
+### Phase 2: Overview UI
 
 Scope:
 
@@ -122,8 +137,8 @@ Scope:
 
 Expected result:
 
-- new UI available behind an explicit CLI gate
-- old prompt flow still available
+- new UI becomes the normal interactive path
+- old prompt flow can remain temporarily as fallback while stabilizing the new path
 
 ### Phase 3: Iterate and promote
 
@@ -140,26 +155,15 @@ Expected result:
 - new UI becomes the primary path
 - old prompt-only path can later be removed
 
-## UI gating recommendation
+## UI activation
 
-Do not switch the new UI on by default in the first version.
+Current agreed direction:
 
-Recommended temporary gating:
+- the overview UI should be shown on every interactive start
+- CLI args should prefill values shown in the UI
+- `--yes` should continue without showing the overview UI
 
-- add an explicit CLI option for the new UI
-
-Candidate shapes:
-
-- `--config-ui`
-- `--ui=overview`
-- `--ui=textual`
-
-Preferred direction:
-
-- start with a generic UI selector if multiple UIs are plausible
-- otherwise start with `--config-ui` and keep it simple
-
-This makes rollout safer and keeps fallback behavior obvious.
+Temporary fallback paths may still exist during implementation, but they are not the intended steady-state behavior.
 
 ## Textual recommendation
 
@@ -225,4 +229,4 @@ That keeps the first change:
 - low-risk
 - useful on its own
 
-Then add the new UI behind a flag in a second step.
+Then add the always-shown overview UI in a second step, with `--yes` continuing as the non-interactive bypass.

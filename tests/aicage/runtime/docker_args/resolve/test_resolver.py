@@ -31,10 +31,6 @@ class ResolverTests(TestCase):
 
             with (
                 mock.patch(
-                    f"{_MODULE}.resolve_mount_prompt_prefs",
-                    return_value=mock.Mock(git_mounts=set(), extension_mounts={}),
-                ) as mount_prompt_mock,
-                mock.patch(
                     f"{_MODULE}._project.resolve",
                     return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),
                 ),
@@ -82,7 +78,6 @@ class ResolverTests(TestCase):
             ],
             [(item.name, item.value) for item in env],
         )
-        mount_prompt_mock.assert_called_once_with(project_path, project_cfg.agents["codex"], context.extensions)
         git_mock.assert_called_once_with(context, "codex", parsed)
         docker_mock.assert_called_once_with(context, "codex", parsed)
 
@@ -97,7 +92,6 @@ class ResolverTests(TestCase):
         )
 
         with (
-            mock.patch(f"{_MODULE}.resolve_mount_prompt_prefs", return_value=None),
             mock.patch(f"{_MODULE}._project.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}._agent_config.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}._git_config.resolve", return_value=ResolvedArgs()),
@@ -123,7 +117,6 @@ class ResolverTests(TestCase):
             parsed = self._build_parsed()
 
             with (
-                mock.patch(f"{_MODULE}.resolve_mount_prompt_prefs", return_value=None),
                 mock.patch(
                     f"{_MODULE}._project.resolve",
                     return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),

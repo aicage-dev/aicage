@@ -29,7 +29,7 @@ class ImageSelectionTests(TestCase):
             selection = select_agent_image("codex", context)
 
             self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-debian", selection.image_ref)
-            store.save_project.assert_called_once_with(project_path, context.project_cfg)
+            store.save_project.assert_not_called()
 
     def test_select_agent_image_prompts_and_marks_dirty(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -50,7 +50,7 @@ class ImageSelectionTests(TestCase):
                 select_agent_image("codex", context)
 
             self.assertEqual("alpine", context.project_cfg.agents["codex"].base)
-            store.save_project.assert_called_once_with(project_path, context.project_cfg)
+            store.save_project.assert_not_called()
 
     def test_select_agent_image_raises_without_bases(self) -> None:
         context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=[])
@@ -88,7 +88,7 @@ class ImageSelectionTests(TestCase):
             selection = select_agent_image("claude", context)
 
             self.assertEqual("aicage:claude-ubuntu", selection.image_ref)
-            store.save_project.assert_called_once_with(project_path, context.project_cfg)
+            store.save_project.assert_not_called()
 
     @staticmethod
     def test_select_agent_image_uses_fresh_selection_when_image_ref_has_no_base() -> None:
