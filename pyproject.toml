@@ -13,7 +13,8 @@ dependencies = [
   "docker>=7.1.0,<8",
   "jsonschema>=4.25.1,<5",
   "portalocker>=3.2.0,<4",
-  "PyYAML>=6.0.3,<7"
+  "PyYAML>=6.0.3,<7",
+  "textual>=8.2.8,<9",
 ]
 dynamic = ["version"]
 
@@ -27,6 +28,7 @@ packages = ["src/aicage"]
 "config/agent-build" = "config/agent-build"
 "config/base-build" = "config/base-build"
 "config/extension-build" = "config/extension-build"
+"config/textual" = "config/textual"
 "config/validation/agent.schema.json" = "config/validation/agent.schema.json"
 "config/validation/base.schema.json" = "config/validation/base.schema.json"
 "config/validation/extension.schema.json" = "config/validation/extension.schema.json"
@@ -36,6 +38,7 @@ include = [
   "config/agent-build/**",
   "config/base-build/**",
   "config/extension-build/**",
+  "config/textual/**",
   "config/validation/agent.schema.json",
   "config/validation/base.schema.json",
   "config/validation/extension.schema.json",
@@ -47,6 +50,7 @@ include = [
   "config/agent-build/**",
   "config/base-build/**",
   "config/extension-build/**",
+  "config/textual/**",
   "config/validation/agent.schema.json",
   "config/validation/base.schema.json",
   "config/validation/extension.schema.json",
