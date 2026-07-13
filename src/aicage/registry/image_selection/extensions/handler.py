@@ -3,7 +3,7 @@ from aicage.config.extended_images import (
     extended_image_config_path,
     write_extended_image_config,
 )
-from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
+from aicage.config.image_refs import default_extended_image_ref
 from aicage.runtime.prompts.extensions import ExtensionOption, prompt_for_extensions
 from aicage.runtime.prompts.image_ref import prompt_for_image_ref
 
@@ -61,8 +61,7 @@ def handle_extension_selection(selection: ExtensionSelectionContext) -> ImageSel
 
 
 def _default_extended_image_ref(agent: str, base: str, extensions: list[str]) -> str:
-    tag = "-".join([agent, base, *extensions]).lower().replace("/", "-")
-    return f"{DEFAULT_EXTENDED_IMAGE_NAME}:{tag}"
+    return default_extended_image_ref(agent, base, extensions)
 
 
 def _extended_image_name(image_ref: str) -> str:
