@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.config.project_config import AgentConfig, _AgentMounts
-from aicage.runtime.docker_args._resolvers import _gpg
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolvers import gpg
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 from ._fixtures import build_context, build_parsed
 
@@ -14,10 +14,10 @@ class GpgHomeTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts(gnupg=True))
         context = build_context(agent_cfg)
         with mock.patch(
-            "aicage.runtime.docker_args._resolvers._gpg.is_commit_signing_enabled",
+            "aicage.runtime.docker_args.resolvers.gpg.is_commit_signing_enabled",
             return_value=False,
         ):
-            resolved = _gpg.resolve(context, "codex", build_parsed())
+            resolved = gpg.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_gpg_mount_skips_for_ssh_format(self) -> None:
@@ -25,15 +25,15 @@ class GpgHomeTests(TestCase):
         context = build_context(agent_cfg)
         with (
             mock.patch(
-                "aicage.runtime.docker_args._resolvers._gpg.is_commit_signing_enabled",
+                "aicage.runtime.docker_args.resolvers.gpg.is_commit_signing_enabled",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.runtime.docker_args._resolvers._gpg.resolve_signing_format",
+                "aicage.runtime.docker_args.resolvers.gpg.resolve_signing_format",
                 return_value="ssh",
             ),
         ):
-            resolved = _gpg.resolve(context, "codex", build_parsed())
+            resolved = gpg.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_gpg_mount_respects_pref(self) -> None:
@@ -42,19 +42,19 @@ class GpgHomeTests(TestCase):
         context = build_context(agent_cfg)
         with (
             mock.patch(
-                "aicage.runtime.docker_args._resolvers._gpg.is_commit_signing_enabled",
+                "aicage.runtime.docker_args.resolvers.gpg.is_commit_signing_enabled",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.runtime.docker_args._resolvers._gpg.resolve_signing_format",
+                "aicage.runtime.docker_args.resolvers.gpg.resolve_signing_format",
                 return_value="gpg",
             ),
             mock.patch(
-                "aicage.runtime.docker_args._resolvers._gpg.resolve_gpg_home",
+                "aicage.runtime.docker_args.resolvers.gpg.resolve_gpg_home",
                 return_value=gpg_home,
             ),
         ):
-            resolved = _gpg.resolve(context, "codex", build_parsed())
+            resolved = gpg.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_gpg_mount_uses_preference(self) -> None:
@@ -65,19 +65,19 @@ class GpgHomeTests(TestCase):
             gpg_home.mkdir()
             with (
                 mock.patch(
-                    "aicage.runtime.docker_args._resolvers._gpg.is_commit_signing_enabled",
+                    "aicage.runtime.docker_args.resolvers.gpg.is_commit_signing_enabled",
                     return_value=True,
                 ),
                 mock.patch(
-                    "aicage.runtime.docker_args._resolvers._gpg.resolve_signing_format",
+                    "aicage.runtime.docker_args.resolvers.gpg.resolve_signing_format",
                     return_value="gpg",
                 ),
                 mock.patch(
-                    "aicage.runtime.docker_args._resolvers._gpg.resolve_gpg_home",
+                    "aicage.runtime.docker_args.resolvers.gpg.resolve_gpg_home",
                     return_value=gpg_home,
                 ),
             ):
-                resolved = _gpg.resolve(context, "codex", build_parsed())
+                resolved = gpg.resolve(context, "codex", build_parsed())
         self.assertEqual(
             ResolvedArgs(mounts=[MountRequest(host_path=gpg_home)]),
             resolved,

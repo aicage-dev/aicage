@@ -6,8 +6,8 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.project_config import AgentConfig, ProjectConfig
-from aicage.runtime.docker_args._resolvers import _shares
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolvers import shares
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 
 class ShareResolverTests(TestCase):
@@ -20,7 +20,7 @@ class ShareResolverTests(TestCase):
             extensions={},
         )
 
-        self.assertEqual(ResolvedArgs(), _shares.resolve(context, "codex", None))
+        self.assertEqual(ResolvedArgs(), shares.resolve(context, "codex", None))
 
     def test_resolve_returns_share_mounts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -34,8 +34,8 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args._resolvers._shares.Path.cwd", return_value=cwd):
-                resolved = _shares.resolve(context, "codex", parsed)
+            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+                resolved = shares.resolve(context, "codex", parsed)
 
         expected_path = (cwd / "data").resolve()
         self.assertEqual(
@@ -69,8 +69,8 @@ class ShareResolverTests(TestCase):
                 },
             )
 
-            with mock.patch("aicage.runtime.docker_args._resolvers._shares.Path.cwd", return_value=cwd):
-                resolved = _shares.resolve(context, "codex", parsed)
+            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+                resolved = shares.resolve(context, "codex", parsed)
 
         expected_paths = [(cwd / "data").resolve(), Path.home().resolve() / ".config" / "gh"]
         self.assertEqual(
@@ -104,8 +104,8 @@ class ShareResolverTests(TestCase):
                 },
             )
 
-            with mock.patch("aicage.runtime.docker_args._resolvers._shares.Path.cwd", return_value=cwd):
-                resolved = _shares.resolve(context, "codex", parsed)
+            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+                resolved = shares.resolve(context, "codex", parsed)
 
         self.assertEqual(ResolvedArgs(), resolved)
 
@@ -125,7 +125,7 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args._resolvers._shares.Path.cwd", return_value=cwd):
-                resolved = _shares.resolve(context, "codex", parsed)
+            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+                resolved = shares.resolve(context, "codex", parsed)
 
         self.assertEqual(ResolvedArgs(), resolved)

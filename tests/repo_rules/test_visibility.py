@@ -26,7 +26,7 @@ class VisibilityRulesTests(TestCase):
             module_name = _module_name_from_path(path, src_dir)
             current_package = _current_package(module_name, path)
             tree = _parse_tree(path)
-            for imported in _iter_imported_modules(tree, current_package):
+            for imported in _iter_imported_modules(tree, current_package, src_dir):
                 if _is_root_version_import(module_name, imported):
                     continue
                 if _has_private_segment(imported):
@@ -55,18 +55,18 @@ class VisibilityRulesTests(TestCase):
             module_name = _module_name_from_path(path, src_dir)
             current_package = _current_package(module_name, path)
             tree = _parse_tree(path)
-            for imported in _iter_imported_modules(tree, current_package):
+            for imported in _iter_imported_modules(tree, current_package, src_dir):
                 if imported == "__future__":
                     continue
-                private_parent = _private_parent_package(imported)
-                if private_parent is None:
+                private_package = _private_module_package(imported, src_dir)
+                if private_package is None:
                     continue
-                if private_parent == [] and current_package != []:
+                if private_package == [] and current_package != []:
                     violations.append(f"{path.relative_to(repo_root)}:{imported}")
                     continue
                 if not current_package:
                     continue
-                if not _package_starts_with(current_package, private_parent):
+                if not _package_starts_with(current_package, private_package):
                     violations.append(f"{path.relative_to(repo_root)}:{imported}")
 
         self.assertEqual([], violations, f"Found private module imports across packages: {violations}")
@@ -164,25 +164,52 @@ def _iter_function_defs(tree: ast.AST) -> list[ast.FunctionDef | ast.AsyncFuncti
     ]
 
 
-def _iter_imported_modules(tree: ast.AST, current_package: list[str]) -> list[str]:
+def _iter_imported_modules(tree: ast.AST, current_package: list[str], src_dir: Path) -> list[str]:
     imported_modules: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported_modules.append(alias.name)
         elif isinstance(node, ast.ImportFrom):
-            if node.level == 0 and node.module:
-                imported_modules.append(node.module)
+            resolved_module_name = _resolve_import_from_module_name(node, current_package)
+            if resolved_module_name is None:
                 continue
-            resolved_base = _resolve_relative_module(node.module, node.level, current_package)
-            if not resolved_base:
-                continue
-            if node.module:
-                imported_modules.append(".".join(resolved_base))
-                continue
-            for alias in node.names:
-                imported_modules.append(".".join(resolved_base + alias.name.split(".")))
+            imported_modules.extend(_import_from_targets(resolved_module_name, node.names, src_dir))
     return imported_modules
+
+
+def _resolve_import_from_module_name(
+    node: ast.ImportFrom,
+    current_package: list[str],
+) -> str | None:
+    if node.level == 0 and node.module:
+        return node.module
+    resolved_base = _resolve_relative_module(node.module, node.level, current_package)
+    if not resolved_base:
+        return None
+    if node.module:
+        return ".".join(resolved_base)
+    return None
+
+
+def _import_from_targets(module_name: str, aliases: list[ast.alias], src_dir: Path) -> list[str]:
+    imported_modules = [module_name]
+    for alias in aliases:
+        if alias.name == "*":
+            continue
+        imported_name = f"{module_name}.{alias.name}"
+        if _imported_module_exists(imported_name, src_dir):
+            imported_modules.append(imported_name)
+    return imported_modules
+
+
+def _imported_module_exists(module_name: str, src_dir: Path) -> bool:
+    parts = module_name.split(".")
+    if src_dir.joinpath(*parts, "__init__.py").exists():
+        return True
+    if len(parts) == 1:
+        return src_dir.joinpath(f"{parts[0]}.py").exists()
+    return src_dir.joinpath(*parts[:-1], f"{parts[-1]}.py").exists()
 
 
 def _resolve_relative_module(
@@ -206,14 +233,17 @@ def _has_private_segment(module_name: str) -> bool:
     return any(part.startswith("_") for part in module_name.split("."))
 
 
-def _private_parent_package(module_name: str) -> list[str] | None:
+def _private_module_package(module_name: str, src_dir: Path) -> list[str] | None:
     parts = module_name.split(".")
-    for index, part in enumerate(parts):
-        if part.startswith("_"):
-            if index == 0:
-                return []
-            return parts[:index]
-    return None
+    if not any(part.startswith("_") for part in parts):
+        return None
+    package_init = src_dir.joinpath(*parts, "__init__.py")
+    if package_init.exists():
+        return parts
+    module_file = src_dir.joinpath(*parts[:-1], f"{parts[-1]}.py")
+    if module_file.exists():
+        return parts[:-1]
+    return parts
 
 
 def _package_starts_with(package: list[str], prefix: list[str]) -> bool:

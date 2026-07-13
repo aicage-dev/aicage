@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.config.project_config import AgentConfig
-from aicage.runtime.docker_args._resolvers import _git_config
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolvers import git_config
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 from ._fixtures import build_context, build_parsed
 
@@ -14,10 +14,10 @@ class GitConfigTests(TestCase):
         agent_cfg = AgentConfig()
         context = build_context(agent_cfg)
         with mock.patch(
-            "aicage.runtime.docker_args._resolvers._git_config.resolve_git_config_path",
+            "aicage.runtime.docker_args.resolvers.git_config.resolve_git_config_path",
             return_value=None,
         ):
-            resolved = _git_config.resolve(context, "codex", build_parsed())
+            resolved = git_config.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_git_config_mount_respects_pref(self) -> None:
@@ -28,10 +28,10 @@ class GitConfigTests(TestCase):
             gitconfig = Path(tmp_dir) / ".gitconfig"
             gitconfig.write_text("user.name = tester", encoding="utf-8")
             with mock.patch(
-                "aicage.runtime.docker_args._resolvers._git_config.resolve_git_config_path",
+                "aicage.runtime.docker_args.resolvers.git_config.resolve_git_config_path",
                 return_value=gitconfig,
             ):
-                resolved = _git_config.resolve(context, "codex", build_parsed())
+                resolved = git_config.resolve(context, "codex", build_parsed())
         self.assertEqual(
             ResolvedArgs(mounts=[MountRequest(host_path=gitconfig)]),
             resolved,

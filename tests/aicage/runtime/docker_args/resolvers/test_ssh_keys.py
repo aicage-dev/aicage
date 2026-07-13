@@ -3,12 +3,12 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.config.project_config import AgentConfig, _AgentMounts
-from aicage.runtime.docker_args._resolvers import _ssh_keys
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolvers import ssh_keys
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 from ._fixtures import build_context, build_parsed
 
-_MODULE = "aicage.runtime.docker_args._resolvers._ssh_keys"
+_MODULE = "aicage.runtime.docker_args.resolvers.ssh_keys"
 
 
 class SshKeyTests(TestCase):
@@ -19,7 +19,7 @@ class SshKeyTests(TestCase):
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
             mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
         ):
-            resolved = _ssh_keys.resolve(context, "codex", build_parsed())
+            resolved = ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_ssh_mount_skips_for_non_ssh_format(self) -> None:
@@ -36,7 +36,7 @@ class SshKeyTests(TestCase):
             ),
             mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
         ):
-            resolved = _ssh_keys.resolve(context, "codex", build_parsed())
+            resolved = ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_ssh_mount_respects_pref(self) -> None:
@@ -49,7 +49,7 @@ class SshKeyTests(TestCase):
             mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
             mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
         ):
-            resolved = _ssh_keys.resolve(context, "codex", build_parsed())
+            resolved = ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_ssh_mount_uses_preference(self) -> None:
@@ -64,7 +64,7 @@ class SshKeyTests(TestCase):
                 mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
                 mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
             ):
-                resolved = _ssh_keys.resolve(context, "codex", build_parsed())
+                resolved = ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(
             ResolvedArgs(mounts=[MountRequest(host_path=ssh_dir)]),
             resolved,
@@ -81,7 +81,7 @@ class SshKeyTests(TestCase):
                 mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
             ):
-                resolved = _ssh_keys.resolve(context, "codex", build_parsed())
+                resolved = ssh_keys.resolve(context, "codex", build_parsed())
         self.assertEqual(
             ResolvedArgs(mounts=[MountRequest(host_path=ssh_dir)]),
             resolved,

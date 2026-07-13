@@ -6,14 +6,14 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.runtime._agent_config import AgentConfig as RuntimeAgentConfig
-from aicage.runtime.docker_args._resolvers import _agent_config
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolvers import agent_config
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 
 class AgentConfigResolverTests(TestCase):
     def test_resolve_maps_agent_config_paths(self) -> None:
         host_paths = [Path("/tmp/agent/.codex"), Path("/tmp/agent/.config/codex")]
-        agent_config = RuntimeAgentConfig(
+        runtime_agent_config = RuntimeAgentConfig(
             agent_path_files=[],
             agent_path_directories=["~/.codex", "~/.config/codex"],
             agent_config_host=host_paths,
@@ -36,10 +36,10 @@ class AgentConfigResolverTests(TestCase):
         )
 
         with mock.patch(
-            "aicage.runtime.docker_args._resolvers._agent_config.resolve_agent_config",
-            return_value=agent_config,
+            "aicage.runtime.docker_args.resolvers.agent_config.resolve_agent_config",
+            return_value=runtime_agent_config,
         ):
-            resolved = _agent_config.resolve(context, "codex", _build_parsed())
+            resolved = agent_config.resolve(context, "codex", _build_parsed())
 
         self.assertEqual(
             ResolvedArgs(mounts=[MountRequest(host_path=path) for path in host_paths]),

@@ -1,9 +1,8 @@
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
-
-from .._support._git_support import resolve_git_config_path
+from aicage.runtime.docker_args.support.git_support import resolve_git_config_path
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 
 def resolve(

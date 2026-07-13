@@ -2,9 +2,9 @@ import subprocess
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.runtime.docker_args._support._exec import capture_stdout
+from aicage.runtime.docker_args.support._exec import capture_stdout
 
-_MODULE = "aicage.runtime.docker_args._support._exec"
+_MODULE = "aicage.runtime.docker_args.support._exec"
 
 
 class CaptureStdoutTests(TestCase):

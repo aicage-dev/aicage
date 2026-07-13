@@ -11,7 +11,7 @@ from aicage.config.project_config import (
 from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
 
 from ._exec import capture_stdout
-from ._signing import is_commit_signing_enabled, resolve_signing_format
+from .signing import is_commit_signing_enabled, resolve_signing_format
 
 _REMOTE_WITH_URL_FIELD_COUNT: int = 2
 _REMOTE_URL_INDEX: int = 1

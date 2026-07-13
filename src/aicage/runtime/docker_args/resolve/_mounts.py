@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from aicage.paths import container_project_path
-from aicage.runtime.docker_args._support._resolver_types import MountRequest
+from aicage.runtime.docker_args.support.resolver_types import MountRequest
 from aicage.runtime.run_args import MountSpec
 
 

@@ -7,7 +7,7 @@ from aicage.config.project_config import AgentConfig
 from aicage.runtime.mounts.shares import ShareSpec, resolve_share_specs
 from aicage.runtime.prompts.confirm import prompt_mount_git_support
 
-from ._git_support import git_support_prompt_items
+from .git_support import git_support_prompt_items
 
 
 @dataclass(frozen=True)

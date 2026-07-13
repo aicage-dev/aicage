@@ -6,11 +6,11 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.errors import AicageError
 from aicage.paths import container_project_path
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs, Resolver
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs, Resolver
 from aicage.runtime.env_vars import AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
 
-from .._resolvers import _agent_config, _docker_socket, _git_config, _git_root, _gpg, _project, _shares, _ssh_keys
+from ..resolvers import agent_config, docker_socket, git_config, git_root, gpg, project, shares, ssh_keys
 from ._mounts import map_mount_requests
 
 
@@ -43,14 +43,14 @@ def _resolve_provider(
 
 def _resolver_sequence() -> tuple[Resolver, ...]:
     return (
-        _project.resolve,
-        _agent_config.resolve,
-        _git_config.resolve,
-        _gpg.resolve,
-        _ssh_keys.resolve,
-        _git_root.resolve,
-        _docker_socket.resolve,
-        _shares.resolve,
+        project.resolve,
+        agent_config.resolve,
+        git_config.resolve,
+        gpg.resolve,
+        ssh_keys.resolve,
+        git_root.resolve,
+        docker_socket.resolve,
+        shares.resolve,
     )
 
 

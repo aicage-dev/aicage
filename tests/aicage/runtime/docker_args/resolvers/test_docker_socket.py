@@ -4,10 +4,10 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
-from aicage.runtime.docker_args._resolvers._docker_socket import resolve
+from aicage.runtime.docker_args.resolvers.docker_socket import resolve
 from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
 
-_MODULE = "aicage.runtime.docker_args._resolvers._docker_socket"
+_MODULE = "aicage.runtime.docker_args.resolvers.docker_socket"
 
 
 class DockerSocketMountTests(TestCase):

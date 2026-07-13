@@ -13,7 +13,7 @@ from aicage.config.project_config import (
 )
 from aicage.runtime.prompts.confirm import prompt_persist_docker_socket
 
-from ._support._mount_prompt import resolve_mount_prompt_prefs
+from .support.mount_prompt import resolve_mount_prompt_prefs
 
 
 def apply_mount_preferences(

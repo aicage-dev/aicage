@@ -4,8 +4,8 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
-from aicage.runtime.docker_args._resolvers import _project
-from aicage.runtime.docker_args._support._resolver_types import MountRequest, ResolvedArgs
+from aicage.runtime.docker_args.resolvers import project
+from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
 
 class ProjectResolverTests(TestCase):
@@ -19,7 +19,7 @@ class ProjectResolverTests(TestCase):
             extensions={},
         )
 
-        resolved = _project.resolve(context, "codex", _build_parsed())
+        resolved = project.resolve(context, "codex", _build_parsed())
 
         self.assertEqual(
             ResolvedArgs(mounts=[MountRequest(host_path=project_path.resolve())]),
