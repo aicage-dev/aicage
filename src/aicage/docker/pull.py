@@ -28,10 +28,10 @@ def run_pull(
             line = _format_pull_event(event)
             log_handle.write(f"{line}\n")
             log_handle.flush()
+            progress.consume_event(event, time.monotonic())
             if reporter is not None:
                 reporter.on_phase_log("pull", line)
-                _report_progress(reporter, event)
-            progress.consume_event(event, time.monotonic())
+                _report_progress(reporter, progress, event)
 
     progress.finish()
     if reporter is not None:
@@ -50,23 +50,15 @@ def _format_pull_event(event: object) -> str:
     return str(event).rstrip("\n")
 
 
-def _report_progress(reporter: OperationReporter, event: object) -> None:
+def _report_progress(reporter: OperationReporter, progress: PullProgress, event: object) -> None:
     if not isinstance(event, dict):
         return
     status = event.get("status")
     if not isinstance(status, str):
         return
-    progress_detail = event.get("progressDetail")
-    if not isinstance(progress_detail, dict):
-        reporter.on_phase_progress("pull", status, None, None)
-        return
     reporter.on_phase_progress(
         "pull",
-        status,
-        _progress_value(progress_detail.get("current")),
-        _progress_value(progress_detail.get("total")),
+        progress.progress_details() or progress.progress_status(),
+        progress.progress_current(),
+        progress.progress_total(),
     )
-
-
-def _progress_value(value: object) -> int | None:
-    return value if isinstance(value, int) else None

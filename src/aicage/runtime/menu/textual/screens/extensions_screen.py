@@ -1,6 +1,3 @@
-import platform
-import shutil
-import subprocess
 from collections.abc import Sequence
 
 from textual.app import ComposeResult
@@ -10,11 +7,11 @@ from textual.widgets import Button, Checkbox, Header, Static, TextArea
 
 from aicage.config.extensions.loader import ExtensionMetadata
 
+from .. import _clipboard
 from ._screen_support import CancelableScreen
 
 
 class ExtensionsScreen(CancelableScreen[list[str] | None]):
-    _CLIPBOARD_SETTLE_TIMEOUT_SECONDS = 0.2
     _SAMPLES_CLONE_COMMAND = "git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom"
 
     BINDINGS = [
@@ -121,44 +118,15 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
         return "Toggle the optional extensions to include."
 
     def _copy_samples_command(self) -> None:
-        if self._copy_to_system_clipboard(self._SAMPLES_CLONE_COMMAND):
-            return
-        self.app.copy_to_clipboard(self._SAMPLES_CLONE_COMMAND)
+        _clipboard.copy_to_clipboard(self._SAMPLES_CLONE_COMMAND, self.app.copy_to_clipboard)
 
     @classmethod
     def _copy_to_system_clipboard(cls, text: str) -> bool:
-        command = cls._clipboard_command()
-        if command is None:
-            return False
-        process = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            start_new_session=True,
-        )
-        if process.stdin is None:
-            return False
-        process.stdin.write(text)
-        process.stdin.close()
-        try:
-            process.wait(timeout=cls._CLIPBOARD_SETTLE_TIMEOUT_SECONDS)
-        except subprocess.TimeoutExpired:
-            return True
-        return process.returncode == 0
+        return _clipboard.copy_to_system_clipboard(text)
 
     @staticmethod
     def _clipboard_command() -> list[str] | None:
-        system = platform.system()
-        if system == "Darwin":
-            return ["pbcopy"] if shutil.which("pbcopy") else None
-        if system == "Windows":
-            return ["clip"] if shutil.which("clip") else None
-        for command in (["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]):
-            if shutil.which(command[0]):
-                return command
-        return None
+        return _clipboard.clipboard_command()
 
     def _move_checkbox_focus(self, delta: int) -> None:
         if not self._options:

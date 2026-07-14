@@ -10,7 +10,7 @@ from aicage.config.runtime_config import RunConfig
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry._errors import RegistryError
 from aicage.registry.extension_build._store import BuildRecord
-from aicage.registry.extension_build.ensure import ensure
+from aicage.registry.extension_build.ensure import build_needed, ensure
 from aicage.registry.image_selection.models import ImageSelection
 
 
@@ -107,6 +107,34 @@ class EnsureExtendedImageTests(TestCase):
         store.save.assert_called_once()
         record = store.save.call_args.args[0]
         self.assertIsInstance(record, BuildRecord)
+
+    def test_build_needed_uses_should_rebuild_result(self) -> None:
+        extension = self._extension("ext")
+        run_config = self._run_config(
+            extensions=["ext"],
+            local_definition_dir=Path("/tmp/def"),
+            available_extensions={"ext": extension},
+        )
+        store = mock.Mock()
+        store.load.return_value = None
+
+        with (
+            mock.patch(
+                "aicage.registry.extension_build.ensure.BuildStore",
+                return_value=store,
+            ),
+            mock.patch(
+                "aicage.registry.extension_build.ensure.extension_hash",
+                return_value="hash",
+            ),
+            mock.patch(
+                "aicage.registry.extension_build.ensure.should_rebuild",
+                return_value=True,
+            ) as should_rebuild_mock,
+        ):
+            assert build_needed(run_config) is True
+
+        should_rebuild_mock.assert_called_once()
 
     @staticmethod
     def _extension(extension_id: str) -> ExtensionMetadata:

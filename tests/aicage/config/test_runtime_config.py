@@ -318,7 +318,11 @@ class RuntimeConfigTests(TestCase):
                 config_action=None,
             )
 
-            def overview_side_effect(draft: object, _context: object) -> tuple[ImageSelection, str]:
+            def overview_side_effect(
+                draft: object,
+                _context: object,
+                **_kwargs: object,
+            ) -> tuple[ImageSelection, str]:
                 typed_draft = draft
                 typed_draft.prefill_for_overview()
                 typed_draft.consume_overview_prefill()

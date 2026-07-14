@@ -2,7 +2,7 @@ from pathlib import Path
 
 from aicage._logging import get_logger
 from aicage.config.agent.models import AgentMetadata
-from aicage.config.runtime_config import RunConfig
+from aicage.config.run_config import RunConfig
 from aicage.docker.build import run_build
 from aicage.docker.query import (
     cleanup_old_digest,
@@ -16,6 +16,7 @@ from aicage.registry._build_flow import maybe_build
 from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
 
+from ..base_build.ensure import build_needed as base_build_needed
 from ..base_build.ensure import ensure as ensure_base_build
 from ._logs import build_log_path
 from ._plan import should_rebuild
@@ -78,6 +79,40 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
                 built_at=now_iso(),
             )
         ),
+    )
+
+
+def build_needed(run_config: RunConfig) -> bool:
+    agent_metadata = run_config.context.agents[run_config.agent]
+    definition_dir = agent_metadata.local_definition_dir
+    base_metadata = run_config.context.bases[run_config.selection.base]
+    custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
+    base_image = get_base_image_ref(run_config)
+    image_ref = run_config.selection.base_image_ref
+    if custom_base:
+        if base_build_needed(
+            run_config.selection.base,
+            base_metadata,
+            base_image,
+        ):
+            return True
+    base_repo = base_repository(run_config)
+    if not custom_base:
+        try:
+            base_image = refresh_base_image(
+                base_image_ref=base_image,
+                base_repository=base_repo,
+            )
+        except RegistryError:
+            return not local_image_exists(image_ref)
+
+    store = BuildStore()
+    agent_version = _get_agent_version(run_config, agent_metadata, definition_dir)
+    return should_rebuild(
+        run_config=run_config,
+        record=store.load(run_config.agent, run_config.selection.base),
+        agent_version=agent_version,
+        base_image_ref=base_image,
     )
 
 
