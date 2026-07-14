@@ -1,6 +1,6 @@
 from aicage._proxy import proxy_env_vars_from_host
 from aicage.cli_types import ParsedArgs
-from aicage.config.runtime_config import RunConfig
+from aicage.config.run_config import RunConfig
 from aicage.runtime._host_timezone import resolve_host_timezone
 from aicage.runtime.run_args import DockerRunArgs, EnvVar, merge_docker_args
 

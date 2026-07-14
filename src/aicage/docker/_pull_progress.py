@@ -26,8 +26,6 @@ class PullProgress:
         self._stream: TextIO | None = _progress_stream()
 
     def consume_event(self, event: object, now: float) -> None:
-        if not self._should_render():
-            return
         layer_id = _layer_id(event)
         if layer_id is None:
             return
@@ -54,6 +52,8 @@ class PullProgress:
 
         if not _is_progress_status(status):
             return
+        if not self._should_render():
+            return
         if now - self._last_render_at < _MIN_RENDER_INTERVAL_SECONDS and status != "Pull complete":
             return
 
@@ -73,31 +73,60 @@ class PullProgress:
     def _should_render(self) -> bool:
         return self._stream is not None
 
-    def _render_line(self) -> str:
+    def progress_current(self) -> int | None:
+        downloaded_bytes = sum(layer.current for layer in self._layers.values())
+        return downloaded_bytes if downloaded_bytes > 0 else None
+
+    def progress_total(self) -> int | None:
+        total_bytes = sum(layer.total for layer in self._layers.values())
+        return total_bytes if total_bytes > 0 else None
+
+    def progress_status(self) -> str:
+        summary = self._render_summary()
+        if summary is None:
+            return "Preparing pull"
+        return summary
+
+    def progress_details(self) -> str | None:
+        if any(layer.status == "Pulling fs layer" for layer in self._layers.values()):
+            return "[waiting for layer sizes...]"
+        if not self._layers:
+            return None
+
         downloaded_bytes = sum(layer.current for layer in self._layers.values())
         total_bytes = sum(layer.total for layer in self._layers.values())
-        percent = 0
-        if total_bytes > 0:
-            percent = min(100, int(downloaded_bytes * 100 / total_bytes))
-        elif any(layer.status == "Pulling fs layer" for layer in self._layers.values()):
-            return "[aicage] Pulling [waiting for layer sizes...]"
-
         completed_layers = sum(1 for layer in self._layers.values() if _is_complete(layer))
         downloading_layers = sum(1 for layer in self._layers.values() if layer.status == "Downloading")
         extracting_layers = sum(1 for layer in self._layers.values() if layer.status == "Extracting")
         known_layers = len(self._layers)
 
-        bar = _render_bar(percent)
-        summary = (
-            f"[aicage] Pulling {bar} {percent:>3}% "
+        details = (
             f"{_format_size(downloaded_bytes)}/{_format_size(total_bytes)} "
             f"layers {completed_layers}/{known_layers}"
         )
         if downloading_layers > 0:
-            summary += f" downloading {downloading_layers}"
+            details += f" downloading {downloading_layers}"
         if extracting_layers > 0:
-            summary += f" extracting {extracting_layers}"
-        return _truncate_to_terminal(summary)
+            details += f" extracting {extracting_layers}"
+        return details
+
+    def _render_line(self) -> str:
+        summary = self._render_summary()
+        if summary is None:
+            return "[aicage] Pulling"
+        return _truncate_to_terminal(f"[aicage] Pulling {summary}")
+
+    def _render_summary(self) -> str | None:
+        downloaded_bytes = sum(layer.current for layer in self._layers.values())
+        total_bytes = sum(layer.total for layer in self._layers.values())
+        percent = 0
+        if total_bytes > 0:
+            percent = min(100, int(downloaded_bytes * 100 / total_bytes))
+        details = self.progress_details()
+        if details is None:
+            return None
+        bar = _render_bar(percent)
+        return f"{bar} {percent:>3}% {details}"
 
 
 def _is_progress_status(status: str) -> bool:

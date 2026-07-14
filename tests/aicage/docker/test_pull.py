@@ -79,8 +79,12 @@ class DockerPullTests(TestCase):
             "pull",
             '{"status": "Downloading", "id": "layer-a", "progressDetail": {"current": 50, "total": 100}}',
         )
-        reporter.on_phase_progress.assert_any_call("pull", "Downloading", 50, 100)
-        reporter.on_phase_progress.assert_any_call("pull", "Pull complete", None, None)
+        reporter.on_phase_progress.assert_any_call(
+            "pull",
+            "100 B/100 B layers 1/1",
+            100,
+            100,
+        )
         reporter.on_phase_finished.assert_called_once_with(
             "pull",
             "Pull finished for ghcr.io/aicage/aicage:latest",

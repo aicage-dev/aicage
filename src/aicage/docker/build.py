@@ -1,11 +1,12 @@
 import subprocess
 from pathlib import Path
+from typing import TextIO
 
 from aicage._logging import get_logger
 from aicage._proxy import proxy_build_args_from_host
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.resources import find_packaged_path
-from aicage.config.runtime_config import RunConfig
+from aicage.config.run_config import RunConfig
 from aicage.docker.cli import run_docker_command
 from aicage.docker.errors import DockerError
 from aicage.docker.reporting import OperationReporter, default_operation_reporter
@@ -44,13 +45,12 @@ def run_build(
     ]
     command.extend(proxy_build_args_from_host())
     with log_path.open("w", encoding="utf-8") as log_handle:
-        result = run_docker_command(
+        returncode = _run_build_command(
             command,
-            check=False,
-            stdout=log_handle,
-            stderr=subprocess.STDOUT,
+            log_handle,
+            operation_reporter,
         )
-    if result.returncode != 0:
+    if returncode != 0:
         logger.error("Local image build failed for %s (logs: %s)", image_ref, log_path)
         operation_reporter.on_phase_failed("build", f"Local image build failed for {image_ref}", log_path)
         raise DockerError(
@@ -109,13 +109,12 @@ def run_extended_build(
                 str(extension.directory),
             ]
             command.extend(proxy_build_args)
-            result = run_docker_command(
+            returncode = _run_build_command(
                 command,
-                check=False,
-                stdout=log_handle,
-                stderr=subprocess.STDOUT,
+                log_handle,
+                operation_reporter,
             )
-            if result.returncode != 0:
+            if returncode != 0:
                 logger.error(
                     "Extended image build failed for %s (logs: %s)",
                     run_config.selection.image_ref,
@@ -166,13 +165,12 @@ def run_custom_base_build(
     ]
     command.extend(proxy_build_args_from_host())
     with log_path.open("w", encoding="utf-8") as log_handle:
-        result = run_docker_command(
+        returncode = _run_build_command(
             command,
-            check=False,
-            stdout=log_handle,
-            stderr=subprocess.STDOUT,
+            log_handle,
+            operation_reporter,
         )
-    if result.returncode != 0:
+    if returncode != 0:
         logger.error("Custom base image build failed for %s (logs: %s)", image_ref, log_path)
         operation_reporter.on_phase_failed(
             "build",
@@ -220,3 +218,27 @@ def _cleanup_intermediate_images(intermediate_refs: list[str]) -> None:
         )
         if result.returncode != 0:
             logger.warning("Failed to remove intermediate image %s", image_ref)
+
+
+def _run_build_command(
+    command: list[str],
+    log_handle: TextIO,
+    reporter: OperationReporter,
+) -> int:
+    try:
+        with subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+        ) as process:
+            assert process.stdout is not None
+            for line in process.stdout:
+                stripped = line.rstrip("\n")
+                log_handle.write(line)
+                log_handle.flush()
+                reporter.on_phase_log("build", stripped)
+            return process.wait()
+    except FileNotFoundError as exc:
+        raise DockerError("Docker CLI not found. Install Docker and ensure it is on PATH.") from exc
