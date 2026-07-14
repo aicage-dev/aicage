@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TypeVar
 
@@ -12,6 +13,7 @@ from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.resources import find_packaged_path
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.docker.reporting import OperationReporter
 from aicage.registry.image_selection.models import ImageSelection
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
@@ -20,11 +22,13 @@ from ._state import OverviewState
 from .overview.view import Overview
 from .screens.base_screen import BaseScreen
 from .screens.docker_args_screen import DockerArgsScreen
+from .screens.execution_screen import ExecutionScreen
 from .screens.extensions_screen import ExtensionsScreen
 from .screens.host_access_confirm_screen import HostAccessConfirmScreen
 from .screens.share_editor_screen import ShareEditorScreen
 from .services.base_support import base_metadata_for_draft, ensure_base_default
 from .services.custom_share_flow import add_custom_share, update_custom_share
+from .services.execution_reporting import ExecutionReporter
 from .services.host_access_flow import confirm_and_apply_host_access
 from .services.summary import extras_values, shares_values
 
@@ -37,7 +41,7 @@ class _OverviewResult:
     project_docker_args: str
 
 
-class OverviewApp(App[_OverviewResult | None]):
+class OverviewApp(App[_OverviewResult | BaseException | None]):
     CSS_PATH = find_packaged_path("textual/overview/app.tcss")
     ENABLE_COMMAND_PALETTE = False
     INLINE_PADDING = 0
@@ -48,10 +52,19 @@ class OverviewApp(App[_OverviewResult | None]):
         Binding("ctrl+c", "cancel", "Cancel"),
     ]
 
-    def __init__(self, draft: RunConfigDraft, context: ConfigContext) -> None:
+    def __init__(
+        self,
+        draft: RunConfigDraft,
+        context: ConfigContext,
+        setup_needed: Callable[[ImageSelection], bool] | None = None,
+        execute_setup: Callable[[ImageSelection, OperationReporter], None] | None = None,
+    ) -> None:
         super().__init__()
         self._draft = draft
         self._config_context = context
+        self._setup_needed = setup_needed
+        self._execute_setup = execute_setup
+        self._running_execution = False
         self._state = OverviewState(
             last_section_id=None,
             built_in_shares=shares_values(self._draft, self._config_context).built_in_shares,
@@ -63,6 +76,9 @@ class OverviewApp(App[_OverviewResult | None]):
 
     def compose(self) -> ComposeResult:
         yield Overview(self._draft.agent, self._draft.project_cfg.path, self._state)
+        execution_screen = ExecutionScreen()
+        execution_screen.display = False
+        yield execution_screen
 
     def format_title(self, title: str, sub_title: str) -> Content:
         if not sub_title:
@@ -76,6 +92,8 @@ class OverviewApp(App[_OverviewResult | None]):
         self._overview().focus_default()
 
     def action_accept(self) -> None:
+        if self._running_execution:
+            return
         self._accept()
 
     def action_cancel(self) -> None:
@@ -84,13 +102,21 @@ class OverviewApp(App[_OverviewResult | None]):
     @work(exclusive=True)
     async def _accept(self) -> None:
         accepted = await self._confirm_undecided_built_in_shares()
-        if accepted:
-            self._finish(
-                _OverviewResult(
-                    selection=resolve_overview_selection(self._draft, self._config_context),
-                    project_docker_args=self._draft.agent_cfg.docker_args,
-                )
-            )
+        if not accepted:
+            return
+        result = _OverviewResult(
+            selection=resolve_overview_selection(self._draft, self._config_context),
+            project_docker_args=self._draft.agent_cfg.docker_args,
+        )
+        if (
+            self._setup_needed is None
+            or self._execute_setup is None
+            or not self._setup_needed(result.selection)
+        ):
+            self._finish(result)
+            return
+        self._show_execution_screen()
+        self._run_execution(result)
 
     @work(exclusive=True)
     async def _edit_section(self, section_id: str) -> None:
@@ -186,6 +212,44 @@ class OverviewApp(App[_OverviewResult | None]):
 
     def _refresh_sections(self) -> None:
         self._overview().refresh_from(self._draft, self._config_context)
+
+    def _build_execution_reporting(self) -> tuple[ExecutionScreen, ExecutionReporter]:
+        screen = self._execution_screen()
+        return screen, ExecutionReporter(screen)
+
+    def _execution_screen(self) -> ExecutionScreen:
+        return self.query_one(ExecutionScreen)
+
+    def _show_execution_screen(self) -> None:
+        self._running_execution = True
+        self.sub_title = "container setup"
+        overview = self._overview()
+        execution_screen = self._execution_screen()
+        overview.display = False
+        execution_screen.display = True
+        execution_screen.focus()
+
+    @work(thread=True, exclusive=True)
+    def _run_execution(self, result: _OverviewResult) -> None:
+        _, reporter = self._build_execution_reporting()
+        error: BaseException | None = None
+        try:
+            assert self._execute_setup is not None
+            self._execute_setup(result.selection, reporter)
+        except BaseException as exc:
+            error = exc
+        self.call_from_thread(self._finish_execution, result, error)
+
+    def _finish_execution(
+        self,
+        result: _OverviewResult,
+        error: BaseException | None,
+    ) -> None:
+        self._running_execution = False
+        if error is not None:
+            self.exit(error)
+            return
+        self._finish(result)
 
     async def _confirm_undecided_built_in_shares(self) -> bool:
         overview = self._overview()

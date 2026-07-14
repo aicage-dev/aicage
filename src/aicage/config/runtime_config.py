@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 from aicage.cli_types import ParsedArgs
@@ -8,7 +7,10 @@ from aicage.config.base.loader import load_bases
 from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import load_extensions
+from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft, create_run_config_draft
+from aicage.docker.reporting import OperationReporter
+from aicage.registry.ensure_image import ensure_image, image_setup_needed
 from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
@@ -16,18 +18,6 @@ from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
 from aicage.runtime.menu.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
 from aicage.runtime.menu.textual.entry import edit_draft_with_textual_app
-from aicage.runtime.run_args import EnvVar, MountSpec
-
-
-@dataclass(frozen=True)
-class RunConfig:
-    project_path: Path
-    agent: str
-    context: ConfigContext
-    selection: ImageSelection
-    project_docker_args: str
-    mounts: list[MountSpec]
-    env: list[EnvVar]
 
 
 def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
@@ -45,7 +35,20 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
         extensions=load_extensions(),
     )
     if parsed is not None and parsed.menu == "textual":
-        selection, project_docker_args = edit_draft_with_textual_app(draft, context)
+        selection, project_docker_args = edit_draft_with_textual_app(
+            draft,
+            context,
+            setup_needed=lambda selection: _image_setup_needed(
+                _setup_run_config(project_path, agent, context, selection)
+            ),
+            execute_setup=lambda selection, reporter: _execute_image_setup(
+                project_path,
+                agent,
+                context,
+                selection,
+                reporter,
+            ),
+        )
     else:
         selection = select_agent_image(agent, context)
         draft.apply_selection(selection)
@@ -94,3 +97,34 @@ def _persist_shares(draft: RunConfigDraft) -> None:
     if not new_shares:
         return
     draft.persist_shares(prompt_persist_shares(new_shares, existing_shares))
+
+
+def _execute_image_setup(
+    project_path: Path,
+    agent: str,
+    context: ConfigContext,
+    selection: ImageSelection,
+    reporter: OperationReporter,
+) -> None:
+    ensure_image(_setup_run_config(project_path, agent, context, selection), reporter=reporter)
+
+
+def _image_setup_needed(run_config: RunConfig) -> bool:
+    return image_setup_needed(run_config)
+
+
+def _setup_run_config(
+    project_path: Path,
+    agent: str,
+    context: ConfigContext,
+    selection: ImageSelection,
+) -> RunConfig:
+    return RunConfig(
+        project_path=project_path,
+        agent=agent,
+        context=context,
+        selection=selection,
+        project_docker_args="",
+        mounts=[],
+        env=[],
+    )

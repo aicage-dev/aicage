@@ -41,8 +41,9 @@ class OverviewAppTests(TestCase):
 
         widgets = list(app.compose())
 
-        self.assertEqual(1, len(widgets))
+        self.assertEqual(2, len(widgets))
         self.assertIsInstance(widgets[0], Overview)
+        self.assertIsInstance(widgets[1], _app.ExecutionScreen)
 
     def test_on_mount_populates_table(self) -> None:
         app = _build_app()
@@ -83,6 +84,15 @@ class OverviewAppTests(TestCase):
 
         accept_mock.assert_called_once_with()
 
+    def test_action_accept_ignores_request_during_execution(self) -> None:
+        app = _build_app()
+        app._running_execution = True
+
+        with mock.patch.object(app, "_accept") as accept_mock:
+            app.action_accept()
+
+        accept_mock.assert_not_called()
+
     def test_action_cancel_exits_none(self) -> None:
         app = _build_app()
 
@@ -90,6 +100,72 @@ class OverviewAppTests(TestCase):
             app.action_cancel()
 
         finish_mock.assert_called_once_with(None)
+
+    def test_action_cancel_exits_none_during_execution(self) -> None:
+        app = _build_app()
+        app._running_execution = True
+
+        with mock.patch.object(app, "_finish") as finish_mock:
+            app.action_cancel()
+
+        finish_mock.assert_called_once_with(None)
+
+    def test_accept_finishes_directly_when_setup_not_needed(self) -> None:
+        app = _build_app(setup_needed=lambda _selection: False)
+
+        with (
+            mock.patch.object(app, "_confirm_undecided_built_in_shares", new=mock.AsyncMock(return_value=True)),
+            mock.patch.object(app, "_finish") as finish_mock,
+            mock.patch.object(app, "_run_execution") as run_execution_mock,
+        ):
+            asyncio.run(_app.OverviewApp._accept.__wrapped__(app))
+
+        finish_mock.assert_called_once()
+        run_execution_mock.assert_not_called()
+
+    def test_accept_shows_execution_screen_when_setup_needed(self) -> None:
+        app = _build_app(
+            setup_needed=lambda _selection: True,
+            execute_setup=lambda _selection, _reporter: None,
+        )
+
+        with (
+            mock.patch.object(app, "_confirm_undecided_built_in_shares", new=mock.AsyncMock(return_value=True)),
+            mock.patch.object(app, "_show_execution_screen") as show_execution_screen_mock,
+            mock.patch.object(app, "_run_execution") as run_execution_mock,
+        ):
+            asyncio.run(_app.OverviewApp._accept.__wrapped__(app))
+
+        show_execution_screen_mock.assert_called_once_with()
+        run_execution_mock.assert_called_once()
+
+    def test_show_execution_screen_marks_execution_running_and_updates_subtitle(self) -> None:
+        app = _build_app()
+        overview = mock.Mock()
+        execution_screen = mock.Mock()
+
+        with (
+            mock.patch.object(app, "_overview", return_value=overview),
+            mock.patch.object(app, "_execution_screen", return_value=execution_screen),
+        ):
+            app._show_execution_screen()
+
+        self.assertTrue(app._running_execution)
+        self.assertEqual("container setup", app.sub_title)
+        self.assertFalse(overview.display)
+        self.assertTrue(execution_screen.display)
+        execution_screen.focus.assert_called_once_with()
+
+    def test_finish_execution_clears_execution_flag(self) -> None:
+        app = _build_app()
+        app._running_execution = True
+        result = mock.Mock()
+
+        with mock.patch.object(app, "_finish") as finish_mock:
+            app._finish_execution(result, None)
+
+        self.assertFalse(app._running_execution)
+        finish_mock.assert_called_once_with(result)
 
     def test_on_overview_accept_requested_dispatches_ok(self) -> None:
         app = _build_app()
@@ -346,6 +422,8 @@ class OverviewAppTests(TestCase):
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
+    setup_needed=None,
+    execute_setup=None,
 ) -> _app.OverviewApp:
     with mock.patch(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
@@ -357,4 +435,6 @@ def _build_app(
                 ParsedArgs(False, "", "codex", [], False, [], None),
             ),
             _build_context(),
+            setup_needed,
+            execute_setup,
         )

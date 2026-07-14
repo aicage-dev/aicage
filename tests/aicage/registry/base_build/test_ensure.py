@@ -208,6 +208,31 @@ class EnsureCustomBaseImageTests(TestCase):
             )
         digest_mock.assert_called_once_with("ubuntu:latest")
 
+    def test_build_needed_uses_should_rebuild_result(self) -> None:
+        base_metadata = self._base_metadata()
+
+        with (
+            mock.patch(
+                "aicage.registry.base_build.ensure.local_image_exists",
+                return_value=True,
+            ),
+            mock.patch(
+                "aicage.registry.base_build.ensure.BuildStore"
+            ) as store_cls,
+            mock.patch(
+                "aicage.registry.base_build.ensure.get_remote_digest",
+                return_value="sha256:remote",
+            ),
+            mock.patch(
+                "aicage.registry.base_build.ensure._should_rebuild",
+                return_value=True,
+            ) as should_rebuild_mock,
+        ):
+            store_cls.return_value.load.return_value = None
+            assert _ensure.build_needed("custom", base_metadata, _ensure.image_ref("custom")) is True
+
+        should_rebuild_mock.assert_called_once()
+
     @staticmethod
     def _base_metadata() -> BaseMetadata:
         return BaseMetadata(

@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tempfile
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -24,8 +25,8 @@ class LocalBuildRunnerTests(TestCase):
                     return_value=Path("/tmp/build/Dockerfile"),
                 ),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=mock.Mock(returncode=0),
+                    "aicage.docker.build._run_build_command",
+                    return_value=0,
                 ) as run_mock,
             ):
                 build.run_build(
@@ -66,8 +67,8 @@ class LocalBuildRunnerTests(TestCase):
                     return_value=Path("/tmp/build/Dockerfile"),
                 ),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=mock.Mock(returncode=1),
+                    "aicage.docker.build._run_build_command",
+                    return_value=1,
                 ),
                 self.assertRaises(DockerError),
             ):
@@ -92,8 +93,8 @@ class LocalBuildRunnerTests(TestCase):
             with (
                 mock.patch.dict(os.environ, {}, clear=True),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=CompletedProcess([], 0),
+                    "aicage.docker.build._run_build_command",
+                    return_value=0,
                 ) as run_mock,
             ):
                 build.run_custom_base_build(
@@ -135,8 +136,8 @@ class LocalBuildRunnerTests(TestCase):
                     return_value=Path("/tmp/build/Dockerfile"),
                 ),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=mock.Mock(returncode=0),
+                    "aicage.docker.build._run_build_command",
+                    return_value=0,
                 ) as run_mock,
             ):
                 build.run_build(
@@ -157,8 +158,8 @@ class LocalBuildRunnerTests(TestCase):
             dockerfile_path.write_text("FROM ubuntu:latest\n", encoding="utf-8")
             with (
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=CompletedProcess([], 1),
+                    "aicage.docker.build._run_build_command",
+                    return_value=1,
                 ),
                 self.assertRaises(DockerError),
             ):
@@ -178,8 +179,8 @@ class LocalBuildRunnerTests(TestCase):
             with (
                 mock.patch.dict(os.environ, {}, clear=True),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=CompletedProcess([], 0),
+                    "aicage.docker.build._run_build_command",
+                    return_value=0,
                 ),
             ):
                 build.run_custom_base_build(
@@ -211,8 +212,8 @@ class LocalBuildRunnerTests(TestCase):
                     return_value=Path("/tmp/Dockerfile"),
                 ),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=CompletedProcess([], 0),
+                    "aicage.docker.build._run_build_command",
+                    return_value=0,
                 ) as run_mock,
                 mock.patch("aicage.docker.build._cleanup_intermediate_images") as cleanup_mock,
             ):
@@ -237,8 +238,8 @@ class LocalBuildRunnerTests(TestCase):
                     return_value=Path("/tmp/Dockerfile"),
                 ),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=CompletedProcess([], 1),
+                    "aicage.docker.build._run_build_command",
+                    return_value=1,
                 ),
             ):
                 with self.assertRaises(DockerError):
@@ -267,8 +268,8 @@ class LocalBuildRunnerTests(TestCase):
                     return_value=Path("/tmp/build/Dockerfile"),
                 ),
                 mock.patch(
-                    "aicage.docker.build.subprocess.run",
-                    return_value=mock.Mock(returncode=0),
+                    "aicage.docker.build._run_build_command",
+                    return_value=0,
                 ),
             ):
                 build.run_build(
@@ -287,6 +288,41 @@ class LocalBuildRunnerTests(TestCase):
         reporter.on_phase_finished.assert_called_once_with(
             "build",
             "Local image build finished for aicage:claude-ubuntu",
+        )
+
+    @staticmethod
+    def test_run_build_command_streams_output_to_log_and_reporter() -> None:
+        reporter = mock.Mock()
+        process = mock.Mock()
+        process.stdout = iter(["step 1\n", "step 2\n"])
+        process.wait.return_value = 0
+        popen_context = mock.Mock()
+        popen_context.__enter__ = mock.Mock(return_value=process)
+        popen_context.__exit__ = mock.Mock(return_value=None)
+        log_handle = mock.Mock()
+
+        with mock.patch("aicage.docker.build.subprocess.Popen", return_value=popen_context) as popen_mock:
+            returncode = build._run_build_command(["docker", "build"], log_handle, reporter)
+
+        assert returncode == 0
+        popen_mock.assert_called_once_with(
+            ["docker", "build"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+        )
+        assert log_handle.mock_calls == [
+            mock.call.write("step 1\n"),
+            mock.call.flush(),
+            mock.call.write("step 2\n"),
+            mock.call.flush(),
+        ]
+        reporter.on_phase_log.assert_has_calls(
+            [
+                mock.call("build", "step 1"),
+                mock.call("build", "step 2"),
+            ]
         )
 
     @staticmethod

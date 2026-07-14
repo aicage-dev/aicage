@@ -54,6 +54,84 @@ class PullProgressTests(TestCase):
         self.assertIn("extracting 1", rendered)
         self.assertTrue(rendered.endswith("\n"))
 
+    def test_progress_details_reports_aggregate_summary_without_tty(self) -> None:
+        with (
+            mock.patch("sys.stdout", io.StringIO()),
+            mock.patch("sys.stderr", io.StringIO()),
+            mock.patch("sys.stdout.isatty", return_value=False),
+            mock.patch("sys.stderr.isatty", return_value=False),
+        ):
+            progress = PullProgress()
+            progress.consume_event({"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0)
+            self.assertEqual("[waiting for layer sizes...]", progress.progress_details())
+            self.assertIsNone(progress.progress_current())
+            self.assertIsNone(progress.progress_total())
+
+            progress.consume_event(
+                {
+                    "status": "Downloading",
+                    "id": "layer-a",
+                    "progressDetail": {"current": 25, "total": 100},
+                },
+                2.0,
+            )
+
+        self.assertEqual(
+            "25 B/100 B layers 0/1 downloading 1",
+            progress.progress_details(),
+        )
+
+    def test_progress_current_returns_aggregate_downloaded_bytes(self) -> None:
+        progress = PullProgress()
+
+        progress.consume_event({"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0)
+        self.assertIsNone(progress.progress_current())
+
+        progress.consume_event(
+            {
+                "status": "Downloading",
+                "id": "layer-a",
+                "progressDetail": {"current": 25, "total": 100},
+            },
+            2.0,
+        )
+
+        self.assertEqual(25, progress.progress_current())
+
+    def test_progress_status_returns_console_summary(self) -> None:
+        progress = PullProgress()
+
+        progress.consume_event(
+            {
+                "status": "Downloading",
+                "id": "layer-a",
+                "progressDetail": {"current": 25, "total": 100},
+            },
+            1.0,
+        )
+
+        self.assertEqual(
+            "[######..................]  25% 25 B/100 B layers 0/1 downloading 1",
+            progress.progress_status(),
+        )
+
+    def test_progress_total_returns_aggregate_total_bytes(self) -> None:
+        progress = PullProgress()
+
+        progress.consume_event({"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0)
+        self.assertIsNone(progress.progress_total())
+
+        progress.consume_event(
+            {
+                "status": "Downloading",
+                "id": "layer-a",
+                "progressDetail": {"current": 25, "total": 100},
+            },
+            2.0,
+        )
+
+        self.assertEqual(100, progress.progress_total())
+
     def test_finish_prints_trailing_newline_after_render(self) -> None:
         stdout = io.StringIO()
         with (

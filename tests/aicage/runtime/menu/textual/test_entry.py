@@ -53,6 +53,20 @@ class OverviewEntryTests(TestCase):
         self.assertFalse(parsed.docker_socket)
         app_mock.run.assert_called_once_with(inline=True)
 
+    def test_edit_draft_with_textual_app_reraises_app_error(self) -> None:
+        draft = _build_draft(
+            agent_cfg=AgentConfig(base="ubuntu"),
+            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+        )
+        app_mock = mock.Mock()
+        app_mock.run.return_value = RuntimeError("boom")
+
+        with (
+            mock.patch("aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock),
+            self.assertRaises(RuntimeError),
+        ):
+            entry.edit_draft_with_textual_app(draft, _build_context())
+
     def test_edit_draft_with_textual_app_raises_keyboard_interrupt_on_cancel(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu", docker_args="--existing", shares=["/repo/existing"]),

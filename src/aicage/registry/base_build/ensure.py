@@ -59,6 +59,22 @@ def ensure(
     )
 
 
+def build_needed(
+    base: str,
+    base_metadata: BaseMetadata,
+    target_image_ref: str,
+) -> bool:
+    local_exists = local_image_exists(target_image_ref)
+    store = BuildStore()
+    source_digest = get_remote_digest(base_metadata.from_image)
+    return _should_rebuild(
+        local_exists=local_exists,
+        record=store.load(base),
+        base_metadata=base_metadata,
+        source_digest=source_digest,
+    )
+
+
 def _should_rebuild(
     local_exists: bool,
     record: BuildRecord | None,
