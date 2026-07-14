@@ -12,14 +12,15 @@ class EnsureImageTests(TestCase):
     @staticmethod
     def test_ensure_image_pulls_when_not_local() -> None:
         run_config = _run_config(build_local=False, extensions=[])
+        reporter = mock.Mock()
         with (
             mock.patch("aicage.registry.ensure_image.pull_image") as pull_mock,
             mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
             mock.patch("aicage.registry.ensure_image.ensure_extended_image") as extended_mock,
         ):
-            ensure_image(run_config)
+            ensure_image(run_config, reporter=reporter)
 
-        pull_mock.assert_called_once()
+        pull_mock.assert_called_once_with(run_config.selection.base_image_ref, reporter=reporter)
         local_mock.assert_not_called()
         extended_mock.assert_not_called()
 
@@ -31,26 +32,28 @@ class EnsureImageTests(TestCase):
             base="custom",
             base_definition_dir=CUSTOM_BASES_DIR / "custom",
         )
+        reporter = mock.Mock()
         with (
             mock.patch("aicage.registry.ensure_image.pull_image") as pull_mock,
             mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
         ):
-            ensure_image(run_config)
+            ensure_image(run_config, reporter=reporter)
 
         pull_mock.assert_not_called()
-        local_mock.assert_called_once_with(run_config)
+        local_mock.assert_called_once_with(run_config, reporter=reporter)
 
     @staticmethod
     def test_ensure_image_runs_extended_build() -> None:
         run_config = _run_config(build_local=True, extensions=["extra"])
+        reporter = mock.Mock()
         with (
             mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
             mock.patch("aicage.registry.ensure_image.ensure_extended_image") as extended_mock,
         ):
-            ensure_image(run_config)
+            ensure_image(run_config, reporter=reporter)
 
-        local_mock.assert_called_once_with(run_config)
-        extended_mock.assert_called_once_with(run_config)
+        local_mock.assert_called_once_with(run_config, reporter=reporter)
+        extended_mock.assert_called_once_with(run_config, reporter=reporter)
 
 
 def _run_config(

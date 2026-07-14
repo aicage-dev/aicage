@@ -10,6 +10,7 @@ from aicage.docker.query import (
     local_image_exists,
 )
 from aicage.docker.refs import repository_from_image_ref
+from aicage.docker.reporting import OperationReporter
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._build_flow import maybe_build
 from aicage.registry._errors import RegistryError
@@ -24,7 +25,7 @@ from ._store import BuildRecord, BuildStore
 from .agent_version.checker import AgentVersionChecker
 
 
-def ensure(run_config: RunConfig) -> None:
+def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> None:
     agent_metadata = run_config.context.agents[run_config.agent]
     definition_dir = agent_metadata.local_definition_dir
 
@@ -37,6 +38,7 @@ def ensure(run_config: RunConfig) -> None:
             run_config.selection.base,
             base_metadata,
             base_metadata.local_definition_dir,
+            reporter=reporter,
         )
     else:
         base_repo = base_repository(run_config)
@@ -65,7 +67,7 @@ def ensure(run_config: RunConfig) -> None:
             agent_version=agent_version,
             base_image_ref=base_image,
         ),
-        run_build=lambda: _run_build(run_config, base_image, image_ref),
+        run_build=lambda: _run_build(run_config, base_image, image_ref, reporter),
         save_record=lambda: store.save(
             BuildRecord(
                 agent=run_config.agent,
@@ -96,6 +98,7 @@ def _run_build(
     run_config: RunConfig,
     base_image_ref: str,
     image_ref: str,
+    reporter: OperationReporter | None,
 ) -> None:
     image_repository = repository_from_image_ref(image_ref)
     old_digest = get_local_repo_digest_for_repo(image_ref, image_repository)
@@ -105,5 +108,6 @@ def _run_build(
         base_image_ref=base_image_ref,
         image_ref=image_ref,
         log_path=log_path,
+        reporter=reporter,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
