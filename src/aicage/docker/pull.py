@@ -5,7 +5,7 @@ from pathlib import Path
 from aicage._logging import get_logger
 from aicage.docker._client import get_docker_pull_client
 from aicage.docker._pull_progress import PullProgress
-from aicage.docker._reporting import OperationReporter
+from aicage.docker.reporting import OperationReporter
 
 
 def run_pull(

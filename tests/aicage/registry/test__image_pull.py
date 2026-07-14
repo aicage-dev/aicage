@@ -31,6 +31,7 @@ class FakeDockerClient:
 class DockerInvocationTests(TestCase):
     def test_pull_image_success_writes_log(self) -> None:
         image_ref = "repo:tag"
+        reporter = mock.Mock()
         api = FakeDockerApi(
             events=[
                 {"status": "Pulling from org/repo", "id": "repo:tag"},
@@ -64,7 +65,7 @@ class DockerInvocationTests(TestCase):
                 mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
-                image_pull.pull_image(image_ref)
+                image_pull.pull_image(image_ref, reporter=reporter)
             remote_mock.assert_not_called()
             verify_mock.assert_called_once_with(image_ref)
             cleanup_mock.assert_called_once_with(
@@ -72,7 +73,7 @@ class DockerInvocationTests(TestCase):
                 "sha256:old",
                 image_ref,
             )
-            self.assertIn("Pulling image repo:tag", stdout.getvalue())
+            self.assertEqual("", stdout.getvalue())
             log_lines = log_path.read_text(encoding="utf-8").splitlines()
             self.assertEqual(2, len(log_lines))
             self.assertEqual(
@@ -84,6 +85,7 @@ class DockerInvocationTests(TestCase):
                 json.loads(log_lines[1]),
             )
             self.assertEqual([("repo:tag", True, True)], api.calls)
+            reporter.on_phase_started.assert_called_once()
 
     def test_pull_image_raises_on_sdk_error(self) -> None:
         image_ref = "repo:tag"
