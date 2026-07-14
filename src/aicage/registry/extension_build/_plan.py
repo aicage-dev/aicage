@@ -1,4 +1,4 @@
-from aicage.config.runtime_config import RunConfig
+from aicage.config.run_config import RunConfig
 from aicage.docker.query import local_image_exists
 from aicage.registry._layers import base_layer_missing
 

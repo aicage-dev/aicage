@@ -11,7 +11,15 @@ Screen {
     layout: vertical;
 }
 
+#execution_root {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    layout: vertical;
+}
+
 #overview_frame,
+.execution_frame,
 .screen_frame {
     width: 100%;
     height: auto;
@@ -36,6 +44,15 @@ Screen {
 }
 
 .confirm_shell {
+    width: 92;
+    max-width: 100%;
+    height: auto;
+    padding: 0 2;
+    border: heavy $primary;
+    background: $surface;
+}
+
+.execution_shell {
     width: 92;
     max-width: 100%;
     height: auto;
@@ -262,6 +279,46 @@ Screen {
 
 .field {
     margin: 0 0;
+}
+
+.execution_log {
+    display: none;
+    height: 8;
+    margin-top: 1;
+}
+
+#execution_build_info {
+    display: none;
+    height: auto;
+    margin-top: 0;
+}
+
+.execution_image_ref {
+    margin-bottom: 1;
+}
+
+.execution_image_ref_label {
+    margin-bottom: 0;
+}
+
+.execution_log_path_label {
+    margin-bottom: 0;
+}
+
+.execution_log_path {
+    margin-bottom: 0;
+}
+
+.execution_copy_actions {
+    height: auto;
+    align-horizontal: left;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.execution_copy_actions Button {
+    min-width: 14;
+    border: none;
 }
 
 .bind_mount_input {

@@ -1,7 +1,7 @@
 import hashlib
 
 from aicage.config.extensions.loader import ExtensionMetadata, extension_hash
-from aicage.config.runtime_config import RunConfig
+from aicage.config.run_config import RunConfig
 from aicage.docker.build import run_extended_build
 from aicage.docker.query import (
     cleanup_old_digest,
@@ -46,6 +46,18 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
                 built_at=now_iso(),
             )
         ),
+    )
+
+
+def build_needed(run_config: RunConfig) -> bool:
+    resolved = _resolve_extensions(run_config.selection.extensions, run_config.context.extensions)
+    combined_hash = _combined_extension_hash(resolved)
+    store = BuildStore()
+    return should_rebuild(
+        run_config=run_config,
+        record=store.load(run_config.selection.image_ref),
+        base_image_ref=run_config.selection.base_image_ref,
+        extension_hash=combined_hash,
     )
 
 

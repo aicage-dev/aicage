@@ -5,7 +5,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
-from aicage.registry.ensure_image import ensure_image
+from aicage.registry.ensure_image import ensure_image, image_setup_needed
 
 
 class EnsureImageTests(TestCase):
@@ -54,6 +54,30 @@ class EnsureImageTests(TestCase):
 
         local_mock.assert_called_once_with(run_config, reporter=reporter)
         extended_mock.assert_called_once_with(run_config, reporter=reporter)
+
+    @staticmethod
+    def test_image_setup_needed_true_when_pull_needed() -> None:
+        run_config = _run_config(build_local=False, extensions=[])
+
+        with mock.patch("aicage.registry.ensure_image.decide_pull", return_value=True):
+            assert image_setup_needed(run_config) is True
+
+    @staticmethod
+    def test_image_setup_needed_false_when_pull_not_needed_and_no_extensions() -> None:
+        run_config = _run_config(build_local=False, extensions=[])
+
+        with mock.patch("aicage.registry.ensure_image.decide_pull", return_value=False):
+            assert image_setup_needed(run_config) is False
+
+    @staticmethod
+    def test_image_setup_needed_true_when_extensions_need_build() -> None:
+        run_config = _run_config(build_local=False, extensions=["extra"])
+
+        with (
+            mock.patch("aicage.registry.ensure_image.decide_pull", return_value=False),
+            mock.patch("aicage.registry.ensure_image.extension_build_needed", return_value=True),
+        ):
+            assert image_setup_needed(run_config) is True
 
 
 def _run_config(

@@ -150,26 +150,20 @@ class ExtensionsScreenTests(TestCase):
 
     def test_copy_samples_command_copies_to_system_clipboard_when_available(self) -> None:
         screen = extensions_screen.ExtensionsScreen([], [])
-
-        with mock.patch.object(screen, "_copy_to_system_clipboard", return_value=True) as copy_system_mock:
-            screen._copy_samples_command()
-
-        copy_system_mock.assert_called_once_with(
-            "git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom"
-        )
-
-    def test_copy_samples_command_falls_back_to_textual_clipboard(self) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
         app = mock.Mock()
 
         with (
-            mock.patch.object(screen, "_copy_to_system_clipboard", return_value=False),
             mock.patch.object(type(screen), "app", new_callable=mock.PropertyMock, return_value=app),
+            mock.patch(
+                "aicage.runtime.menu.textual.screens.extensions_screen._clipboard.copy_to_clipboard"
+            ) as copy_mock,
         ):
             screen._copy_samples_command()
 
-        app.copy_to_clipboard.assert_called_once_with(
-            "git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom"
+        copy_mock.assert_called_once()
+        self.assertEqual(
+            "git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom",
+            copy_mock.call_args.args[0],
         )
 
     def test_copy_to_system_clipboard_returns_true_when_process_stays_alive(self) -> None:
@@ -178,8 +172,8 @@ class ExtensionsScreenTests(TestCase):
         process.wait.side_effect = subprocess.TimeoutExpired(cmd="xclip", timeout=0.2)
 
         with (
-            mock.patch.object(extensions_screen.ExtensionsScreen, "_clipboard_command", return_value=["xclip"]),
-            mock.patch("aicage.runtime.menu.textual.screens.extensions_screen.subprocess.Popen", return_value=process),
+            mock.patch("aicage.runtime.menu.textual._clipboard.clipboard_command", return_value=["xclip"]),
+            mock.patch("aicage.runtime.menu.textual._clipboard.subprocess.Popen", return_value=process),
         ):
             copied = extensions_screen.ExtensionsScreen._copy_to_system_clipboard("echo hi")
 
@@ -189,8 +183,8 @@ class ExtensionsScreenTests(TestCase):
 
     def test_clipboard_command_prefers_wl_copy_on_linux(self) -> None:
         with (
-            mock.patch("aicage.runtime.menu.textual.screens.extensions_screen.platform.system", return_value="Linux"),
-            mock.patch("aicage.runtime.menu.textual.screens.extensions_screen.shutil.which") as which_mock,
+            mock.patch("aicage.runtime.menu.textual._clipboard.platform.system", return_value="Linux"),
+            mock.patch("aicage.runtime.menu.textual._clipboard.shutil.which") as which_mock,
         ):
             which_mock.side_effect = lambda name: "/usr/bin/wl-copy" if name == "wl-copy" else None
 

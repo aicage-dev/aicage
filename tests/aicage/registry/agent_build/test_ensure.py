@@ -249,3 +249,31 @@ class EnsureLocalImageTests(TestCase):
                 ensure_module.ensure(run_config)
 
             build_mock.assert_not_called()
+
+    @staticmethod
+    def test_build_needed_uses_should_rebuild_result() -> None:
+        run_config = build_run_config()
+        store = mock.Mock()
+        store.load.return_value = None
+
+        with (
+            mock.patch(
+                "aicage.registry.agent_build.ensure.BuildStore",
+                return_value=store,
+            ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.refresh_base_image",
+                return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
+            ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.should_rebuild",
+                return_value=True,
+            ) as should_rebuild_mock,
+            mock.patch(
+                "aicage.registry.agent_build.ensure.AgentVersionChecker"
+            ) as checker_cls,
+        ):
+            checker_cls.return_value.get_version.return_value = "1.2.3"
+            assert ensure_module.build_needed(run_config) is True
+
+        should_rebuild_mock.assert_called_once()
