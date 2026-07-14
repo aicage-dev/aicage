@@ -56,3 +56,46 @@ class DockerPullTests(TestCase):
         self.assertIn("Pulling image ghcr.io/aicage/aicage:latest", rendered)
         self.assertIn("100%", rendered)
         self.assertTrue(rendered.endswith("\n"))
+
+    def test_run_pull_reports_started_progress_logs_and_finished(self) -> None:
+        client = mock.Mock()
+        client.api.pull.return_value = [
+            {
+                "status": "Downloading",
+                "id": "layer-a",
+                "progressDetail": {"current": 50, "total": 100},
+            },
+            {"status": "Pull complete", "id": "layer-a"},
+        ]
+        reporter = mock.Mock()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "pull.log"
+            with mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client):
+                run_pull("ghcr.io/aicage/aicage:latest", log_path, reporter=reporter)
+
+        reporter.on_phase_started.assert_called_once()
+        reporter.on_phase_log.assert_any_call(
+            "pull",
+            '{"status": "Downloading", "id": "layer-a", "progressDetail": {"current": 50, "total": 100}}',
+        )
+        reporter.on_phase_progress.assert_any_call("pull", "Downloading", 50, 100)
+        reporter.on_phase_progress.assert_any_call("pull", "Pull complete", None, None)
+        reporter.on_phase_finished.assert_called_once_with(
+            "pull",
+            "Pull finished for ghcr.io/aicage/aicage:latest",
+        )
+
+    def test_run_pull_without_reporter_skips_reporting_seam(self) -> None:
+        client = mock.Mock()
+        client.api.pull.return_value = [{"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "pull.log"
+            with (
+                mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client),
+                mock.patch("aicage.docker.pull._report_progress") as report_progress_mock,
+            ):
+                run_pull("ghcr.io/aicage/aicage:latest", log_path)
+
+        report_progress_mock.assert_not_called()
