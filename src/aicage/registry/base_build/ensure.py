@@ -8,6 +8,7 @@ from aicage.docker.query import (
     get_local_repo_digest_for_repo,
     local_image_exists,
 )
+from aicage.docker.reporting import OperationReporter
 from aicage.registry._build_flow import maybe_build
 from aicage.registry._time import now_iso
 from aicage.registry.digest.remote_digest import get_remote_digest
@@ -20,7 +21,12 @@ def image_ref(base: str) -> str:
     return f"{LOCAL_IMAGE_BASE_REPOSITORY}:{base}"
 
 
-def ensure(base: str, base_metadata: BaseMetadata, base_dir: Path) -> None:
+def ensure(
+    base: str,
+    base_metadata: BaseMetadata,
+    base_dir: Path,
+    reporter: OperationReporter | None = None,
+) -> None:
     target_image_ref = image_ref(base)
     local_exists = local_image_exists(target_image_ref)
     store = BuildStore()
@@ -39,6 +45,7 @@ def ensure(base: str, base_metadata: BaseMetadata, base_dir: Path) -> None:
             base_metadata=base_metadata,
             base_dir=base_dir,
             target_image_ref=target_image_ref,
+            reporter=reporter,
         ),
         save_record=lambda: store.save(
             BuildRecord(
@@ -72,14 +79,15 @@ def _run_build(
     base_metadata: BaseMetadata,
     base_dir: Path,
     target_image_ref: str,
+    reporter: OperationReporter | None,
 ) -> None:
     old_digest = get_local_repo_digest_for_repo(target_image_ref, LOCAL_IMAGE_BASE_REPOSITORY)
     log_path = build_log_path(base)
     run_custom_base_build(
-        dockerfile_path=base_dir / "Dockerfile",
         build_root=base_dir,
         from_image=base_metadata.from_image,
         image_ref=target_image_ref,
         log_path=log_path,
+        reporter=reporter,
     )
     cleanup_old_digest(LOCAL_IMAGE_BASE_REPOSITORY, old_digest, target_image_ref)

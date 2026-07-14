@@ -97,7 +97,6 @@ class LocalBuildRunnerTests(TestCase):
                 ) as run_mock,
             ):
                 build.run_custom_base_build(
-                    dockerfile_path=dockerfile_path,
                     build_root=Path(tmp_dir),
                     from_image="ubuntu:latest",
                     image_ref="aicage:base-sample",
@@ -164,12 +163,42 @@ class LocalBuildRunnerTests(TestCase):
                 self.assertRaises(DockerError),
             ):
                 build.run_custom_base_build(
-                    dockerfile_path=dockerfile_path,
                     build_root=Path(tmp_dir),
                     from_image="ubuntu:latest",
                     image_ref="aicage:base-sample",
                     log_path=log_path,
                 )
+
+    def test_run_custom_base_build_reports_started_and_finished(self) -> None:
+        reporter = mock.Mock()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "logs" / "build.log"
+            dockerfile_path = Path(tmp_dir) / "Dockerfile"
+            dockerfile_path.write_text("FROM ubuntu:latest\n", encoding="utf-8")
+            with (
+                mock.patch.dict(os.environ, {}, clear=True),
+                mock.patch(
+                    "aicage.docker.build.subprocess.run",
+                    return_value=CompletedProcess([], 0),
+                ),
+            ):
+                build.run_custom_base_build(
+                    build_root=Path(tmp_dir),
+                    from_image="ubuntu:latest",
+                    image_ref="aicage:base-sample",
+                    log_path=log_path,
+                    reporter=reporter,
+                )
+
+        reporter.on_phase_started.assert_called_once_with(
+            "build",
+            "Building custom base image aicage:base-sample",
+            log_path,
+        )
+        reporter.on_phase_finished.assert_called_once_with(
+            "build",
+            "Custom base image build finished for aicage:base-sample",
+        )
 
     def test_run_extended_build_builds_all_extensions(self) -> None:
         run_config = build_extended_run_config()
