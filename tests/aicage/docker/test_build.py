@@ -59,6 +59,7 @@ class LocalBuildRunnerTests(TestCase):
         run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
+            reporter = mock.Mock()
             with (
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
@@ -75,7 +76,13 @@ class LocalBuildRunnerTests(TestCase):
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                     image_ref="aicage:claude-ubuntu",
                     log_path=log_path,
+                    reporter=reporter,
                 )
+        reporter.on_phase_failed.assert_called_once_with(
+            "build",
+            "Local image build failed for aicage:claude-ubuntu",
+            log_path,
+        )
 
     def test_run_custom_base_build_invokes_docker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -194,6 +201,7 @@ class LocalBuildRunnerTests(TestCase):
         extension = _extension("extra")
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "build.log"
+            reporter = mock.Mock()
             with (
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
@@ -210,7 +218,47 @@ class LocalBuildRunnerTests(TestCase):
                         base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
                         extensions=[extension],
                         log_path=log_path,
+                        reporter=reporter,
                     )
+        reporter.on_phase_failed.assert_called_once_with(
+            "build",
+            f"Extended image build failed for {run_config.selection.image_ref}",
+            log_path,
+        )
+
+    def test_run_build_reports_started_and_finished(self) -> None:
+        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
+        reporter = mock.Mock()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "logs" / "build.log"
+            with (
+                mock.patch.dict(os.environ, {}, clear=True),
+                mock.patch(
+                    "aicage.docker.build.find_packaged_path",
+                    return_value=Path("/tmp/build/Dockerfile"),
+                ),
+                mock.patch(
+                    "aicage.docker.build.subprocess.run",
+                    return_value=mock.Mock(returncode=0),
+                ),
+            ):
+                build.run_build(
+                    run_config=run_config,
+                    base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                    image_ref="aicage:claude-ubuntu",
+                    log_path=log_path,
+                    reporter=reporter,
+                )
+
+        reporter.on_phase_started.assert_called_once_with(
+            "build",
+            "Building local image aicage:claude-ubuntu",
+            log_path,
+        )
+        reporter.on_phase_finished.assert_called_once_with(
+            "build",
+            "Local image build finished for aicage:claude-ubuntu",
+        )
 
     @staticmethod
     def test_cleanup_intermediate_images_logs_failures() -> None:
