@@ -6,9 +6,9 @@ from aicage._proxy import proxy_build_args_from_host
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.resources import find_packaged_path
 from aicage.config.runtime_config import RunConfig
-from aicage.docker._reporting import OperationReporter, default_operation_reporter
 from aicage.docker.cli import run_docker_command
 from aicage.docker.errors import DockerError
+from aicage.docker.reporting import OperationReporter, default_operation_reporter
 
 
 def run_build(
@@ -139,15 +139,17 @@ def run_extended_build(
 
 
 def run_custom_base_build(
-    dockerfile_path: Path,
     build_root: Path,
     from_image: str,
     image_ref: str,
     log_path: Path,
+    reporter: OperationReporter | None = None,
 ) -> None:
     logger = get_logger()
+    operation_reporter = reporter or default_operation_reporter()
+    dockerfile_path = build_root / "Dockerfile"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    print(f"[aicage] Building custom base image {image_ref} (logs: {log_path})...")
+    operation_reporter.on_phase_started("build", f"Building custom base image {image_ref}", log_path)
     logger.info("Building custom base image %s (logs: %s)", image_ref, log_path)
 
     command = [
@@ -172,10 +174,16 @@ def run_custom_base_build(
         )
     if result.returncode != 0:
         logger.error("Custom base image build failed for %s (logs: %s)", image_ref, log_path)
+        operation_reporter.on_phase_failed(
+            "build",
+            f"Custom base image build failed for {image_ref}",
+            log_path,
+        )
         raise DockerError(
             f"Custom base image build failed for {image_ref}. See log at {log_path}."
         )
 
+    operation_reporter.on_phase_finished("build", f"Custom base image build finished for {image_ref}")
     logger.info("Custom base image build succeeded for %s", image_ref)
 
 

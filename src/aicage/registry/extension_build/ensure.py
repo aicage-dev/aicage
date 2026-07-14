@@ -8,6 +8,7 @@ from aicage.docker.query import (
     get_local_repo_digest_for_repo,
 )
 from aicage.docker.refs import repository_from_image_ref
+from aicage.docker.reporting import OperationReporter
 from aicage.registry._build_flow import maybe_build
 from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
@@ -17,7 +18,7 @@ from ._plan import should_rebuild
 from ._store import BuildRecord, BuildStore
 
 
-def ensure(run_config: RunConfig) -> None:
+def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> None:
     if not run_config.selection.extensions:
         raise RegistryError("No extensions selected for extended image build.")
 
@@ -33,7 +34,7 @@ def ensure(run_config: RunConfig) -> None:
             base_image_ref=run_config.selection.base_image_ref,
             extension_hash=combined_hash,
         ),
-        run_build=lambda: _run_build(run_config, resolved),
+        run_build=lambda: _run_build(run_config, resolved, reporter),
         save_record=lambda: store.save(
             BuildRecord(
                 agent=run_config.agent,
@@ -51,6 +52,7 @@ def ensure(run_config: RunConfig) -> None:
 def _run_build(
     run_config: RunConfig,
     resolved: list[ExtensionMetadata],
+    reporter: OperationReporter | None,
 ) -> None:
     image_ref = run_config.selection.image_ref
     image_repository = repository_from_image_ref(image_ref)
@@ -61,6 +63,7 @@ def _run_build(
         base_image_ref=run_config.selection.base_image_ref,
         extensions=resolved,
         log_path=log_path,
+        reporter=reporter,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
 
