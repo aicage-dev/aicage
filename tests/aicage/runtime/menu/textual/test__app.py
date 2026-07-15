@@ -4,6 +4,7 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
+from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu.textual import _app
 from aicage.runtime.menu.textual._models import (
     BuiltInShareValue,
@@ -122,7 +123,7 @@ class OverviewAppTests(TestCase):
             mock.patch.object(app, "_finish") as finish_mock,
             mock.patch.object(app, "_run_execution") as run_execution_mock,
         ):
-            asyncio.run(_app.OverviewApp._accept.__wrapped__(app))
+            asyncio.run(app._accept_async())
 
         finish_mock.assert_called_once()
         run_execution_mock.assert_not_called()
@@ -144,7 +145,7 @@ class OverviewAppTests(TestCase):
             ) as show_execution_screen_mock,
             mock.patch.object(app, "_run_execution") as run_execution_mock,
         ):
-            asyncio.run(_app.OverviewApp._accept.__wrapped__(app))
+            asyncio.run(app._accept_async())
 
         show_execution_screen_mock.assert_called_once_with()
         run_execution_mock.assert_called_once()
@@ -239,7 +240,7 @@ class OverviewAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(_app.OverviewApp._add_share.__wrapped__(app))
+            asyncio.run(app._add_share_async())
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/logs")], app._state.custom_shares
@@ -404,11 +405,7 @@ class OverviewAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(
-                _app.OverviewApp._edit_custom_share.__wrapped__(
-                    app, "/test-tmp/project/logs"
-                )
-            )
+            asyncio.run(app._edit_custom_share_async("/test-tmp/project/logs"))
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
@@ -430,11 +427,7 @@ class OverviewAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(
-                _app.OverviewApp._edit_custom_share.__wrapped__(
-                    app, "/test-tmp/project/logs"
-                )
-            )
+            asyncio.run(app._edit_custom_share_async("/test-tmp/project/logs"))
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
@@ -462,11 +455,20 @@ class OverviewAppTests(TestCase):
 
     def test_finish_exits_with_result(self) -> None:
         app = _build_app()
+        result = _app._OverviewResult(
+            ImageSelection(
+                image_ref="ref",
+                base="ubuntu",
+                extensions=[],
+                base_image_ref="ref",
+            ),
+            "--project",
+        )
 
         with mock.patch.object(app, "exit") as exit_mock:
-            app._finish(True)
+            app._finish(result)
 
-        exit_mock.assert_called_once_with(True)
+        exit_mock.assert_called_once_with(result)
 
     def test_focus_last_section_focuses_default_when_no_last_section(self) -> None:
         app = _build_app()

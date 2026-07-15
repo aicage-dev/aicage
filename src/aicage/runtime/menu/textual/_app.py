@@ -107,6 +107,9 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
 
     @work(exclusive=True)
     async def _accept(self) -> None:
+        await self._accept_async()
+
+    async def _accept_async(self) -> None:
         accepted = await self._confirm_undecided_built_in_shares()
         if not accepted:
             return
@@ -186,6 +189,9 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
 
     @work(exclusive=True)
     async def _add_share(self) -> None:
+        await self._add_share_async()
+
+    async def _add_share_async(self) -> None:
         result = await self._push_section_screen(ShareEditorScreen())
         if result is None or result.share is None:
             return
@@ -196,6 +202,9 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
 
     @work(exclusive=True)
     async def _edit_custom_share(self, current_value: str) -> None:
+        await self._edit_custom_share_async(current_value)
+
+    async def _edit_custom_share_async(self, current_value: str) -> None:
         result = await self._push_section_screen(
             ShareEditorScreen(current_value, allow_remove=True)
         )
