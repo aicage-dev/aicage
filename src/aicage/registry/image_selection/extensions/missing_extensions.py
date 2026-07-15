@@ -4,7 +4,7 @@ from aicage.config.context import ConfigContext
 from aicage.config.errors import ConfigError
 from aicage.config.yaml_loader import load_yaml
 from aicage.registry._errors import RegistryError
-from aicage.runtime.prompts.missing_extensions import prompt_for_missing_extensions
+from aicage.runtime.menu.prompts.missing_extensions import prompt_for_missing_extensions
 
 
 def ensure_extensions_exist(

@@ -2,7 +2,7 @@ from aicage._logging import get_logger
 from aicage.docker.query import get_local_repo_digest_for_repo
 from aicage.registry._errors import RegistryError
 from aicage.registry._signature import resolve_verified_digest
-from aicage.runtime.prompts.confirm import prompt_update_image
+from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from ._digest import resolve_base_digest
 

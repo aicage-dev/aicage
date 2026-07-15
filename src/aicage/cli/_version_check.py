@@ -7,7 +7,7 @@ import urllib.request
 from aicage._logging import get_logger
 from aicage._network import classify_network_failure, host_from_url
 from aicage.constants import PYPI_VERSION_CHECK_TIMEOUT_SECONDS
-from aicage.runtime.prompts.confirm import prompt_update_aicage
+from aicage.runtime.menu.prompts.confirm import prompt_update_aicage
 
 _PYPI_URL: str = "https://pypi.org/pypi/aicage/json"
 _UPGRADE_COMMAND: str = "pipx upgrade aicage"

@@ -4,8 +4,8 @@ from pathlib import Path
 
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.project_config import AgentConfig
+from aicage.runtime.menu.prompts.confirm import prompt_mount_git_support
 from aicage.runtime.mounts.shares import ShareSpec, resolve_share_specs
-from aicage.runtime.prompts.confirm import prompt_mount_git_support
 
 from .git_support import git_support_prompt_items
 

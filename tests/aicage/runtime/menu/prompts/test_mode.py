@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from aicage.runtime.prompts import mode
+from aicage.runtime.menu.prompts import mode
 
 
 class PromptModeTests(TestCase):

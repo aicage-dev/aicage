@@ -5,8 +5,8 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.filter import filter_bases
 from aicage.config.context import ConfigContext
 from aicage.runtime._errors import RuntimeExecutionError
+from aicage.runtime.menu.default_base import resolve_default_base
 
-from ._default_base import resolve_default_base
 from ._tty import ensure_tty_for_prompt
 from .mode import assume_yes_enabled
 
@@ -16,6 +16,7 @@ class BaseSelectionRequest:
     agent: str
     context: ConfigContext
     agent_metadata: AgentMetadata
+    default_base: str | None = None
 
 
 @dataclass(frozen=True)
@@ -26,7 +27,7 @@ class _BaseOption:
 
 def prompt_for_base(request: BaseSelectionRequest) -> str:
     bases = _base_options(request.context, request.agent_metadata)
-    default_base = resolve_default_base(_available_bases(bases))
+    default_base = request.default_base or resolve_default_base(_available_bases(bases))
     if assume_yes_enabled():
         get_logger().info("Selected base '%s' for agent '%s' (assume-yes)", default_base, request.agent)
         return default_base

@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from aicage.runtime._errors import RuntimeExecutionError
-from aicage.runtime.prompts._tty import ensure_tty_for_prompt
+from aicage.runtime.menu.prompts._tty import ensure_tty_for_prompt
 
 
 class PromptTtyTests(TestCase):

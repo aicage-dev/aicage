@@ -3,16 +3,18 @@ from pathlib import Path
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.agent.loader import load_agents
+from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.loader import load_bases
 from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import load_extensions
 from aicage.config.run_config_draft import RunConfigDraft, create_run_config_draft
+from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
-from aicage.runtime.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
+from aicage.runtime.menu.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 
@@ -32,6 +34,7 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
     project_path = Path.cwd().resolve()
     bases = load_bases()
     agents = load_agents(bases)
+    _require_known_agent(agent, agents)
     draft = create_run_config_draft(project_path, agent, store.load_project(project_path), parsed)
     context = ConfigContext(
         store=store,
@@ -58,6 +61,14 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
         mounts=mounts,
         env=env,
     )
+
+
+def _require_known_agent(agent: str, agents: dict[str, AgentMetadata]) -> None:
+    if agent in agents:
+        return
+    if agent == "config":
+        raise RegistryError("Unknown agent 'config'. Use '--config' for config commands.")
+    raise RegistryError(f"Unknown agent '{agent}'.")
 
 
 def _persist_docker_args(draft: RunConfigDraft) -> None:

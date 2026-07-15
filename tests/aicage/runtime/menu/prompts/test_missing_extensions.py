@@ -1,14 +1,14 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.runtime.prompts.missing_extensions import prompt_for_missing_extensions
+from aicage.runtime.menu.prompts.missing_extensions import prompt_for_missing_extensions
 
 
 class PromptMissingExtensionsTests(TestCase):
     def test_prompt_for_missing_extensions_lists_projects(self) -> None:
         other_projects = [("/tmp/one", Path("/tmp/one.yml"))]
         with (
-            mock.patch("aicage.runtime.prompts.missing_extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.missing_extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="fresh"),
             mock.patch("builtins.print") as print_mock,
         ):
@@ -24,7 +24,7 @@ class PromptMissingExtensionsTests(TestCase):
 
     def test_prompt_for_missing_extensions_no_projects(self) -> None:
         with (
-            mock.patch("aicage.runtime.prompts.missing_extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.missing_extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="exit"),
             mock.patch("builtins.print") as print_mock,
         ):
@@ -40,8 +40,8 @@ class PromptMissingExtensionsTests(TestCase):
 
     def test_prompt_for_missing_extensions_returns_default_when_assume_yes(self) -> None:
         with (
-            mock.patch("aicage.runtime.prompts.missing_extensions.assume_yes_enabled", return_value=True),
-            mock.patch("aicage.runtime.prompts.missing_extensions.ensure_tty_for_prompt") as tty_mock,
+            mock.patch("aicage.runtime.menu.prompts.missing_extensions.assume_yes_enabled", return_value=True),
+            mock.patch("aicage.runtime.menu.prompts.missing_extensions.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,
             mock.patch("builtins.print") as print_mock,
         ):

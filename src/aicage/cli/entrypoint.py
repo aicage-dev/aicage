@@ -16,7 +16,7 @@ from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
 from aicage.registry.ensure_image import ensure_image
-from aicage.runtime.prompts.mode import set_assume_yes
+from aicage.runtime.menu.prompts.mode import set_assume_yes
 from aicage.runtime.run_args import DockerRunArgs
 from aicage.runtime.run_plan import build_run_args
 

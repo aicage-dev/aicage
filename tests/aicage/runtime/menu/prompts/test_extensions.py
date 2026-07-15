@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from aicage.runtime._errors import RuntimeExecutionError
-from aicage.runtime.prompts.extensions import ExtensionOption, prompt_for_extensions
+from aicage.runtime.menu.prompts.extensions import ExtensionOption, prompt_for_extensions
 
 
 class PromptExtensionsTests(TestCase):
@@ -14,7 +14,7 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="two", description="Second"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="2,one"),
         ):
             selection = prompt_for_extensions(options)
@@ -28,7 +28,7 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="regctl", description="regctl"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="4,3,2,1"),
         ):
             selection = prompt_for_extensions(options)
@@ -40,7 +40,7 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="two", description="Second"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value=""),
         ):
             selection = prompt_for_extensions(options)
@@ -52,7 +52,7 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="two", description="Second"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="1,one"),
         ):
             with self.assertRaises(RuntimeExecutionError):
@@ -64,7 +64,7 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="two", description="Second"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="3"),
         ):
             with self.assertRaises(RuntimeExecutionError):
@@ -76,7 +76,7 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="two", description="Second"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt"),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value="unknown"),
         ):
             with self.assertRaises(RuntimeExecutionError):
@@ -88,8 +88,8 @@ class PromptExtensionsTests(TestCase):
             ExtensionOption(name="two", description="Second"),
         ]
         with (
-            mock.patch("aicage.runtime.prompts.extensions.assume_yes_enabled", return_value=True),
-            mock.patch("aicage.runtime.prompts.extensions.ensure_tty_for_prompt") as tty_mock,
+            mock.patch("aicage.runtime.menu.prompts.extensions.assume_yes_enabled", return_value=True),
+            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
             selection = prompt_for_extensions(options)

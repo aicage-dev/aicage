@@ -11,7 +11,7 @@ from aicage.config.project_config import (
     MOUNT_SSH_KEY,
     AgentConfig,
 )
-from aicage.runtime.prompts.confirm import prompt_persist_docker_socket
+from aicage.runtime.menu.prompts.confirm import prompt_persist_docker_socket
 
 from .support.mount_prompt import resolve_mount_prompt_prefs
 

@@ -4,8 +4,8 @@ from aicage.config.extended_images import (
     write_extended_image_config,
 )
 from aicage.config.image_refs import default_extended_image_ref
-from aicage.runtime.prompts.extensions import ExtensionOption, prompt_for_extensions
-from aicage.runtime.prompts.image_ref import prompt_for_image_ref
+from aicage.runtime.menu.prompts.extensions import ExtensionOption, prompt_for_extensions
+from aicage.runtime.menu.prompts.image_ref import prompt_for_image_ref
 
 from ..models import ImageSelection
 from .context import ExtensionSelectionContext

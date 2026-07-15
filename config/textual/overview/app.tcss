@@ -1,0 +1,332 @@
+Screen {
+    align: center top;
+    background: transparent;
+    border: none;
+}
+
+#overview_root {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    layout: vertical;
+}
+
+#overview_frame,
+.screen_frame {
+    width: 100%;
+    height: auto;
+    padding: 0 2;
+}
+
+.app_header {
+    dock: top;
+    height: 1;
+    background: transparent;
+    color: $text;
+    margin-bottom: 1;
+}
+
+#shell {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    padding: 0 2;
+    border: heavy $primary;
+    background: $surface;
+}
+
+.confirm_shell {
+    width: 92;
+    max-width: 100%;
+    height: auto;
+    padding: 0 2;
+    border: heavy $primary;
+    background: $surface;
+}
+
+.screen_shell {
+    width: 100%;
+    min-width: 96;
+    max-width: 120;
+    height: auto;
+    padding: 0 2;
+    border: heavy $primary;
+    background: $surface;
+}
+
+#title {
+    text-style: bold;
+    margin-bottom: 0;
+}
+
+#context {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.screen_title {
+    text-style: bold;
+    margin-bottom: 0;
+}
+
+.screen_subtitle {
+    text-style: bold;
+    margin-bottom: 0;
+}
+
+.screen_hint {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+.screen_path {
+    color: $text-muted;
+    margin-bottom: 0;
+}
+
+.screen_row {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.screen_row_title {
+    height: auto;
+}
+
+#sections {
+    width: auto;
+    height: auto;
+    align-horizontal: center;
+    margin-bottom: 1;
+}
+
+#access_overview {
+    height: auto;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#shares_overview {
+    display: none;
+    height: auto;
+    width: 100%;
+    color: $text-muted;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#shares_overview_header {
+    height: auto;
+    width: auto;
+    align-horizontal: left;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#shares_overview_title {
+    width: auto;
+    margin-right: 1;
+}
+
+#add_share {
+    min-width: 3;
+    width: 3;
+    height: auto;
+    background: $primary;
+    color: $surface;
+    border: none;
+}
+
+#add_share:focus {
+    background: $accent;
+    color: $surface;
+}
+
+#docker_overview {
+    height: auto;
+    width: 100%;
+    color: $text-muted;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#docker_overview_title {
+    width: auto;
+}
+
+#actions {
+    height: auto;
+    align-horizontal: right;
+    margin-top: 0;
+}
+
+#actions Button {
+    min-width: 8;
+    border: none;
+}
+
+.screen_actions {
+    height: auto;
+    align-horizontal: right;
+    margin-top: 1;
+}
+
+.screen_actions Button {
+    min-width: 8;
+    border: none;
+}
+
+.section {
+    width: 28;
+    min-height: 4;
+    margin-right: 1;
+    content-align: center middle;
+    text-style: bold;
+    background: $surface-lighten-1;
+    color: $text;
+    border: none;
+}
+
+.section:hover {
+    background: $primary 15%;
+}
+
+.section:focus {
+    background: $primary 20%;
+    color: $text;
+    text-style: bold;
+}
+
+.section.-active,
+.section:focus:hover {
+    background: $primary 30%;
+}
+
+.dialog,
+.subview {
+    width: 110;
+    max-width: 96%;
+    height: auto;
+    padding: 1 2;
+    border: heavy $primary;
+    background: $panel;
+}
+
+.dialog_title,
+.subview_title {
+    text-style: bold;
+    margin-bottom: 0;
+}
+
+.dialog_hint,
+.subview_hint {
+    color: $text-muted;
+    margin-bottom: 0;
+}
+
+.dialog_actions,
+.subview_actions {
+    margin-top: 0;
+    align-horizontal: right;
+}
+
+.dialog_actions Button,
+.subview_actions Button {
+    min-width: 8;
+    border: none;
+}
+
+.base_table {
+    height: 8;
+    margin: 0 0;
+}
+
+.checkbox_group {
+    height: auto;
+    margin: 0 0;
+}
+
+.confirm_section {
+    margin-bottom: 1;
+}
+
+.confirm_hint {
+    margin-bottom: 0;
+}
+
+.checkbox_group Checkbox {
+    margin: 0 0;
+    height: auto;
+    border: none;
+}
+
+.field {
+    margin: 0 0;
+}
+
+.bind_mount_input {
+    margin-bottom: 0;
+    background: $panel;
+    color: $text;
+    border: round $primary-background;
+}
+
+.bind_mount_input:focus {
+    border: round $primary;
+    background: $boost;
+}
+
+.bind_mount_checkbox_row {
+    height: auto;
+    align-horizontal: left;
+    margin-top: 0;
+    margin-bottom: 1;
+}
+
+.bind_mount_checkbox {
+    width: auto;
+    height: auto;
+    margin: 0 0;
+    border: none;
+}
+
+.bind_mount_tree_frame {
+    height: 10;
+    margin-top: 0;
+}
+
+.bind_mount_tree {
+    height: 100%;
+    border: round $primary-background;
+    background: $panel;
+    color: $text;
+    padding: 0 1;
+}
+
+.bind_mount_tree:focus {
+    border: round $primary;
+}
+
+#docker_args {
+    height: 6;
+}
+
+.share_input {
+    width: 1fr;
+}
+
+.share_remove {
+    width: 1fr;
+}
+
+.command_box {
+    height: 3;
+    border: round $primary-background;
+    background: $panel;
+    color: $text;
+    padding: 0 1;
+}
+
+.command_box:focus {
+    border: round $primary;
+}

@@ -1,6 +1,6 @@
 from aicage._logging import get_logger
+from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 
-from ...constants import DEFAULT_EXTENDED_IMAGE_NAME
 from ._tty import ensure_tty_for_prompt
 from .mode import assume_yes_enabled
 
