@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec B404 -- subprocess types are used for structured Docker error handling.
 import sys
 from collections.abc import Sequence
 
@@ -89,4 +89,6 @@ def _format_unexpected_error(exc: Exception) -> str:
 
 
 def _restart_with_current_args(parsed_argv: Sequence[str]) -> None:
-    os.execv(sys.executable, [sys.executable, "-m", "aicage", *parsed_argv])
+    os.execv(  # nosec B606 -- restart re-executes the current Python interpreter with current CLI args.
+        sys.executable, [sys.executable, "-m", "aicage", *parsed_argv]
+    )

@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # nosec B404 -- subprocess is the intended wrapper for Docker CLI execution.
 from typing import Literal, TextIO, overload
 
 from aicage.docker.errors import DockerError
@@ -12,7 +12,7 @@ def run_docker_command(
     stderr: TextIO | int | None = None,
 ) -> subprocess.CompletedProcess[str] | subprocess.CompletedProcess[bytes]:
     try:
-        return subprocess.run(
+        return subprocess.run(  # nosec B603 -- command is a caller-built Docker CLI argv list without shell usage.
             command,
             check=check,
             stdout=stdout,
@@ -53,7 +53,7 @@ def run_docker_command_capture(
     text: bool,
 ) -> subprocess.CompletedProcess[str] | subprocess.CompletedProcess[bytes]:
     try:
-        return subprocess.run(
+        return subprocess.run(  # nosec B603 -- command is a caller-built Docker CLI argv list without shell usage.
             command,
             check=check,
             capture_output=True,

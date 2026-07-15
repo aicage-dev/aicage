@@ -56,7 +56,7 @@ class ImageSelectionTests(TestCase):
 
     def test_select_agent_image_raises_without_bases(self) -> None:
         context = build_context(
-            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=[]
+            mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=[]
         )
         with self.assertRaises(RegistryError):
             select_agent_image("codex", context)
@@ -64,7 +64,7 @@ class ImageSelectionTests(TestCase):
     def test_select_agent_image_raises_on_invalid_base(self) -> None:
         context = build_context(
             mock.Mock(spec=SettingsStore),
-            Path("/tmp/project"),
+            Path("/test-tmp/project"),
             bases=["ubuntu"],
             agents={"codex": AgentConfig(base="alpine")},
         )
@@ -99,7 +99,7 @@ class ImageSelectionTests(TestCase):
         None
     ):
         context = build_context(
-            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+            mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=["ubuntu"]
         )
         agent_cfg = AgentConfig(image_ref="aicage:codex-ubuntu")
         context.project_cfg.agents["codex"] = agent_cfg
@@ -118,7 +118,7 @@ class ImageSelectionTests(TestCase):
     @staticmethod
     def test_select_agent_image_resets_on_missing_extensions() -> None:
         context = build_context(
-            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+            mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=["ubuntu"]
         )
         agent_cfg = AgentConfig(
             base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=["extra"]
@@ -144,7 +144,7 @@ class ImageSelectionTests(TestCase):
 
     def test_select_agent_image_uses_stored_image_ref(self) -> None:
         context = build_context(
-            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+            mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=["ubuntu"]
         )
         agent_cfg = AgentConfig(
             base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=[]
@@ -156,7 +156,7 @@ class ImageSelectionTests(TestCase):
     def test_select_agent_image_raises_when_agent_missing(self) -> None:
         context = ConfigContext(
             store=mock.Mock(spec=SettingsStore),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases={},
             extensions=self._extensions,

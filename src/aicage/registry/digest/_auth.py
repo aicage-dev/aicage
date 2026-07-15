@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 
 from aicage._logging import get_logger
-from aicage._network import classify_network_failure, host_from_url
+from aicage._network import classify_network_failure, host_from_url, require_http_url
 from aicage.constants import REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
 
 _AUTH_HEADER_SPLIT_PARTS: int = 2
@@ -28,9 +28,11 @@ def fetch_bearer_token(realm: str, service: str, scope: str) -> str | None:
     logger = get_logger()
     query = {"service": service, "scope": scope} if service else {"scope": scope}
     url = f"{realm}?{urllib.parse.urlencode(query)}"
-    request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
-        with urllib.request.urlopen(
+        request = urllib.request.Request(
+            require_http_url(url), headers={"Accept": "application/json"}
+        )
+        with urllib.request.urlopen(  # nosec B310 -- request URL is restricted to HTTP(S) by require_http_url().
             request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
         ) as response:
             payload = response.read().decode("utf-8")

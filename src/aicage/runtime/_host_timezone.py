@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec B404 -- subprocess is required to query Windows timezone via PowerShell.
 from pathlib import Path
 
 
@@ -46,7 +46,7 @@ def _resolve_windows_timezone() -> str | None:
     )
     for shell in ("powershell", "pwsh"):
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 -- command is a fixed PowerShell probe without shell expansion.
                 [shell, "-NoProfile", "-Command", command],
                 check=False,
                 capture_output=True,

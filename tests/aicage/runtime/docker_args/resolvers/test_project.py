@@ -10,7 +10,7 @@ from aicage.runtime.docker_args.support.resolver_types import MountRequest, Reso
 
 class ProjectResolverTests(TestCase):
     def test_resolve_returns_project_mount(self) -> None:
-        project_path = Path("/tmp/project")
+        project_path = Path("/test-tmp/project")
         context = ConfigContext(
             store=mock.Mock(),
             project_cfg=ProjectConfig(path=str(project_path), agents={}),

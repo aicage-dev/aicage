@@ -20,47 +20,47 @@ class HostAccessTests(TestCase):
                 "extension",
                 "gcloud",
                 "Extension gcloud",
-                "/tmp/gcloud",
+                "/test-tmp/gcloud",
                 None,
                 True,
-                "gcloud:/tmp/gcloud",
+                "gcloud:/test-tmp/gcloud",
             )
         )
 
-        self.assertEqual("builtin:extension:gcloud:/tmp/gcloud", value)
+        self.assertEqual("builtin:extension:gcloud:/test-tmp/gcloud", value)
 
     def test_current_built_in_shares_updates_enabled_state(self) -> None:
         values = host_access.current_built_in_shares(
             {"builtin:git_support:ssh"},
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)],
         )
 
         self.assertEqual(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
             values,
         )
 
     def test_current_built_in_shares_updates_all_extension_rows_in_group(self) -> None:
         values = host_access.current_built_in_shares(
-            {"builtin:extension:gcloud:/tmp/gcloud"},
+            {"builtin:extension:gcloud:/test-tmp/gcloud"},
             [
                 BuiltInShareValue(
                     "extension",
                     "gcloud",
                     "Extension gcloud",
-                    "/tmp/gcloud",
+                    "/test-tmp/gcloud",
                     None,
                     False,
-                    "gcloud:/tmp/gcloud",
+                    "gcloud:/test-tmp/gcloud",
                 ),
                 BuiltInShareValue(
                     "extension",
                     "gcloud",
                     "Extension gcloud",
-                    "/tmp/boto",
+                    "/test-tmp/boto",
                     None,
                     False,
-                    "gcloud:/tmp/boto",
+                    "gcloud:/test-tmp/boto",
                 ),
             ],
         )
@@ -71,19 +71,19 @@ class HostAccessTests(TestCase):
                     "extension",
                     "gcloud",
                     "Extension gcloud",
-                    "/tmp/gcloud",
+                    "/test-tmp/gcloud",
                     None,
                     True,
-                    "gcloud:/tmp/gcloud",
+                    "gcloud:/test-tmp/gcloud",
                 ),
                 BuiltInShareValue(
                     "extension",
                     "gcloud",
                     "Extension gcloud",
-                    "/tmp/boto",
+                    "/test-tmp/boto",
                     None,
                     True,
-                    "gcloud:/tmp/boto",
+                    "gcloud:/test-tmp/boto",
                 ),
             ],
             values,
@@ -98,42 +98,42 @@ class HostAccessTests(TestCase):
 
     def test_built_in_group_selection_values_returns_extension_group_rows(self) -> None:
         values = host_access.built_in_group_selection_values(
-            "builtin:extension:gcloud:/tmp/gcloud",
+            "builtin:extension:gcloud:/test-tmp/gcloud",
             [
                 BuiltInShareValue(
                     "extension",
                     "gcloud",
                     "Extension gcloud",
-                    "/tmp/gcloud",
+                    "/test-tmp/gcloud",
                     None,
                     True,
-                    "gcloud:/tmp/gcloud",
+                    "gcloud:/test-tmp/gcloud",
                 ),
                 BuiltInShareValue(
                     "extension",
                     "gcloud",
                     "Extension gcloud",
-                    "/tmp/boto",
+                    "/test-tmp/boto",
                     None,
                     True,
-                    "gcloud:/tmp/boto",
+                    "gcloud:/test-tmp/boto",
                 ),
             ],
         )
 
         self.assertEqual(
             [
-                "builtin:extension:gcloud:/tmp/gcloud",
-                "builtin:extension:gcloud:/tmp/boto",
+                "builtin:extension:gcloud:/test-tmp/gcloud",
+                "builtin:extension:gcloud:/test-tmp/boto",
             ],
             values,
         )
 
     def test_build_confirmation_request_filters_newly_enabled_values(self) -> None:
         built_in_shares = [
-            BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True),
+            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True),
             BuiltInShareValue(
-                "extension", "gh", "Extension gh", "/tmp/.config/gh", False, True
+                "extension", "gh", "Extension gh", "/test-tmp/.config/gh", False, True
             ),
         ]
         docker_option = DockerOptionValue("docker", "Docker socket", True, True)
@@ -146,13 +146,13 @@ class HostAccessTests(TestCase):
 
     def test_merge_confirmed_host_access_applies_confirmed_values(self) -> None:
         built_in_shares = [
-            BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)
+            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)
         ]
         docker_option = DockerOptionValue("docker", "Docker socket", None, True)
         confirmed = HostAccessConfirmValues(
             docker_options=[DockerOptionValue("docker", "Docker socket", None, False)],
             git_support_shares=[
-                BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)
+                BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)
             ],
             extension_shares=[],
         )
@@ -164,7 +164,7 @@ class HostAccessTests(TestCase):
         )
 
         self.assertEqual(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)],
             merged_shares,
         )
         self.assertEqual(
@@ -180,16 +180,16 @@ class HostAccessTests(TestCase):
         host_access.apply_confirmed_host_access(
             draft,
             [
-                BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True),
+                BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True),
                 BuiltInShareValue(
-                    "extension", "gh", "Extension gh", "/tmp/.config/gh", None, False
+                    "extension", "gh", "Extension gh", "/test-tmp/.config/gh", None, False
                 ),
             ],
-            [CustomShareValue("/tmp/logs")],
+            [CustomShareValue("/test-tmp/logs")],
             DockerOptionValue("docker", "Docker socket", None, True),
         )
 
-        self.assertEqual(["/tmp/logs"], draft.agent_cfg.shares)
+        self.assertEqual(["/test-tmp/logs"], draft.agent_cfg.shares)
         self.assertTrue(draft.agent_cfg.mounts.ssh)
         self.assertEqual({"gh": False}, draft.agent_cfg.extension_mounts)
         self.assertTrue(draft.agent_cfg.mounts.docker)

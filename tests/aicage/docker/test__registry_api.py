@@ -68,3 +68,7 @@ class RemoteApiTests(TestCase):
             data, headers = _registry_api._fetch_json("https://example.test/api", None)
         self.assertEqual({"token": "abc"}, data)
         self.assertEqual({"x-test": "1"}, headers)
+
+    def test_fetch_json_raises_on_non_http_scheme(self) -> None:
+        with self.assertRaises(_registry_api.RegistryDiscoveryError):
+            _registry_api._fetch_json("file:///tmp/example.json", None)

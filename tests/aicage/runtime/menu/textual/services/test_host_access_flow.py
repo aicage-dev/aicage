@@ -20,7 +20,7 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
             AgentConfig(), ParsedArgs(False, "", "codex", [], False, [], None)
         )
         built_in_shares = [
-            BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", True, True),
+            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", True, True),
         ]
         docker_option = DockerOptionValue("docker", "Docker socket", True, True)
 
@@ -30,11 +30,11 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
         accepted, current = await host_access_flow.confirm_and_apply_host_access(
             draft,
             built_in_shares,
-            [CustomShareValue("/tmp/logs")],
+            [CustomShareValue("/test-tmp/logs")],
             docker_option,
             confirm_host_access,
         )
 
         self.assertTrue(accepted)
         self.assertEqual(built_in_shares, current)
-        self.assertEqual(["/tmp/logs"], draft.agent_cfg.shares)
+        self.assertEqual(["/test-tmp/logs"], draft.agent_cfg.shares)

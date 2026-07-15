@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # nosec B404 -- subprocess exceptions are part of the Docker query error contract.
 
 from docker.errors import DockerException, ImageNotFound
 

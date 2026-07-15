@@ -98,7 +98,7 @@ class ExtensionHandlerTests(TestCase):
             agent_homepage="https://example.com",
             build_local=local,
             valid_bases={"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
         )
 
     @staticmethod
@@ -110,7 +110,7 @@ class ExtensionHandlerTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             )
         }
         return ConfigContext(

@@ -4,7 +4,7 @@ import urllib.error
 from email.message import Message
 from unittest import TestCase
 
-from aicage._network import classify_network_failure, host_from_url
+from aicage._network import classify_network_failure, host_from_url, require_http_url
 
 
 class NetworkTests(TestCase):
@@ -38,3 +38,10 @@ class NetworkTests(TestCase):
         self.assertEqual(
             "api.github.com", host_from_url("https://api.github.com/repos")
         )
+
+    def test_require_http_url_accepts_https(self) -> None:
+        self.assertEqual("https://example.test/path", require_http_url("https://example.test/path"))
+
+    def test_require_http_url_rejects_file_scheme(self) -> None:
+        with self.assertRaises(urllib.error.URLError):
+            require_http_url("file:///tmp/example.json")

@@ -58,7 +58,7 @@ def _build_agents_and_bases() -> (
             base_image_description="Minimal",
             architectures=["amd64", "arm64"],
             build_local=False,
-            local_definition_dir=Path("/tmp/alpine"),
+            local_definition_dir=Path("/test-tmp/alpine"),
         ),
         "debian": BaseMetadata(
             from_image="debian:latest",
@@ -66,7 +66,7 @@ def _build_agents_and_bases() -> (
             base_image_description="Default",
             architectures=["amd64", "arm64"],
             build_local=False,
-            local_definition_dir=Path("/tmp/debian"),
+            local_definition_dir=Path("/test-tmp/debian"),
         ),
         "ubuntu": BaseMetadata(
             from_image="ubuntu:latest",
@@ -74,7 +74,7 @@ def _build_agents_and_bases() -> (
             base_image_description="Default",
             architectures=["amd64", "arm64"],
             build_local=False,
-            local_definition_dir=Path("/tmp/ubuntu"),
+            local_definition_dir=Path("/test-tmp/ubuntu"),
         ),
     }
     agents = {
@@ -89,7 +89,7 @@ def _build_agents_and_bases() -> (
                 "debian": "ghcr.io/aicage/aicage:codex-debian",
                 "ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu",
             },
-            local_definition_dir=Path("/tmp/codex"),
+            local_definition_dir=Path("/test-tmp/codex"),
         )
     }
     return bases, agents

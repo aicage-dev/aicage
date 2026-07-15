@@ -95,7 +95,7 @@ def _run_config(
     base: str = "ubuntu",
     base_definition_dir: Path | None = None,
 ) -> RunConfig:
-    base_dir = base_definition_dir or Path("/tmp/base")
+    base_dir = base_definition_dir or Path("/test-tmp/base")
     run_config = mock.Mock(spec=RunConfig)
     run_config.agent = "codex"
     run_config.selection = mock.Mock()
@@ -121,7 +121,7 @@ def _run_config(
             agent_homepage="https://example.com",
             build_local=build_local,
             valid_bases={},
-            local_definition_dir=Path("/tmp/agent"),
+            local_definition_dir=Path("/test-tmp/agent"),
         )
     }
     return run_config

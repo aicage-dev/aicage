@@ -20,9 +20,9 @@ class MountPromptTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts())
         project_path = Path("/repo")
         git_items = [
-            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
-            (MOUNT_GITROOT_KEY, "Git root (repository access): /tmp/root"),
-            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
+            (MOUNT_GITROOT_KEY, "Git root (repository access): /test-tmp/root"),
+            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /test-tmp/gnupg"),
         ]
 
         with (
@@ -61,8 +61,8 @@ class MountPromptTests(TestCase):
             name="GitHub CLI",
             description="Desc",
             shares=["~/.config/gh", "~/.cache/gh:ro"],
-            directory=Path("/tmp/ext"),
-            scripts_dir=Path("/tmp/ext/scripts"),
+            directory=Path("/test-tmp/ext"),
+            scripts_dir=Path("/test-tmp/ext/scripts"),
             dockerfile_path=None,
         )
 
@@ -103,8 +103,8 @@ class MountPromptTests(TestCase):
             name="GitHub CLI",
             description="Desc",
             shares=["~/.config/gh"],
-            directory=Path("/tmp/ext"),
-            scripts_dir=Path("/tmp/ext/scripts"),
+            directory=Path("/test-tmp/ext"),
+            scripts_dir=Path("/test-tmp/ext/scripts"),
             dockerfile_path=None,
         )
 
@@ -132,8 +132,8 @@ class MountPromptTests(TestCase):
             name="Sample",
             description="Desc",
             shares=["~/.sample"],
-            directory=Path("/tmp/ext"),
-            scripts_dir=Path("/tmp/ext/scripts"),
+            directory=Path("/test-tmp/ext"),
+            scripts_dir=Path("/test-tmp/ext/scripts"),
             dockerfile_path=None,
         )
 
@@ -167,8 +167,8 @@ class MountPromptTests(TestCase):
             name="Empty",
             description="Desc",
             shares=[],
-            directory=Path("/tmp/ext"),
-            scripts_dir=Path("/tmp/ext/scripts"),
+            directory=Path("/test-tmp/ext"),
+            scripts_dir=Path("/test-tmp/ext/scripts"),
             dockerfile_path=None,
         )
 
