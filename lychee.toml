@@ -1,0 +1,5 @@
+# Exclude URLs and mail addresses from checking. The values are treated as regular expressions
+exclude = [
+    '^http://host.docker.internal:.*$',
+    '^http://localhost:.*$',
+]
