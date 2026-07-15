@@ -19,7 +19,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.scripts]
-aicage = "aicage.cli:main"
+aicage = "aicage.cli.entrypoint:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aicage"]
