@@ -1,13 +1,11 @@
 {
-  "reportPrivateUsage": "error",
-  "reportPrivateImportUsage": "error",
-
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": ["src", "tests"],
   "executionEnvironments": [
     {
-      "root": "tests",
-      "reportPrivateUsage": "none",
-      "reportPrivateImportUsage": "none",
-      "reportAttributeAccessIssue": "none"
+      "root": ".",
+      "extraPaths": ["src"]
     }
   ]
 }
