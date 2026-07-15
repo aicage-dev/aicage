@@ -193,9 +193,7 @@ class ExtensionsScreenTests(TestCase):
                 return_value=process,
             ),
         ):
-            copied = screen_module.ExtensionsScreen._copy_to_system_clipboard(
-                "echo hi"
-            )
+            copied = screen_module.ExtensionsScreen._copy_to_system_clipboard("echo hi")
 
         self.assertTrue(copied)
         process.stdin.write.assert_called_once_with("echo hi")

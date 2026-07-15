@@ -18,7 +18,11 @@ class MountDisplayTests(TestCase):
 
     def test_overview_mount_list_items_returns_built_in_and_custom_items(self) -> None:
         values = _mount_display.overview_mount_list_items(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
             [CustomShareValue("/test-tmp/logs:ro"), CustomShareValue("/test-tmp/data")],
         )
 
@@ -50,7 +54,9 @@ class MountDisplayTests(TestCase):
 
         self.assertEqual("Extension gh", values[0].prefix)
         self.assertEqual("Read-only: /test-tmp/gh", values[0].path)
-        self.assertEqual("builtin:extension:gh:/test-tmp/gh:ro", values[0].selection_key)
+        self.assertEqual(
+            "builtin:extension:gh:/test-tmp/gh:ro", values[0].selection_key
+        )
         self.assertFalse(values[0].enabled)
 
     def test_mount_selection_rows_aligns_prefixes(self) -> None:

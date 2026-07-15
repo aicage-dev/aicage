@@ -102,7 +102,9 @@ class PromptConfirmTests(TestCase):
         input_mock.assert_not_called()
 
     def test_prompt_mount_git_support_renders_extension_section(self) -> None:
-        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")]
+        git_items = [
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")
+        ]
         extension_items = [("gh", "Extension gh shares: /test-tmp/gh")]
         with (
             mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"),

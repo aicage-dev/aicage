@@ -12,7 +12,10 @@ from aicage.runtime.docker_args.support.resolver_types import MountRequest, Reso
 
 class AgentConfigResolverTests(TestCase):
     def test_resolve_maps_agent_config_paths(self) -> None:
-        host_paths = [Path("/test-tmp/agent/.codex"), Path("/test-tmp/agent/.config/codex")]
+        host_paths = [
+            Path("/test-tmp/agent/.codex"),
+            Path("/test-tmp/agent/.config/codex"),
+        ]
         runtime_agent_config = RuntimeAgentConfig(
             agent_path_files=[],
             agent_path_directories=["~/.codex", "~/.config/codex"],
