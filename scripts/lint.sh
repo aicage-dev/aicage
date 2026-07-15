@@ -44,3 +44,6 @@ if [[ ${#shell_scripts[@]} -gt 0 ]]; then
   echo "Run shellcheck"
   shellcheck -x "${shell_scripts[@]}"
 fi
+
+# flake8
+flake8 .
