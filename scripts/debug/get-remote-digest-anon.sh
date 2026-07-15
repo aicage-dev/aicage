@@ -42,7 +42,7 @@ fi
 
 # Determine registry vs repo
 first="${ref%%/*}"
-if [[ "${ref}" == */* && ( "${first}" == *.* || "${first}" == *:* || "${first}" == "localhost" ) ]]; then
+if [[ "${ref}" == */* && ("${first}" == *.* || "${first}" == *:* || "${first}" == "localhost") ]]; then
   registry="${first}"
   repo="${ref#*/}"
 else
@@ -144,11 +144,12 @@ if [[ -z "${token}" || "${token}" == "null" ]]; then
 fi
 
 # 3) HEAD again with the Bearer token to get Docker-Content-Digest
-auth_headers="$(curl -fsSIL \
-  -H "Accept: ${accept}" \
-  -H "Authorization: Bearer ${token}" \
-  "${manifest_url}" \
-  | tr -d '\r'
+auth_headers="$(
+  curl -fsSIL \
+    -H "Accept: ${accept}" \
+    -H "Authorization: Bearer ${token}" \
+    "${manifest_url}" |
+    tr -d '\r'
 )"
 
 digest="$(printf '%s\n' "${auth_headers}" | extract_digest || true)"

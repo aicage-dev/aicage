@@ -17,5 +17,5 @@ fi
 echo "Fetching Goose release from https://api.github.com/repos/aaif-goose/goose/releases/latest" >&2
 curl \
   "${curl_args[@]}" \
-  https://api.github.com/repos/aaif-goose/goose/releases/latest \
-  | jq -r '.name | ltrimstr("v")'
+  https://api.github.com/repos/aaif-goose/goose/releases/latest |
+  jq -r '.name | ltrimstr("v")'
