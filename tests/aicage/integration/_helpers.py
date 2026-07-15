@@ -27,7 +27,9 @@ from aicage.docker.refs import repository_from_image_ref
 from aicage.registry.agent_build._store import BuildRecord, BuildStore
 from aicage.registry.digest.remote_digest import get_remote_digest
 
-if sys.platform != "win32":
+if sys.platform == "win32":
+    pty = None
+else:
     import pty
 
 
@@ -67,6 +69,7 @@ def run_cli_pty(
             exit_status = process.wait()
         return cast(int, exit_status), "".join(chunks)
 
+    assert pty is not None
     master_fd, slave_fd = pty.openpty()
     process = subprocess.Popen(
         [sys.executable, "-m", "aicage", *args],
