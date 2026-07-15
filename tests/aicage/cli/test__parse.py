@@ -161,7 +161,9 @@ class ParseCliTests(TestCase):
         self.assertEqual([], parsed.shares)
 
     def test_parse_cli_with_share(self) -> None:
-        parsed = parse_cli(["--share", "data", "--share", "/test-tmp/one:ro", "--", "codex"])
+        parsed = parse_cli(
+            ["--share", "data", "--share", "/test-tmp/one:ro", "--", "codex"]
+        )
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_menu_none(self) -> None:
