@@ -116,7 +116,7 @@ The complete user documentation lives in the wiki:
 | crush    | Crush              | [https://github.com/charmbracelet/crush](https://github.com/charmbracelet/crush)   |
 | droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
 | gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                     |
-| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                     |
+| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
 | opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
 | qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
 
