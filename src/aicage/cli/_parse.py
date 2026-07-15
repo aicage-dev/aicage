@@ -6,6 +6,9 @@ from aicage import __version__
 from aicage._logging import get_logger
 from aicage.cli._errors import CliError
 from aicage.cli_types import ParsedArgs
+from aicage.config.agent.loader import load_agents
+from aicage.config.base.loader import load_bases
+from aicage.config.errors import ConfigError
 
 _MIN_REMAINING_WITH_AGENT = 2
 _MAX_CONFIG_TOKENS = 2
@@ -182,10 +185,24 @@ def _parse_agent_section(
         docker_args = " ".join(remaining).strip()
         return docker_args, post_argv[0], post_argv[1:]
     if not remaining:
-        raise CliError(
-            "Missing arguments. Provide an agent name (and optional docker args)."
-        )
+        raise CliError(_missing_agent_message())
     first: str = remaining[0]
     if first.startswith("-") or "=" in first:
         raise CliError("Docker args require '--' before the agent.")
     return "", first, remaining[1:]
+
+
+def _missing_agent_message() -> str:
+    message = "Missing argument. Provide an agent name."
+    available_agents = _available_agents()
+    if not available_agents:
+        return message
+    agent_list = ", ".join(available_agents)
+    return f"{message} Available agents: {agent_list}."
+
+
+def _available_agents() -> list[str]:
+    try:
+        return sorted(load_agents(load_bases()))
+    except ConfigError:
+        return []

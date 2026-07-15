@@ -4,6 +4,7 @@ from unittest import TestCase, mock
 from aicage import __version__
 from aicage.cli._errors import CliError
 from aicage.cli._parse import parse_cli
+from aicage.config.errors import ConfigError
 
 
 class ParseCliTests(TestCase):
@@ -76,8 +77,10 @@ class ParseCliTests(TestCase):
         self.assertEqual(f"{__version__}\n", stdout.getvalue())
 
     def test_parse_cli_requires_arguments(self) -> None:
-        with self.assertRaises(CliError):
+        with self.assertRaises(CliError) as ctx:
             parse_cli([])
+        self.assertIn("Missing argument. Provide an agent name", str(ctx.exception))
+        self.assertIn("Available agents:", str(ctx.exception))
 
     def test_parse_cli_requires_agent_after_separator(self) -> None:
         with self.assertRaises(CliError):
@@ -86,6 +89,19 @@ class ParseCliTests(TestCase):
     def test_parse_cli_requires_agent_name(self) -> None:
         with self.assertRaises(CliError):
             parse_cli([""])
+
+    def test_parse_cli_requires_arguments_without_agent_list_on_config_error(
+        self,
+    ) -> None:
+        with mock.patch(
+            "aicage.cli._parse.load_bases", side_effect=ConfigError("broken")
+        ):
+            with self.assertRaises(CliError) as ctx:
+                parse_cli([])
+        self.assertEqual(
+            "Missing argument. Provide an agent name.",
+            str(ctx.exception),
+        )
 
     def test_parse_cli_requires_separator_for_docker_args(self) -> None:
         with self.assertRaises(CliError) as ctx:
