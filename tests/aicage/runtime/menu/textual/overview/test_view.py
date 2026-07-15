@@ -38,14 +38,14 @@ class OverviewTests(TestCase):
 
     def test_on_button_pressed_posts_accept_message(self) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
-        overview.post_message = mock.Mock()
         event = mock.Mock()
         event.button.id = "ok"
 
-        overview.on_button_pressed(event)
+        with mock.patch.object(overview, "post_message") as post_message_mock:
+            overview.on_button_pressed(event)
 
         self.assertIsInstance(
-            overview.post_message.call_args.args[0], Overview.AcceptRequested
+            post_message_mock.call_args.args[0], Overview.AcceptRequested
         )
 
     def test_on_selection_list_selected_changed_updates_built_in_shares(self) -> None:
@@ -68,16 +68,16 @@ class OverviewTests(TestCase):
         self,
     ) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
-        overview.post_message = mock.Mock()
         event = mock.Mock()
         event.selection_list.id = "shares_overview_list"
         event.selection.value = "custom:/test-tmp/logs"
 
-        overview.on_selection_list_selection_toggled(event)
+        with mock.patch.object(overview, "post_message") as post_message_mock:
+            overview.on_selection_list_selection_toggled(event)
 
         event.selection_list.select.assert_called_once_with("custom:/test-tmp/logs")
         self.assertIsInstance(
-            overview.post_message.call_args.args[0], Overview.EditCustomShareRequested
+            post_message_mock.call_args.args[0], Overview.EditCustomShareRequested
         )
 
     def test_on_selection_list_selection_toggled_syncs_extension_group_rows(
@@ -152,7 +152,6 @@ class OverviewTests(TestCase):
                 "#docker_overview_list": docker_list,
             }[selector]
 
-        overview.query_one = mock.Mock(side_effect=query_one_side_effect)
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
             ParsedArgs(False, "", "codex", [], False, [], None),
@@ -165,6 +164,7 @@ class OverviewTests(TestCase):
                 new_callable=mock.PropertyMock,
                 return_value=mock.Mock(width=120),
             ),
+            mock.patch.object(overview, "query_one", side_effect=query_one_side_effect),
             mock.patch(
                 "aicage.runtime.menu.textual.overview.view.shares_values"
             ) as shares_values,
@@ -193,9 +193,9 @@ class OverviewTests(TestCase):
         )
         shell = mock.Mock()
         shell.styles = mock.Mock()
-        overview.query_one = mock.Mock(return_value=shell)
 
-        overview.apply_shell_width(120)
+        with mock.patch.object(overview, "query_one", return_value=shell):
+            overview.apply_shell_width(120)
 
         self.assertEqual(shell.styles.width, shell.styles.min_width)
         self.assertEqual(shell.styles.width, shell.styles.max_width)
@@ -203,36 +203,36 @@ class OverviewTests(TestCase):
     def test_focus_default_focuses_ok_button(self) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         button = mock.Mock(spec=Button)
-        overview.query_one = mock.Mock(return_value=button)
 
-        overview.focus_default()
+        with mock.patch.object(overview, "query_one", return_value=button):
+            overview.focus_default()
 
         button.focus.assert_called_once_with()
 
     def test_focus_section_focuses_section_button(self) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         button = mock.Mock(spec=Button)
-        overview.query_one = mock.Mock(return_value=button)
 
-        overview.focus_section("base")
+        with mock.patch.object(overview, "query_one", return_value=button):
+            overview.focus_section("base")
 
         button.focus.assert_called_once_with()
 
     def test_hide_shell_hides_shell(self) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         shell = mock.Mock()
-        overview.query_one = mock.Mock(return_value=shell)
 
-        overview.hide_shell()
+        with mock.patch.object(overview, "query_one", return_value=shell):
+            overview.hide_shell()
 
         self.assertFalse(shell.display)
 
     def test_show_shell_shows_shell(self) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         shell = mock.Mock()
-        overview.query_one = mock.Mock(return_value=shell)
 
-        overview.show_shell()
+        with mock.patch.object(overview, "query_one", return_value=shell):
+            overview.show_shell()
 
         self.assertTrue(shell.display)
 
@@ -253,9 +253,9 @@ class OverviewTests(TestCase):
         )
         selection_list = mock.Mock(spec=SelectionList)
         selection_list.selected = ["builtin:git_support:ssh"]
-        overview.query_one = mock.Mock(return_value=selection_list)
 
-        values = overview.current_built_in_shares()
+        with mock.patch.object(overview, "query_one", return_value=selection_list):
+            values = overview.current_built_in_shares()
 
         self.assertTrue(values[0].enabled)
 
@@ -272,9 +272,9 @@ class OverviewTests(TestCase):
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         selection_list = mock.Mock(spec=SelectionList)
         selection_list.selected = ["docker:socket"]
-        overview.query_one = mock.Mock(return_value=selection_list)
 
-        value = overview.current_docker_socket_enabled(False)
+        with mock.patch.object(overview, "query_one", return_value=selection_list):
+            value = overview.current_docker_socket_enabled(False)
 
         self.assertTrue(value.enabled)
 
@@ -282,12 +282,12 @@ class OverviewTests(TestCase):
 class OverviewAsyncTests(IsolatedAsyncioTestCase):
     async def test_on_button_pressed_posts_section_message(self) -> None:
         overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
-        overview.post_message = mock.Mock()
         event = mock.Mock()
         event.button.id = "base"
 
-        overview.on_button_pressed(event)
+        with mock.patch.object(overview, "post_message") as post_message_mock:
+            overview.on_button_pressed(event)
 
         self.assertIsInstance(
-            overview.post_message.call_args.args[0], Overview.EditSectionRequested
+            post_message_mock.call_args.args[0], Overview.EditSectionRequested
         )

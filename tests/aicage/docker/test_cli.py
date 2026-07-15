@@ -8,7 +8,9 @@ from aicage.docker.errors import DockerError
 class DockerCliTests(TestCase):
     @staticmethod
     def test_run_docker_command_passes_through() -> None:
-        process = subprocess.CompletedProcess(["docker", "run"], 0)
+        process: subprocess.CompletedProcess[str] = subprocess.CompletedProcess(
+            ["docker", "run"], 0
+        )
         with mock.patch(
             "aicage.docker.cli.subprocess.run", return_value=process
         ) as run_mock:
@@ -33,7 +35,7 @@ class DockerCliTests(TestCase):
 
     @staticmethod
     def test_run_docker_command_capture_returns_process() -> None:
-        process = subprocess.CompletedProcess(
+        process: subprocess.CompletedProcess[str] = subprocess.CompletedProcess(
             ["docker", "run"], 0, stdout="ok", stderr=""
         )
         with mock.patch(
