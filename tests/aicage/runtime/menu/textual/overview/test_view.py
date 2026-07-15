@@ -22,22 +22,29 @@ class OverviewTests(TestCase):
         self.assertEqual(1, len(widgets))
 
     def test_compose_includes_project_path_row(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
 
         self.assertEqual("/test-tmp/project", overview._project_path)
 
     def test_compose_formats_agent_and_project_context(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
 
         self.assertEqual("codex", overview._agent)
         self.assertEqual("/test-tmp/project", overview._project_path)
         self.assertEqual("Agent:   codex", overview._context_line("Agent:", "codex"))
         self.assertEqual(
-            "Project: /test-tmp/project", overview._context_line("Project:", "/test-tmp/project")
+            "Project: /test-tmp/project",
+            overview._context_line("Project:", "/test-tmp/project"),
         )
 
     def test_on_button_pressed_posts_accept_message(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         event = mock.Mock()
         event.button.id = "ok"
 
@@ -51,7 +58,11 @@ class OverviewTests(TestCase):
     def test_on_selection_list_selected_changed_updates_built_in_shares(self) -> None:
         state = OverviewState(
             None,
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
             [],
             False,
         )
@@ -67,7 +78,9 @@ class OverviewTests(TestCase):
     def test_on_selection_list_selection_toggled_posts_custom_share_message(
         self,
     ) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         event = mock.Mock()
         event.selection_list.id = "shares_overview_list"
         event.selection.value = "custom:/test-tmp/logs"
@@ -127,7 +140,9 @@ class OverviewTests(TestCase):
         )
 
     def test_refresh_from_updates_overview_widgets(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         shell = mock.Mock()
         shell.styles = mock.Mock()
         base_button = mock.Mock()
@@ -201,7 +216,9 @@ class OverviewTests(TestCase):
         self.assertEqual(shell.styles.width, shell.styles.max_width)
 
     def test_focus_default_focuses_ok_button(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         button = mock.Mock(spec=Button)
 
         with mock.patch.object(overview, "query_one", return_value=button):
@@ -210,7 +227,9 @@ class OverviewTests(TestCase):
         button.focus.assert_called_once_with()
 
     def test_focus_section_focuses_section_button(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         button = mock.Mock(spec=Button)
 
         with mock.patch.object(overview, "query_one", return_value=button):
@@ -219,7 +238,9 @@ class OverviewTests(TestCase):
         button.focus.assert_called_once_with()
 
     def test_hide_shell_hides_shell(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         shell = mock.Mock()
 
         with mock.patch.object(overview, "query_one", return_value=shell):
@@ -228,7 +249,9 @@ class OverviewTests(TestCase):
         self.assertFalse(shell.display)
 
     def test_show_shell_shows_shell(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         shell = mock.Mock()
 
         with mock.patch.object(overview, "query_one", return_value=shell):
@@ -269,7 +292,9 @@ class OverviewTests(TestCase):
         self.assertIsNot(state.custom_shares, values)
 
     def test_current_docker_socket_enabled_returns_selected_state(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         selection_list = mock.Mock(spec=SelectionList)
         selection_list.selected = ["docker:socket"]
 
@@ -281,7 +306,9 @@ class OverviewTests(TestCase):
 
 class OverviewAsyncTests(IsolatedAsyncioTestCase):
     async def test_on_button_pressed_posts_section_message(self) -> None:
-        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
         event = mock.Mock()
         event.button.id = "base"
 

@@ -27,7 +27,11 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
             [CustomShareValue("/test-tmp/logs")],
             False,
         )
@@ -76,7 +80,11 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
             [CustomShareValue("/test-tmp/logs")],
             False,
         )
@@ -92,12 +100,24 @@ class SharesOverviewTests(TestCase):
 
     def test_merge_built_in_shares_preserves_current_enabled_state(self) -> None:
         values = _shares.merge_built_in_shares(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)],
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                )
+            ],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
         )
 
         self.assertEqual(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
             values,
         )
 

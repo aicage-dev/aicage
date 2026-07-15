@@ -40,7 +40,9 @@ class NetworkTests(TestCase):
         )
 
     def test_require_http_url_accepts_https(self) -> None:
-        self.assertEqual("https://example.test/path", require_http_url("https://example.test/path"))
+        self.assertEqual(
+            "https://example.test/path", require_http_url("https://example.test/path")
+        )
 
     def test_require_http_url_rejects_file_scheme(self) -> None:
         with self.assertRaises(urllib.error.URLError):
