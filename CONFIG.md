@@ -6,8 +6,11 @@
 - Project config: `~/.aicage/projects/<sha256>.yaml`
 - `aicage --config info` prints the current project config path and contents (`print` is an alias).
 - `aicage --config remove` removes the current project config file.
+- `aicage --config remove <agent>` removes only one agent entry from the current project config.
 
 Project config filenames are the SHA-256 digest of the resolved project path string.
+
+Project config is normally created and updated through the `aicage` menu UI rather than edited by hand.
 
 ## Global config schema
 
@@ -42,8 +45,11 @@ agents:
     image_ref: string
     extensions: [string]
     shares: [string]
+    extension_mounts:
+      <extension>: bool
     mounts:
       gitconfig: bool
+      gitroot: bool
       gnupg: bool
       ssh: bool
       docker: bool
@@ -66,8 +72,10 @@ Used under `agents.<agent>` in the project config.
 | `image_ref`        | string | Optional | Selected image ref (prebuilt or extended).               |
 | `extensions`       | list   | Optional | Ordered list of selected extensions for this agent.      |
 | `shares`           | list   | Optional | Persisted share mounts (`HOST` or `HOST:ro`).            |
+| `extension_mounts` | map    | Optional | Persisted on/off choices for extension-defined mounts.   |
 | `mounts`           | map    | Optional | Host resource mount preferences.                         |
 | `mounts.gitconfig` | bool   | Optional | Mount the host Git config file.                          |
+| `mounts.gitroot`   | bool   | Optional | Mount the detected Git repository root.                  |
 | `mounts.gnupg`     | bool   | Optional | Mount the host GnuPG home for Git signing.               |
 | `mounts.ssh`       | bool   | Optional | Mount the host SSH keys for Git SSH access and signing.  |
 | `mounts.docker`    | bool   | Optional | Mount `/run/docker.sock` into the container.             |
