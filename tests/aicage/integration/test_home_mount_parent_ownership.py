@@ -28,7 +28,8 @@ def test_home_mount_parent_ownership_for_nested_mounts(
     )
     exit_code, output = run_cli_pty(
         [
-            "--yes",
+            "--menu",
+            "none",
             "--share",
             str(shared_parent),
             "--env",
@@ -66,7 +67,8 @@ def test_nested_mount_dedup_prefers_parent_mount(
     )
     exit_code, output = run_cli_pty(
         [
-            "--yes",
+            "--menu",
+            "none",
             "--share",
             str(shared_parent),
             "--env",
@@ -104,7 +106,8 @@ def test_workspace_path_is_usable_when_covered_by_parent_mount(
     )
     exit_code, output = run_cli_pty(
         [
-            "--yes",
+            "--menu",
+            "none",
             "--share",
             str(shared_parent),
             "--env",
@@ -140,7 +143,8 @@ def test_home_file_mount_is_direct_not_symlinked(
     )
     exit_code, output = run_cli_pty(
         [
-            "--yes",
+            "--menu",
+            "none",
             "--share",
             str(home_file),
             "--env",

@@ -1,9 +1,9 @@
-_PROMPT_MODE: dict[str, bool] = {"assume_yes": False}
+_PROMPT_MODE: dict[str, bool] = {"non_interactive_defaults": False}
 
 
-def set_assume_yes(value: bool) -> None:
-    _PROMPT_MODE["assume_yes"] = value
+def set_non_interactive_defaults(value: bool) -> None:
+    _PROMPT_MODE["non_interactive_defaults"] = value
 
 
-def assume_yes_enabled() -> bool:
-    return _PROMPT_MODE["assume_yes"]
+def non_interactive_defaults_enabled() -> bool:
+    return _PROMPT_MODE["non_interactive_defaults"]

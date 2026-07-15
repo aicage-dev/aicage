@@ -24,32 +24,35 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
 - Navigate to your project directory and run:
 
   ```bash
-  aicage --yes <agent>
+  aicage --menu none <agent>
   ```
 
-`--yes` accepts suggested defaults and skips setup prompts. This is the fastest first run.
+`--menu none` accepts suggested defaults and skips setup prompts. This is the fastest first run.
 
 - Built-in agent examples:
 
   ```bash
-  aicage --yes claude
-  aicage --yes codex
-  aicage --yes copilot
-  aicage --yes crush
-  aicage --yes droid
-  aicage --yes gemini
-  aicage --yes goose
-  aicage --yes opencode
-  aicage --yes qwen
+  aicage --menu none claude
+  aicage --menu none codex
+  aicage --menu none copilot
+  aicage --menu none crush
+  aicage --menu none droid
+  aicage --menu none gemini
+  aicage --menu none goose
+  aicage --menu none opencode
+  aicage --menu none qwen
   ```
 
 Example output of first run with agent `codex`:
 
-[![Example output of first run with agent codex](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes-thumb.png)](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes.png)
+[![Example output of first run with agent codex using defaults](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes-thumb.png)](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes.png)
 
 ## Full setup (optional)
 
 If you want full interactive setup instead of defaults:
+
+- Use `aicage <agent>` for the Textual menu.
+- Use `aicage --menu simple <agent>` for the line-based prompt menu.
 
 1. Show project config path and contents:
 
@@ -64,7 +67,7 @@ If you want full interactive setup instead of defaults:
    aicage --config remove <agent>
    ```
 
-3. Run again without `--yes`:
+3. Run again without `--menu none`:
 
    ```bash
    aicage <agent>
@@ -158,7 +161,7 @@ Image updates are handled automatically; see [Updates](https://github.com/aicage
 ## aicage options
 
 - `--dry-run` prints the composed `docker run` command without executing it.
-- `-y`, `--yes` applies default answers for all prompts and suppresses prompt output.
+- `--menu textual|simple|none` selects the Textual menu, the simple line-based menu, or no menu.
 - `--docker` mounts `/run/docker.sock` into the container to enable Docker-in-Docker workflows.
 - `--share <path>` mounts a host path into the container at the same path. Repeatable; add `:ro` for read-only.
 - Extensions can also request grouped host mounts during setup.

@@ -202,7 +202,7 @@ def setup_marker_extension_workspace(
 
 def run_agent_version(env: dict[str, str], workspace: Path, agent_name: str) -> None:
     exit_code, output = run_cli_pty(
-        ["--yes", agent_name, "--version"],
+        ["--menu", "none", agent_name, "--version"],
         env=env,
         cwd=workspace,
     )
@@ -220,7 +220,7 @@ def assert_marker_extension_ready(
     share_dir: Path | None = None,
 ) -> None:
     exit_code, output = run_cli_pty(
-        ["--yes", agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        ["--menu", "none", agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
         env=env,
         cwd=workspace,
     )
@@ -229,7 +229,7 @@ def assert_marker_extension_ready(
     if share_dir is not None:
         container_path = paths_module.container_project_path(share_dir).as_posix()
         exit_code, output = run_cli_pty(
-            ["--yes", agent_name, "-lc", f"test -d {container_path}"],
+            ["--menu", "none", agent_name, "-lc", f"test -d {container_path}"],
             env=env,
             cwd=workspace,
         )

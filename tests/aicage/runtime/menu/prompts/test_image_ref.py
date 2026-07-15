@@ -29,10 +29,13 @@ class PromptImageRefTests(TestCase):
             result = prompt_for_image_ref(f"{DEFAULT_EXTENDED_IMAGE_NAME}:default")
         self.assertEqual("repo:tag", result)
 
-    def test_prompt_for_image_ref_returns_default_when_assume_yes(self) -> None:
+    def test_prompt_for_image_ref_returns_default_when_non_interactive_defaults_enabled(self) -> None:
         default_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:default"
         with (
-            mock.patch("aicage.runtime.menu.prompts.image_ref.assume_yes_enabled", return_value=True),
+            mock.patch(
+                "aicage.runtime.menu.prompts.image_ref.non_interactive_defaults_enabled",
+                return_value=True,
+            ),
             mock.patch("aicage.runtime.menu.prompts.image_ref.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):

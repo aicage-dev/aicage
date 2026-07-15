@@ -21,9 +21,12 @@ class PromptConfirmTests(TestCase):
         ):
             self.assertTrue(confirm._prompt_yes_no("Continue?", default=False))
 
-    def test__prompt_yes_no_uses_default_when_assume_yes(self) -> None:
+    def test__prompt_yes_no_uses_default_when_non_interactive_defaults_enabled(self) -> None:
         with (
-            mock.patch("aicage.runtime.menu.prompts.confirm.assume_yes_enabled", return_value=True),
+            mock.patch(
+                "aicage.runtime.menu.prompts.confirm.non_interactive_defaults_enabled",
+                return_value=True,
+            ),
             mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
@@ -65,13 +68,16 @@ class PromptConfirmTests(TestCase):
             selected = confirm.prompt_mount_git_support(git_items, [])
         self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_SSH_KEY], selected)
 
-    def test_prompt_mount_git_support_uses_all_when_assume_yes(self) -> None:
+    def test_prompt_mount_git_support_uses_all_when_non_interactive_defaults_enabled(self) -> None:
         git_items = [
             (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
             (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
         ]
         with (
-            mock.patch("aicage.runtime.menu.prompts.confirm.assume_yes_enabled", return_value=True),
+            mock.patch(
+                "aicage.runtime.menu.prompts.confirm.non_interactive_defaults_enabled",
+                return_value=True,
+            ),
             mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):

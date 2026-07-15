@@ -89,7 +89,7 @@ class RuntimeConfigTests(TestCase):
                 docker_socket=False,
                 shares=[],
                 config_action=None,
-                yes=True,
+                menu="none",
             )
             with (
                 mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
@@ -184,7 +184,7 @@ class RuntimeConfigTests(TestCase):
                     docker_socket=False,
                     shares=["data", "logs:ro"],
                     config_action=None,
-                    yes=True,
+                    menu="none",
                 )
                 with (
                     mock.patch("aicage.config.runtime_config.SettingsStore", new=store_factory),
@@ -249,7 +249,7 @@ class RuntimeConfigTests(TestCase):
                     docker_socket=False,
                     shares=["shared", "new"],
                     config_action=None,
-                    yes=True,
+                    menu="none",
                 )
                 prompt_mock = mock.Mock(return_value=True)
                 with (
@@ -307,7 +307,7 @@ class RuntimeConfigTests(TestCase):
                 docker_socket=False,
                 shares=[],
                 config_action=None,
-                yes=True,
+                menu="none",
             )
             apply_mount_preferences_mock = mock.Mock()
             with (

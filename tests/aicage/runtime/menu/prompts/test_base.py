@@ -81,9 +81,12 @@ class PromptTests(TestCase):
             )
         self.assertEqual("ubuntu", choice)
 
-    def test_prompt_for_base_uses_default_when_assume_yes(self) -> None:
+    def test_prompt_for_base_uses_default_when_non_interactive_defaults_enabled(self) -> None:
         with (
-            mock.patch("aicage.runtime.menu.prompts.base.assume_yes_enabled", return_value=True),
+            mock.patch(
+                "aicage.runtime.menu.prompts.base.non_interactive_defaults_enabled",
+                return_value=True,
+            ),
             mock.patch("aicage.runtime.menu.prompts.base.resolve_default_base", return_value="fedora"),
             mock.patch("aicage.runtime.menu.prompts.base.ensure_tty_for_prompt") as tty_mock,
             mock.patch("builtins.input") as input_mock,

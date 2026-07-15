@@ -16,7 +16,8 @@ def test_docker_socket_runs_hello_world_in_container(
 
     exit_code, output = run_cli_pty(
         [
-            "--yes",
+            "--menu",
+            "none",
             "--docker",
             "-e",
             "AICAGE_ENTRYPOINT_CMD=bash",
