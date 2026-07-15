@@ -56,8 +56,8 @@ class PromptConfirmTests(TestCase):
 
     def test_prompt_mount_git_support_defaults_to_all(self) -> None:
         git_items = [
-            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
-            (MOUNT_GITROOT_KEY, "Git root (repository access): /tmp/root"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
+            (MOUNT_GITROOT_KEY, "Git root (repository access): /test-tmp/root"),
         ]
         with (
             mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"),
@@ -68,9 +68,9 @@ class PromptConfirmTests(TestCase):
 
     def test_prompt_mount_git_support_accepts_selection(self) -> None:
         git_items = [
-            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
-            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
-            (MOUNT_SSH_KEY, "SSH keys (for Git SSH/signing): /tmp/ssh"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
+            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /test-tmp/gnupg"),
+            (MOUNT_SSH_KEY, "SSH keys (for Git SSH/signing): /test-tmp/ssh"),
         ]
         with (
             mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"),
@@ -83,8 +83,8 @@ class PromptConfirmTests(TestCase):
         self,
     ) -> None:
         git_items = [
-            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
-            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
+            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /test-tmp/gnupg"),
         ]
         with (
             mock.patch(
@@ -102,8 +102,8 @@ class PromptConfirmTests(TestCase):
         input_mock.assert_not_called()
 
     def test_prompt_mount_git_support_renders_extension_section(self) -> None:
-        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig")]
-        extension_items = [("gh", "Extension gh shares: /tmp/gh")]
+        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")]
+        extension_items = [("gh", "Extension gh shares: /test-tmp/gh")]
         with (
             mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"),
             mock.patch("builtins.input", return_value=""),
@@ -144,11 +144,11 @@ class PromptConfirmTests(TestCase):
         ) as prompt_mock:
             self.assertTrue(
                 confirm.prompt_persist_shares(
-                    ["/tmp/share"], ["/tmp/one", "/tmp/two:ro"]
+                    ["/test-tmp/share"], ["/test-tmp/one", "/test-tmp/two:ro"]
                 )
             )
         prompt_mock.assert_called_once_with(
-            "Persist share mounts '/tmp/share' for this project (adding to 2 existing share(s))?",
+            "Persist share mounts '/test-tmp/share' for this project (adding to 2 existing share(s))?",
             default=True,
         )
 

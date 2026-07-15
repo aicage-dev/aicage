@@ -31,3 +31,9 @@ class DigestHttpTests(TestCase):
             )
         self.assertIsNone(status)
         self.assertEqual({}, headers)
+
+    def test_head_request_rejects_non_http_scheme(self) -> None:
+        status, headers = _http.head_request("file:///tmp/example.json", {"Accept": "x"})
+
+        self.assertIsNone(status)
+        self.assertEqual({}, headers)

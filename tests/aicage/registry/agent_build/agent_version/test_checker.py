@@ -194,5 +194,5 @@ class AgentVersionCheckTests(TestCase):
             agent_homepage="https://example.com",
             build_local=build_local,
             valid_bases={},
-            local_definition_dir=Path("/tmp/definition"),
+            local_definition_dir=Path("/test-tmp/definition"),
         )

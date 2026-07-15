@@ -88,7 +88,7 @@ class ResolverTests(TestCase):
         docker_mock.assert_called_once_with(context, "codex", parsed)
 
     def test_resolve_docker_args_inserts_agent_config(self) -> None:
-        project_cfg = ProjectConfig(path="/tmp/project", agents={})
+        project_cfg = ProjectConfig(path="/test-tmp/project", agents={})
         context = ConfigContext(
             store=mock.Mock(),
             project_cfg=project_cfg,
@@ -106,7 +106,7 @@ class ResolverTests(TestCase):
             mock.patch(f"{_MODULE}.gpg.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.shares.resolve", return_value=ResolvedArgs()),
-            mock.patch(f"{_MODULE}.Path.home", return_value=Path("/tmp/home")),
+            mock.patch(f"{_MODULE}.Path.home", return_value=Path("/test-tmp/home")),
         ):
             resolver.resolve_docker_args(context, "codex", None)
 
@@ -197,7 +197,7 @@ class ResolverTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/base"),
+                local_definition_dir=Path("/test-tmp/base"),
             )
         }
 
@@ -211,7 +211,7 @@ class ResolverTests(TestCase):
                 agent_homepage="https://example.com",
                 build_local=False,
                 valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
-                local_definition_dir=Path("/tmp/agent"),
+                local_definition_dir=Path("/test-tmp/agent"),
             )
         }
 

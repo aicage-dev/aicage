@@ -39,7 +39,7 @@ class LocalBuildRefsTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             )
         }
         ref = _refs.get_base_image_ref(run_config)

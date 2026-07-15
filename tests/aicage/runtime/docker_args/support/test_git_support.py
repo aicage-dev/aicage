@@ -18,7 +18,7 @@ _MODULE = "aicage.runtime.docker_args.support.git_support"
 class GitSupportTests(TestCase):
     def test_resolve_git_config_path_parses_first_file(self) -> None:
         output = (
-            "file:/home/user/.gitconfig user.name=Name\nfile:/tmp/other key=value\n"
+            "file:/home/user/.gitconfig user.name=Name\nfile:/test-tmp/other key=value\n"
         )
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
             path = git_support.resolve_git_config_path()
@@ -30,8 +30,8 @@ class GitSupportTests(TestCase):
         self.assertIsNone(path)
 
     def test_resolve_git_root_prefers_superproject(self) -> None:
-        project_path = Path("/tmp/project")
-        superproject = "/tmp/root"
+        project_path = Path("/test-tmp/project")
+        superproject = "/test-tmp/root"
         with mock.patch(
             f"{_MODULE}.capture_stdout",
             return_value=f"{superproject}\n",
@@ -44,8 +44,8 @@ class GitSupportTests(TestCase):
         )
 
     def test_resolve_git_root_falls_back_to_toplevel(self) -> None:
-        project_path = Path("/tmp/project")
-        toplevel = "/tmp/root"
+        project_path = Path("/test-tmp/project")
+        toplevel = "/test-tmp/root"
         with mock.patch(
             f"{_MODULE}.capture_stdout",
             side_effect=["", f"{toplevel}\n"],
@@ -121,12 +121,12 @@ class GitSupportTests(TestCase):
     def test_git_support_prompt_items(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
-        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig")]
+        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")]
 
         with (
             mock.patch(
                 f"{_MODULE}.resolve_git_config_path",
-                return_value=Path("/tmp/gitconfig"),
+                return_value=Path("/test-tmp/gitconfig"),
             ),
             mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),

@@ -29,7 +29,7 @@ class EnsureExtendedImageTests(TestCase):
         extension = self._extension("ext")
         run_config = self._run_config(
             extensions=["ext"],
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
             available_extensions={"ext": extension},
         )
         store = mock.Mock()
@@ -60,7 +60,7 @@ class EnsureExtendedImageTests(TestCase):
         run_config = self._run_config(
             extensions=["ext"],
             build_local=True,
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
             available_extensions={"ext": extension},
         )
         store = mock.Mock()
@@ -90,7 +90,7 @@ class EnsureExtendedImageTests(TestCase):
             ) as cleanup_mock,
             mock.patch(
                 "aicage.registry.extension_build.ensure.build_log_path",
-                return_value=Path("/tmp/logs/build.log"),
+                return_value=Path("/test-tmp/logs/build.log"),
             ),
             mock.patch(
                 "aicage.registry.extension_build.ensure.now_iso",
@@ -112,7 +112,7 @@ class EnsureExtendedImageTests(TestCase):
         extension = self._extension("ext")
         run_config = self._run_config(
             extensions=["ext"],
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
             available_extensions={"ext": extension},
         )
         store = mock.Mock()
@@ -143,8 +143,8 @@ class EnsureExtendedImageTests(TestCase):
             name=extension_id,
             description="desc",
             shares=[],
-            directory=Path("/tmp/ext"),
-            scripts_dir=Path("/tmp/ext/scripts"),
+            directory=Path("/test-tmp/ext"),
+            scripts_dir=Path("/test-tmp/ext/scripts"),
             dockerfile_path=None,
         )
 
@@ -152,7 +152,7 @@ class EnsureExtendedImageTests(TestCase):
     def _run_config(
         extensions: list[str],
         build_local: bool = False,
-        local_definition_dir: Path = Path("/tmp/def"),
+        local_definition_dir: Path = Path("/test-tmp/def"),
         available_extensions: dict[str, ExtensionMetadata] | None = None,
     ) -> RunConfig:
         bases = {
@@ -162,7 +162,7 @@ class EnsureExtendedImageTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/base"),
+                local_definition_dir=Path("/test-tmp/base"),
             )
         }
         agents = {
@@ -177,11 +177,11 @@ class EnsureExtendedImageTests(TestCase):
             )
         }
         return RunConfig(
-            project_path=Path("/tmp/project"),
+            project_path=Path("/test-tmp/project"),
             agent="codex",
             context=ConfigContext(
                 store=mock.Mock(),
-                project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+                project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
                 agents=agents,
                 bases=bases,
                 extensions=available_extensions or {},

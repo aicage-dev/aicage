@@ -26,7 +26,7 @@ class ExecutionScreenTests(TestCase):
             side_effect=[status, progress, details, build_info, progress, details, log],
         ):
             screen.show_phase_started(
-                "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+                "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
             )
 
         status.update.assert_called_once_with("Pulling image repo:tag")
@@ -64,12 +64,12 @@ class ExecutionScreenTests(TestCase):
             screen.show_phase_started(
                 "build",
                 "Building extended image repo:tag",
-                Path("/tmp/build.log"),
+                Path("/test-tmp/build.log"),
             )
 
         status.update.assert_called_once_with("Building extended image")
         image_ref.update.assert_called_once_with("repo:tag")
-        log_path.update.assert_called_once_with("/tmp/build.log")
+        log_path.update.assert_called_once_with("/test-tmp/build.log")
         self.assertFalse(progress.display)
         self.assertFalse(details.display)
         self.assertTrue(build_info.display)
@@ -100,7 +100,7 @@ class ExecutionScreenTests(TestCase):
             ],
         ):
             screen.show_phase_started(
-                "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+                "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
             )
             screen.show_phase_progress(
                 "pull",
@@ -177,10 +177,10 @@ class ExecutionScreenTests(TestCase):
         with mock.patch.object(
             screen, "query_one", side_effect=[status, log_path, build_info, log]
         ):
-            screen.show_phase_failed("build", "Build failed", Path("/tmp/build.log"))
+            screen.show_phase_failed("build", "Build failed", Path("/test-tmp/build.log"))
 
         status.update.assert_called_once_with("Build failed")
-        log_path.update.assert_called_once_with("/tmp/build.log")
+        log_path.update.assert_called_once_with("/test-tmp/build.log")
         self.assertTrue(build_info.display)
         log.write.assert_called_once_with("[build] Build failed")
 
@@ -188,7 +188,7 @@ class ExecutionScreenTests(TestCase):
         screen = execution_screen.ExecutionScreen()
         event = mock.Mock()
         event.button.id = "copy_log_path"
-        screen._build_log_path = "/tmp/build.log"
+        screen._build_log_path = "/test-tmp/build.log"
         app = mock.Mock()
 
         with (
@@ -202,4 +202,4 @@ class ExecutionScreenTests(TestCase):
             screen.on_button_pressed(event)
 
         event.stop.assert_called_once_with()
-        copy_mock.assert_called_once_with("/tmp/build.log", app.copy_to_clipboard)
+        copy_mock.assert_called_once_with("/test-tmp/build.log", app.copy_to_clipboard)

@@ -42,7 +42,7 @@ class AgentLoaderTests(TestCase):
                     base_image_description="Default",
                     architectures=["amd64", "arm64"],
                     build_local=False,
-                    local_definition_dir=Path("/tmp/base"),
+                    local_definition_dir=Path("/test-tmp/base"),
                 )
             }
             custom_agent = AgentMetadata(
@@ -52,7 +52,7 @@ class AgentLoaderTests(TestCase):
                 agent_homepage="https://example.com",
                 build_local=True,
                 valid_bases={"ubuntu": "aicage:custom-ubuntu"},
-                local_definition_dir=Path("/tmp/custom"),
+                local_definition_dir=Path("/test-tmp/custom"),
             )
             with (
                 mock.patch(

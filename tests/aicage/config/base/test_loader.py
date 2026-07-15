@@ -52,7 +52,7 @@ class BaseLoaderTests(TestCase):
                 base_image_description="Custom base",
                 architectures=["amd64", "arm64"],
                 build_local=True,
-                local_definition_dir=Path("/tmp/custom"),
+                local_definition_dir=Path("/test-tmp/custom"),
             )
             with (
                 mock.patch(

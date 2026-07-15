@@ -16,13 +16,13 @@ class CustomShareFlowTests(TestCase):
             AgentConfig(), ParsedArgs(False, "", "codex", [], False, [], None)
         )
 
-        added = custom_share_flow.add_custom_share(state, draft, "/tmp/logs")
+        added = custom_share_flow.add_custom_share(state, draft, "/test-tmp/logs")
 
         self.assertTrue(added)
-        self.assertEqual([CustomShareValue("/tmp/logs")], state.custom_shares)
+        self.assertEqual([CustomShareValue("/test-tmp/logs")], state.custom_shares)
 
     def test_update_custom_share_replaces_existing_value(self) -> None:
-        state = OverviewState(None, [], [CustomShareValue("/tmp/logs")], False)
+        state = OverviewState(None, [], [CustomShareValue("/test-tmp/logs")], False)
         draft = _build_draft(
             AgentConfig(), ParsedArgs(False, "", "codex", [], False, [], None)
         )
@@ -30,9 +30,9 @@ class CustomShareFlowTests(TestCase):
         updated = custom_share_flow.update_custom_share(
             state,
             draft,
-            "/tmp/logs",
-            ShareEditorResult("/tmp/cache", False),
+            "/test-tmp/logs",
+            ShareEditorResult("/test-tmp/cache", False),
         )
 
         self.assertTrue(updated)
-        self.assertEqual([CustomShareValue("/tmp/cache")], state.custom_shares)
+        self.assertEqual([CustomShareValue("/test-tmp/cache")], state.custom_shares)

@@ -65,7 +65,7 @@ class RunCommandTests(TestCase):
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
-                Path("/tmp/agent"),
+                Path("/test-tmp/agent"),
             )
         self.assertEqual(0, result.returncode)
         self.assertEqual("1.2.3\n", result.stdout)
@@ -83,7 +83,7 @@ class RunCommandTests(TestCase):
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
-                Path("/tmp/agent"),
+                Path("/test-tmp/agent"),
             )
         self.assertEqual(2, result.returncode)
         self.assertEqual("partial", result.stdout)
@@ -99,7 +99,7 @@ class RunCommandTests(TestCase):
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
-                Path("/tmp/agent"),
+                Path("/test-tmp/agent"),
             )
         self.assertEqual(124, result.returncode)
         self.assertEqual("", result.stdout)
@@ -115,7 +115,7 @@ class RunCommandTests(TestCase):
         ):
             result = run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
-                Path("/tmp/agent"),
+                Path("/test-tmp/agent"),
             )
         self.assertEqual(1, result.returncode)
         self.assertEqual("", result.stdout)
@@ -135,7 +135,7 @@ class RunCommandTests(TestCase):
         ):
             run.run_builder_version_check(
                 "ghcr.io/aicage/aicage-image-util:agent-version",
-                Path("/tmp/agent"),
+                Path("/test-tmp/agent"),
             )
 
         command = run_mock.call_args.args[0]
@@ -154,7 +154,7 @@ class RunCommandTests(TestCase):
                 env=[EnvVar(name="EXTRA", value="1")],
                 mounts=[
                     MountSpec(
-                        host_path=Path("/tmp/one"),
+                        host_path=Path("/test-tmp/one"),
                         container_path=PurePosixPath("/opt/one"),
                         read_only=True,
                     )
@@ -164,7 +164,7 @@ class RunCommandTests(TestCase):
         self.assertIn("-e", cmd)
         self.assertIn("EXTRA=1", cmd)
         self.assertIn("--mount", cmd)
-        host_mount = Path("/tmp/one").as_posix()
+        host_mount = Path("/test-tmp/one").as_posix()
         container_mount = PurePosixPath("/opt/one").as_posix()
         self.assertIn(f"type=bind,src={host_mount},dst={container_mount},readonly", cmd)
         self.assertNotIn("AICAGE_AGENT_CONFIG_PATH", " ".join(cmd))
