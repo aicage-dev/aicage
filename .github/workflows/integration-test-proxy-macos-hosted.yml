@@ -121,13 +121,16 @@ jobs:
           HTTPS_PROXY: http://localhost:3128
           ALL_PROXY: http://localhost:3128
           NO_PROXY: localhost,127.0.0.1
+          TEST_NODE: ${{ matrix.test }}
         run: |
-          pytest -m proxy_integration ${{ matrix.test }}
+          pytest -m proxy_integration "$TEST_NODE"
 
       - name: "On failure: Collect aicage logs"
         if: failure()
+        env:
+          JOB_INDEX: ${{ strategy.job-index }}
         run: |
-          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          artifact_dir="$RUNNER_TEMP/aicage-logs-$JOB_INDEX"
           mkdir -p "$artifact_dir"
           if [ -d "$HOME/.aicage" ]; then
             mkdir -p "$artifact_dir/$HOME"
@@ -143,9 +146,11 @@ jobs:
           if-no-files-found: ignore
 
       - name: Verify proxy traffic in Squid logs
+        env:
+          EXPECTED_HOST: ${{ matrix.expected_host }}
         if: always()
         run: |
           docker logs squid-proxy > squid-access.log
           echo "Last proxy access lines:"
           tail -n 200 squid-access.log || true
-          grep -q '${{ matrix.expected_host }}' squid-access.log
+          grep -q "$EXPECTED_HOST" squid-access.log

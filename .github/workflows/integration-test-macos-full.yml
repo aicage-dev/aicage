@@ -79,8 +79,10 @@ jobs:
           PY
 
       - name: Print integration matrix
+        env:
+          MATRIX_JSON: ${{ steps.collect.outputs.matrix }}
         run: |
-          echo '${{ steps.collect.outputs.matrix }}' | python -m json.tool
+          printf '%s\n' "$MATRIX_JSON" | python -m json.tool
 
   integration-macos:
     name: macOS full integration (${{ matrix.test }})
@@ -124,12 +126,15 @@ jobs:
       - name: Run macOS full integration test
         env:
           AICAGE_RUN_INTEGRATION: "1"
-        run: pytest -m "integration and not proxy_integration" ${{ matrix.test }}
+          TEST_NODE: ${{ matrix.test }}
+        run: pytest -m "integration and not proxy_integration" "$TEST_NODE"
 
       - name: Collect aicage logs
         if: failure() || inputs.upload_logs_on_success
+        env:
+          JOB_INDEX: ${{ strategy.job-index }}
         run: |
-          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          artifact_dir="$RUNNER_TEMP/aicage-logs-$JOB_INDEX"
           mkdir -p "$artifact_dir"
           if [ -d "$HOME/.aicage" ]; then
             mkdir -p "$artifact_dir/$HOME"

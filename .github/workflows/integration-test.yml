@@ -58,8 +58,10 @@ jobs:
           PY
 
       - name: Print integration matrix
+        env:
+          MATRIX_JSON: ${{ steps.collect.outputs.matrix }}
         run: |
-          echo '${{ steps.collect.outputs.matrix }}' | python -m json.tool
+          printf '%s\n' "$MATRIX_JSON" | python -m json.tool
 
   integration:
     name: Integration (${{ matrix.test }})
@@ -98,12 +100,15 @@ jobs:
       - name: Run integration test
         env:
           AICAGE_RUN_INTEGRATION: "1"
-        run: pytest -m "integration and not proxy_integration" ${{ matrix.test }}
+          TEST_NODE: ${{ matrix.test }}
+        run: pytest -m "integration and not proxy_integration" "$TEST_NODE"
 
       - name: "On failure: Collect aicage logs"
         if: failure()
+        env:
+          JOB_INDEX: ${{ strategy.job-index }}
         run: |
-          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          artifact_dir="$RUNNER_TEMP/aicage-logs-$JOB_INDEX"
           mkdir -p "$artifact_dir"
           while IFS= read -r path; do
             rel_path="${path#/}"
