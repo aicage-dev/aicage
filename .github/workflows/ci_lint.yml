@@ -92,13 +92,13 @@ jobs:
       - name: Run Pyright
         run: pyright .
 
-      - name: Get user information
-        run: |
-          {
-            echo "MEGALINTER_UID=$(id -u)"
-            echo "MEGALINTER_GID=$(id -g)"
-            echo "MEGALINTER_USER=$(id -un)"
-          } >> "$GITHUB_ENV"
+      # - name: Get user information
+      #   run: |
+      #     {
+      #       echo "MEGALINTER_UID=$(id -u)"
+      #       echo "MEGALINTER_GID=$(id -g)"
+      #       echo "MEGALINTER_USER=$(id -un)"
+      #     } >> "$GITHUB_ENV"
 
       - name: MegaLinter
         id: ml
@@ -112,9 +112,9 @@ jobs:
           APPLY_FIXES_MODE: pull_request
           REPORT_OUTPUT_FOLDER: ${{ runner.temp }}/megalinter-reports
           # new non-root user test
-          MEGALINTER_UID: ${{ env.MEGALINTER_UID }}
-          MEGALINTER_GID: ${{ env.MEGALINTER_GID }}
-          MEGALINTER_USER: ${{ env.MEGALINTER_USER }}
+          # MEGALINTER_UID: ${{ env.MEGALINTER_UID }}
+          # MEGALINTER_GID: ${{ env.MEGALINTER_GID }}
+          # MEGALINTER_USER: ${{ env.MEGALINTER_USER }}
 
       - name: Upload MegaLinter artifacts
         if: success() || failure()
