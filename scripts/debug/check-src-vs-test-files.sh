@@ -21,7 +21,7 @@ while IFS= read -r -d '' module_path; do
     echo "${module_path} misses test ${test_path}"
     had_errors=1
     shopt -s extglob
-    if compgen -G "$test_path_wrong" > /dev/null; then
+    if compgen -G "$test_path_wrong" >/dev/null; then
       echo "  -> test file seems to exist at: $(compgen -G "$test_path_wrong")"
       # git mv $(compgen -G "$test_path_wrong") "${test_path}"
     fi

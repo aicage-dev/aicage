@@ -17,8 +17,8 @@ agents=(claude copilot codex qwen droid opencode goose gemini)
 ghcr_pull_token() {
   local repo="$1"
   curl -fsSL \
-    "${registry_token_url}:${repo}:pull" \
-    | jq -r '.token'
+    "${registry_token_url}:${repo}:pull" |
+    jq -r '.token'
 }
 
 ghcr_list_all_tags() {
@@ -50,7 +50,7 @@ match_tag() {
   for x in "${agents[@]}"; do
     if [[ "$tag" == *"$x"* ]]; then
       if [[ -n "$t" && "$t" != "$x" ]]; then
-        return 1  # ambiguous agent
+        return 1 # ambiguous agent
       fi
       t="$x"
     fi
@@ -59,7 +59,7 @@ match_tag() {
   for x in "${bases[@]}"; do
     if [[ "$tag" == *"$x"* ]]; then
       if [[ -n "$b" && "$b" != "$x" ]]; then
-        return 1  # ambiguous base
+        return 1 # ambiguous base
       fi
       b="$x"
     fi
@@ -91,8 +91,8 @@ main() {
 
       : "${per_base["$base"]:=0}"
       : "${per_agent["$agent"]:=0}"
-      per_base["$base"]=$(( per_base["$base"] + 1 ))
-      per_agent["$agent"]=$(( per_agent["$agent"] + 1 ))
+      per_base["$base"]=$((per_base["$base"] + 1))
+      per_agent["$agent"]=$((per_agent["$agent"] + 1))
     else
       unmatched+=("$tag")
     fi
