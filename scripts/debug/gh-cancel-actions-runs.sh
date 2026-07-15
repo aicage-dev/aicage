@@ -50,8 +50,8 @@ cancel_run() {
 
   # 202 = accepted
   curl -fsS -o /dev/null -w "%{http_code}\n" "${hdrs[@]}" \
-    -X POST "${API}/repos/${OWNER}/${REPO}/actions/runs/${run_id}/cancel" \
-  | awk -v id="$run_id" '
+    -X POST "${API}/repos/${OWNER}/${REPO}/actions/runs/${run_id}/cancel" |
+    awk -v id="$run_id" '
       $1=="202"{print "canceled run_id="id; next}
       {print "FAILED run_id="id" http="$1; exit 1}
     '
@@ -73,8 +73,8 @@ while :; do
     .workflow_runs[]
     | select(($st != "") ? (.status == $st) : (($ex == "") or (.status != $ex)))
     | .id
-  ' <<<"$json" \
-  | xargs -n1 -P "${CONCURRENCY}" bash -c 'cancel_run "$@"' _
+  ' <<<"$json" |
+    xargs -n1 -P "${CONCURRENCY}" bash -c 'cancel_run "$@"' _
 
   page=$((page + 1))
 done
