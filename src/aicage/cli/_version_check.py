@@ -1,11 +1,11 @@
 import json
 import re
-import subprocess
+import subprocess  # nosec B404 -- subprocess is required for the explicit pipx upgrade command.
 import urllib.error
 import urllib.request
 
 from aicage._logging import get_logger
-from aicage._network import classify_network_failure, host_from_url
+from aicage._network import classify_network_failure, host_from_url, require_http_url
 from aicage.constants import PYPI_VERSION_CHECK_TIMEOUT_SECONDS
 from aicage.runtime.menu.prompts.confirm import prompt_update_aicage
 
@@ -19,9 +19,9 @@ def _check_for_update(current_version: str) -> str | None:
     host = host_from_url(_PYPI_URL)
     try:
         request = urllib.request.Request(
-            _PYPI_URL, headers={"Accept": "application/json"}
+            require_http_url(_PYPI_URL), headers={"Accept": "application/json"}
         )
-        with urllib.request.urlopen(
+        with urllib.request.urlopen(  # nosec B310 -- fixed HTTPS PyPI URL, validated by require_http_url().
             request, timeout=PYPI_VERSION_CHECK_TIMEOUT_SECONDS
         ) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -67,7 +67,7 @@ def maybe_prompt_update(current_version: str) -> bool:
 def _run_upgrade() -> bool:
     logger = get_logger()
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 -- command is a fixed internal pipx invocation without shell expansion.
             _UPGRADE_COMMAND.split(),
             check=False,
             capture_output=True,

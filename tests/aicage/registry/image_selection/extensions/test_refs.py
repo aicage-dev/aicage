@@ -20,7 +20,7 @@ class ExtensionRefsTests(TestCase):
             agent_homepage="https://example.com",
             build_local=True,
             valid_bases={"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
         )
 
         result = base_image_ref(agent_metadata, "codex", "ubuntu", context)
@@ -36,7 +36,7 @@ class ExtensionRefsTests(TestCase):
             agent_homepage="https://example.com",
             build_local=False,
             valid_bases={"ubuntu": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu"},
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
         )
 
         result = base_image_ref(agent_metadata, "codex", "ubuntu", context)
@@ -52,7 +52,7 @@ class ExtensionRefsTests(TestCase):
             agent_homepage="https://example.com",
             build_local=False,
             valid_bases={"custom": f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-custom"},
-            local_definition_dir=Path("/tmp/def"),
+            local_definition_dir=Path("/test-tmp/def"),
         )
         context.bases["custom"] = BaseMetadata(
             from_image="ubuntu:latest",
@@ -75,12 +75,12 @@ class ExtensionRefsTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             )
         }
         return ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases=bases,
             extensions={},

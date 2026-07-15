@@ -22,7 +22,7 @@ class ImageSelectionMetadataTests(TestCase):
             agent_homepage="https://example.com",
             build_local=True,
             valid_bases={"ubuntu": "image", "alpine": "image"},
-            local_definition_dir=Path("/tmp/agent"),
+            local_definition_dir=Path("/test-tmp/agent"),
         )
         bases = self._bases()
         context = self._context(bases, {"agent": agent_metadata})
@@ -39,7 +39,7 @@ class ImageSelectionMetadataTests(TestCase):
             agent_homepage="https://example.com",
             build_local=True,
             valid_bases={"ubuntu": "image"},
-            local_definition_dir=Path("/tmp/agent"),
+            local_definition_dir=Path("/test-tmp/agent"),
         )
         bases = {"ubuntu": self._bases()["ubuntu"]}
         context = self._context(bases, {"agent": agent_metadata})
@@ -55,7 +55,7 @@ class ImageSelectionMetadataTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             ),
             "alpine": BaseMetadata(
                 from_image="alpine:latest",
@@ -63,7 +63,7 @@ class ImageSelectionMetadataTests(TestCase):
                 base_image_description="Minimal",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/alpine"),
+                local_definition_dir=Path("/test-tmp/alpine"),
             ),
         }
 
@@ -74,7 +74,7 @@ class ImageSelectionMetadataTests(TestCase):
     ) -> ConfigContext:
         return ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents=agents,
             bases=bases,
             extensions={},

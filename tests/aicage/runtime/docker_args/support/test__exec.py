@@ -15,7 +15,7 @@ class CaptureStdoutTests(TestCase):
         with mock.patch(
             f"{_MODULE}.subprocess.run", return_value=completed
         ) as run_mock:
-            result = capture_stdout(["cmd"], cwd=Path("/tmp"))
+            result = capture_stdout(["cmd"], cwd=Path("/test-tmp"))
         self.assertEqual("ok", result)
         run_mock.assert_called_once()
 

@@ -33,7 +33,7 @@ class BaseFilterTests(TestCase):
             base_image_description="Rolling",
             architectures=["amd64"],
             build_local=False,
-            local_definition_dir=Path("/tmp/arch"),
+            local_definition_dir=Path("/test-tmp/arch"),
         )
 
         with mock.patch(
@@ -52,7 +52,7 @@ class BaseFilterTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             ),
             "alpine": BaseMetadata(
                 from_image="alpine:latest",
@@ -60,12 +60,12 @@ class BaseFilterTests(TestCase):
                 base_image_description="Minimal",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/alpine"),
+                local_definition_dir=Path("/test-tmp/alpine"),
             ),
         }
         return ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases=bases,
             extensions={},
@@ -83,7 +83,7 @@ class BaseFilterTests(TestCase):
             agent_homepage="https://example.com",
             build_local=True,
             valid_bases={},
-            local_definition_dir=Path("/tmp/agent"),
+            local_definition_dir=Path("/test-tmp/agent"),
             base_exclude=base_exclude or [],
             base_distro_exclude=base_distro_exclude or [],
         )

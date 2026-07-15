@@ -11,7 +11,7 @@ class ParsedArgsTests(TestCase):
             agent="codex",
             agent_args=["--flag"],
             docker_socket=False,
-            shares=["/tmp/one", "/tmp/two:ro"],
+            shares=["/test-tmp/one", "/test-tmp/two:ro"],
             config_action=None,
         )
 
@@ -20,7 +20,7 @@ class ParsedArgsTests(TestCase):
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--flag"], parsed.agent_args)
         self.assertFalse(parsed.docker_socket)
-        self.assertEqual(["/tmp/one", "/tmp/two:ro"], parsed.shares)
+        self.assertEqual(["/test-tmp/one", "/test-tmp/two:ro"], parsed.shares)
         self.assertIsNone(parsed.config_action)
         self.assertIsNone(parsed.config_agent)
         self.assertEqual("textual", parsed.menu)

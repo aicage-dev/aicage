@@ -103,7 +103,7 @@ class MissingExtensionsTests(TestCase):
             matching.write_text(
                 "\n".join(
                     [
-                        "path: /tmp/project",
+                        "path: /test-tmp/project",
                         "agents:",
                         "  codex:",
                         "    image_ref: aicage:codex-ubuntu",
@@ -117,10 +117,10 @@ class MissingExtensionsTests(TestCase):
 
             matches = _find_projects_using_image(context, "aicage:codex-ubuntu")
 
-            self.assertEqual([("/tmp/project", matching)], matches)
+            self.assertEqual([("/test-tmp/project", matching)], matches)
 
     def test_find_projects_using_image_empty_ref_returns_empty(self) -> None:
-        context = self._context("/tmp", AgentConfig())
+        context = self._context("/test-tmp", AgentConfig())
 
         matches = _find_projects_using_image(context, "")
 
@@ -131,7 +131,7 @@ class MissingExtensionsTests(TestCase):
             store = mock.Mock()
             store.projects_dir = Path(tmp_dir)
             (Path(tmp_dir) / "one.yml").write_text(
-                "path: /tmp/project\n", encoding="utf-8"
+                "path: /test-tmp/project\n", encoding="utf-8"
             )
             context = self._context(tmp_dir, AgentConfig())
             context.store = store
@@ -150,7 +150,7 @@ class MissingExtensionsTests(TestCase):
             Path(tmp_dir, "one.yml").write_text(
                 "\n".join(
                     [
-                        "path: /tmp/project",
+                        "path: /test-tmp/project",
                         "agents:",
                         "  - not-a-mapping",
                     ]

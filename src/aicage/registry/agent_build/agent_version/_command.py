@@ -1,5 +1,6 @@
 import os
-import subprocess
+import shutil
+import subprocess  # nosec B404 -- subprocess is required for host-side version script execution.
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,9 +36,14 @@ def run_host(script_path: Path) -> _CommandResult:
             "version.sh at %s is not executable; running with /bin/bash.",
             script_path,
         )
+    bash_path = shutil.which("bash")
+    if bash_path is None:
+        message = "bash is not available on the host."
+        get_logger().warning("Version check failed in host: %s", message)
+        return _CommandResult(success=False, output="", error=message)
     try:
-        process = subprocess.run(
-            ["bash", str(script_path)],
+        process = subprocess.run(  # nosec B603 -- resolved bash path plus local script path, no shell usage.
+            [bash_path, str(script_path)],
             check=False,
             capture_output=True,
             text=True,

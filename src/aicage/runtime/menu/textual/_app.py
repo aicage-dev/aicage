@@ -253,7 +253,8 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         _, reporter = self._build_execution_reporting()
         error: BaseException | None = None
         try:
-            assert self._execute_setup is not None
+            if self._execute_setup is None:
+                raise RuntimeError("Missing Textual setup executor.")
             self._execute_setup(result.selection, reporter)
         except BaseException as exc:
             error = exc

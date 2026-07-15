@@ -6,6 +6,10 @@ from aicage.cli import _version_check as version_check
 
 
 class VersionCheckTests(TestCase):
+    def test_check_for_update_rejects_non_http_scheme(self) -> None:
+        with mock.patch.object(version_check, "_PYPI_URL", "file:///tmp/example.json"):
+            self.assertIsNone(version_check._check_for_update("1.0.0"))
+
     def test_check_for_update_handles_url_error(self) -> None:
         with mock.patch(
             "aicage.cli._version_check.urllib.request.urlopen",

@@ -31,7 +31,7 @@ class OverviewSelectionTests(TestCase):
                     agent_homepage="https://example.com",
                     build_local=False,
                     valid_bases={"ubuntu": "repo:ubuntu"},
-                    local_definition_dir=Path("/tmp/agent"),
+                    local_definition_dir=Path("/test-tmp/agent"),
                 )
             },
             bases={
@@ -41,7 +41,7 @@ class OverviewSelectionTests(TestCase):
                     base_image_description="Default",
                     architectures=["amd64", "arm64"],
                     build_local=False,
-                    local_definition_dir=Path("/tmp/base"),
+                    local_definition_dir=Path("/test-tmp/base"),
                 )
             },
             extensions={},
@@ -81,7 +81,7 @@ class OverviewSelectionTests(TestCase):
                     agent_homepage="https://example.com",
                     build_local=False,
                     valid_bases={"ubuntu": "repo:ubuntu"},
-                    local_definition_dir=Path("/tmp/agent"),
+                    local_definition_dir=Path("/test-tmp/agent"),
                 )
             },
             bases={
@@ -91,7 +91,7 @@ class OverviewSelectionTests(TestCase):
                     base_image_description="Default",
                     architectures=["amd64", "arm64"],
                     build_local=False,
-                    local_definition_dir=Path("/tmp/base"),
+                    local_definition_dir=Path("/test-tmp/base"),
                 )
             },
             extensions={},

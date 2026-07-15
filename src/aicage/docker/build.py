@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # nosec B404 -- subprocess is required to stream docker build output incrementally.
 from pathlib import Path
 from typing import TextIO
 
@@ -244,14 +244,15 @@ def _run_build_command(
     reporter: OperationReporter,
 ) -> int:
     try:
-        with subprocess.Popen(
+        with subprocess.Popen(  # nosec B603 -- command is an internal Docker CLI argument list without shell usage.
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             encoding="utf-8",
         ) as process:
-            assert process.stdout is not None
+            if process.stdout is None:
+                raise RuntimeError("Docker build process did not provide stdout.")
             for line in process.stdout:
                 stripped = line.rstrip("\n")
                 log_handle.write(line)

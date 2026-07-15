@@ -35,7 +35,7 @@ def build_agents_and_bases(
             base_image_description="Default",
             architectures=["amd64", "arm64"],
             build_local=False,
-            local_definition_dir=Path(f"/tmp/{name}"),
+            local_definition_dir=Path(f"/test-tmp/{name}"),
         )
         for name in bases
     }
@@ -49,7 +49,7 @@ def build_agents_and_bases(
             valid_bases={
                 name: f"ghcr.io/aicage/aicage:{agent_name}-{name}" for name in bases
             },
-            local_definition_dir=Path(f"/tmp/{agent_name}"),
+            local_definition_dir=Path(f"/test-tmp/{agent_name}"),
         )
     }
     return base_entries, agents

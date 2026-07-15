@@ -13,7 +13,7 @@ from aicage.config.run_config_draft import create_run_config_draft
 def _build_draft(
     agent_cfg: AgentConfig,
     parsed: ParsedArgs,
-    project_path: Path = Path("/tmp/project"),
+    project_path: Path = Path("/test-tmp/project"),
 ):
     return create_run_config_draft(
         project_path,
@@ -26,7 +26,7 @@ def _build_draft(
 def _build_context() -> ConfigContext:
     return ConfigContext(
         store=mock.Mock(),
-        project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+        project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
         agents={
             "codex": AgentMetadata(
                 agent_path_files=[],
@@ -38,7 +38,7 @@ def _build_context() -> ConfigContext:
                     "alpine": "repo:alpine",
                     "ubuntu": "repo:ubuntu",
                 },
-                local_definition_dir=Path("/tmp/codex"),
+                local_definition_dir=Path("/test-tmp/codex"),
             )
         },
         bases={
@@ -48,7 +48,7 @@ def _build_context() -> ConfigContext:
                 base_image_description="Minimal",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/alpine"),
+                local_definition_dir=Path("/test-tmp/alpine"),
             ),
             "ubuntu": BaseMetadata(
                 from_image="ubuntu:latest",
@@ -56,7 +56,7 @@ def _build_context() -> ConfigContext:
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             ),
         },
         extensions={
@@ -65,8 +65,8 @@ def _build_context() -> ConfigContext:
                 name="GitHub CLI",
                 description="GitHub CLI",
                 shares=["~/.config/gh"],
-                directory=Path("/tmp/extensions/gh"),
-                scripts_dir=Path("/tmp/extensions/gh/scripts"),
+                directory=Path("/test-tmp/extensions/gh"),
+                scripts_dir=Path("/test-tmp/extensions/gh/scripts"),
                 dockerfile_path=None,
             ),
             "gcloud": ExtensionMetadata(
@@ -74,8 +74,8 @@ def _build_context() -> ConfigContext:
                 name="Google Cloud CLI",
                 description="Google Cloud CLI",
                 shares=["~/.config/gcloud", "~/.boto"],
-                directory=Path("/tmp/extensions/gcloud"),
-                scripts_dir=Path("/tmp/extensions/gcloud/scripts"),
+                directory=Path("/test-tmp/extensions/gcloud"),
+                scripts_dir=Path("/test-tmp/extensions/gcloud/scripts"),
                 dockerfile_path=None,
             ),
         },
