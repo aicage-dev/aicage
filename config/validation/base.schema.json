@@ -25,10 +25,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": [
-          "amd64",
-          "arm64"
-        ]
+        "enum": ["amd64", "arm64"]
       },
       "uniqueItems": true,
       "minItems": 1
