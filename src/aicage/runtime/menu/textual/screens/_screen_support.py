@@ -3,7 +3,7 @@ from typing import Generic, TypeVar
 from textual.binding import Binding
 from textual.screen import Screen
 
-_CANCEL_BINDINGS = [
+_CANCEL_BINDINGS: list[Binding | tuple[str, str] | tuple[str, str, str]] = [
     Binding("escape", "cancel", "Cancel"),
     Binding("ctrl+c", "cancel", "Cancel"),
 ]

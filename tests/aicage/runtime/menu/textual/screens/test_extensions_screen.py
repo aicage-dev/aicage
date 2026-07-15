@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 from textual.widgets import Checkbox, Static, TextArea
 
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.runtime.menu.textual.screens import extensions_screen
+from aicage.runtime.menu.textual.screens import extensions_screen as screen_module
 
 
 class ExtensionsScreenTests(TestCase):
@@ -18,7 +18,7 @@ class ExtensionsScreenTests(TestCase):
             scripts_dir=mock.Mock(),
             dockerfile_path=None,
         )
-        screen = extensions_screen.ExtensionsScreen([option], ["gh"])
+        screen = screen_module.ExtensionsScreen([option], ["gh"])
 
         widgets = list(screen.compose())
 
@@ -35,7 +35,7 @@ class ExtensionsScreenTests(TestCase):
             dockerfile_path=None,
         )
 
-        checkboxes = extensions_screen.ExtensionsScreen([option], ["gh"])._checkboxes()
+        checkboxes = screen_module.ExtensionsScreen([option], ["gh"])._checkboxes()
 
         self.assertEqual(1, len(checkboxes))
 
@@ -49,7 +49,7 @@ class ExtensionsScreenTests(TestCase):
             scripts_dir=mock.Mock(),
             dockerfile_path=None,
         )
-        screen = extensions_screen.ExtensionsScreen([option], ["gh"])
+        screen = screen_module.ExtensionsScreen([option], ["gh"])
 
         with mock.patch.object(screen, "_focus_checkbox") as focus_checkbox_mock:
             screen.on_mount()
@@ -57,7 +57,7 @@ class ExtensionsScreenTests(TestCase):
         focus_checkbox_mock.assert_called_once_with(0)
 
     def test_on_mount_without_options_focuses_command_box(self) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
+        screen = screen_module.ExtensionsScreen([], [])
         command_box = mock.Mock(spec=TextArea)
 
         with mock.patch.object(screen, "query_one", return_value=command_box):
@@ -66,7 +66,7 @@ class ExtensionsScreenTests(TestCase):
         command_box.focus.assert_called_once_with()
 
     def test_content_widgets_without_options_returns_empty_state_message(self) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
+        screen = screen_module.ExtensionsScreen([], [])
 
         widgets = screen._content_widgets()
 
@@ -74,24 +74,26 @@ class ExtensionsScreenTests(TestCase):
         self.assertIsInstance(widgets[0], Static)
         self.assertIsInstance(widgets[1], Static)
         self.assertIsInstance(widgets[2], TextArea)
+        command_box = widgets[2]
+        assert isinstance(command_box, TextArea)
         self.assertEqual("No optional extensions available.", widgets[0].render())
         self.assertEqual("Get samples with:", widgets[1].render())
         self.assertEqual(
             "git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom",
-            widgets[2].text,
+            command_box.text,
         )
 
     def test_action_buttons_without_options_uses_copy_command_instead_of_clear(
         self,
     ) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
+        screen = screen_module.ExtensionsScreen([], [])
 
         buttons = screen._action_buttons()
 
         self.assertEqual(["copy_command", "cancel"], [button.id for button in buttons])
 
     def test_hint_text_without_options_mentions_custom_extensions_dir(self) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
+        screen = screen_module.ExtensionsScreen([], [])
 
         hint = screen._hint_text()
 
@@ -109,7 +111,7 @@ class ExtensionsScreenTests(TestCase):
             scripts_dir=mock.Mock(),
             dockerfile_path=None,
         )
-        screen = extensions_screen.ExtensionsScreen([option], [])
+        screen = screen_module.ExtensionsScreen([option], [])
         checkbox = mock.Mock()
         checkbox.value = True
 
@@ -131,7 +133,7 @@ class ExtensionsScreenTests(TestCase):
             scripts_dir=mock.Mock(),
             dockerfile_path=None,
         )
-        screen = extensions_screen.ExtensionsScreen([option], [])
+        screen = screen_module.ExtensionsScreen([option], [])
         event = mock.Mock()
         event.button.id = "ok"
 
@@ -142,7 +144,7 @@ class ExtensionsScreenTests(TestCase):
         accept_mock.assert_called_once_with()
 
     def test_on_button_pressed_copy_command_copies_samples_command(self) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
+        screen = screen_module.ExtensionsScreen([], [])
         event = mock.Mock()
         event.button.id = "copy_command"
 
@@ -155,7 +157,7 @@ class ExtensionsScreenTests(TestCase):
     def test_copy_samples_command_copies_to_system_clipboard_when_available(
         self,
     ) -> None:
-        screen = extensions_screen.ExtensionsScreen([], [])
+        screen = screen_module.ExtensionsScreen([], [])
         app = mock.Mock()
 
         with (
@@ -191,7 +193,7 @@ class ExtensionsScreenTests(TestCase):
                 return_value=process,
             ),
         ):
-            copied = extensions_screen.ExtensionsScreen._copy_to_system_clipboard(
+            copied = screen_module.ExtensionsScreen._copy_to_system_clipboard(
                 "echo hi"
             )
 
@@ -213,7 +215,7 @@ class ExtensionsScreenTests(TestCase):
                 "/usr/bin/wl-copy" if name == "wl-copy" else None
             )
 
-            command = extensions_screen.ExtensionsScreen._clipboard_command()
+            command = screen_module.ExtensionsScreen._clipboard_command()
 
         self.assertEqual(["wl-copy"], command)
 
@@ -238,7 +240,7 @@ class ExtensionsScreenTests(TestCase):
                 dockerfile_path=None,
             ),
         ]
-        screen = extensions_screen.ExtensionsScreen(options, [])
+        screen = screen_module.ExtensionsScreen(options, [])
         screen.focused = mock.Mock(id="ext-gh")
         checkbox = mock.Mock()
 
@@ -268,7 +270,7 @@ class ExtensionsScreenTests(TestCase):
                 dockerfile_path=None,
             ),
         ]
-        screen = extensions_screen.ExtensionsScreen(options, [])
+        screen = screen_module.ExtensionsScreen(options, [])
 
         with mock.patch.object(screen, "_move_checkbox_focus") as move_focus_mock:
             screen.action_focus_previous_option()
@@ -296,7 +298,7 @@ class ExtensionsScreenTests(TestCase):
                 dockerfile_path=None,
             ),
         ]
-        screen = extensions_screen.ExtensionsScreen(options, ["gh", "act"])
+        screen = screen_module.ExtensionsScreen(options, ["gh", "act"])
         event = mock.Mock()
         event.button.id = "clear"
         checkboxes = {"#ext-gh": mock.Mock(), "#ext-act": mock.Mock()}
@@ -332,7 +334,7 @@ class ExtensionsScreenTests(TestCase):
                 dockerfile_path=None,
             ),
         ]
-        screen = extensions_screen.ExtensionsScreen(options, [])
+        screen = screen_module.ExtensionsScreen(options, [])
         focused = mock.Mock(spec=Checkbox)
         focused.id = "ext-act"
         screen.focused = focused
@@ -351,7 +353,7 @@ class ExtensionsScreenTests(TestCase):
             scripts_dir=mock.Mock(),
             dockerfile_path=None,
         )
-        screen = extensions_screen.ExtensionsScreen([option], [])
+        screen = screen_module.ExtensionsScreen([option], [])
         focused = mock.Mock(spec=Checkbox)
         focused.id = "ext-missing"
         screen.focused = focused

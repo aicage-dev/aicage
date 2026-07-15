@@ -10,7 +10,7 @@ from aicage.config.project_config import (
     AgentConfig,
     _AgentMounts,
 )
-from aicage.runtime.docker_args.support import mount_prompt
+from aicage.runtime.docker_args.support import mount_prompt as mount_prompt_module
 
 _MODULE = "aicage.runtime.docker_args.support.mount_prompt"
 
@@ -32,8 +32,11 @@ class MountPromptTests(TestCase):
                 return_value=[MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY],
             ),
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(project_path, agent_cfg, {})
+            prefs = mount_prompt_module.resolve_mount_prompt_prefs(
+                project_path, agent_cfg, {}
+            )
 
+        assert prefs is not None
         self.assertEqual(
             {MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY}, prefs.git_mounts
         )
@@ -46,7 +49,7 @@ class MountPromptTests(TestCase):
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
             mock.patch(f"{_MODULE}.prompt_mount_git_support") as prompt_mock,
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(
+            prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {}
             )
 
@@ -82,10 +85,11 @@ class MountPromptTests(TestCase):
                     return_value=[MOUNT_GITCONFIG_KEY, "gh"],
                 ) as prompt_mock,
             ):
-                prefs = mount_prompt.resolve_mount_prompt_prefs(
+                prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                     project_path, agent_cfg, {"gh": extension}
                 )
 
+        assert prefs is not None
         git_prompt_items = prompt_mock.call_args.args[0]
         extension_prompt_items = prompt_mock.call_args.args[1]
         self.assertEqual(MOUNT_GITCONFIG_KEY, git_prompt_items[0][0])
@@ -112,10 +116,11 @@ class MountPromptTests(TestCase):
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
             mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=[]),
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(
+            prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"gh": extension}
             )
 
+        assert prefs is not None
         self.assertEqual(set(), prefs.git_mounts)
         self.assertEqual({"gh": False}, prefs.extension_mounts)
 
@@ -143,10 +148,11 @@ class MountPromptTests(TestCase):
                 f"{_MODULE}.prompt_mount_git_support", return_value=["sample"]
             ) as prompt_mock,
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(
+            prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"sample": extension}
             )
 
+        assert prefs is not None
         self.assertEqual(
             [
                 (
@@ -176,7 +182,7 @@ class MountPromptTests(TestCase):
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
             mock.patch(f"{_MODULE}.prompt_mount_git_support") as prompt_mock,
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(
+            prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"empty": extension}
             )
 
