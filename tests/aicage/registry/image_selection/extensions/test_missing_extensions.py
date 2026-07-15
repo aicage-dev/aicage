@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
+from unittest.mock import Mock
 
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
@@ -29,6 +30,7 @@ class MissingExtensionsTests(TestCase):
                 extensions=["extra"], image_ref="aicage:codex-ubuntu"
             )
             context = self._context(tmp_dir, agent_cfg, extensions={"extra": extension})
+            save_project_mock = context.store.save_project
 
             with mock.patch(
                 "aicage.registry.image_selection.extensions.missing_extensions.prompt_for_missing_extensions"
@@ -40,6 +42,8 @@ class MissingExtensionsTests(TestCase):
 
             self.assertFalse(result)
             prompt_mock.assert_not_called()
+            assert isinstance(save_project_mock, Mock)
+            save_project_mock.assert_not_called()
 
     def test_ensure_extensions_exist_resets_on_fresh_choice(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -47,6 +51,7 @@ class MissingExtensionsTests(TestCase):
                 extensions=["extra"], image_ref="aicage:codex-ubuntu"
             )
             context = self._context(tmp_dir, agent_cfg)
+            save_project_mock = context.store.save_project
 
             with mock.patch(
                 "aicage.registry.image_selection.extensions.missing_extensions.prompt_for_missing_extensions",
@@ -59,7 +64,8 @@ class MissingExtensionsTests(TestCase):
 
             self.assertTrue(result)
             self.assertNotIn("codex", context.project_cfg.agents)
-            context.store.save_project.assert_not_called()
+            assert isinstance(save_project_mock, Mock)
+            save_project_mock.assert_not_called()
 
     def test_ensure_extensions_exist_raises_on_exit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

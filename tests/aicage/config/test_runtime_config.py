@@ -7,10 +7,11 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, _AgentMounts
+from aicage.config.run_config_draft import RunConfigDraft
 from aicage.config.runtime_config import RunConfig, load_run_config
 from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime.run_args import MountSpec
+from aicage.runtime.run_args import EnvVar, MountSpec
 
 
 class RuntimeConfigTests(TestCase):
@@ -39,7 +40,7 @@ class RuntimeConfigTests(TestCase):
                     container_path=PurePosixPath("/test-tmp/container"),
                 )
             ]
-            env = []
+            env: list[EnvVar] = []
             with (
                 mock.patch(
                     "aicage.config.runtime_config.SettingsStore", new=store_factory
@@ -388,13 +389,12 @@ class RuntimeConfigTests(TestCase):
             )
 
             def overview_side_effect(
-                draft: object,
+                draft: RunConfigDraft,
                 _context: object,
                 **_kwargs: object,
             ) -> tuple[ImageSelection, str]:
-                typed_draft = draft
-                typed_draft.prefill_for_overview()
-                typed_draft.consume_overview_prefill()
+                draft.prefill_for_overview()
+                draft.consume_overview_prefill()
                 return (
                     ImageSelection(
                         image_ref="ref",

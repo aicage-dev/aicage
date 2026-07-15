@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
+from unittest.mock import Mock
 
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
@@ -31,6 +32,7 @@ class ExtensionHandlerTests(TestCase):
                 extensions={},
                 context=context,
             )
+            save_project_mock = context.store.save_project
             with mock.patch(
                 "aicage.registry.image_selection.extensions.handler.prompt_for_extensions",
                 return_value=[],
@@ -41,7 +43,8 @@ class ExtensionHandlerTests(TestCase):
                 f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu", result.image_ref
             )
             self.assertEqual([], agent_cfg.extensions)
-            context.store.save_project.assert_not_called()
+            assert isinstance(save_project_mock, Mock)
+            save_project_mock.assert_not_called()
 
     def test_handle_extension_selection_persists_selection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -56,6 +59,7 @@ class ExtensionHandlerTests(TestCase):
                 extensions={"extra": extension},
                 context=context,
             )
+            save_project_mock = context.store.save_project
             with (
                 mock.patch(
                     "aicage.registry.image_selection.extensions.handler.prompt_for_extensions",
@@ -74,7 +78,8 @@ class ExtensionHandlerTests(TestCase):
             self.assertEqual(f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom", result.image_ref)
             self.assertEqual(["extra"], agent_cfg.extensions)
             write_mock.assert_called_once()
-            context.store.save_project.assert_not_called()
+            assert isinstance(save_project_mock, Mock)
+            save_project_mock.assert_not_called()
 
     @staticmethod
     def _extension(tmp_dir: str, extension_id: str) -> ExtensionMetadata:

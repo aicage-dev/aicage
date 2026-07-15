@@ -5,6 +5,14 @@ from unittest import TestCase, mock
 from aicage.cli import _version_check as version_check
 
 
+class _ContextBytesIO(io.BytesIO):
+    def __enter__(self) -> "_ContextBytesIO":
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        return None
+
+
 class VersionCheckTests(TestCase):
     def test_check_for_update_rejects_non_http_scheme(self) -> None:
         with mock.patch.object(version_check, "_PYPI_URL", "file:///tmp/example.json"):
@@ -18,9 +26,7 @@ class VersionCheckTests(TestCase):
             self.assertIsNone(version_check._check_for_update("1.0.0"))
 
     def test_check_for_update_handles_bad_json(self) -> None:
-        response = io.BytesIO(b"not-json")
-        response.__enter__ = mock.Mock(return_value=response)
-        response.__exit__ = mock.Mock(return_value=None)
+        response = _ContextBytesIO(b"not-json")
         with mock.patch(
             "aicage.cli._version_check.urllib.request.urlopen", return_value=response
         ):
@@ -28,9 +34,7 @@ class VersionCheckTests(TestCase):
 
     def test_check_for_update_handles_missing_version(self) -> None:
         payload = json.dumps({"info": {"version": ""}}).encode("utf-8")
-        response = io.BytesIO(payload)
-        response.__enter__ = mock.Mock(return_value=response)
-        response.__exit__ = mock.Mock(return_value=None)
+        response = _ContextBytesIO(payload)
         with mock.patch(
             "aicage.cli._version_check.urllib.request.urlopen", return_value=response
         ):
@@ -38,9 +42,7 @@ class VersionCheckTests(TestCase):
 
     def test_check_for_update_returns_newer_version(self) -> None:
         payload = json.dumps({"info": {"version": "1.2.0"}}).encode("utf-8")
-        response = io.BytesIO(payload)
-        response.__enter__ = mock.Mock(return_value=response)
-        response.__exit__ = mock.Mock(return_value=None)
+        response = _ContextBytesIO(payload)
         with mock.patch(
             "aicage.cli._version_check.urllib.request.urlopen", return_value=response
         ):
