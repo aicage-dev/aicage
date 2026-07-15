@@ -15,7 +15,9 @@ class DigestHttpTests(TestCase):
             "aicage.registry.digest._http.urllib.request.urlopen",
             side_effect=urllib.error.URLError("boom"),
         ):
-            status, headers = _http.head_request("https://example.test", {"Accept": "x"})
+            status, headers = _http.head_request(
+                "https://example.test", {"Accept": "x"}
+            )
         self.assertIsNone(status)
         self.assertEqual({}, headers)
 
@@ -24,6 +26,8 @@ class DigestHttpTests(TestCase):
             "aicage.registry.digest._http.urllib.request.urlopen",
             side_effect=TimeoutError("timed out"),
         ):
-            status, headers = _http.head_request("https://example.test", {"Accept": "x"})
+            status, headers = _http.head_request(
+                "https://example.test", {"Accept": "x"}
+            )
         self.assertIsNone(status)
         self.assertEqual({}, headers)

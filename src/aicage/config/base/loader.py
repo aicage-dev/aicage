@@ -37,12 +37,16 @@ def _load_builtin_bases() -> dict[str, BaseMetadata]:
         mapping = validate_base_mapping(load_yaml(definition_path))
         bases[base_name] = BaseMetadata(
             from_image=expect_string(mapping.get(_FROM_IMAGE_KEY), _FROM_IMAGE_KEY),
-            base_image_distro=expect_string(mapping.get(_BASE_IMAGE_DISTRO_KEY), _BASE_IMAGE_DISTRO_KEY),
+            base_image_distro=expect_string(
+                mapping.get(_BASE_IMAGE_DISTRO_KEY), _BASE_IMAGE_DISTRO_KEY
+            ),
             base_image_description=expect_string(
                 mapping.get(_BASE_IMAGE_DESCRIPTION_KEY),
                 _BASE_IMAGE_DESCRIPTION_KEY,
             ),
-            architectures=read_str_list(mapping.get(ARCHITECTURES_KEY), ARCHITECTURES_KEY),
+            architectures=read_str_list(
+                mapping.get(ARCHITECTURES_KEY), ARCHITECTURES_KEY
+            ),
             build_local=expect_bool(mapping.get(BUILD_LOCAL_KEY), BUILD_LOCAL_KEY),
             local_definition_dir=entry,
         )

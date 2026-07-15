@@ -15,7 +15,9 @@ def _base_options_for_draft(draft: RunConfigDraft, context: ConfigContext) -> li
     return sorted(filtered)
 
 
-def base_metadata_for_draft(draft: RunConfigDraft, context: ConfigContext) -> dict[str, BaseMetadata]:
+def base_metadata_for_draft(
+    draft: RunConfigDraft, context: ConfigContext
+) -> dict[str, BaseMetadata]:
     agent_metadata = _require_agent_metadata(draft.agent, context)
     filtered = _filtered_bases(context, agent_metadata)
     if not filtered:

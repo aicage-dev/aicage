@@ -16,11 +16,15 @@ class EnsureImageTests(TestCase):
         with (
             mock.patch("aicage.registry.ensure_image.pull_image") as pull_mock,
             mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
-            mock.patch("aicage.registry.ensure_image.ensure_extended_image") as extended_mock,
+            mock.patch(
+                "aicage.registry.ensure_image.ensure_extended_image"
+            ) as extended_mock,
         ):
             ensure_image(run_config, reporter=reporter)
 
-        pull_mock.assert_called_once_with(run_config.selection.base_image_ref, reporter=reporter)
+        pull_mock.assert_called_once_with(
+            run_config.selection.base_image_ref, reporter=reporter
+        )
         local_mock.assert_not_called()
         extended_mock.assert_not_called()
 
@@ -48,7 +52,9 @@ class EnsureImageTests(TestCase):
         reporter = mock.Mock()
         with (
             mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
-            mock.patch("aicage.registry.ensure_image.ensure_extended_image") as extended_mock,
+            mock.patch(
+                "aicage.registry.ensure_image.ensure_extended_image"
+            ) as extended_mock,
         ):
             ensure_image(run_config, reporter=reporter)
 
@@ -75,7 +81,9 @@ class EnsureImageTests(TestCase):
 
         with (
             mock.patch("aicage.registry.ensure_image.decide_pull", return_value=False),
-            mock.patch("aicage.registry.ensure_image.extension_build_needed", return_value=True),
+            mock.patch(
+                "aicage.registry.ensure_image.extension_build_needed", return_value=True
+            ),
         ):
             assert image_setup_needed(run_config) is True
 

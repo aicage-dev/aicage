@@ -33,7 +33,9 @@ def validate_schema_mapping(
         normalized = normalizer(normalized)
 
     validator = Draft202012Validator(schema)
-    errors = sorted(validator.iter_errors(normalized), key=lambda error: list(error.path))
+    errors = sorted(
+        validator.iter_errors(normalized), key=lambda error: list(error.path)
+    )
     if errors:
         raise ConfigError(_error_message(context, errors[0]))
     return normalized

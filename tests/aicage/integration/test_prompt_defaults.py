@@ -57,7 +57,9 @@ def test_yes_uses_default_mount_selection_without_prompt_output(
 
     assert exit_code == 0, output
     assert "Enable Git support in the container by mounting:" not in output
-    assert "Select mounts (comma-separated numbers) [all, default on Enter]:" not in output
+    assert (
+        "Select mounts (comma-separated numbers) [all, default on Enter]:" not in output
+    )
     agent_cfg = SettingsStore().load_project(project_dir).agents["codex"]
     assert agent_cfg.mounts.gitconfig is True
     assert agent_cfg.mounts.gitroot is True
@@ -80,7 +82,12 @@ def _write_global_gitconfig(home_dir: Path) -> None:
 
 def _init_git_repo(repo_root: Path) -> None:
     subprocess.run(["git", "init"], cwd=repo_root, check=True, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "Integration Test"], cwd=repo_root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Integration Test"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+    )
     subprocess.run(
         ["git", "config", "user.email", "integration@example.com"],
         cwd=repo_root,

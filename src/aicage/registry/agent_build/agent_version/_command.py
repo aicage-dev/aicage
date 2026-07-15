@@ -44,14 +44,18 @@ def run_host(script_path: Path) -> _CommandResult:
             timeout=HOST_VERSION_CHECK_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired:
-        return _CommandResult(success=False, output="", error=_VERSION_CHECK_TIMEOUT_MESSAGE)
+        return _CommandResult(
+            success=False, output="", error=_VERSION_CHECK_TIMEOUT_MESSAGE
+        )
     except Exception as exc:
         get_logger().warning("Version check failed in host: %s", exc)
         return _CommandResult(success=False, output="", error=str(exc))
     return _from_process(process, "host")
 
 
-def _from_process(process: subprocess.CompletedProcess[str], context: str) -> _CommandResult:
+def _from_process(
+    process: subprocess.CompletedProcess[str], context: str
+) -> _CommandResult:
     output = process.stdout.strip() if process.stdout else ""
     if process.returncode == 0 and output:
         return _CommandResult(success=True, output=output, error="")

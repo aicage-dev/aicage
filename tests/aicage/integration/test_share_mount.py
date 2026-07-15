@@ -5,12 +5,19 @@ import pytest
 from aicage.config.config_store import SettingsStore
 from aicage.paths import container_project_path
 
-from ._helpers import require_integration, run_cli_pty, setup_marker_extension_workspace, setup_workspace
+from ._helpers import (
+    require_integration,
+    run_cli_pty,
+    setup_marker_extension_workspace,
+    setup_workspace,
+)
 
 pytestmark = pytest.mark.integration
 
 
-def test_share_mounts_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_share_mounts_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot")
     share_dir = tmp_path / "share"
@@ -37,7 +44,9 @@ def test_share_mounts_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path)
     assert (share_dir / "ok.txt").exists()
 
 
-def test_share_mounts_directory_read_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_share_mounts_directory_read_only(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot")
     share_dir = tmp_path / "share-ro"
@@ -64,7 +73,9 @@ def test_share_mounts_directory_read_only(monkeypatch: pytest.MonkeyPatch, tmp_p
     assert not (share_dir / "blocked.txt").exists()
 
 
-def test_extension_defined_share_mounts_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_extension_defined_share_mounts_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     workspace, env, _, share_dir = setup_marker_extension_workspace(
         monkeypatch,

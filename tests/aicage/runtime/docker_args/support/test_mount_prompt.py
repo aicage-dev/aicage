@@ -34,7 +34,9 @@ class MountPromptTests(TestCase):
         ):
             prefs = mount_prompt.resolve_mount_prompt_prefs(project_path, agent_cfg, {})
 
-        self.assertEqual({MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY}, prefs.git_mounts)
+        self.assertEqual(
+            {MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY}, prefs.git_mounts
+        )
         self.assertEqual({}, prefs.extension_mounts)
 
     def test_resolve_mount_prompt_prefs_skips_when_no_items(self) -> None:
@@ -44,7 +46,9 @@ class MountPromptTests(TestCase):
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
             mock.patch(f"{_MODULE}.prompt_mount_git_support") as prompt_mock,
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(Path("/repo"), agent_cfg, {})
+            prefs = mount_prompt.resolve_mount_prompt_prefs(
+                Path("/repo"), agent_cfg, {}
+            )
 
         self.assertIsNone(prefs)
         prompt_mock.assert_not_called()
@@ -63,15 +67,24 @@ class MountPromptTests(TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            git_items = [(MOUNT_GITCONFIG_KEY, f"Git config (name/email): {Path(tmp_dir) / '.gitconfig'}")]
+            git_items = [
+                (
+                    MOUNT_GITCONFIG_KEY,
+                    f"Git config (name/email): {Path(tmp_dir) / '.gitconfig'}",
+                )
+            ]
             with (
-                mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=git_items),
+                mock.patch(
+                    f"{_MODULE}.git_support_prompt_items", return_value=git_items
+                ),
                 mock.patch(
                     f"{_MODULE}.prompt_mount_git_support",
                     return_value=[MOUNT_GITCONFIG_KEY, "gh"],
                 ) as prompt_mock,
             ):
-                prefs = mount_prompt.resolve_mount_prompt_prefs(project_path, agent_cfg, {"gh": extension})
+                prefs = mount_prompt.resolve_mount_prompt_prefs(
+                    project_path, agent_cfg, {"gh": extension}
+                )
 
         git_prompt_items = prompt_mock.call_args.args[0]
         extension_prompt_items = prompt_mock.call_args.args[1]
@@ -81,7 +94,9 @@ class MountPromptTests(TestCase):
         self.assertEqual({MOUNT_GITCONFIG_KEY}, prefs.git_mounts)
         self.assertEqual({"gh": True}, prefs.extension_mounts)
 
-    def test_resolve_mount_prompt_prefs_returns_unselected_extension_group_false(self) -> None:
+    def test_resolve_mount_prompt_prefs_returns_unselected_extension_group_false(
+        self,
+    ) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(), extensions=["gh"])
         extension = ExtensionMetadata(
             extension_id="gh",
@@ -97,12 +112,16 @@ class MountPromptTests(TestCase):
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
             mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=[]),
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(Path("/repo"), agent_cfg, {"gh": extension})
+            prefs = mount_prompt.resolve_mount_prompt_prefs(
+                Path("/repo"), agent_cfg, {"gh": extension}
+            )
 
         self.assertEqual(set(), prefs.git_mounts)
         self.assertEqual({"gh": False}, prefs.extension_mounts)
 
-    def test_resolve_mount_prompt_prefs_skips_extensions_with_stored_choice(self) -> None:
+    def test_resolve_mount_prompt_prefs_skips_extensions_with_stored_choice(
+        self,
+    ) -> None:
         agent_cfg = AgentConfig(
             mounts=_AgentMounts(),
             extensions=["gh", "sample"],
@@ -120,17 +139,28 @@ class MountPromptTests(TestCase):
 
         with (
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
-            mock.patch(f"{_MODULE}.prompt_mount_git_support", return_value=["sample"]) as prompt_mock,
+            mock.patch(
+                f"{_MODULE}.prompt_mount_git_support", return_value=["sample"]
+            ) as prompt_mock,
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(Path("/repo"), agent_cfg, {"sample": extension})
+            prefs = mount_prompt.resolve_mount_prompt_prefs(
+                Path("/repo"), agent_cfg, {"sample": extension}
+            )
 
         self.assertEqual(
-            [("sample", f"Extension sample shares: {Path.home().resolve() / '.sample'}")],
+            [
+                (
+                    "sample",
+                    f"Extension sample shares: {Path.home().resolve() / '.sample'}",
+                )
+            ],
             prompt_mock.call_args.args[1],
         )
         self.assertEqual({"sample": True}, prefs.extension_mounts)
 
-    def test_resolve_mount_prompt_prefs_skips_missing_or_shareless_extensions(self) -> None:
+    def test_resolve_mount_prompt_prefs_skips_missing_or_shareless_extensions(
+        self,
+    ) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(), extensions=["missing", "empty"])
         extension = ExtensionMetadata(
             extension_id="empty",
@@ -146,7 +176,9 @@ class MountPromptTests(TestCase):
             mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]),
             mock.patch(f"{_MODULE}.prompt_mount_git_support") as prompt_mock,
         ):
-            prefs = mount_prompt.resolve_mount_prompt_prefs(Path("/repo"), agent_cfg, {"empty": extension})
+            prefs = mount_prompt.resolve_mount_prompt_prefs(
+                Path("/repo"), agent_cfg, {"empty": extension}
+            )
 
         self.assertIsNone(prefs)
         prompt_mock.assert_not_called()

@@ -9,8 +9,12 @@ _MODULE = "aicage.runtime.docker_args.support._exec"
 
 class CaptureStdoutTests(TestCase):
     def test_capture_stdout_returns_output(self) -> None:
-        completed = subprocess.CompletedProcess(args=["cmd"], returncode=0, stdout="ok", stderr="")
-        with mock.patch(f"{_MODULE}.subprocess.run", return_value=completed) as run_mock:
+        completed = subprocess.CompletedProcess(
+            args=["cmd"], returncode=0, stdout="ok", stderr=""
+        )
+        with mock.patch(
+            f"{_MODULE}.subprocess.run", return_value=completed
+        ) as run_mock:
             result = capture_stdout(["cmd"], cwd=Path("/tmp"))
         self.assertEqual("ok", result)
         run_mock.assert_called_once()

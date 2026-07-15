@@ -23,7 +23,9 @@ from .._helpers import (
 pytestmark = [pytest.mark.integration, pytest.mark.proxy_integration]
 
 
-def test_proxy_host_and_runtime_network(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_proxy_host_and_runtime_network(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     require_proxy_integration()
     workspace, env = setup_workspace(
@@ -40,7 +42,13 @@ def test_proxy_host_and_runtime_network(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert local_image_exists(old_image_ref)
 
     exit_code, output = run_cli_pty(
-        ["--menu", "none", "codex", "-lc", "curl -fsS https://api.github.com >/dev/null"],
+        [
+            "--menu",
+            "none",
+            "codex",
+            "-lc",
+            "curl -fsS https://api.github.com >/dev/null",
+        ],
         env=env,
         cwd=workspace,
     )
@@ -50,7 +58,9 @@ def test_proxy_host_and_runtime_network(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert_old_image_replaced(old_image_ref, image_ref)
 
 
-def test_proxy_custom_agent_build_and_version(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_proxy_custom_agent_build_and_version(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     require_proxy_integration()
     workspace, env = setup_workspace(monkeypatch, tmp_path, "forge")

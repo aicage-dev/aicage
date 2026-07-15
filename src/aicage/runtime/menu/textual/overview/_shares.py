@@ -33,7 +33,9 @@ def refresh_shares(container: Any, state: OverviewState) -> None:
     container.query_one("#shares_overview_title", Static).update("Bind Mounts")
     selection_list = container.query_one("#shares_overview_list", SelectionList)
     selection_list.clear_options()
-    selection_list.add_options(_share_selection_items(state.built_in_shares, state.custom_shares))
+    selection_list.add_options(
+        _share_selection_items(state.built_in_shares, state.custom_shares)
+    )
 
 
 def merge_built_in_shares(
@@ -50,7 +52,9 @@ def merge_built_in_shares(
             label=item.label,
             path=item.path,
             persisted=item.persisted,
-            enabled=current_enabled_by_identity.get(built_in_identity(item.source, item.key), item.enabled),
+            enabled=current_enabled_by_identity.get(
+                built_in_identity(item.source, item.key), item.enabled
+            ),
             row_key=item.row_key,
         )
         for item in fresh_items
@@ -65,4 +69,6 @@ def _share_selection_items(
     built_in_shares: list[BuiltInShareValue],
     custom_shares: list[CustomShareValue],
 ) -> list[tuple[str, str, bool]]:
-    return mount_selection_rows(overview_mount_list_items(built_in_shares, custom_shares))
+    return mount_selection_rows(
+        overview_mount_list_items(built_in_shares, custom_shares)
+    )

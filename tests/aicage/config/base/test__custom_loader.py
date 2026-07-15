@@ -39,7 +39,9 @@ class CustomBaseLoaderTests(TestCase):
                 base_image_distro="Debian",
                 base_image_description="Custom Debian",
             )
-            (base_dir / "Dockerfile").write_text("FROM ${FROM_IMAGE}\n", encoding="utf-8")
+            (base_dir / "Dockerfile").write_text(
+                "FROM ${FROM_IMAGE}\n", encoding="utf-8"
+            )
             with mock.patch(
                 "aicage.config.base._custom_loader.CUSTOM_BASES_DIR",
                 custom_dir,

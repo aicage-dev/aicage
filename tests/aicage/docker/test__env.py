@@ -9,8 +9,12 @@ class EnvTests(TestCase):
         with (
             mock.patch("aicage.docker._env.os.getuid", None, create=True),
             mock.patch("aicage.docker._env.os.getgid", None, create=True),
-            mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
-            mock.patch("aicage.docker._env.Path.home", return_value=Path("/home/tester")),
+            mock.patch.dict(
+                "aicage.docker._env.os.environ", {"USER": "tester"}, clear=True
+            ),
+            mock.patch(
+                "aicage.docker._env.Path.home", return_value=Path("/home/tester")
+            ),
             mock.patch("aicage.docker._env.os.name", "posix"),
             mock.patch("aicage.docker._env.is_rootless_docker", return_value=False),
         ):
@@ -29,8 +33,12 @@ class EnvTests(TestCase):
         with (
             mock.patch("aicage.docker._env.os.getuid", return_value=1000, create=True),
             mock.patch("aicage.docker._env.os.getgid", return_value=1001, create=True),
-            mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
-            mock.patch("aicage.docker._env.Path.home", return_value=Path("/home/tester")),
+            mock.patch.dict(
+                "aicage.docker._env.os.environ", {"USER": "tester"}, clear=True
+            ),
+            mock.patch(
+                "aicage.docker._env.Path.home", return_value=Path("/home/tester")
+            ),
             mock.patch("aicage.docker._env.os.name", "posix"),
             mock.patch("aicage.docker._env.is_rootless_docker", return_value=False),
         ):
@@ -53,8 +61,12 @@ class EnvTests(TestCase):
         with (
             mock.patch("aicage.docker._env.os.getuid", return_value=1000, create=True),
             mock.patch("aicage.docker._env.os.getgid", return_value=1001, create=True),
-            mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
-            mock.patch("aicage.docker._env.Path.home", return_value=Path("/home/tester")),
+            mock.patch.dict(
+                "aicage.docker._env.os.environ", {"USER": "tester"}, clear=True
+            ),
+            mock.patch(
+                "aicage.docker._env.Path.home", return_value=Path("/home/tester")
+            ),
             mock.patch("aicage.docker._env.os.name", "posix"),
             mock.patch("aicage.docker._env.is_rootless_docker", return_value=True),
         ):
@@ -77,10 +89,18 @@ class EnvTests(TestCase):
 
     def test_resolve_user_ids_sets_root_on_windows(self) -> None:
         with (
-            mock.patch("aicage.docker._env.os.getuid", side_effect=AttributeError, create=True),
-            mock.patch("aicage.docker._env.os.getgid", side_effect=AttributeError, create=True),
-            mock.patch.dict("aicage.docker._env.os.environ", {"USER": "tester"}, clear=True),
-            mock.patch("aicage.docker._env.Path.home", return_value=Path(r"D:\Users\tester")),
+            mock.patch(
+                "aicage.docker._env.os.getuid", side_effect=AttributeError, create=True
+            ),
+            mock.patch(
+                "aicage.docker._env.os.getgid", side_effect=AttributeError, create=True
+            ),
+            mock.patch.dict(
+                "aicage.docker._env.os.environ", {"USER": "tester"}, clear=True
+            ),
+            mock.patch(
+                "aicage.docker._env.Path.home", return_value=Path(r"D:\Users\tester")
+            ),
             mock.patch("aicage.docker._env.os.name", "nt"),
         ):
             env_flags = resolve_user_ids()

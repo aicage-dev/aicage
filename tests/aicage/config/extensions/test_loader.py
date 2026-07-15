@@ -58,7 +58,9 @@ class ExtensionDiscoveryTests(TestCase):
                 metadata = extensions["sample"]
                 first_hash = extensions_module.extension_hash(metadata)
                 script_path = metadata.scripts_dir / "01-install.sh"
-                script_path.write_text("#!/usr/bin/env bash\necho changed\n", encoding="utf-8")
+                script_path.write_text(
+                    "#!/usr/bin/env bash\necho changed\n", encoding="utf-8"
+                )
                 second_hash = extensions_module.extension_hash(metadata)
 
         self.assertNotEqual(first_hash, second_hash)
@@ -68,7 +70,9 @@ class ExtensionDiscoveryTests(TestCase):
             extension_root = Path(tmp_dir) / "extension"
             extension_dir = extension_root / "sample"
             write_extension(extension_dir, name="Sample", description="Desc")
-            (extension_dir / "Dockerfile").write_text("FROM ubuntu:latest\n", encoding="utf-8")
+            (extension_dir / "Dockerfile").write_text(
+                "FROM ubuntu:latest\n", encoding="utf-8"
+            )
             with mock.patch(
                 "aicage.config.extensions.loader.CUSTOM_EXTENSIONS_DIR",
                 Path(extension_root),
@@ -76,7 +80,9 @@ class ExtensionDiscoveryTests(TestCase):
                 extensions = extensions_module.load_extensions()
                 metadata = extensions["sample"]
                 first_hash = extensions_module.extension_hash(metadata)
-                (extension_dir / "Dockerfile").write_text("FROM ubuntu:22.04\n", encoding="utf-8")
+                (extension_dir / "Dockerfile").write_text(
+                    "FROM ubuntu:22.04\n", encoding="utf-8"
+                )
                 second_hash = extensions_module.extension_hash(metadata)
 
         self.assertNotEqual(first_hash, second_hash)
@@ -120,7 +126,9 @@ class ExtensionDiscoveryTests(TestCase):
             extension_dir = extension_root / "sample"
             extension_dir.mkdir(parents=True)
             (extension_dir / "extension.yml").write_text(
-                extension_definition("Sample", "Desc", extra_lines=["shares:", "  - ~/.m2"]),
+                extension_definition(
+                    "Sample", "Desc", extra_lines=["shares:", "  - ~/.m2"]
+                ),
                 encoding="utf-8",
             )
             with mock.patch(
@@ -210,7 +218,7 @@ class ExtensionDiscoveryTests(TestCase):
             scripts_dir = extension_dir / "scripts"
             scripts_dir.mkdir(parents=True, exist_ok=True)
             (extension_dir / "extension.yml").write_text(
-                join_yaml(["name: \"Sample\""]),
+                join_yaml(['name: "Sample"']),
                 encoding="utf-8",
             )
             with mock.patch(

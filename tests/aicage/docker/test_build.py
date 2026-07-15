@@ -15,7 +15,9 @@ from .._run_config_fixtures import build_run_config as _build_run_config
 
 class LocalBuildRunnerTests(TestCase):
     def test_run_build_invokes_docker(self) -> None:
-        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
+        run_config = _build_run_config(
+            local_definition_dir=Path("/tmp/build/agents/claude")
+        )
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
             with (
@@ -57,7 +59,9 @@ class LocalBuildRunnerTests(TestCase):
         )
 
     def test_run_build_raises_on_failure(self) -> None:
-        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
+        run_config = _build_run_config(
+            local_definition_dir=Path("/tmp/build/agents/claude")
+        )
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
             reporter = mock.Mock()
@@ -122,7 +126,9 @@ class LocalBuildRunnerTests(TestCase):
         )
 
     def test_run_build_includes_proxy_build_args(self) -> None:
-        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
+        run_config = _build_run_config(
+            local_definition_dir=Path("/tmp/build/agents/claude")
+        )
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
             with (
@@ -215,7 +221,9 @@ class LocalBuildRunnerTests(TestCase):
                     "aicage.docker.build._run_build_command",
                     return_value=0,
                 ) as run_mock,
-                mock.patch("aicage.docker.build._cleanup_intermediate_images") as cleanup_mock,
+                mock.patch(
+                    "aicage.docker.build._cleanup_intermediate_images"
+                ) as cleanup_mock,
             ):
                 build.run_extended_build(
                     run_config=run_config,
@@ -257,7 +265,9 @@ class LocalBuildRunnerTests(TestCase):
         )
 
     def test_run_build_reports_started_and_finished(self) -> None:
-        run_config = _build_run_config(local_definition_dir=Path("/tmp/build/agents/claude"))
+        run_config = _build_run_config(
+            local_definition_dir=Path("/tmp/build/agents/claude")
+        )
         reporter = mock.Mock()
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
@@ -301,8 +311,12 @@ class LocalBuildRunnerTests(TestCase):
         popen_context.__exit__ = mock.Mock(return_value=None)
         log_handle = mock.Mock()
 
-        with mock.patch("aicage.docker.build.subprocess.Popen", return_value=popen_context) as popen_mock:
-            returncode = build._run_build_command(["docker", "build"], log_handle, reporter)
+        with mock.patch(
+            "aicage.docker.build.subprocess.Popen", return_value=popen_context
+        ) as popen_mock:
+            returncode = build._run_build_command(
+                ["docker", "build"], log_handle, reporter
+            )
 
         assert returncode == 0
         popen_mock.assert_called_once_with(

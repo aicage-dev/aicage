@@ -118,7 +118,9 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
         return "Toggle the optional extensions to include."
 
     def _copy_samples_command(self) -> None:
-        _clipboard.copy_to_clipboard(self._SAMPLES_CLONE_COMMAND, self.app.copy_to_clipboard)
+        _clipboard.copy_to_clipboard(
+            self._SAMPLES_CLONE_COMMAND, self.app.copy_to_clipboard
+        )
 
     @classmethod
     def _copy_to_system_clipboard(cls, text: str) -> bool:

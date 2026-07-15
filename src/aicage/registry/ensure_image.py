@@ -5,11 +5,15 @@ from aicage.registry._image_pull import pull_image
 from aicage.registry._pull_decision import decide_pull
 from aicage.registry.agent_build.ensure import build_needed as agent_build_needed
 from aicage.registry.agent_build.ensure import ensure as ensure_agent_image
-from aicage.registry.extension_build.ensure import build_needed as extension_build_needed
+from aicage.registry.extension_build.ensure import (
+    build_needed as extension_build_needed,
+)
 from aicage.registry.extension_build.ensure import ensure as ensure_extended_image
 
 
-def ensure_image(run_config: RunConfig, reporter: OperationReporter | None = None) -> None:
+def ensure_image(
+    run_config: RunConfig, reporter: OperationReporter | None = None
+) -> None:
     agent_metadata = run_config.context.agents[run_config.agent]
     base_metadata = run_config.context.bases[run_config.selection.base]
     custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)

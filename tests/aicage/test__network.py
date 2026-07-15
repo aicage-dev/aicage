@@ -22,13 +22,19 @@ class NetworkTests(TestCase):
 
     def test_classify_network_failure_proxy_auth(self) -> None:
         headers = Message()
-        error = urllib.error.HTTPError("https://example.test", 407, "Proxy Auth Required", headers, None)
+        error = urllib.error.HTTPError(
+            "https://example.test", 407, "Proxy Auth Required", headers, None
+        )
         self.assertEqual("proxy_auth_407", classify_network_failure(error))
 
     def test_classify_network_failure_auth(self) -> None:
         headers = Message()
-        error = urllib.error.HTTPError("https://example.test", 403, "Forbidden", headers, None)
+        error = urllib.error.HTTPError(
+            "https://example.test", 403, "Forbidden", headers, None
+        )
         self.assertEqual("auth_401_403", classify_network_failure(error))
 
     def test_host_from_url_returns_hostname(self) -> None:
-        self.assertEqual("api.github.com", host_from_url("https://api.github.com/repos"))
+        self.assertEqual(
+            "api.github.com", host_from_url("https://api.github.com/repos")
+        )

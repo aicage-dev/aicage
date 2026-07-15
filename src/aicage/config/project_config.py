@@ -75,7 +75,9 @@ class AgentConfig:
             image_ref=data.get(_AGENT_IMAGE_REF_KEY),
             extensions=read_str_list_or_empty(data.get(_AGENT_EXTENSIONS_KEY)),
             shares=read_str_list_or_empty(data.get(_AGENT_SHARES_KEY)),
-            extension_mounts=_read_bool_dict_or_empty(data.get(_AGENT_EXTENSION_MOUNTS_KEY)),
+            extension_mounts=_read_bool_dict_or_empty(
+                data.get(_AGENT_EXTENSION_MOUNTS_KEY)
+            ),
         )
 
     def to_mapping(self) -> dict[str, Any]:
@@ -116,7 +118,9 @@ class ProjectConfig:
     @classmethod
     def from_mapping(cls, project_path: Path, data: dict[str, Any]) -> "ProjectConfig":
         raw_agents = data.get(_PROJECT_AGENTS_KEY, {}) or {}
-        agents = {name: AgentConfig.from_mapping(cfg) for name, cfg in raw_agents.items()}
+        agents = {
+            name: AgentConfig.from_mapping(cfg) for name, cfg in raw_agents.items()
+        }
         legacy_docker_args = data.get(_DOCKER_ARGS_KEY, "")
         if legacy_docker_args:
             for agent_cfg in agents.values():

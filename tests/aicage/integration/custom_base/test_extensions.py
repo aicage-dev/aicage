@@ -68,7 +68,9 @@ def _configure_extension(workspace: Path, agent_name: str, base_name: str) -> No
     agent_cfg = project_cfg.agents[agent_name]
     agent_cfg.base = base_name
     agent_cfg.docker_args = "--env AICAGE_ENTRYPOINT_CMD=bash"
-    agent_cfg.image_ref = f"{DEFAULT_EXTENDED_IMAGE_NAME}:{agent_name}-{base_name}-marker"
+    agent_cfg.image_ref = (
+        f"{DEFAULT_EXTENDED_IMAGE_NAME}:{agent_name}-{base_name}-marker"
+    )
     agent_cfg.extensions = ["marker"]
     agent_cfg.extension_mounts["marker"] = True
     store.save_project(workspace, project_cfg)

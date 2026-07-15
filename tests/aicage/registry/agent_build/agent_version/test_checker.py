@@ -26,7 +26,9 @@ class AgentVersionCheckTests(TestCase):
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_host",
-                    return_value=command._CommandResult(success=True, output="1.2.3", error=""),
+                    return_value=command._CommandResult(
+                        success=True, output="1.2.3", error=""
+                    ),
                 ),
             ):
                 checker = AgentVersionChecker()
@@ -56,11 +58,15 @@ class AgentVersionCheckTests(TestCase):
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_host",
-                    return_value=command._CommandResult(success=False, output="", error="host failed"),
+                    return_value=command._CommandResult(
+                        success=False, output="", error="host failed"
+                    ),
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_version_check_image",
-                    return_value=command._CommandResult(success=True, output="1.2.3", error=""),
+                    return_value=command._CommandResult(
+                        success=True, output="1.2.3", error=""
+                    ),
                 ),
             ):
                 checker = AgentVersionChecker()
@@ -90,7 +96,9 @@ class AgentVersionCheckTests(TestCase):
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_host",
-                    return_value=command._CommandResult(success=False, output="", error="host failed"),
+                    return_value=command._CommandResult(
+                        success=False, output="", error="host failed"
+                    ),
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_version_check_image",
@@ -136,7 +144,9 @@ class AgentVersionCheckTests(TestCase):
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_host",
-                    return_value=command._CommandResult(success=False, output="", error="host failed"),
+                    return_value=command._CommandResult(
+                        success=False, output="", error="host failed"
+                    ),
                 ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version.checker.run_version_check_image"

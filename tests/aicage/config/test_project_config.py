@@ -22,14 +22,19 @@ class ProjectConfigTests(TestCase):
     def test_to_mapping_round_trip(self) -> None:
         cfg = ProjectConfig(path="/repo", agents={"codex": AgentConfig(base="ubuntu")})
         self.assertEqual(
-            {_PROJECT_PATH_KEY: "/repo", _PROJECT_AGENTS_KEY: {"codex": {_AGENT_BASE_KEY: "ubuntu"}}},
+            {
+                _PROJECT_PATH_KEY: "/repo",
+                _PROJECT_AGENTS_KEY: {"codex": {_AGENT_BASE_KEY: "ubuntu"}},
+            },
             cfg.to_mapping(),
         )
 
     def test_to_mapping_includes_shares(self) -> None:
         cfg = ProjectConfig(
             path="/repo",
-            agents={"codex": AgentConfig(base="ubuntu", shares=["/tmp/one", "/tmp/two:ro"])},
+            agents={
+                "codex": AgentConfig(base="ubuntu", shares=["/tmp/one", "/tmp/two:ro"])
+            },
         )
         self.assertEqual(
             {
@@ -47,7 +52,11 @@ class ProjectConfigTests(TestCase):
     def test_to_mapping_includes_extension_mounts(self) -> None:
         cfg = ProjectConfig(
             path="/repo",
-            agents={"codex": AgentConfig(base="ubuntu", extension_mounts={"gh": True, "maven": False})},
+            agents={
+                "codex": AgentConfig(
+                    base="ubuntu", extension_mounts={"gh": True, "maven": False}
+                )
+            },
         )
         self.assertEqual(
             {

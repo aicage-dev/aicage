@@ -6,7 +6,9 @@ from aicage.registry import _layers as layers
 class LayersTests(TestCase):
     def test_base_layer_missing_returns_false_when_base_unknown(self) -> None:
         with (
-            mock.patch("aicage.registry._layers.get_local_rootfs_layers", return_value=None),
+            mock.patch(
+                "aicage.registry._layers.get_local_rootfs_layers", return_value=None
+            ),
             mock.patch("aicage.registry._layers.get_logger") as get_logger_mock,
         ):
             self.assertFalse(layers.base_layer_missing("base", "final"))

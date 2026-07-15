@@ -19,7 +19,9 @@ def fresh_selection(
     agent_metadata = require_agent_metadata(agent, context)
     bases = available_bases(agent, context)
     if not bases:
-        raise RegistryError(f"No base images found for agent '{agent}' in config context.")
+        raise RegistryError(
+            f"No base images found for agent '{agent}' in config context."
+        )
 
     base = prompt_for_base(
         BaseSelectionRequest(

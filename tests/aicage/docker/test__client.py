@@ -15,7 +15,9 @@ class DockerClientTests(TestCase):
     def test_get_docker_client_uses_timeout() -> None:
         host = mock.Mock(host="unix:///run/docker.sock")
         with (
-            mock.patch("aicage.docker._client.get_active_docker_host", return_value=host),
+            mock.patch(
+                "aicage.docker._client.get_active_docker_host", return_value=host
+            ),
             mock.patch("aicage.docker._client.docker.DockerClient") as client_ctor,
         ):
             _client.get_docker_client()
@@ -29,7 +31,9 @@ class DockerClientTests(TestCase):
     def test_get_docker_pull_client_uses_timeout() -> None:
         host = mock.Mock(host="unix:///run/docker.sock")
         with (
-            mock.patch("aicage.docker._client.get_active_docker_host", return_value=host),
+            mock.patch(
+                "aicage.docker._client.get_active_docker_host", return_value=host
+            ),
             mock.patch("aicage.docker._client.docker.DockerClient") as client_ctor,
         ):
             _client.get_docker_pull_client()
@@ -42,7 +46,9 @@ class DockerClientTests(TestCase):
     def test_get_docker_client_raises_clean_error_when_docker_missing(self) -> None:
         host = mock.Mock(host="unix:///run/docker.sock")
         with (
-            mock.patch("aicage.docker._client.get_active_docker_host", return_value=host),
+            mock.patch(
+                "aicage.docker._client.get_active_docker_host", return_value=host
+            ),
             mock.patch(
                 "aicage.docker._client.docker.DockerClient",
                 side_effect=DockerException("boom"),

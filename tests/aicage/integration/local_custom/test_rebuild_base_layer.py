@@ -21,7 +21,9 @@ from .._helpers import (
 pytestmark = pytest.mark.integration
 
 
-def test_custom_agent_rebuilds_on_base_layer(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_custom_agent_rebuilds_on_base_layer(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     workspace, env = setup_workspace(monkeypatch, tmp_path, "bash")
     agent_dir = custom_agents_dir() / "bash"

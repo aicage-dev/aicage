@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
-from aicage.config.project_config import MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY, MOUNT_SSH_KEY
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+)
 
 from ._ids import custom_share_selection_key
 from ._models import BuiltInShareValue, CustomShareValue
@@ -63,7 +68,10 @@ def confirm_mount_list_items(shares: list[BuiltInShareValue]) -> list[_MountList
 
 def mount_selection_rows(items: list[_MountListItem]) -> list[tuple[str, str, bool]]:
     prefix_width = max((len(item.prefix or "") for item in items), default=0)
-    return [(_format_mount_label(item, prefix_width), item.selection_key, item.enabled) for item in items]
+    return [
+        (_format_mount_label(item, prefix_width), item.selection_key, item.enabled)
+        for item in items
+    ]
 
 
 def _custom_mount_list_item(item: CustomShareValue) -> _MountListItem:

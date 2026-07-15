@@ -12,6 +12,8 @@ def base_image_ref(
     context: ConfigContext,
 ) -> str:
     base_metadata = context.bases[base]
-    if agent_metadata.build_local or base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR):
+    if agent_metadata.build_local or base_metadata.local_definition_dir.is_relative_to(
+        CUSTOM_BASES_DIR
+    ):
         return local_image_ref(LOCAL_IMAGE_REPOSITORY, agent, base)
     return local_image_ref(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}", agent, base)

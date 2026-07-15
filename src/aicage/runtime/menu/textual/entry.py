@@ -28,7 +28,9 @@ def edit_draft_with_textual_app(
         raise result
     selection = getattr(result, "selection", None)
     project_docker_args = getattr(result, "project_docker_args", None)
-    if not isinstance(selection, ImageSelection) or not isinstance(project_docker_args, str):
+    if not isinstance(selection, ImageSelection) or not isinstance(
+        project_docker_args, str
+    ):
         raise RuntimeError("Unexpected Textual overview result.")
     draft.consume_overview_prefill()
     return selection, project_docker_args

@@ -15,9 +15,9 @@ class ConfigStoreTests(TestCase):
             projects_dir = Path(tmp_dir)
 
             with mock.patch(
-                    "aicage.config.config_store.PROJECTS_DIR",
-                    projects_dir,
-                ):
+                "aicage.config.config_store.PROJECTS_DIR",
+                projects_dir,
+            ):
                 store = SettingsStore()
                 project_path = Path("/repo")
                 expected = hashlib.sha256(str(project_path).encode("utf-8")).hexdigest()
@@ -31,25 +31,27 @@ class ConfigStoreTests(TestCase):
             projects_dir = Path(tmp_dir)
 
             with mock.patch(
-                    "aicage.config.config_store.PROJECTS_DIR",
-                    projects_dir,
-                ):
+                "aicage.config.config_store.PROJECTS_DIR",
+                projects_dir,
+            ):
                 store = SettingsStore()
                 project_path = projects_dir / "project"
                 project_path.mkdir(parents=True, exist_ok=True)
 
                 project_cfg = store.load_project(project_path)
 
-            self.assertEqual(ProjectConfig(path=str(project_path), agents={}), project_cfg)
+            self.assertEqual(
+                ProjectConfig(path=str(project_path), agents={}), project_cfg
+            )
 
     def test_save_project_writes_mapping(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             projects_dir = Path(tmp_dir)
 
             with mock.patch(
-                    "aicage.config.config_store.PROJECTS_DIR",
-                    projects_dir,
-                ):
+                "aicage.config.config_store.PROJECTS_DIR",
+                projects_dir,
+            ):
                 store = SettingsStore()
                 project_path = projects_dir / "project"
                 project_path.mkdir(parents=True, exist_ok=True)

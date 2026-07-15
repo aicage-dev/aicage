@@ -32,11 +32,19 @@ class ExtensionValidationTests(TestCase):
 
     def test_validate_extension_mapping_accepts_shares(self) -> None:
         payload = _validation.validate_extension_mapping(
-            {"name": "Example", "description": "Demo", "shares": ["~/.m2", "~/.cache:ro"]}
+            {
+                "name": "Example",
+                "description": "Demo",
+                "shares": ["~/.m2", "~/.cache:ro"],
+            }
         )
         self.assertEqual(
             payload,
-            {"name": "Example", "description": "Demo", "shares": ["~/.m2", "~/.cache:ro"]},
+            {
+                "name": "Example",
+                "description": "Demo",
+                "shares": ["~/.m2", "~/.cache:ro"],
+            },
         )
 
     def test_validate_extension_mapping_rejects_invalid_share_item(self) -> None:

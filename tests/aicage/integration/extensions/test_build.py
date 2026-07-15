@@ -19,7 +19,9 @@ from .._helpers import (
 pytestmark = pytest.mark.integration
 
 
-def test_extension_builds_and_runs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_extension_builds_and_runs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     workspace, env, _, share_dir = setup_marker_extension_workspace(
         monkeypatch,
         tmp_path,

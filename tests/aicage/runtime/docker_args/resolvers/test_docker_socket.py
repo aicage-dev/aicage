@@ -11,7 +11,9 @@ _MODULE = "aicage.runtime.docker_args.resolvers.docker_socket"
 
 
 class DockerSocketMountTests(TestCase):
-    def test_resolve_docker_socket_mount_uses_cli_socket_without_persisting(self) -> None:
+    def test_resolve_docker_socket_mount_uses_cli_socket_without_persisting(
+        self,
+    ) -> None:
         agent_cfg = AgentConfig()
         context = _build_context(agent_cfg)
         parsed = _build_parsed(docker_socket=True)
@@ -19,7 +21,9 @@ class DockerSocketMountTests(TestCase):
             mock.patch(f"{_MODULE}.os.name", "posix"),
             mock.patch(
                 f"{_MODULE}.get_active_docker_host",
-                return_value=mock.Mock(host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")),
+                return_value=mock.Mock(
+                    host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")
+                ),
             ),
         ):
             resolved = resolve(context, "codex", parsed)
@@ -36,7 +40,9 @@ class DockerSocketMountTests(TestCase):
             mock.patch(f"{_MODULE}.os.name", "posix"),
             mock.patch(
                 f"{_MODULE}.get_active_docker_host",
-                return_value=mock.Mock(host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")),
+                return_value=mock.Mock(
+                    host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")
+                ),
             ),
         ):
             resolved = resolve(context, "codex", _build_parsed())

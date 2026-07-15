@@ -15,10 +15,24 @@ from .._ids import (
 )
 from .._models import BuiltInShareValue, CustomShareValue, DockerOptionValue
 from .._state import OverviewState
-from ..services.host_access import built_in_group_selection_values, current_built_in_shares, current_docker_option
-from ..services.summary import extensions_summary, extras_summary, extras_values, shares_values
+from ..services.host_access import (
+    built_in_group_selection_values,
+    current_built_in_shares,
+    current_docker_option,
+)
+from ..services.summary import (
+    extensions_summary,
+    extras_summary,
+    extras_values,
+    shares_values,
+)
 from ._layout import shell_width
-from ._shares import current_custom_shares, merge_built_in_shares, refresh_shares, share_widgets
+from ._shares import (
+    current_custom_shares,
+    merge_built_in_shares,
+    refresh_shares,
+    share_widgets,
+)
 
 
 class Overview(Container):
@@ -54,7 +68,9 @@ class Overview(Container):
             Container(
                 Header(show_clock=False, classes="app_header"),
                 Static(self._context_line("Agent:", self._agent), id="title"),
-                Static(self._context_line("Project:", self._project_path), id="context"),
+                Static(
+                    self._context_line("Project:", self._project_path), id="context"
+                ),
                 Horizontal(
                     Button(id=ROW_BASE, classes="section"),
                     Button(id=ROW_EXTENSIONS, classes="section"),
@@ -86,7 +102,9 @@ class Overview(Container):
         elif event.button.id in SECTION_IDS:
             self.post_message(self.EditSectionRequested(event.button.id))
 
-    def on_selection_list_selected_changed(self, event: SelectionList.SelectedChanged) -> None:
+    def on_selection_list_selected_changed(
+        self, event: SelectionList.SelectedChanged
+    ) -> None:
         if event.selection_list.id == "shares_overview_list":
             self._state.built_in_shares = current_built_in_shares(
                 set(event.selection_list.selected),
@@ -94,19 +112,29 @@ class Overview(Container):
             )
             return
         if event.selection_list.id == "docker_overview_list":
-            self._state.docker_socket_enabled = docker_selection_key("socket") in event.selection_list.selected
+            self._state.docker_socket_enabled = (
+                docker_selection_key("socket") in event.selection_list.selected
+            )
             self.apply_shell_width(self.size.width)
 
-    def on_selection_list_selection_toggled(self, event: SelectionList.SelectionToggled) -> None:
+    def on_selection_list_selection_toggled(
+        self, event: SelectionList.SelectionToggled
+    ) -> None:
         if event.selection_list.id != "shares_overview_list":
             return
         selection_value = event.selection.value
-        if not isinstance(selection_value, str) or not selection_value.startswith("custom:"):
+        if not isinstance(selection_value, str) or not selection_value.startswith(
+            "custom:"
+        ):
             if isinstance(selection_value, str):
-                self._sync_built_in_share_group_selection(event.selection_list, selection_value)
+                self._sync_built_in_share_group_selection(
+                    event.selection_list, selection_value
+                )
             return
         event.selection_list.select(selection_value)
-        self.post_message(self.EditCustomShareRequested(selection_value.removeprefix("custom:")))
+        self.post_message(
+            self.EditCustomShareRequested(selection_value.removeprefix("custom:"))
+        )
 
     def refresh_from(self, draft: RunConfigDraft, context: ConfigContext) -> None:
         self._state.built_in_shares = merge_built_in_shares(
@@ -114,7 +142,9 @@ class Overview(Container):
             self._state.built_in_shares,
         )
         self.apply_shell_width(self.size.width)
-        self._section_button(ROW_BASE).label = self._section_label("Base", draft.agent_cfg.base or "")
+        self._section_button(ROW_BASE).label = self._section_label(
+            "Base", draft.agent_cfg.base or ""
+        )
         self._section_button(ROW_EXTENSIONS).label = self._section_label(
             "Extensions",
             extensions_summary(draft.agent_cfg.extensions),
@@ -127,7 +157,9 @@ class Overview(Container):
         self._refresh_docker()
 
     def apply_shell_width(self, viewport_width: int) -> None:
-        width = shell_width(self._state.built_in_shares, self._state.custom_shares, viewport_width)
+        width = shell_width(
+            self._state.built_in_shares, self._state.custom_shares, viewport_width
+        )
         shell = self.query_one("#shell", Container)
         shell.styles.width = width
         shell.styles.min_width = width
@@ -155,7 +187,9 @@ class Overview(Container):
     def current_custom_shares(self) -> list[CustomShareValue]:
         return current_custom_shares(self._state)
 
-    def current_docker_socket_enabled(self, current_mount_value: bool | None) -> DockerOptionValue:
+    def current_docker_socket_enabled(
+        self, current_mount_value: bool | None
+    ) -> DockerOptionValue:
         return current_docker_option(
             set(self.query_one("#docker_overview_list", SelectionList).selected),
             current_mount_value,
@@ -164,8 +198,12 @@ class Overview(Container):
     def _section_button(self, section_id: str) -> Button:
         return self.query_one(f"#{section_id}", Button)
 
-    def _sync_built_in_share_group_selection(self, selection_list: SelectionList, selection_value: str) -> None:
-        related_values = built_in_group_selection_values(selection_value, self._state.built_in_shares)
+    def _sync_built_in_share_group_selection(
+        self, selection_list: SelectionList, selection_value: str
+    ) -> None:
+        related_values = built_in_group_selection_values(
+            selection_value, self._state.built_in_shares
+        )
         if not related_values:
             return
         selected_values = set(selection_list.selected)
@@ -180,7 +218,11 @@ class Overview(Container):
         return [
             Static("Docker", id="docker_overview_title"),
             SelectionList(
-                ("Docker socket", docker_selection_key("socket"), self._state.docker_socket_enabled),
+                (
+                    "Docker socket",
+                    docker_selection_key("socket"),
+                    self._state.docker_socket_enabled,
+                ),
                 id="docker_overview_list",
                 compact=True,
             ),
@@ -191,7 +233,13 @@ class Overview(Container):
         selection_list = self.query_one("#docker_overview_list", SelectionList)
         selection_list.clear_options()
         selection_list.add_options(
-            [("Docker socket", docker_selection_key("socket"), self._state.docker_socket_enabled)]
+            [
+                (
+                    "Docker socket",
+                    docker_selection_key("socket"),
+                    self._state.docker_socket_enabled,
+                )
+            ]
         )
 
     def _section_label(self, title: str, summary: str) -> str:

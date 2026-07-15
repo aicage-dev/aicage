@@ -54,7 +54,9 @@ class AgentMetadataBuilderTests(TestCase):
             metadata.valid_bases,
         )
 
-    def test_build_agent_metadata_excludes_bases_for_unsupported_host_architecture(self) -> None:
+    def test_build_agent_metadata_excludes_bases_for_unsupported_host_architecture(
+        self,
+    ) -> None:
         bases = {
             "arch": BaseMetadata(
                 from_image="archlinux:latest",
@@ -79,7 +81,9 @@ class AgentMetadataBuilderTests(TestCase):
             BUILD_LOCAL_KEY: False,
         }
 
-        with mock.patch("aicage.config.base.architecture.platform.machine", return_value="aarch64"):
+        with mock.patch(
+            "aicage.config.base.architecture.platform.machine", return_value="aarch64"
+        ):
             metadata = build_agent_metadata(
                 agent_name="codex",
                 agent_mapping=mapping,

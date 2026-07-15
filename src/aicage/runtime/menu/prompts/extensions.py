@@ -20,7 +20,9 @@ def prompt_for_extensions(options: list[ExtensionOption]) -> list[str]:
         get_logger().info("Selected extensions [] (non-interactive defaults)")
         return []
     ensure_tty_for_prompt()
-    print("Select extensions to add (comma-separated numbers or names, empty for none):")
+    print(
+        "Select extensions to add (comma-separated numbers or names, empty for none):"
+    )
     for idx, option in enumerate(options, start=1):
         print(f"  {idx}) {option.name}: {option.description}")
     response = input("Enter selection: ").strip()
@@ -31,7 +33,9 @@ def prompt_for_extensions(options: list[ExtensionOption]) -> list[str]:
     for item in requested:
         extension_id = _resolve_extension_choice(item, options)
         if extension_id in seen:
-            raise RuntimeExecutionError(f"Duplicate extension '{extension_id}' selected.")
+            raise RuntimeExecutionError(
+                f"Duplicate extension '{extension_id}' selected."
+            )
         seen.add(extension_id)
     return [option.name for option in options if option.name in seen]
 
@@ -48,4 +52,6 @@ def _resolve_extension_choice(response: str, options: list[ExtensionOption]) -> 
         if option.name == response:
             return option.name
     valid = ", ".join(option.name for option in options)
-    raise RuntimeExecutionError(f"Invalid extension '{response}'. Valid options: {valid}")
+    raise RuntimeExecutionError(
+        f"Invalid extension '{response}'. Valid options: {valid}"
+    )

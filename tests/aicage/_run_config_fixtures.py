@@ -21,7 +21,9 @@ def build_run_config(
 
 
 def build_custom_run_config() -> RunConfig:
-    return _build_run_config(build_local=True, local_definition_dir=Path("/tmp/definition"))
+    return _build_run_config(
+        build_local=True, local_definition_dir=Path("/tmp/definition")
+    )
 
 
 def build_extended_run_config() -> RunConfig:

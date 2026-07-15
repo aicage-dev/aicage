@@ -17,7 +17,9 @@ _MODULE = "aicage.runtime.docker_args.support.git_support"
 
 class GitSupportTests(TestCase):
     def test_resolve_git_config_path_parses_first_file(self) -> None:
-        output = "file:/home/user/.gitconfig user.name=Name\nfile:/tmp/other key=value\n"
+        output = (
+            "file:/home/user/.gitconfig user.name=Name\nfile:/tmp/other key=value\n"
+        )
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
             path = git_support.resolve_git_config_path()
         self.assertEqual(Path("/home/user/.gitconfig"), path)
@@ -77,7 +79,9 @@ class GitSupportTests(TestCase):
     def test_resolve_gpg_home_handles_missing_dirs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with (
-                mock.patch(f"{_MODULE}.HOST_GNUPG_DIR", Path(tmp_dir) / HOST_GNUPG_DIR.name),
+                mock.patch(
+                    f"{_MODULE}.HOST_GNUPG_DIR", Path(tmp_dir) / HOST_GNUPG_DIR.name
+                ),
                 mock.patch(f"{_MODULE}.capture_stdout", return_value=""),
             ):
                 path = git_support.resolve_gpg_home()
@@ -120,7 +124,10 @@ class GitSupportTests(TestCase):
         git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig")]
 
         with (
-            mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=Path("/tmp/gitconfig")),
+            mock.patch(
+                f"{_MODULE}.resolve_git_config_path",
+                return_value=Path("/tmp/gitconfig"),
+            ),
             mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
             mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
@@ -142,7 +149,9 @@ class GitSupportTests(TestCase):
             gpg_home.mkdir()
 
             with (
-                mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=git_config),
+                mock.patch(
+                    f"{_MODULE}.resolve_git_config_path", return_value=git_config
+                ),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
@@ -151,7 +160,10 @@ class GitSupportTests(TestCase):
             ):
                 items = git_support.git_support_prompt_items(project_path, mounts_cfg)
 
-        self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY], [item[0] for item in items])
+        self.assertEqual(
+            [MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY],
+            [item[0] for item in items],
+        )
 
     def test_git_support_prompt_items_default_to_gpg_when_format_missing(self) -> None:
         mounts_cfg = _AgentMounts()
@@ -165,7 +177,9 @@ class GitSupportTests(TestCase):
             git_config.write_text("user.name = tester", encoding="utf-8")
 
             with (
-                mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=git_config),
+                mock.patch(
+                    f"{_MODULE}.resolve_git_config_path", return_value=git_config
+                ),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
@@ -209,7 +223,9 @@ class GitSupportTests(TestCase):
 
         self.assertIn(MOUNT_SSH_KEY, [item[0] for item in items])
 
-    def test_git_support_prompt_items_include_ssh_and_gnupg_when_both_needed(self) -> None:
+    def test_git_support_prompt_items_include_ssh_and_gnupg_when_both_needed(
+        self,
+    ) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
 
