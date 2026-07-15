@@ -74,7 +74,7 @@ jobs:
         env:
           NO_PROXY: localhost,127.0.0.1
         run: |
-          for i in {1..60}; do
+          for _ in {1..60}; do
             if curl -fsS --proxy "$PROXY_URL" https://api.github.com >/dev/null 2>&1; then
               exit 0
             fi
