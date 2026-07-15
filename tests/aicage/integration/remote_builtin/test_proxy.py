@@ -40,7 +40,7 @@ def test_proxy_host_and_runtime_network(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert local_image_exists(old_image_ref)
 
     exit_code, output = run_cli_pty(
-        ["--yes", "codex", "-lc", "curl -fsS https://api.github.com >/dev/null"],
+        ["--menu", "none", "codex", "-lc", "curl -fsS https://api.github.com >/dev/null"],
         env=env,
         cwd=workspace,
     )

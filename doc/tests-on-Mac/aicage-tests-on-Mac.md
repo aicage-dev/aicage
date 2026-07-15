@@ -38,7 +38,7 @@ cd /tmp/aicage-test
 In the project folder, run this:
 
 ```shell
-aicage --yes codex
+aicage --menu none codex
 ```
 
 #### Expectation
@@ -56,7 +56,7 @@ Press Ctrl-C repeatedly to exit.
 In the project folder, run this:
 
 ```shell
-aicage --yes claude
+aicage --menu none claude
 ```
 
 #### Expectation
@@ -73,7 +73,7 @@ Press Ctrl-C repeatedly to exit.
 In the project folder, run this:
 
 ```shell
-aicage --yes --docker -e AICAGE_ENTRYPOINT_CMD=bash -- codex -lc 'docker run --rm hello-world'
+aicage --menu none --docker -e AICAGE_ENTRYPOINT_CMD=bash -- codex -lc 'docker run --rm hello-world'
 ```
 
 #### Expectation

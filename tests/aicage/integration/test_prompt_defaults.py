@@ -24,7 +24,7 @@ def test_git_support_prompt_persists_selected_mounts(
     _save_project_config(project_dir, mounts=_AgentMounts())
 
     exit_code, output = run_cli_pty(
-        ["--dry-run", "codex"],
+        ["--menu", "simple", "--dry-run", "codex"],
         env=env,
         cwd=project_dir,
         input_data="1\n",
@@ -50,7 +50,7 @@ def test_yes_uses_default_mount_selection_without_prompt_output(
     _save_project_config(project_dir, mounts=_AgentMounts())
 
     exit_code, output = run_cli_pty(
-        ["--yes", "--dry-run", "codex"],
+        ["--menu", "none", "--dry-run", "codex"],
         env=env,
         cwd=project_dir,
     )

@@ -22,7 +22,12 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dry-run", action="store_true", help="Print docker run command without executing.")
-    parser.add_argument("-y", "--yes", action="store_true", help="Use defaults for all prompts.")
+    parser.add_argument(
+        "--menu",
+        choices=["textual", "simple", "none"],
+        default="textual",
+        help="Select menu mode: textual, simple, or none.",
+    )
     parser.add_argument("--docker", action="store_true", help="Mount the host Docker socket into the container.")
     parser.add_argument(
         "--share",
@@ -51,22 +56,25 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         usage: str = (
             "Usage:\n"
             "  aicage <agent>\n"
-            "  aicage [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
-            "  aicage [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent> [<agent-args>]\n"
-            "  aicage -y [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent>"
+            " [<agent-args>]\n"
             "  aicage --config\n"
             "  aicage --config info\n"
             "  aicage --config remove [<agent>]\n"
             "  aicage --version\n\n"
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
-            "  -y, --yes        Use default answers for all prompts.\n"
+            "  --menu <mode>    Choose menu mode: textual (default), simple, or none.\n"
             "  --docker         Mount /var/run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
+            "  - '--menu textual' uses the Textual config overview.\n"
+            "  - '--menu simple' uses the line-based setup prompts.\n"
+            "  - '--menu none' skips menus and uses defaults.\n"
             "  - <docker-args> are forwarded verbatim to docker run.\n"
             "  - If docker args are present, use '--' before <agent>.\n"
             "  - <agent-args> are forwarded verbatim to the agent.\n"
@@ -87,7 +95,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             opts.share,
             config_action,
             config_agent,
-            opts.yes,
+            opts.menu,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -104,7 +112,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         opts.share,
         None,
         None,
-        opts.yes,
+        opts.menu,
     )
 
 
@@ -138,7 +146,7 @@ def _validate_config_action(
     config_agent = config_tokens[1] if len(config_tokens) == _MAX_CONFIG_TOKENS else None
     if config_action == "info" and config_agent is not None:
         raise CliError("No agent value is allowed with '--config info'.")
-    if remaining or post_argv or opts.docker or opts.dry_run or opts.share or opts.yes:
+    if remaining or post_argv or opts.docker or opts.dry_run or opts.share or opts.menu != "textual":
         raise CliError("No additional arguments are allowed with --config.")
     return config_action, config_agent
 

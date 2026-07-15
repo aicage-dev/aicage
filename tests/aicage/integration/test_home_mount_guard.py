@@ -15,7 +15,7 @@ def test_refuses_to_start_when_cwd_is_home(tmp_path: Path) -> None:
     env["HOME"] = str(home_dir)
 
     exit_code, output = run_cli_pty(
-        ["--yes", "codex", "--version"],
+        ["--menu", "none", "codex", "--version"],
         env=env,
         cwd=home_dir,
     )

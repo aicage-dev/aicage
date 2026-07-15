@@ -23,4 +23,4 @@ class ParsedArgsTests(TestCase):
         self.assertEqual(["/tmp/one", "/tmp/two:ro"], parsed.shares)
         self.assertIsNone(parsed.config_action)
         self.assertIsNone(parsed.config_agent)
-        self.assertFalse(parsed.yes)
+        self.assertEqual("textual", parsed.menu)

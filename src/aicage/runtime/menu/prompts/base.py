@@ -8,7 +8,7 @@ from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.menu.default_base import resolve_default_base
 
 from ._tty import ensure_tty_for_prompt
-from .mode import assume_yes_enabled
+from .mode import non_interactive_defaults_enabled
 
 
 @dataclass(frozen=True)
@@ -28,8 +28,12 @@ class _BaseOption:
 def prompt_for_base(request: BaseSelectionRequest) -> str:
     bases = _base_options(request.context, request.agent_metadata)
     default_base = request.default_base or resolve_default_base(_available_bases(bases))
-    if assume_yes_enabled():
-        get_logger().info("Selected base '%s' for agent '%s' (assume-yes)", default_base, request.agent)
+    if non_interactive_defaults_enabled():
+        get_logger().info(
+            "Selected base '%s' for agent '%s' (non-interactive defaults)",
+            default_base,
+            request.agent,
+        )
         return default_base
     ensure_tty_for_prompt()
     logger = get_logger()

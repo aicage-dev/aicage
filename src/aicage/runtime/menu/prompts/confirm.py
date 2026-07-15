@@ -4,12 +4,16 @@ from aicage._logging import get_logger
 from aicage.runtime._errors import RuntimeExecutionError
 
 from ._tty import ensure_tty_for_prompt
-from .mode import assume_yes_enabled
+from .mode import non_interactive_defaults_enabled
 
 
 def _prompt_yes_no(question: str, default: bool = False) -> bool:
-    if assume_yes_enabled():
-        get_logger().info("Prompt yes/no '%s' -> %s (assume-yes)", question, default)
+    if non_interactive_defaults_enabled():
+        get_logger().info(
+            "Prompt yes/no '%s' -> %s (non-interactive defaults)",
+            question,
+            default,
+        )
         return default
     ensure_tty_for_prompt()
     suffix = "[Y/n]" if default else "[y/N]"
@@ -36,9 +40,12 @@ def prompt_mount_git_support(
     extension_items: list[tuple[str, str]],
 ) -> list[str]:
     items = [*git_items, *extension_items]
-    if assume_yes_enabled():
+    if non_interactive_defaults_enabled():
         selected_keys = [item[0] for item in items]
-        get_logger().info("Prompt git support mounts selected -> %s (assume-yes)", selected_keys)
+        get_logger().info(
+            "Prompt git support mounts selected -> %s (non-interactive defaults)",
+            selected_keys,
+        )
         return selected_keys
     ensure_tty_for_prompt()
     logger = get_logger()

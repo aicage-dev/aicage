@@ -4,11 +4,11 @@ from aicage.runtime.menu.prompts import mode
 
 
 class PromptModeTests(TestCase):
-    def test_set_assume_yes(self) -> None:
-        mode.set_assume_yes(True)
-        self.assertTrue(mode.assume_yes_enabled())
-        mode.set_assume_yes(False)
+    def test_set_non_interactive_defaults(self) -> None:
+        mode.set_non_interactive_defaults(True)
+        self.assertTrue(mode.non_interactive_defaults_enabled())
+        mode.set_non_interactive_defaults(False)
 
-    def test_assume_yes_enabled(self) -> None:
-        mode.set_assume_yes(False)
-        self.assertFalse(mode.assume_yes_enabled())
+    def test_non_interactive_defaults_enabled(self) -> None:
+        mode.set_non_interactive_defaults(False)
+        self.assertFalse(mode.non_interactive_defaults_enabled())
