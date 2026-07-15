@@ -11,7 +11,9 @@ from ._fixtures import build_context
 
 class ImageSelectionFreshTests(TestCase):
     def test_fresh_selection_prompts_for_base(self) -> None:
-        context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+        )
         with (
             mock.patch(
                 "aicage.registry.image_selection._fresh_selection.prompt_for_base",
@@ -36,7 +38,9 @@ class ImageSelectionFreshTests(TestCase):
         handle_mock.assert_called_once()
 
     def test_fresh_selection_raises_on_empty_bases(self) -> None:
-        context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+        )
         with mock.patch(
             "aicage.registry.image_selection._fresh_selection.available_bases",
             return_value=[],

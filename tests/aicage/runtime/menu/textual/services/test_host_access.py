@@ -92,7 +92,9 @@ class HostAccessTests(TestCase):
     def test_current_docker_option_updates_enabled_state(self) -> None:
         value = host_access.current_docker_option({"docker:socket"}, None)
 
-        self.assertEqual(DockerOptionValue("docker", "Docker socket", None, True), value)
+        self.assertEqual(
+            DockerOptionValue("docker", "Docker socket", None, True), value
+        )
 
     def test_built_in_group_selection_values_returns_extension_group_rows(self) -> None:
         values = host_access.built_in_group_selection_values(
@@ -120,14 +122,19 @@ class HostAccessTests(TestCase):
         )
 
         self.assertEqual(
-            ["builtin:extension:gcloud:/tmp/gcloud", "builtin:extension:gcloud:/tmp/boto"],
+            [
+                "builtin:extension:gcloud:/tmp/gcloud",
+                "builtin:extension:gcloud:/tmp/boto",
+            ],
             values,
         )
 
     def test_build_confirmation_request_filters_newly_enabled_values(self) -> None:
         built_in_shares = [
             BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True),
-            BuiltInShareValue("extension", "gh", "Extension gh", "/tmp/.config/gh", False, True),
+            BuiltInShareValue(
+                "extension", "gh", "Extension gh", "/tmp/.config/gh", False, True
+            ),
         ]
         docker_option = DockerOptionValue("docker", "Docker socket", True, True)
 
@@ -138,11 +145,15 @@ class HostAccessTests(TestCase):
         self.assertEqual([built_in_shares[1]], values.extension_shares)
 
     def test_merge_confirmed_host_access_applies_confirmed_values(self) -> None:
-        built_in_shares = [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)]
+        built_in_shares = [
+            BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)
+        ]
         docker_option = DockerOptionValue("docker", "Docker socket", None, True)
         confirmed = HostAccessConfirmValues(
             docker_options=[DockerOptionValue("docker", "Docker socket", None, False)],
-            git_support_shares=[BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)],
+            git_support_shares=[
+                BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)
+            ],
             extension_shares=[],
         )
 
@@ -152,8 +163,13 @@ class HostAccessTests(TestCase):
             confirmed,
         )
 
-        self.assertEqual([BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)], merged_shares)
-        self.assertEqual(DockerOptionValue("docker", "Docker socket", None, False), merged_docker)
+        self.assertEqual(
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)],
+            merged_shares,
+        )
+        self.assertEqual(
+            DockerOptionValue("docker", "Docker socket", None, False), merged_docker
+        )
 
     def test_apply_confirmed_host_access_persists_values(self) -> None:
         draft = _build_draft(
@@ -165,7 +181,9 @@ class HostAccessTests(TestCase):
             draft,
             [
                 BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True),
-                BuiltInShareValue("extension", "gh", "Extension gh", "/tmp/.config/gh", None, False),
+                BuiltInShareValue(
+                    "extension", "gh", "Extension gh", "/tmp/.config/gh", None, False
+                ),
             ],
             [CustomShareValue("/tmp/logs")],
             DockerOptionValue("docker", "Docker socket", None, True),

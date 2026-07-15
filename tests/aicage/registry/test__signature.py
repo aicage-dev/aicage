@@ -7,7 +7,9 @@ from aicage.registry._errors import RegistryError
 
 
 class SignatureVerificationTests(TestCase):
-    def test_resolve_verified_digest_returns_digest_ref_on_valid_signature(self) -> None:
+    def test_resolve_verified_digest_returns_digest_ref_on_valid_signature(
+        self,
+    ) -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
         with (
             mock.patch(
@@ -115,9 +117,7 @@ class SignatureVerificationTests(TestCase):
                 "aicage.registry._signature.get_local_repo_digest_for_repo",
                 return_value=None,
             ),
-            mock.patch(
-                "aicage.registry._signature._run_cosign_verify"
-            ) as cosign_mock,
+            mock.patch("aicage.registry._signature._run_cosign_verify") as cosign_mock,
         ):
             with self.assertRaises(RegistryError):
                 _signature.resolve_verified_digest(image_ref)
@@ -144,12 +144,8 @@ class SignatureVerificationTests(TestCase):
                 "aicage.registry._signature.pull_log_path",
                 return_value=mock.Mock(),
             ) as log_mock,
-            mock.patch(
-                "aicage.registry._signature.run_pull"
-            ) as pull_mock,
-            mock.patch(
-                "aicage.registry._signature.cleanup_old_digest"
-            ) as cleanup_mock,
+            mock.patch("aicage.registry._signature.run_pull") as pull_mock,
+            mock.patch("aicage.registry._signature.cleanup_old_digest") as cleanup_mock,
             mock.patch(
                 "aicage.registry._signature._run_cosign_verify",
                 return_value=subprocess.CompletedProcess(
@@ -159,13 +155,13 @@ class SignatureVerificationTests(TestCase):
                     stderr="",
                 ),
             ),
-            mock.patch(
-                "aicage.registry._signature._verify_manifest_annotations"
-            ),
+            mock.patch("aicage.registry._signature._verify_manifest_annotations"),
         ):
             _signature.resolve_verified_digest(image_ref)
         log_mock.assert_called_once_with(constants.COSIGN_IMAGE_REF)
-        pull_mock.assert_called_once_with(constants.COSIGN_IMAGE_REF, log_mock.return_value)
+        pull_mock.assert_called_once_with(
+            constants.COSIGN_IMAGE_REF, log_mock.return_value
+        )
         cleanup_mock.assert_called_once_with(
             "ghcr.io/sigstore/cosign/cosign",
             None,
@@ -180,7 +176,9 @@ class SignatureVerificationTests(TestCase):
             _signature._verify_manifest_annotations(image_ref)
         annotations_mock.assert_not_called()
 
-    def test__verify_manifest_annotations_accepts_expected_official_annotations(self) -> None:
+    def test__verify_manifest_annotations_accepts_expected_official_annotations(
+        self,
+    ) -> None:
         image_ref = "ghcr.io/aicage/aicage-image-util@sha256:abc"
         annotations = {
             "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-util",
@@ -192,13 +190,17 @@ class SignatureVerificationTests(TestCase):
         ):
             _signature._verify_manifest_annotations(image_ref)
 
-    def test__verify_manifest_annotations_raises_when_expected_annotation_mismatches(self) -> None:
+    def test__verify_manifest_annotations_raises_when_expected_annotation_mismatches(
+        self,
+    ) -> None:
         image_ref = "ghcr.io/aicage/aicage@sha256:abc"
         annotations = {
             "org.opencontainers.image.source": "https://github.com/aicage/wrong",
             "org.opencontainers.image.title": "aicage",
         }
-        image_ref = f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_REPOSITORY}@sha256:abc"
+        image_ref = (
+            f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_REPOSITORY}@sha256:abc"
+        )
         with mock.patch(
             "aicage.registry._signature._manifest_annotations",
             return_value=annotations,

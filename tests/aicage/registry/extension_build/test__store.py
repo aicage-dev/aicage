@@ -51,7 +51,9 @@ class ExtendedStoreTests(TestCase):
                     "base_image": "base",
                     "built_at": "2024-01-01T00:00:00+00:00",
                 }
-                path.write_text(yaml.safe_dump(payload, sort_keys=True), encoding="utf-8")
+                path.write_text(
+                    yaml.safe_dump(payload, sort_keys=True), encoding="utf-8"
+                )
                 record = store.load("aicage:invalid-extensions")
                 self.assertIsNotNone(record)
                 if record is None:

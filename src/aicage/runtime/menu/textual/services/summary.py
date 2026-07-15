@@ -36,7 +36,9 @@ def _shares_summary(values: SharesValues) -> str:
     parts: list[str] = []
     if values.shares:
         parts.append(_list_summary(values.shares))
-    built_in_labels = [item.label.lower() for item in values.built_in_shares if item.enabled]
+    built_in_labels = [
+        item.label.lower() for item in values.built_in_shares if item.enabled
+    ]
     if built_in_labels:
         parts.append(", ".join(built_in_labels))
     if not parts:

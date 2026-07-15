@@ -1,7 +1,10 @@
 from unittest import TestCase, mock
 
 from aicage.runtime._errors import RuntimeExecutionError
-from aicage.runtime.menu.prompts.extensions import ExtensionOption, prompt_for_extensions
+from aicage.runtime.menu.prompts.extensions import (
+    ExtensionOption,
+    prompt_for_extensions,
+)
 
 
 class PromptExtensionsTests(TestCase):
@@ -20,7 +23,9 @@ class PromptExtensionsTests(TestCase):
             selection = prompt_for_extensions(options)
         self.assertEqual(["one", "two"], selection)
 
-    def test_prompt_for_extensions_returns_prompt_order_for_custom_input_order(self) -> None:
+    def test_prompt_for_extensions_returns_prompt_order_for_custom_input_order(
+        self,
+    ) -> None:
         options = [
             ExtensionOption(name="act", description="Act"),
             ExtensionOption(name="cosign", description="Cosign"),
@@ -82,7 +87,9 @@ class PromptExtensionsTests(TestCase):
             with self.assertRaises(RuntimeExecutionError):
                 prompt_for_extensions(options)
 
-    def test_prompt_for_extensions_returns_default_when_non_interactive_defaults_enabled(self) -> None:
+    def test_prompt_for_extensions_returns_default_when_non_interactive_defaults_enabled(
+        self,
+    ) -> None:
         options = [
             ExtensionOption(name="one", description="First"),
             ExtensionOption(name="two", description="Second"),
@@ -92,7 +99,9 @@ class PromptExtensionsTests(TestCase):
                 "aicage.runtime.menu.prompts.extensions.non_interactive_defaults_enabled",
                 return_value=True,
             ),
-            mock.patch("aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt") as tty_mock,
+            mock.patch(
+                "aicage.runtime.menu.prompts.extensions.ensure_tty_for_prompt"
+            ) as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
             selection = prompt_for_extensions(options)

@@ -22,7 +22,9 @@ class AgentVersionChecker:
         logger = get_logger()
         script_path = definition_dir / "version.sh"
         if not script_path.is_file():
-            raise RegistryError(f"Agent '{agent_name}' is missing version.sh at {script_path}.")
+            raise RegistryError(
+                f"Agent '{agent_name}' is missing version.sh at {script_path}."
+            )
 
         errors: list[str] = []
         host_result = run_host(script_path)
@@ -40,7 +42,9 @@ class AgentVersionChecker:
 
         image_result = run_version_check_image(VERSION_CHECK_IMAGE, definition_dir)
         if image_result.success:
-            logger.info("Version check succeeded in version check image for %s", agent_name)
+            logger.info(
+                "Version check succeeded in version check image for %s", agent_name
+            )
             self._store.save(agent_name, image_result.output)
             return image_result.output
 

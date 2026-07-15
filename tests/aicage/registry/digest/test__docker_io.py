@@ -12,7 +12,9 @@ class DockerIoDigestTests(TestCase):
             reference="latest",
             is_digest=False,
         )
-        with mock.patch("aicage.registry.digest._docker_io.get_manifest_digest") as fetch_mock:
+        with mock.patch(
+            "aicage.registry.digest._docker_io.get_manifest_digest"
+        ) as fetch_mock:
             digest = _docker_io.get_docker_io_digest(parsed)
         self.assertIsNone(digest)
         fetch_mock.assert_not_called()
@@ -30,4 +32,6 @@ class DockerIoDigestTests(TestCase):
         ) as fetch_mock:
             digest = _docker_io.get_docker_io_digest(parsed)
         self.assertEqual("sha256:abc", digest)
-        fetch_mock.assert_called_once_with("registry-1.docker.io", "library/ubuntu", "latest")
+        fetch_mock.assert_called_once_with(
+            "registry-1.docker.io", "library/ubuntu", "latest"
+        )

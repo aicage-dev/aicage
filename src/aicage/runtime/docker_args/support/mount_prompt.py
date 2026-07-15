@@ -46,8 +46,7 @@ def resolve_mount_prompt_prefs(
     return _MountPromptPrefs(
         git_mounts={key for key, _description in git_items if key in selected},
         extension_mounts={
-            item.extension_id: item.extension_id in selected
-            for item in extension_items
+            item.extension_id: item.extension_id in selected for item in extension_items
         },
     )
 

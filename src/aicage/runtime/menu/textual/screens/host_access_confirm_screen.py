@@ -6,12 +6,18 @@ from textual.widgets import Button, Header, SelectionList, Static
 
 from .._models import BuiltInShareValue, DockerOptionValue, HostAccessConfirmValues
 from .._mount_display import confirm_mount_list_items, mount_selection_rows
-from ..services.host_access import built_in_group_selection_values, current_built_in_shares
+from ..services.host_access import (
+    built_in_group_selection_values,
+    current_built_in_shares,
+)
 from ._screen_support import CancelableScreen
 
 
 class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
-    BINDINGS = [Binding("escape", "cancel", "Cancel"), Binding("ctrl+c", "cancel", "Cancel")]
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+        Binding("ctrl+c", "cancel", "Cancel"),
+    ]
 
     def __init__(
         self,
@@ -58,7 +64,9 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
     def action_accept(self) -> None:
         confirmed_docker_options: list[DockerOptionValue] = []
         if self._docker_options:
-            selected = set(self.query_one("#docker_confirm_list", SelectionList).selected)
+            selected = set(
+                self.query_one("#docker_confirm_list", SelectionList).selected
+            )
             for option in self._docker_options:
                 confirmed_docker_options.append(
                     DockerOptionValue(
@@ -71,7 +79,9 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         confirmed_git_support_shares = []
         if self._git_support_shares:
             confirmed_git_support_shares = current_built_in_shares(
-                set(self.query_one("#git_support_confirm_list", SelectionList).selected),
+                set(
+                    self.query_one("#git_support_confirm_list", SelectionList).selected
+                ),
                 self._git_support_shares,
             )
         confirmed_extension_shares = []
@@ -95,13 +105,17 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         elif event.button.id == "cancel":
             self.action_cancel()
 
-    def on_selection_list_selection_toggled(self, event: SelectionList.SelectionToggled) -> None:
+    def on_selection_list_selection_toggled(
+        self, event: SelectionList.SelectionToggled
+    ) -> None:
         if event.selection_list.id != "extension_confirm_list":
             return
         selection_value = event.selection.value
         if not isinstance(selection_value, str):
             return
-        related_values = built_in_group_selection_values(selection_value, self._extension_shares)
+        related_values = built_in_group_selection_values(
+            selection_value, self._extension_shares
+        )
         if not related_values:
             return
         selected_values = set(event.selection_list.selected)
@@ -117,8 +131,13 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
             return None
         return [
             Static("Docker support", classes="screen_subtitle"),
-            Static("Allows the container to talk to the host Docker daemon.", classes="screen_hint confirm_hint"),
-            Vertical(self._docker_selection_list(), classes="checkbox_group confirm_section"),
+            Static(
+                "Allows the container to talk to the host Docker daemon.",
+                classes="screen_hint confirm_hint",
+            ),
+            Vertical(
+                self._docker_selection_list(), classes="checkbox_group confirm_section"
+            ),
         ]
 
     def _git_support_section(self) -> list[Static | Vertical] | None:
@@ -130,7 +149,10 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
                 "Bind mounts host files and keys used for git, SSH remotes, and signing.",
                 classes="screen_hint confirm_hint",
             ),
-            Vertical(self._git_support_selection_list(), classes="checkbox_group confirm_section"),
+            Vertical(
+                self._git_support_selection_list(),
+                classes="checkbox_group confirm_section",
+            ),
         ]
 
     def _extension_section(self) -> list[Static | Vertical] | None:
@@ -138,13 +160,22 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
             return None
         return [
             Static("Extension bind mounts", classes="screen_subtitle"),
-            Static("Bind mounts declared by selected extensions.", classes="screen_hint confirm_hint"),
-            Vertical(self._extension_selection_list(), classes="checkbox_group confirm_section"),
+            Static(
+                "Bind mounts declared by selected extensions.",
+                classes="screen_hint confirm_hint",
+            ),
+            Vertical(
+                self._extension_selection_list(),
+                classes="checkbox_group confirm_section",
+            ),
         ]
 
     def _docker_selection_list(self) -> SelectionList:
         return SelectionList(
-            *[(option.label, option.key, option.enabled) for option in self._docker_options],
+            *[
+                (option.label, option.key, option.enabled)
+                for option in self._docker_options
+            ],
             id="docker_confirm_list",
             compact=True,
         )

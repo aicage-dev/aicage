@@ -22,17 +22,32 @@ class ExecutionScreen(Container):
                 ProgressBar(total=None, id="execution_progress"),
                 Static("", id="execution_details", classes="screen_path"),
                 Vertical(
-                    Static("Target image:", classes="screen_path execution_image_ref_label"),
-                    Static("", id="execution_image_ref", classes="screen_path execution_image_ref"),
+                    Static(
+                        "Target image:", classes="screen_path execution_image_ref_label"
+                    ),
+                    Static(
+                        "",
+                        id="execution_image_ref",
+                        classes="screen_path execution_image_ref",
+                    ),
                     Static("Log path:", classes="screen_path execution_log_path_label"),
                     Horizontal(
                         Button("Copy Log Path", id="copy_log_path", variant="warning"),
                         classes="execution_copy_actions",
                     ),
-                    Static("", id="execution_log_path", classes="screen_path execution_log_path"),
+                    Static(
+                        "",
+                        id="execution_log_path",
+                        classes="screen_path execution_log_path",
+                    ),
                     id="execution_build_info",
                 ),
-                RichLog(id="execution_log", classes="field execution_log", wrap=False, highlight=False),
+                RichLog(
+                    id="execution_log",
+                    classes="field execution_log",
+                    wrap=False,
+                    highlight=False,
+                ),
                 classes="execution_shell",
             ),
             classes="execution_frame",
@@ -91,7 +106,9 @@ class ExecutionScreen(Container):
 
     def show_phase_failed(self, phase: str, message: str, log_path: Path) -> None:
         if phase == "pull":
-            self._status().update(f"{_phase_label(phase)}: {message} (logs: {log_path})")
+            self._status().update(
+                f"{_phase_label(phase)}: {message} (logs: {log_path})"
+            )
             self._details().update("")
         else:
             self._status().update(message)

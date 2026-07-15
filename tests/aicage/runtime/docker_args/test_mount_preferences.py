@@ -46,7 +46,9 @@ class MountPreferencesTests(TestCase):
 
         self.assertTrue(agent_cfg.mounts.docker)
 
-    def test_apply_mount_preferences_skips_docker_prompt_when_already_decided(self) -> None:
+    def test_apply_mount_preferences_skips_docker_prompt_when_already_decided(
+        self,
+    ) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(docker=False))
         context = _build_context(agent_cfg)
 

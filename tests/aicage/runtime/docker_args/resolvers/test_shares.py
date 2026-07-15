@@ -37,16 +37,22 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+            with mock.patch(
+                "aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd
+            ):
                 resolved = shares.resolve(context, "codex", None)
 
         expected_path = (cwd / "data").resolve()
         self.assertEqual(
-            ResolvedArgs(mounts=[MountRequest(host_path=expected_path, read_only=True)]),
+            ResolvedArgs(
+                mounts=[MountRequest(host_path=expected_path, read_only=True)]
+            ),
             resolved,
         )
 
-    def test_resolve_uses_persisted_agent_shares_when_parsed_has_no_shares(self) -> None:
+    def test_resolve_uses_persisted_agent_shares_when_parsed_has_no_shares(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
             project_cfg = ProjectConfig(
@@ -62,12 +68,16 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+            with mock.patch(
+                "aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd
+            ):
                 resolved = shares.resolve(context, "codex", parsed)
 
         expected_path = (cwd / "data").resolve()
         self.assertEqual(
-            ResolvedArgs(mounts=[MountRequest(host_path=expected_path, read_only=False)]),
+            ResolvedArgs(
+                mounts=[MountRequest(host_path=expected_path, read_only=False)]
+            ),
             resolved,
         )
 
@@ -83,12 +93,16 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+            with mock.patch(
+                "aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd
+            ):
                 resolved = shares.resolve(context, "codex", parsed)
 
         expected_path = (cwd / "data").resolve()
         self.assertEqual(
-            ResolvedArgs(mounts=[MountRequest(host_path=expected_path, read_only=True)]),
+            ResolvedArgs(
+                mounts=[MountRequest(host_path=expected_path, read_only=True)]
+            ),
             resolved,
         )
 
@@ -97,7 +111,11 @@ class ShareResolverTests(TestCase):
             cwd = Path(tmp_dir)
             project_cfg = ProjectConfig(
                 path=str(cwd / "project"),
-                agents={"codex": AgentConfig(extensions=["gh"], extension_mounts={"gh": True})},
+                agents={
+                    "codex": AgentConfig(
+                        extensions=["gh"], extension_mounts={"gh": True}
+                    )
+                },
             )
             parsed = ParsedArgs(False, "", "codex", [], False, ["data"], None)
             context = ConfigContext(
@@ -118,12 +136,22 @@ class ShareResolverTests(TestCase):
                 },
             )
 
-            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+            with mock.patch(
+                "aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd
+            ):
                 resolved = shares.resolve(context, "codex", parsed)
 
-        expected_paths = [(cwd / "data").resolve(), Path.home().resolve() / ".config" / "gh"]
+        expected_paths = [
+            (cwd / "data").resolve(),
+            Path.home().resolve() / ".config" / "gh",
+        ]
         self.assertEqual(
-            ResolvedArgs(mounts=[MountRequest(host_path=path, read_only=False) for path in expected_paths]),
+            ResolvedArgs(
+                mounts=[
+                    MountRequest(host_path=path, read_only=False)
+                    for path in expected_paths
+                ]
+            ),
             resolved,
         )
 
@@ -132,7 +160,11 @@ class ShareResolverTests(TestCase):
             cwd = Path(tmp_dir)
             project_cfg = ProjectConfig(
                 path=str(cwd / "project"),
-                agents={"codex": AgentConfig(extensions=["gh"], extension_mounts={"gh": False})},
+                agents={
+                    "codex": AgentConfig(
+                        extensions=["gh"], extension_mounts={"gh": False}
+                    )
+                },
             )
             parsed = ParsedArgs(False, "", "codex", [], False, [], None)
             context = ConfigContext(
@@ -153,7 +185,9 @@ class ShareResolverTests(TestCase):
                 },
             )
 
-            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+            with mock.patch(
+                "aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd
+            ):
                 resolved = shares.resolve(context, "codex", parsed)
 
         self.assertEqual(ResolvedArgs(), resolved)
@@ -163,7 +197,11 @@ class ShareResolverTests(TestCase):
             cwd = Path(tmp_dir)
             project_cfg = ProjectConfig(
                 path=str(cwd / "project"),
-                agents={"codex": AgentConfig(extensions=["gh"], extension_mounts={"gh": True})},
+                agents={
+                    "codex": AgentConfig(
+                        extensions=["gh"], extension_mounts={"gh": True}
+                    )
+                },
             )
             parsed = ParsedArgs(False, "", "codex", [], False, [], None)
             context = ConfigContext(
@@ -174,7 +212,9 @@ class ShareResolverTests(TestCase):
                 extensions={},
             )
 
-            with mock.patch("aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd):
+            with mock.patch(
+                "aicage.runtime.docker_args.resolvers.shares.Path.cwd", return_value=cwd
+            ):
                 resolved = shares.resolve(context, "codex", parsed)
 
         self.assertEqual(ResolvedArgs(), resolved)

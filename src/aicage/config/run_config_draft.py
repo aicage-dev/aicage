@@ -78,7 +78,9 @@ class RunConfigDraft:
     def reset_extension_image(self) -> None:
         self.agent_cfg.image_ref = None
         self.agent_cfg.extension_mounts = {
-            key: value for key, value in self.agent_cfg.extension_mounts.items() if key in self.agent_cfg.extensions
+            key: value
+            for key, value in self.agent_cfg.extension_mounts.items()
+            if key in self.agent_cfg.extensions
         }
 
 

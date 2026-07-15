@@ -56,7 +56,11 @@ class MountDisplayTests(TestCase):
     def test_mount_selection_rows_aligns_prefixes(self) -> None:
         rows = _mount_display.mount_selection_rows(
             _mount_display.overview_mount_list_items(
-                [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+                [
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", "/tmp/.ssh", None, True
+                    )
+                ],
                 [CustomShareValue("/tmp/data")],
             )
         )

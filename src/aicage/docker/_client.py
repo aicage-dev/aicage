@@ -18,7 +18,9 @@ def get_docker_client() -> DockerClient:
     try:
         return _build_client(DOCKER_LOCAL_METADATA_TIMEOUT_SECONDS)
     except DockerException as exc:
-        raise DockerError("Docker is not running or not reachable. Start Docker and retry.") from exc
+        raise DockerError(
+            "Docker is not running or not reachable. Start Docker and retry."
+        ) from exc
 
 
 @lru_cache(maxsize=1)
@@ -26,7 +28,9 @@ def get_docker_pull_client() -> DockerClient:
     try:
         return _build_client(DOCKER_PULL_REQUEST_TIMEOUT_SECONDS)
     except DockerException as exc:
-        raise DockerError("Docker is not running or not reachable. Start Docker and retry.") from exc
+        raise DockerError(
+            "Docker is not running or not reachable. Start Docker and retry."
+        ) from exc
 
 
 def _build_client(timeout: int) -> DockerClient:

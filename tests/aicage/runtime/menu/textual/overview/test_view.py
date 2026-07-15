@@ -13,7 +13,11 @@ from .._test_support import _build_context, _build_draft
 
 class OverviewTests(TestCase):
     def test_compose_builds_widgets(self) -> None:
-        widgets = list(Overview("codex", "/tmp/project", OverviewState(None, [], [], False)).compose())
+        widgets = list(
+            Overview(
+                "codex", "/tmp/project", OverviewState(None, [], [], False)
+            ).compose()
+        )
 
         self.assertEqual(1, len(widgets))
 
@@ -28,7 +32,9 @@ class OverviewTests(TestCase):
         self.assertEqual("codex", overview._agent)
         self.assertEqual("/tmp/project", overview._project_path)
         self.assertEqual("Agent:   codex", overview._context_line("Agent:", "codex"))
-        self.assertEqual("Project: /tmp/project", overview._context_line("Project:", "/tmp/project"))
+        self.assertEqual(
+            "Project: /tmp/project", overview._context_line("Project:", "/tmp/project")
+        )
 
     def test_on_button_pressed_posts_accept_message(self) -> None:
         overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
@@ -38,7 +44,9 @@ class OverviewTests(TestCase):
 
         overview.on_button_pressed(event)
 
-        self.assertIsInstance(overview.post_message.call_args.args[0], Overview.AcceptRequested)
+        self.assertIsInstance(
+            overview.post_message.call_args.args[0], Overview.AcceptRequested
+        )
 
     def test_on_selection_list_selected_changed_updates_built_in_shares(self) -> None:
         state = OverviewState(
@@ -56,7 +64,9 @@ class OverviewTests(TestCase):
 
         self.assertFalse(state.built_in_shares[0].enabled)
 
-    def test_on_selection_list_selection_toggled_posts_custom_share_message(self) -> None:
+    def test_on_selection_list_selection_toggled_posts_custom_share_message(
+        self,
+    ) -> None:
         overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
         overview.post_message = mock.Mock()
         event = mock.Mock()
@@ -66,9 +76,13 @@ class OverviewTests(TestCase):
         overview.on_selection_list_selection_toggled(event)
 
         event.selection_list.select.assert_called_once_with("custom:/tmp/logs")
-        self.assertIsInstance(overview.post_message.call_args.args[0], Overview.EditCustomShareRequested)
+        self.assertIsInstance(
+            overview.post_message.call_args.args[0], Overview.EditCustomShareRequested
+        )
 
-    def test_on_selection_list_selection_toggled_syncs_extension_group_rows(self) -> None:
+    def test_on_selection_list_selection_toggled_syncs_extension_group_rows(
+        self,
+    ) -> None:
         overview = Overview(
             "codex",
             "/tmp/project",
@@ -105,8 +119,12 @@ class OverviewTests(TestCase):
 
         overview.on_selection_list_selection_toggled(event)
 
-        event.selection_list.select.assert_any_call("builtin:extension:gcloud:/tmp/gcloud")
-        event.selection_list.select.assert_any_call("builtin:extension:gcloud:/tmp/boto")
+        event.selection_list.select.assert_any_call(
+            "builtin:extension:gcloud:/tmp/gcloud"
+        )
+        event.selection_list.select.assert_any_call(
+            "builtin:extension:gcloud:/tmp/boto"
+        )
 
     def test_refresh_from_updates_overview_widgets(self) -> None:
         overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
@@ -135,7 +153,10 @@ class OverviewTests(TestCase):
             }[selector]
 
         overview.query_one = mock.Mock(side_effect=query_one_side_effect)
-        draft = _build_draft(AgentConfig(base="ubuntu"), ParsedArgs(False, "", "codex", [], False, [], None))
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], None),
+        )
 
         with (
             mock.patch.object(
@@ -144,7 +165,9 @@ class OverviewTests(TestCase):
                 new_callable=mock.PropertyMock,
                 return_value=mock.Mock(width=120),
             ),
-            mock.patch("aicage.runtime.menu.textual.overview.view.shares_values") as shares_values,
+            mock.patch(
+                "aicage.runtime.menu.textual.overview.view.shares_values"
+            ) as shares_values,
         ):
             shares_values.return_value = mock.Mock(built_in_shares=[])
             overview.refresh_from(draft, _build_context())
@@ -159,7 +182,11 @@ class OverviewTests(TestCase):
             "/tmp/project",
             OverviewState(
                 None,
-                [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+                [
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", "/tmp/.ssh", None, True
+                    )
+                ],
                 [CustomShareValue("/tmp/logs")],
                 False,
             ),
@@ -215,7 +242,11 @@ class OverviewTests(TestCase):
             "/tmp/project",
             OverviewState(
                 None,
-                [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)],
+                [
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", "/tmp/.ssh", None, False
+                    )
+                ],
                 [],
                 False,
             ),
@@ -257,4 +288,6 @@ class OverviewAsyncTests(IsolatedAsyncioTestCase):
 
         overview.on_button_pressed(event)
 
-        self.assertIsInstance(overview.post_message.call_args.args[0], Overview.EditSectionRequested)
+        self.assertIsInstance(
+            overview.post_message.call_args.args[0], Overview.EditSectionRequested
+        )

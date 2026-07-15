@@ -14,7 +14,10 @@ class AgentVersionCommandTests(TestCase):
             script_path = Path(tmp_dir) / "version.sh"
             script_path.write_text("echo 1.2.3\n", encoding="utf-8")
             with (
-                mock.patch("aicage.registry.agent_build.agent_version._command.os.access", return_value=False),
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._command.os.access",
+                    return_value=False,
+                ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._command.subprocess.run",
                     return_value=CompletedProcess([], 0, stdout="1.2.3\n", stderr=""),
@@ -62,7 +65,9 @@ class AgentVersionCommandTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             definition_dir = Path(tmp_dir)
             with (
-                mock.patch("aicage.registry.agent_build.agent_version._command.ensure_version_check_image"),
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._command.ensure_version_check_image"
+                ),
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._command.run_builder_version_check",
                     return_value=CompletedProcess([], 1, stdout="", stderr="failed"),

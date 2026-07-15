@@ -26,7 +26,9 @@ class EnsureCustomBaseImageTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir) / "custom"
             base_dir.mkdir()
-            (base_dir / "Dockerfile").write_text("FROM ${FROM_IMAGE}\n", encoding="utf-8")
+            (base_dir / "Dockerfile").write_text(
+                "FROM ${FROM_IMAGE}\n", encoding="utf-8"
+            )
             state_dir = Path(tmp_dir) / "state"
             with (
                 mock.patch(
@@ -58,7 +60,9 @@ class EnsureCustomBaseImageTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir) / "custom"
             base_dir.mkdir()
-            (base_dir / "Dockerfile").write_text("FROM ${FROM_IMAGE}\n", encoding="utf-8")
+            (base_dir / "Dockerfile").write_text(
+                "FROM ${FROM_IMAGE}\n", encoding="utf-8"
+            )
             state_dir = Path(tmp_dir) / "state"
             with (
                 mock.patch(
@@ -96,7 +100,9 @@ class EnsureCustomBaseImageTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             base_dir = Path(tmp_dir) / "custom"
             base_dir.mkdir()
-            (base_dir / "Dockerfile").write_text("FROM ${FROM_IMAGE}\n", encoding="utf-8")
+            (base_dir / "Dockerfile").write_text(
+                "FROM ${FROM_IMAGE}\n", encoding="utf-8"
+            )
             state_dir = Path(tmp_dir) / "state"
             with (
                 mock.patch(
@@ -134,9 +140,7 @@ class EnsureCustomBaseImageTests(TestCase):
                 "aicage.registry.base_build.ensure.local_image_exists",
                 return_value=True,
             ),
-            mock.patch(
-                "aicage.registry.base_build.ensure.BuildStore"
-            ) as store_cls,
+            mock.patch("aicage.registry.base_build.ensure.BuildStore") as store_cls,
             mock.patch(
                 "aicage.registry.base_build.ensure._should_rebuild",
                 return_value=True,
@@ -181,16 +185,12 @@ class EnsureCustomBaseImageTests(TestCase):
                 "aicage.registry.base_build.ensure.local_image_exists",
                 return_value=False,
             ),
-            mock.patch(
-                "aicage.registry.base_build.ensure.BuildStore"
-            ) as store_cls,
+            mock.patch("aicage.registry.base_build.ensure.BuildStore") as store_cls,
             mock.patch(
                 "aicage.registry.base_build.ensure.get_remote_digest",
                 return_value="sha256:remote",
             ) as digest_mock,
-            mock.patch(
-                "aicage.registry.base_build.ensure.run_custom_base_build"
-            ),
+            mock.patch("aicage.registry.base_build.ensure.run_custom_base_build"),
             mock.patch(
                 "aicage.registry.base_build.ensure.build_log_path",
                 return_value=Path("/tmp/logs/custom-base.log"),
@@ -216,9 +216,7 @@ class EnsureCustomBaseImageTests(TestCase):
                 "aicage.registry.base_build.ensure.local_image_exists",
                 return_value=True,
             ),
-            mock.patch(
-                "aicage.registry.base_build.ensure.BuildStore"
-            ) as store_cls,
+            mock.patch("aicage.registry.base_build.ensure.BuildStore") as store_cls,
             mock.patch(
                 "aicage.registry.base_build.ensure.get_remote_digest",
                 return_value="sha256:remote",
@@ -229,7 +227,12 @@ class EnsureCustomBaseImageTests(TestCase):
             ) as should_rebuild_mock,
         ):
             store_cls.return_value.load.return_value = None
-            assert _ensure.build_needed("custom", base_metadata, _ensure.image_ref("custom")) is True
+            assert (
+                _ensure.build_needed(
+                    "custom", base_metadata, _ensure.image_ref("custom")
+                )
+                is True
+            )
 
         should_rebuild_mock.assert_called_once()
 

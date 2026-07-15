@@ -144,7 +144,7 @@ class ExtendedImagesLoaderTests(TestCase):
             config_path = config_dir / "image-extended.yml"
             config_path.write_text(
                 extended_image_definition(
-                    agent="\"\"",
+                    agent='""',
                     base="ubuntu",
                     extensions=[],
                     image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu",
@@ -194,7 +194,7 @@ class ExtendedImagesLoaderTests(TestCase):
                         "agent: codex",
                         "base: ubuntu",
                         "extensions:",
-                        "  - \"\"",
+                        '  - ""',
                         "image_ref: aicage-extended:codex-ubuntu",
                     ]
                 ),

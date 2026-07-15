@@ -11,8 +11,13 @@ def shell_width(
     min_width = 92
     section_row_width = 90
     shell_overhead = 16
-    longest_share_width = max((cell_len(text) for text in _share_row_texts(built_in_shares, custom_shares)), default=0)
-    target_width = max(section_row_width, longest_share_width + shell_overhead, min_width)
+    longest_share_width = max(
+        (cell_len(text) for text in _share_row_texts(built_in_shares, custom_shares)),
+        default=0,
+    )
+    target_width = max(
+        section_row_width, longest_share_width + shell_overhead, min_width
+    )
     viewport_cap = max(viewport_width - 4, min_width)
     return min(target_width, viewport_cap)
 

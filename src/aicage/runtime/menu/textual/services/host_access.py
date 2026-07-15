@@ -1,7 +1,12 @@
 from aicage.config.run_config_draft import RunConfigDraft
 
 from .._ids import built_in_identity, built_in_selection_key, docker_selection_key
-from .._models import BuiltInShareValue, CustomShareValue, DockerOptionValue, HostAccessConfirmValues
+from .._models import (
+    BuiltInShareValue,
+    CustomShareValue,
+    DockerOptionValue,
+    HostAccessConfirmValues,
+)
 
 
 def built_in_selection_value(item: BuiltInShareValue) -> str:
@@ -31,8 +36,17 @@ def current_built_in_shares(
     ]
 
 
-def built_in_group_selection_values(selection_value: str, built_in_shares: list[BuiltInShareValue]) -> list[str]:
-    selected_item = next((item for item in built_in_shares if built_in_selection_value(item) == selection_value), None)
+def built_in_group_selection_values(
+    selection_value: str, built_in_shares: list[BuiltInShareValue]
+) -> list[str]:
+    selected_item = next(
+        (
+            item
+            for item in built_in_shares
+            if built_in_selection_value(item) == selection_value
+        ),
+        None,
+    )
     if selected_item is None or selected_item.source != "extension":
         return []
     group_identity = built_in_identity(selected_item.source, selected_item.key)
@@ -43,7 +57,9 @@ def built_in_group_selection_values(selection_value: str, built_in_shares: list[
     ]
 
 
-def current_docker_option(selected: set[str], persisted: bool | None) -> DockerOptionValue:
+def current_docker_option(
+    selected: set[str], persisted: bool | None
+) -> DockerOptionValue:
     return DockerOptionValue(
         key="docker",
         label="Docker socket",
@@ -65,12 +81,16 @@ def build_confirmation_request(
         git_support_shares=[
             item
             for item in built_in_shares
-            if item.source == "git_support" and item.enabled and item.persisted is not True
+            if item.source == "git_support"
+            and item.enabled
+            and item.persisted is not True
         ],
         extension_shares=[
             item
             for item in built_in_shares
-            if item.source == "extension" and item.enabled and item.persisted is not True
+            if item.source == "extension"
+            and item.enabled
+            and item.persisted is not True
         ],
     )
 
@@ -85,20 +105,26 @@ def merge_confirmed_host_access(
         for item in [*confirmed.git_support_shares, *confirmed.extension_shares]
     }
     merged_shares = [
-        BuiltInShareValue(
-            source=item.source,
-            key=item.key,
-            label=item.label,
-            path=item.path,
-            persisted=item.persisted,
-            enabled=confirmed_by_key.get(built_in_identity(item.source, item.key), item.enabled),
-            row_key=item.row_key,
+        (
+            BuiltInShareValue(
+                source=item.source,
+                key=item.key,
+                label=item.label,
+                path=item.path,
+                persisted=item.persisted,
+                enabled=confirmed_by_key.get(
+                    built_in_identity(item.source, item.key), item.enabled
+                ),
+                row_key=item.row_key,
+            )
+            if built_in_identity(item.source, item.key) in confirmed_by_key
+            else item
         )
-        if built_in_identity(item.source, item.key) in confirmed_by_key
-        else item
         for item in built_in_shares
     ]
-    confirmed_docker_by_key = {item.key: item.enabled for item in confirmed.docker_options}
+    confirmed_docker_by_key = {
+        item.key: item.enabled for item in confirmed.docker_options
+    }
     if "docker" not in confirmed_docker_by_key:
         return merged_shares, docker_option
     return (

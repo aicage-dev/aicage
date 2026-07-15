@@ -36,7 +36,9 @@ class BaseFilterTests(TestCase):
             local_definition_dir=Path("/tmp/arch"),
         )
 
-        with mock.patch("aicage.config.base.architecture.platform.machine", return_value="aarch64"):
+        with mock.patch(
+            "aicage.config.base.architecture.platform.machine", return_value="aarch64"
+        ):
             filtered = filter_bases(context, self._agent_metadata())
 
         self.assertEqual({"alpine", "ubuntu"}, filtered)

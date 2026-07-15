@@ -116,7 +116,9 @@ def require_integration() -> None:
 
 def require_proxy_integration() -> None:
     if not os.environ.get("AICAGE_RUN_PROXY_INTEGRATION"):
-        pytest.skip("Set AICAGE_RUN_PROXY_INTEGRATION=1 to run proxy integration tests.")
+        pytest.skip(
+            "Set AICAGE_RUN_PROXY_INTEGRATION=1 to run proxy integration tests."
+        )
 
 
 def setup_workspace(
@@ -146,9 +148,15 @@ def setup_workspace(
     monkeypatch.setattr(paths_module, "CUSTOM_AGENTS_DIR", custom_agents_path)
     monkeypatch.setattr(paths_module, "CUSTOM_EXTENSIONS_DIR", custom_extensions_path)
     monkeypatch.setattr(paths_module, "IMAGE_BUILD_STATE_DIR", image_build_dir)
-    monkeypatch.setattr(paths_module, "IMAGE_EXTENDED_BUILD_STATE_DIR", extended_build_dir)
-    monkeypatch.setattr(paths_module, "BASE_IMAGE_BUILD_STATE_DIR", base_image_build_dir)
-    monkeypatch.setattr(paths_module, "AGENT_VERSION_CHECK_STATE_DIR", version_check_dir)
+    monkeypatch.setattr(
+        paths_module, "IMAGE_EXTENDED_BUILD_STATE_DIR", extended_build_dir
+    )
+    monkeypatch.setattr(
+        paths_module, "BASE_IMAGE_BUILD_STATE_DIR", base_image_build_dir
+    )
+    monkeypatch.setattr(
+        paths_module, "AGENT_VERSION_CHECK_STATE_DIR", version_check_dir
+    )
 
     store = SettingsStore()
     store.projects_dir = projects_dir
@@ -220,7 +228,13 @@ def assert_marker_extension_ready(
     share_dir: Path | None = None,
 ) -> None:
     exit_code, output = run_cli_pty(
-        ["--menu", "none", agent_name, "-lc", "test -f /usr/local/share/aicage-extensions/marker.txt"],
+        [
+            "--menu",
+            "none",
+            agent_name,
+            "-lc",
+            "test -f /usr/local/share/aicage-extensions/marker.txt",
+        ],
         env=env,
         cwd=workspace,
     )
@@ -405,7 +419,7 @@ def setup_custom_bash_agent(target_dir: Path) -> None:
             [
                 "#!/usr/bin/env bash",
                 "set -euo pipefail",
-                "printf \"%s\\n\" \"bash\"",
+                'printf "%s\\n" "bash"',
             ]
         )
         + "\n",

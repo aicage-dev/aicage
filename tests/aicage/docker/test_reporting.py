@@ -7,7 +7,9 @@ from aicage.docker import reporting
 
 
 class DefaultOperationReporterTests(TestCase):
-    def test_default_operation_reporter_returns_console_operation_reporter(self) -> None:
+    def test_default_operation_reporter_returns_console_operation_reporter(
+        self,
+    ) -> None:
         reporter = reporting.default_operation_reporter()
 
         self.assertIsInstance(reporter, reporting._ConsoleOperationReporter)
@@ -23,7 +25,10 @@ class ConsoleOperationReporterTests(TestCase):
             with mock.patch("sys.stdout", stdout):
                 reporter.on_phase_started("pull", "Pulling image repo:tag", log_path)
 
-        self.assertEqual(f"[aicage] Pulling image repo:tag (logs: {log_path})...\n", stdout.getvalue())
+        self.assertEqual(
+            f"[aicage] Pulling image repo:tag (logs: {log_path})...\n",
+            stdout.getvalue(),
+        )
 
     def test_on_phase_progress_does_not_print(self) -> None:
         reporter = reporting.default_operation_reporter()

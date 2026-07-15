@@ -96,7 +96,10 @@ class SharesOverviewTests(TestCase):
             [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
         )
 
-        self.assertEqual([BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)], values)
+        self.assertEqual(
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+            values,
+        )
 
     def test_current_custom_shares_returns_copy(self) -> None:
         state = OverviewState(None, [], [CustomShareValue("/tmp/logs")], False)

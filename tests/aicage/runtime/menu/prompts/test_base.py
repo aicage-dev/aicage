@@ -6,13 +6,19 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.runtime._errors import RuntimeExecutionError
-from aicage.runtime.menu.prompts.base import BaseSelectionRequest, _available_bases, _base_options, prompt_for_base
+from aicage.runtime.menu.prompts.base import (
+    BaseSelectionRequest,
+    _available_bases,
+    _base_options,
+    prompt_for_base,
+)
 
 
 class PromptTests(TestCase):
     def test_prompt_for_base_validates_choice(self) -> None:
-        with mock.patch("sys.stdin.isatty", return_value=True), mock.patch(
-            "builtins.input", return_value="fedora"
+        with (
+            mock.patch("sys.stdin.isatty", return_value=True),
+            mock.patch("builtins.input", return_value="fedora"),
         ):
             with self.assertRaises(RuntimeExecutionError):
                 prompt_for_base(
@@ -26,7 +32,10 @@ class PromptTests(TestCase):
     def test_prompt_for_base_accepts_number_and_default(self) -> None:
         with (
             mock.patch("sys.stdin.isatty", return_value=True),
-            mock.patch("aicage.runtime.menu.prompts.base.resolve_default_base", return_value="ubuntu"),
+            mock.patch(
+                "aicage.runtime.menu.prompts.base.resolve_default_base",
+                return_value="ubuntu",
+            ),
             mock.patch("builtins.input", side_effect=["2", ""]),
         ):
             choice = prompt_for_base(
@@ -45,7 +54,10 @@ class PromptTests(TestCase):
                 )
             )
             self.assertEqual("ubuntu", default_choice)
-        with mock.patch("sys.stdin.isatty", return_value=True), mock.patch("builtins.input", return_value="3"):
+        with (
+            mock.patch("sys.stdin.isatty", return_value=True),
+            mock.patch("builtins.input", return_value="3"),
+        ):
             with self.assertRaises(RuntimeExecutionError):
                 prompt_for_base(
                     BaseSelectionRequest(
@@ -58,7 +70,10 @@ class PromptTests(TestCase):
     def test_prompt_for_base_uses_host_default_on_enter(self) -> None:
         with (
             mock.patch("sys.stdin.isatty", return_value=True),
-            mock.patch("aicage.runtime.menu.prompts.base.resolve_default_base", return_value="fedora"),
+            mock.patch(
+                "aicage.runtime.menu.prompts.base.resolve_default_base",
+                return_value="fedora",
+            ),
             mock.patch("builtins.input", return_value=""),
         ):
             choice = prompt_for_base(
@@ -71,7 +86,10 @@ class PromptTests(TestCase):
         self.assertEqual("fedora", choice)
 
     def test_prompt_for_base_accepts_default_without_list(self) -> None:
-        with mock.patch("sys.stdin.isatty", return_value=True), mock.patch("builtins.input", return_value=""):
+        with (
+            mock.patch("sys.stdin.isatty", return_value=True),
+            mock.patch("builtins.input", return_value=""),
+        ):
             choice = prompt_for_base(
                 BaseSelectionRequest(
                     agent="codex",
@@ -81,14 +99,21 @@ class PromptTests(TestCase):
             )
         self.assertEqual("ubuntu", choice)
 
-    def test_prompt_for_base_uses_default_when_non_interactive_defaults_enabled(self) -> None:
+    def test_prompt_for_base_uses_default_when_non_interactive_defaults_enabled(
+        self,
+    ) -> None:
         with (
             mock.patch(
                 "aicage.runtime.menu.prompts.base.non_interactive_defaults_enabled",
                 return_value=True,
             ),
-            mock.patch("aicage.runtime.menu.prompts.base.resolve_default_base", return_value="fedora"),
-            mock.patch("aicage.runtime.menu.prompts.base.ensure_tty_for_prompt") as tty_mock,
+            mock.patch(
+                "aicage.runtime.menu.prompts.base.resolve_default_base",
+                return_value="fedora",
+            ),
+            mock.patch(
+                "aicage.runtime.menu.prompts.base.ensure_tty_for_prompt"
+            ) as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
             choice = prompt_for_base(
@@ -105,7 +130,10 @@ class PromptTests(TestCase):
     def test_base_options_returns_descriptions(self) -> None:
         context = self._build_context(["ubuntu"])
         options = _base_options(context, self._agent_metadata(["ubuntu"]))
-        self.assertEqual([("ubuntu", "Default")], [(option.base, option.description) for option in options])
+        self.assertEqual(
+            [("ubuntu", "Default")],
+            [(option.base, option.description) for option in options],
+        )
 
     def test_base_options_filters_excluded_bases(self) -> None:
         context = self._build_context(["alpine", "ubuntu"])
@@ -113,7 +141,10 @@ class PromptTests(TestCase):
             context,
             self._agent_metadata(["alpine", "ubuntu"], base_exclude=["alpine"]),
         )
-        self.assertEqual([("ubuntu", "Default")], [(option.base, option.description) for option in options])
+        self.assertEqual(
+            [("ubuntu", "Default")],
+            [(option.base, option.description) for option in options],
+        )
 
     def test_available_bases_returns_list(self) -> None:
         context = self._build_context(["ubuntu", "alpine"])

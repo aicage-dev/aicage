@@ -63,12 +63,16 @@ def prompt_for_base(request: BaseSelectionRequest) -> str:
 
     if bases and choice not in _available_bases(bases):
         options = ", ".join(_available_bases(bases))
-        raise RuntimeExecutionError(f"Invalid base '{choice}'. Valid options: {options}")
+        raise RuntimeExecutionError(
+            f"Invalid base '{choice}'. Valid options: {options}"
+        )
     logger.info("Selected base '%s' for agent '%s'", choice, request.agent)
     return choice
 
 
-def _base_options(context: ConfigContext, agent_metadata: AgentMetadata) -> list[_BaseOption]:
+def _base_options(
+    context: ConfigContext, agent_metadata: AgentMetadata
+) -> list[_BaseOption]:
     bases = filter_bases(context, agent_metadata)
     return [
         _BaseOption(

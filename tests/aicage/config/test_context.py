@@ -21,7 +21,9 @@ class ContextTests(TestCase):
             bases=self._get_bases(),
             extensions={},
         )
-        self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}", context.image_repository_ref())
+        self.assertEqual(
+            f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}", context.image_repository_ref()
+        )
 
     def test_build_config_context_uses_store(self) -> None:
         project_cfg = ProjectConfig(path="/work/project", agents={})
@@ -30,7 +32,9 @@ class ContextTests(TestCase):
             mock.patch("pathlib.Path.cwd", return_value=Path("/work/project")),
             mock.patch("aicage.config.base.loader.load_bases") as load_bases,
             mock.patch("aicage.config.agent.loader.load_agents") as load_agents,
-            mock.patch("aicage.config.extensions.loader.load_extensions") as load_extensions,
+            mock.patch(
+                "aicage.config.extensions.loader.load_extensions"
+            ) as load_extensions,
         ):
             store = store_cls.return_value
             store.load_project.return_value = project_cfg

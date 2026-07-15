@@ -49,7 +49,9 @@ class CustomAgentLoaderTests(TestCase):
                 ),
                 encoding="utf-8",
             )
-            (agent_dir / "install.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+            (agent_dir / "install.sh").write_text(
+                "#!/usr/bin/env bash\n", encoding="utf-8"
+            )
             (agent_dir / "version.sh").write_text("echo 1.0.0\n", encoding="utf-8")
             with mock.patch(
                 "aicage.config.agent._custom_loader.CUSTOM_AGENTS_DIR",

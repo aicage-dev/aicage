@@ -22,7 +22,10 @@ class HostTimezoneTests(TestCase):
         timezone_file.read_text.return_value = "Europe/Zurich\n"
         localtime_path = mock.Mock()
 
-        with mock.patch("aicage.runtime._host_timezone.Path", side_effect=[timezone_file, localtime_path]):
+        with mock.patch(
+            "aicage.runtime._host_timezone.Path",
+            side_effect=[timezone_file, localtime_path],
+        ):
             result = _resolve_posix_timezone()
 
         self.assertEqual("Europe/Zurich", result)
@@ -34,7 +37,10 @@ class HostTimezoneTests(TestCase):
         localtime_path.exists.return_value = True
         localtime_path.resolve.return_value = Path("/usr/share/zoneinfo/Europe/Zurich")
 
-        with mock.patch("aicage.runtime._host_timezone.Path", side_effect=[timezone_file, localtime_path]):
+        with mock.patch(
+            "aicage.runtime._host_timezone.Path",
+            side_effect=[timezone_file, localtime_path],
+        ):
             result = _resolve_posix_timezone()
 
         self.assertEqual("Europe/Zurich", result)
@@ -46,13 +52,17 @@ class HostTimezoneTests(TestCase):
             stdout="Europe/Zurich\n",
             stderr="",
         )
-        with mock.patch("aicage.runtime._host_timezone.subprocess.run", return_value=process):
+        with mock.patch(
+            "aicage.runtime._host_timezone.subprocess.run", return_value=process
+        ):
             result = _resolve_windows_timezone()
 
         self.assertEqual("Europe/Zurich", result)
 
     def test_resolve_windows_timezone_returns_none_when_shell_missing(self) -> None:
-        with mock.patch("aicage.runtime._host_timezone.subprocess.run", side_effect=OSError):
+        with mock.patch(
+            "aicage.runtime._host_timezone.subprocess.run", side_effect=OSError
+        ):
             result = _resolve_windows_timezone()
 
         self.assertIsNone(result)

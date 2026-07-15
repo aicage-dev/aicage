@@ -9,9 +9,7 @@ from aicage.registry.agent_build._store import BuildStore as AgentBuildStore
 from aicage.registry.base_build._store import (
     BuildRecord,
 )
-from aicage.registry.base_build._store import (
-    BuildStore as BaseBuildStore,
-)
+from aicage.registry.base_build._store import BuildStore as BaseBuildStore
 from aicage.registry.base_build.ensure import image_ref
 
 from .._helpers import (
@@ -140,4 +138,6 @@ def _update_from_image(base_dir: Path, from_image: str) -> None:
     definition_path = base_dir / "base.yml"
     payload = yaml.safe_load(definition_path.read_text(encoding="utf-8")) or {}
     payload["from_image"] = from_image
-    definition_path.write_text(yaml.safe_dump(payload, sort_keys=True), encoding="utf-8")
+    definition_path.write_text(
+        yaml.safe_dump(payload, sort_keys=True), encoding="utf-8"
+    )

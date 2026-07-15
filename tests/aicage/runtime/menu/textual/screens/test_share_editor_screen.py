@@ -10,7 +10,9 @@ class AddShareScreenTests(TestCase):
     def test_compose_builds_screen_widgets(self) -> None:
         screen = share_editor_screen.ShareEditorScreen()
 
-        with mock.patch.object(share_editor_screen, "DirectoryTree", return_value=Static()):
+        with mock.patch.object(
+            share_editor_screen, "DirectoryTree", return_value=Static()
+        ):
             widgets = list(screen.compose())
 
         self.assertEqual(1, len(widgets))
@@ -24,7 +26,9 @@ class AddShareScreenTests(TestCase):
 
         path_input.focus.assert_called_once_with()
 
-    def test_action_accept_dismisses_trimmed_bind_mount_with_read_only_suffix(self) -> None:
+    def test_action_accept_dismisses_trimmed_bind_mount_with_read_only_suffix(
+        self,
+    ) -> None:
         screen = share_editor_screen.ShareEditorScreen()
         share_input = mock.Mock()
         share_input.value = "  logs  "
@@ -103,7 +107,9 @@ class AddShareScreenTests(TestCase):
         accept_mock.assert_called_once_with()
 
     def test_on_button_pressed_dispatches_remove(self) -> None:
-        screen = share_editor_screen.ShareEditorScreen("/tmp/project/logs", allow_remove=True)
+        screen = share_editor_screen.ShareEditorScreen(
+            "/tmp/project/logs", allow_remove=True
+        )
         event = mock.Mock()
         event.button.id = "remove"
 
@@ -111,4 +117,6 @@ class AddShareScreenTests(TestCase):
             screen.on_button_pressed(event)
 
         event.stop.assert_called_once_with()
-        dismiss_mock.assert_called_once_with(ShareEditorResult("/tmp/project/logs", True))
+        dismiss_mock.assert_called_once_with(
+            ShareEditorResult("/tmp/project/logs", True)
+        )

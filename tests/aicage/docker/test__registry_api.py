@@ -57,7 +57,7 @@ class RemoteApiTests(TestCase):
 
     def test_fetch_json_returns_payload_and_headers(self) -> None:
         response = mock.Mock()
-        response.read.return_value = b"{\"token\": \"abc\"}"
+        response.read.return_value = b'{"token": "abc"}'
         response.headers = {"x-test": "1"}
         response.__enter__ = mock.Mock(return_value=response)
         response.__exit__ = mock.Mock(return_value=None)

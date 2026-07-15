@@ -28,7 +28,9 @@ class DockerRuntimeTests(TestCase):
         process = mock.Mock(stdout='"unix:///run/user/1000/docker.sock"\n')
         with (
             mock.patch.dict("aicage.docker.runtime.os.environ", {}, clear=True),
-            mock.patch("aicage.docker.runtime.run_docker_command_capture", return_value=process),
+            mock.patch(
+                "aicage.docker.runtime.run_docker_command_capture", return_value=process
+            ),
         ):
             host = runtime.get_active_docker_host()
 
@@ -38,7 +40,10 @@ class DockerRuntimeTests(TestCase):
     def test_get_active_docker_host_falls_back_to_default(self) -> None:
         with (
             mock.patch.dict("aicage.docker.runtime.os.environ", {}, clear=True),
-            mock.patch("aicage.docker.runtime.run_docker_command_capture", side_effect=RuntimeError("boom")),
+            mock.patch(
+                "aicage.docker.runtime.run_docker_command_capture",
+                side_effect=RuntimeError("boom"),
+            ),
         ):
             host = runtime.get_active_docker_host()
 
@@ -49,7 +54,9 @@ class DockerRuntimeTests(TestCase):
         process = mock.Mock(stdout='["name=seccomp","name=rootless"]\n')
         with (
             mock.patch("aicage.docker.runtime.os.name", "posix"),
-            mock.patch("aicage.docker.runtime.run_docker_command_capture", return_value=process),
+            mock.patch(
+                "aicage.docker.runtime.run_docker_command_capture", return_value=process
+            ),
         ):
             self.assertTrue(runtime.is_rootless_docker())
 
@@ -57,6 +64,8 @@ class DockerRuntimeTests(TestCase):
         process = mock.Mock(stdout='["name=seccomp"]\n')
         with (
             mock.patch("aicage.docker.runtime.os.name", "posix"),
-            mock.patch("aicage.docker.runtime.run_docker_command_capture", return_value=process),
+            mock.patch(
+                "aicage.docker.runtime.run_docker_command_capture", return_value=process
+            ),
         ):
             self.assertFalse(runtime.is_rootless_docker())

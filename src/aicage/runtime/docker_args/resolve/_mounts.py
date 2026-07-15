@@ -20,7 +20,9 @@ def _dedupe_exact_mount_requests(requests: list[MountRequest]) -> list[MountRequ
         host_path = request.host_path.resolve()
         if host_path in deduped_requests:
             continue
-        deduped_requests[host_path] = MountRequest(host_path=host_path, read_only=request.read_only)
+        deduped_requests[host_path] = MountRequest(
+            host_path=host_path, read_only=request.read_only
+        )
     return list(deduped_requests.values())
 
 
@@ -29,7 +31,9 @@ def _dedupe_nested_mount_requests(requests: list[MountRequest]) -> list[MountReq
     for request in requests:
         host_path = request.host_path.resolve()
         if any(
-            _is_redundant_nested_mount(request, selected, host_path, selected.host_path.resolve())
+            _is_redundant_nested_mount(
+                request, selected, host_path, selected.host_path.resolve()
+            )
             for selected in selected_requests
         ):
             continue
@@ -68,9 +72,8 @@ def _is_redundant_nested_mount(
     nested_host_path: Path,
     parent_host_path: Path,
 ) -> bool:
-    return (
-        nested_request.read_only == parent_request.read_only
-        and _is_path_within(nested_host_path, parent_host_path)
+    return nested_request.read_only == parent_request.read_only and _is_path_within(
+        nested_host_path, parent_host_path
     )
 
 

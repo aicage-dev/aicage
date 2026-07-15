@@ -36,7 +36,9 @@ def _pull_version_check_image(
         resolve_verified_digest(image_ref)
         run_pull(image_ref, log_path)
     except RegistryError:
-        logger.warning("Version check image pull failed; using local image (logs: %s).", log_path)
+        logger.warning(
+            "Version check image pull failed; using local image (logs: %s).", log_path
+        )
         return
     cleanup_old_digest(repository, local_digest, image_ref)
 

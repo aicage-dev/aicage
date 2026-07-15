@@ -19,9 +19,13 @@ def run_docker_command(
             stderr=stderr,
         )
     except FileNotFoundError as exc:
-        raise DockerError("Docker CLI not found. Install Docker and ensure it is on PATH.") from exc
+        raise DockerError(
+            "Docker CLI not found. Install Docker and ensure it is on PATH."
+        ) from exc
     except subprocess.CalledProcessError as exc:
-        raise DockerError(f"Docker command failed with exit code {exc.returncode}.") from exc
+        raise DockerError(
+            f"Docker command failed with exit code {exc.returncode}."
+        ) from exc
 
 
 @overload
@@ -30,8 +34,7 @@ def run_docker_command_capture(
     *,
     check: bool,
     text: Literal[True],
-) -> subprocess.CompletedProcess[str]:
-    ...
+) -> subprocess.CompletedProcess[str]: ...
 
 
 @overload
@@ -40,8 +43,7 @@ def run_docker_command_capture(
     *,
     check: bool,
     text: Literal[False],
-) -> subprocess.CompletedProcess[bytes]:
-    ...
+) -> subprocess.CompletedProcess[bytes]: ...
 
 
 def run_docker_command_capture(
@@ -58,6 +60,10 @@ def run_docker_command_capture(
             text=text,
         )
     except FileNotFoundError as exc:
-        raise DockerError("Docker CLI not found. Install Docker and ensure it is on PATH.") from exc
+        raise DockerError(
+            "Docker CLI not found. Install Docker and ensure it is on PATH."
+        ) from exc
     except subprocess.CalledProcessError as exc:
-        raise DockerError(f"Docker command failed with exit code {exc.returncode}.") from exc
+        raise DockerError(
+            f"Docker command failed with exit code {exc.returncode}."
+        ) from exc

@@ -14,9 +14,7 @@ class GitRootTests(TestCase):
     def test_resolve_git_root_mount_skips_without_git_root(self) -> None:
         agent_cfg = AgentConfig()
         context = build_context(agent_cfg)
-        with (
-            mock.patch(f"{_MODULE}.resolve_git_root", return_value=None),
-        ):
+        with (mock.patch(f"{_MODULE}.resolve_git_root", return_value=None),):
             resolved = git_root.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
@@ -24,7 +22,9 @@ class GitRootTests(TestCase):
         agent_cfg = AgentConfig()
         context = build_context(agent_cfg)
         with (
-            mock.patch(f"{_MODULE}.resolve_git_root", return_value=Path("/tmp/project")),
+            mock.patch(
+                f"{_MODULE}.resolve_git_root", return_value=Path("/tmp/project")
+            ),
         ):
             resolved = git_root.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
