@@ -20,7 +20,9 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
             AgentConfig(), ParsedArgs(False, "", "codex", [], False, [], None)
         )
         built_in_shares = [
-            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", True, True),
+            BuiltInShareValue(
+                "git_support", "ssh", "SSH", "/test-tmp/.ssh", True, True
+            ),
         ]
         docker_option = DockerOptionValue("docker", "Docker socket", True, True)
 

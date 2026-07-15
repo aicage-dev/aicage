@@ -17,4 +17,6 @@ class ExtensionBuildLogsTests(TestCase):
         ):
             log_path = _logs.build_log_path("aicage:codex-ubuntu")
 
-        self.assertEqual(Path("/test-tmp/logs") / "aicage_codex-ubuntu-stamp.log", log_path)
+        self.assertEqual(
+            Path("/test-tmp/logs") / "aicage_codex-ubuntu-stamp.log", log_path
+        )

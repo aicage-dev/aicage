@@ -286,7 +286,8 @@ class OverviewAppTests(TestCase):
         self.assertTrue(app._draft.agent_cfg.mounts.gitconfig)
         self.assertTrue(app._draft.agent_cfg.mounts.docker)
         self.assertEqual(
-            ["/test-tmp/project/logs", "/test-tmp/project/data"], app._draft.agent_cfg.shares
+            ["/test-tmp/project/logs", "/test-tmp/project/data"],
+            app._draft.agent_cfg.shares,
         )
 
     def test_confirm_undecided_built_in_shares_persists_deselected_docker_socket_from_popup(
@@ -389,7 +390,8 @@ class OverviewAppTests(TestCase):
     def test_edit_custom_share_removes_share(self) -> None:
         app = _build_app(
             agent_cfg=AgentConfig(
-                base="ubuntu", shares=["/test-tmp/project/logs", "/test-tmp/project/data"]
+                base="ubuntu",
+                shares=["/test-tmp/project/logs", "/test-tmp/project/data"],
             )
         )
 
