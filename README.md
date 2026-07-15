@@ -24,35 +24,43 @@ See [Why cage agents?](#why-cage-agents) for the full rationale.
 - Navigate to your project directory and run:
 
   ```bash
-  aicage --menu none <agent>
+  aicage <agent>
   ```
 
-`--menu none` accepts suggested defaults and skips setup prompts. This is the fastest first run.
+This opens the default Textual configuration UI where you can review and adjust the setup before starting.
 
 - Built-in agent examples:
 
   ```bash
-  aicage --menu none claude
-  aicage --menu none codex
-  aicage --menu none copilot
-  aicage --menu none crush
-  aicage --menu none droid
-  aicage --menu none gemini
-  aicage --menu none goose
-  aicage --menu none opencode
-  aicage --menu none qwen
+  aicage claude
+  aicage codex
+  aicage copilot
+  aicage crush
+  aicage droid
+  aicage gemini
+  aicage goose
+  aicage opencode
+  aicage qwen
   ```
 
-Example output of first run with agent `codex`:
+If you want the fastest no-menu first run, use:
 
-[![Example output of first run with agent codex using defaults](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes-thumb.png)](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/01-quickstart-with-yes.png)
+```bash
+aicage --menu none <agent>
+```
 
-## Full setup (optional)
+`--menu none` accepts suggested defaults and skips interactive menus.
 
-If you want full interactive setup instead of defaults:
+## Menu modes
 
-- Use `aicage <agent>` for the Textual menu.
-- Use `aicage --menu simple <agent>` for the line-based prompt menu.
+- `aicage <agent>` uses the default Textual configuration UI.
+- `aicage --menu simple <agent>` uses the classic line-based prompt menu.
+- `aicage --menu none <agent>` skips menus and uses defaults.
+
+Run `aicage <agent>` again whenever you want to review or change the saved config for that agent in the current
+project.
+
+Use `--config remove` only when you want to reset the saved config completely.
 
 1. Show project config path and contents:
 
@@ -66,16 +74,6 @@ If you want full interactive setup instead of defaults:
    aicage --config remove
    aicage --config remove <agent>
    ```
-
-3. Run again without `--menu none`:
-
-   ```bash
-   aicage <agent>
-   ```
-
-Example output of full setup prompt flow:
-
-[![Example output of full setup prompt flow](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/02-full-config-start-thumb.png)](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/02-full-config-start.png)
 
 ## Full documentation
 
@@ -148,9 +146,9 @@ Extensions can install tools and request additional host mounts.
 
 After adding or changing custom definitions, restart `aicage`.
 
-If your project is already configured for an agent, `aicage` will keep using the saved config. To reconfigure (and
-see new bases/agents/extensions), run `aicage --config remove` and start `aicage` again. To reset only one agent
-entry, use `aicage --config remove <agent>`. Use `aicage --config` to inspect the current config.
+If your project is already configured for an agent, rerun `aicage <agent>` to review or change that saved config.
+Use `aicage --config remove` only to reset the whole project config, or `aicage --config remove <agent>` to reset a
+single agent entry. Use `aicage --config` to inspect the current config.
 
 - Extensions: [Customization-Extensions](https://github.com/aicage/aicage/wiki/Customization-Extensions)
 - Custom agents: [Customization-Agents](https://github.com/aicage/aicage/wiki/Customization-Agents)
