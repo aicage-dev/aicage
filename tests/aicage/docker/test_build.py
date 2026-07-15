@@ -16,7 +16,7 @@ from .._run_config_fixtures import build_run_config as _build_run_config
 class LocalBuildRunnerTests(TestCase):
     def test_run_build_invokes_docker(self) -> None:
         run_config = _build_run_config(
-            local_definition_dir=Path("/tmp/build/agents/claude")
+            local_definition_dir=Path("/test-tmp/build/agents/claude")
         )
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
@@ -24,7 +24,7 @@ class LocalBuildRunnerTests(TestCase):
                 mock.patch.dict(os.environ, {}, clear=True),
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
-                    return_value=Path("/tmp/build/Dockerfile"),
+                    return_value=Path("/test-tmp/build/Dockerfile"),
                 ),
                 mock.patch(
                     "aicage.docker.build._run_build_command",
@@ -46,21 +46,21 @@ class LocalBuildRunnerTests(TestCase):
                 "build",
                 "--no-cache",
                 "--file",
-                str(Path("/tmp/build/Dockerfile")),
+                str(Path("/test-tmp/build/Dockerfile")),
                 "--build-arg",
                 "BASE_IMAGE=ghcr.io/aicage/aicage-image-base:ubuntu",
                 "--build-arg",
                 "AGENT=claude",
                 "--tag",
                 "aicage:claude-ubuntu",
-                str(Path("/tmp/build")),
+                str(Path("/test-tmp/build")),
             ],
             command,
         )
 
     def test_run_build_raises_on_failure(self) -> None:
         run_config = _build_run_config(
-            local_definition_dir=Path("/tmp/build/agents/claude")
+            local_definition_dir=Path("/test-tmp/build/agents/claude")
         )
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
@@ -68,7 +68,7 @@ class LocalBuildRunnerTests(TestCase):
             with (
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
-                    return_value=Path("/tmp/build/Dockerfile"),
+                    return_value=Path("/test-tmp/build/Dockerfile"),
                 ),
                 mock.patch(
                     "aicage.docker.build._run_build_command",
@@ -127,7 +127,7 @@ class LocalBuildRunnerTests(TestCase):
 
     def test_run_build_includes_proxy_build_args(self) -> None:
         run_config = _build_run_config(
-            local_definition_dir=Path("/tmp/build/agents/claude")
+            local_definition_dir=Path("/test-tmp/build/agents/claude")
         )
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "logs" / "build.log"
@@ -139,7 +139,7 @@ class LocalBuildRunnerTests(TestCase):
                 ),
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
-                    return_value=Path("/tmp/build/Dockerfile"),
+                    return_value=Path("/test-tmp/build/Dockerfile"),
                 ),
                 mock.patch(
                     "aicage.docker.build._run_build_command",
@@ -215,7 +215,7 @@ class LocalBuildRunnerTests(TestCase):
             with (
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
-                    return_value=Path("/tmp/Dockerfile"),
+                    return_value=Path("/test-tmp/Dockerfile"),
                 ),
                 mock.patch(
                     "aicage.docker.build._run_build_command",
@@ -243,7 +243,7 @@ class LocalBuildRunnerTests(TestCase):
             with (
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
-                    return_value=Path("/tmp/Dockerfile"),
+                    return_value=Path("/test-tmp/Dockerfile"),
                 ),
                 mock.patch(
                     "aicage.docker.build._run_build_command",
@@ -266,7 +266,7 @@ class LocalBuildRunnerTests(TestCase):
 
     def test_run_build_reports_started_and_finished(self) -> None:
         run_config = _build_run_config(
-            local_definition_dir=Path("/tmp/build/agents/claude")
+            local_definition_dir=Path("/test-tmp/build/agents/claude")
         )
         reporter = mock.Mock()
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -275,7 +275,7 @@ class LocalBuildRunnerTests(TestCase):
                 mock.patch.dict(os.environ, {}, clear=True),
                 mock.patch(
                     "aicage.docker.build.find_packaged_path",
-                    return_value=Path("/tmp/build/Dockerfile"),
+                    return_value=Path("/test-tmp/build/Dockerfile"),
                 ),
                 mock.patch(
                     "aicage.docker.build._run_build_command",
@@ -359,7 +359,7 @@ def _extension(extension_id: str) -> ExtensionMetadata:
         name=extension_id,
         description="desc",
         shares=[],
-        directory=Path("/tmp/ext"),
-        scripts_dir=Path("/tmp/ext/scripts"),
+        directory=Path("/test-tmp/ext"),
+        scripts_dir=Path("/test-tmp/ext/scripts"),
         dockerfile_path=None,
     )

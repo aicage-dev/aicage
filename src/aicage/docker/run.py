@@ -1,5 +1,5 @@
 import shlex
-import subprocess
+import subprocess  # nosec B404 -- subprocess is required for Docker CLI execution and result handling.
 from pathlib import Path
 
 from aicage._proxy import proxy_run_env_args_from_host
@@ -51,7 +51,7 @@ def run_builder_version_check(
         *command,
     ]
     try:
-        process = subprocess.run(
+        process = subprocess.run(  # nosec B603 -- command is an internal Docker argv list without shell usage.
             run_command,
             check=False,
             capture_output=True,

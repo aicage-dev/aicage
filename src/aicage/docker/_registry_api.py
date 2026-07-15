@@ -4,7 +4,7 @@ import urllib.request
 from collections.abc import Mapping
 from typing import Any
 
-from aicage._network import classify_network_failure, host_from_url
+from aicage._network import classify_network_failure, host_from_url, require_http_url
 from aicage.constants import DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS
 
 from .errors import RegistryDiscoveryError
@@ -27,9 +27,9 @@ def _fetch_pull_token_for_repository(
 def _fetch_json(
     url: str, headers: dict[str, str] | None
 ) -> tuple[dict[str, Any], Mapping[str, str]]:
-    request = urllib.request.Request(url, headers=headers or {})
     try:
-        with urllib.request.urlopen(
+        request = urllib.request.Request(require_http_url(url), headers=headers or {})
+        with urllib.request.urlopen(  # nosec B310 -- request URL is restricted to HTTP(S) by require_http_url().
             request, timeout=DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS
         ) as response:
             payload = response.read().decode("utf-8")

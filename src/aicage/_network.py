@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 _HTTP_PROXY_AUTH_REQUIRED: int = 407
 _HTTP_AUTH_STATUS_CODES: set[int] = {401, 403}
+_SUPPORTED_URL_SCHEMES: set[str] = {"http", "https"}
 
 
 def classify_network_failure(exc: BaseException) -> str:
@@ -35,6 +36,15 @@ def host_from_url(url: str) -> str:
     parsed = urlparse(url)
     if parsed.hostname:
         return parsed.hostname
+    return url
+
+
+def require_http_url(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme not in _SUPPORTED_URL_SCHEMES:
+        raise urllib.error.URLError(
+            f"Unsupported URL scheme for network request: {parsed.scheme or '<missing>'}"
+        )
     return url
 
 

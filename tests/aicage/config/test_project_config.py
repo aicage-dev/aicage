@@ -33,7 +33,7 @@ class ProjectConfigTests(TestCase):
         cfg = ProjectConfig(
             path="/repo",
             agents={
-                "codex": AgentConfig(base="ubuntu", shares=["/tmp/one", "/tmp/two:ro"])
+                "codex": AgentConfig(base="ubuntu", shares=["/test-tmp/one", "/test-tmp/two:ro"])
             },
         )
         self.assertEqual(
@@ -42,7 +42,7 @@ class ProjectConfigTests(TestCase):
                 _PROJECT_AGENTS_KEY: {
                     "codex": {
                         _AGENT_BASE_KEY: "ubuntu",
-                        _AGENT_SHARES_KEY: ["/tmp/one", "/tmp/two:ro"],
+                        _AGENT_SHARES_KEY: ["/test-tmp/one", "/test-tmp/two:ro"],
                     }
                 },
             },

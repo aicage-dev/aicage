@@ -7,8 +7,8 @@ from aicage.runtime.menu.textual.overview import _layout
 class LayoutTests(TestCase):
     def test_shell_width_returns_fixed_width_value(self) -> None:
         width = _layout.shell_width(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
-            [CustomShareValue("/tmp/logs")],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [CustomShareValue("/test-tmp/logs")],
             120,
         )
 

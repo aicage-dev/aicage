@@ -97,7 +97,7 @@ class CustomAgentLoaderTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path(f"/tmp/{name}"),
+                local_definition_dir=Path(f"/test-tmp/{name}"),
             )
             for name in bases
         }

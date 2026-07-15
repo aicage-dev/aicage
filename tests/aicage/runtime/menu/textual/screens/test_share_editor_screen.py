@@ -67,23 +67,23 @@ class AddShareScreenTests(TestCase):
         screen = share_editor_screen.ShareEditorScreen()
         share_input = mock.Mock(spec=Input)
         event = mock.Mock()
-        event.path = "/tmp/logs"
+        event.path = "/test-tmp/logs"
 
         with mock.patch.object(screen, "query_one", return_value=share_input):
             screen.on_directory_tree_directory_selected(event)
 
-        self.assertEqual("/tmp/logs", share_input.value)
+        self.assertEqual("/test-tmp/logs", share_input.value)
 
     def test_on_directory_tree_file_selected_updates_input_value(self) -> None:
         screen = share_editor_screen.ShareEditorScreen()
         share_input = mock.Mock(spec=Input)
         event = mock.Mock()
-        event.path = "/tmp/config.txt"
+        event.path = "/test-tmp/config.txt"
 
         with mock.patch.object(screen, "query_one", return_value=share_input):
             screen.on_directory_tree_file_selected(event)
 
-        self.assertEqual("/tmp/config.txt", share_input.value)
+        self.assertEqual("/test-tmp/config.txt", share_input.value)
 
     def test_on_input_submitted_dispatches_accept_for_share_input(self) -> None:
         screen = share_editor_screen.ShareEditorScreen()
@@ -108,7 +108,7 @@ class AddShareScreenTests(TestCase):
 
     def test_on_button_pressed_dispatches_remove(self) -> None:
         screen = share_editor_screen.ShareEditorScreen(
-            "/tmp/project/logs", allow_remove=True
+            "/test-tmp/project/logs", allow_remove=True
         )
         event = mock.Mock()
         event.button.id = "remove"
@@ -118,5 +118,5 @@ class AddShareScreenTests(TestCase):
 
         event.stop.assert_called_once_with()
         dismiss_mock.assert_called_once_with(
-            ShareEditorResult("/tmp/project/logs", True)
+            ShareEditorResult("/test-tmp/project/logs", True)
         )

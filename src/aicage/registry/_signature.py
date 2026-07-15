@@ -1,5 +1,5 @@
 import json
-import subprocess
+import subprocess  # nosec B404 -- subprocess result types are used for cosign and docker verification flows.
 
 from aicage._logging import get_logger
 from aicage.constants import (

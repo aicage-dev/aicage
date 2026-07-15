@@ -89,7 +89,7 @@ class ParseCliTests(TestCase):
 
     def test_parse_cli_requires_separator_for_docker_args(self) -> None:
         with self.assertRaises(CliError) as ctx:
-            parse_cli(["-v", "/tmp/folder:/tmp/folder", "codex"])
+            parse_cli(["-v", "/test-tmp/folder:/test-tmp/folder", "codex"])
         self.assertEqual(
             "Docker args require '--' before the agent.", str(ctx.exception)
         )
@@ -161,8 +161,8 @@ class ParseCliTests(TestCase):
         self.assertEqual([], parsed.shares)
 
     def test_parse_cli_with_share(self) -> None:
-        parsed = parse_cli(["--share", "data", "--share", "/tmp/one:ro", "--", "codex"])
-        self.assertEqual(["data", "/tmp/one:ro"], parsed.shares)
+        parsed = parse_cli(["--share", "data", "--share", "/test-tmp/one:ro", "--", "codex"])
+        self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_menu_none(self) -> None:
         parsed = parse_cli(["--menu", "none", "codex"])

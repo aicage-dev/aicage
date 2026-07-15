@@ -9,7 +9,7 @@ class ExtensionBuildLogsTests(TestCase):
         with (
             mock.patch(
                 "aicage.registry.extension_build._logs.IMAGE_EXTENDED_BUILD_LOG_DIR",
-                Path("/tmp/logs"),
+                Path("/test-tmp/logs"),
             ),
             mock.patch(
                 "aicage.registry.extension_build._logs.timestamp", return_value="stamp"
@@ -17,4 +17,4 @@ class ExtensionBuildLogsTests(TestCase):
         ):
             log_path = _logs.build_log_path("aicage:codex-ubuntu")
 
-        self.assertEqual(Path("/tmp/logs") / "aicage_codex-ubuntu-stamp.log", log_path)
+        self.assertEqual(Path("/test-tmp/logs") / "aicage_codex-ubuntu-stamp.log", log_path)

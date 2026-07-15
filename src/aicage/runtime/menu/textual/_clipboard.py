@@ -1,6 +1,6 @@
 import platform
 import shutil
-import subprocess
+import subprocess  # nosec B404 -- subprocess is required to talk to platform clipboard helpers.
 from collections.abc import Callable
 
 _CLIPBOARD_SETTLE_TIMEOUT_SECONDS = 0.2
@@ -16,7 +16,7 @@ def copy_to_system_clipboard(text: str) -> bool:
     command = clipboard_command()
     if command is None:
         return False
-    process = subprocess.Popen(
+    process = subprocess.Popen(  # nosec B603 -- command comes from fixed clipboard helper probes without shell usage.
         command,
         stdin=subprocess.PIPE,
         stdout=subprocess.DEVNULL,

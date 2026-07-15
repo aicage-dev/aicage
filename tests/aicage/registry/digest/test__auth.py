@@ -47,3 +47,8 @@ class DigestAuthTests(TestCase):
         ):
             token = _auth.fetch_bearer_token("https://example.test", "", "repo:pull")
         self.assertEqual("token", token)
+
+    def test_fetch_bearer_token_rejects_non_http_scheme(self) -> None:
+        token = _auth.fetch_bearer_token("file:///tmp/token", "", "repo:pull")
+
+        self.assertIsNone(token)

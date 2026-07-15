@@ -40,11 +40,11 @@ class OverviewSummaryTests(TestCase):
 
     def test_shares_values_reads_mount_preferences(self) -> None:
         draft = _build_draft(
-            AgentConfig(base="ubuntu", shares=["/tmp/logs"]),
+            AgentConfig(base="ubuntu", shares=["/test-tmp/logs"]),
             ParsedArgs(False, "", "codex", [], False, [], None),
         )
         built_in_share = BuiltInShareValue(
-            "git_support", "gitconfig", "Git config", "/tmp/gitconfig", True, True
+            "git_support", "gitconfig", "Git config", "/test-tmp/gitconfig", True, True
         )
 
         with mock.patch(
@@ -53,7 +53,7 @@ class OverviewSummaryTests(TestCase):
         ):
             values = summary.shares_values(draft, _build_context())
 
-        self.assertEqual(["/tmp/logs"], values.shares)
+        self.assertEqual(["/test-tmp/logs"], values.shares)
         self.assertEqual([built_in_share], values.built_in_shares)
 
     def test_list_summary_returns_none_for_empty(self) -> None:
@@ -62,13 +62,13 @@ class OverviewSummaryTests(TestCase):
     def test_shares_summary_formats_values(self) -> None:
         summary_text = summary._shares_summary(
             SharesValues(
-                ["/tmp/logs"],
+                ["/test-tmp/logs"],
                 [
                     BuiltInShareValue(
                         "git_support",
                         "gitconfig",
                         "Git config",
-                        "/tmp/gitconfig",
+                        "/test-tmp/gitconfig",
                         None,
                         True,
                     )
@@ -76,7 +76,7 @@ class OverviewSummaryTests(TestCase):
             )
         )
 
-        self.assertIn("/tmp/logs", summary_text)
+        self.assertIn("/test-tmp/logs", summary_text)
         self.assertIn("git config", summary_text)
 
     def test_extras_summary_formats_values(self) -> None:

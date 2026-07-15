@@ -3,7 +3,11 @@ import urllib.request
 from collections.abc import Mapping
 
 from aicage._logging import get_logger
-from aicage._network import classify_network_failure, host_from_url
+from aicage._network import (
+    classify_network_failure,
+    host_from_url,
+    require_http_url,
+)
 from aicage.constants import REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
 
 
@@ -11,9 +15,11 @@ def head_request(
     url: str, headers: Mapping[str, str]
 ) -> tuple[int | None, dict[str, str]]:
     logger = get_logger()
-    request = urllib.request.Request(url, headers=dict(headers), method="HEAD")
     try:
-        with urllib.request.urlopen(
+        request = urllib.request.Request(
+            require_http_url(url), headers=dict(headers), method="HEAD"
+        )
+        with urllib.request.urlopen(  # nosec B310 -- request URL is restricted to HTTP(S) by require_http_url().
             request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
         ) as response:
             return response.status, dict(response.headers)

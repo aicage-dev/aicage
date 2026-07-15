@@ -23,7 +23,7 @@ class AgentMetadataBuilderTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             ),
             "alpine": BaseMetadata(
                 from_image="alpine:latest",
@@ -31,7 +31,7 @@ class AgentMetadataBuilderTests(TestCase):
                 base_image_description="Minimal",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/alpine"),
+                local_definition_dir=Path("/test-tmp/alpine"),
             ),
         }
         mapping = {
@@ -46,7 +46,7 @@ class AgentMetadataBuilderTests(TestCase):
             agent_name="codex",
             agent_mapping=mapping,
             bases=bases,
-            definition_dir=Path("/tmp/agent"),
+            definition_dir=Path("/test-tmp/agent"),
         )
 
         self.assertEqual(
@@ -64,7 +64,7 @@ class AgentMetadataBuilderTests(TestCase):
                 base_image_description="Rolling",
                 architectures=["amd64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/arch"),
+                local_definition_dir=Path("/test-tmp/arch"),
             ),
             "ubuntu": BaseMetadata(
                 from_image="ubuntu:latest",
@@ -72,7 +72,7 @@ class AgentMetadataBuilderTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/ubuntu"),
+                local_definition_dir=Path("/test-tmp/ubuntu"),
             ),
         }
         mapping = {
@@ -88,7 +88,7 @@ class AgentMetadataBuilderTests(TestCase):
                 agent_name="codex",
                 agent_mapping=mapping,
                 bases=bases,
-                definition_dir=Path("/tmp/agent"),
+                definition_dir=Path("/test-tmp/agent"),
             )
 
         self.assertEqual(

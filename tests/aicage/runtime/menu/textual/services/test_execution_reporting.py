@@ -11,11 +11,11 @@ class ExecutionReporterTests(TestCase):
         reporter = execution_reporting.ExecutionReporter(screen)
 
         reporter.on_phase_started(
-            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
         )
 
         screen.show_phase_started.assert_called_once_with(
-            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
         )
 
     def test_on_phase_started_dispatches_via_app_thread_bridge(self) -> None:
@@ -24,14 +24,14 @@ class ExecutionReporterTests(TestCase):
         reporter = execution_reporting.ExecutionReporter(screen)
 
         reporter.on_phase_started(
-            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
         )
 
         screen.app.call_from_thread.assert_called_once_with(
             screen.show_phase_started,
             "pull",
             "Pulling image repo:tag",
-            Path("/tmp/pull.log"),
+            Path("/test-tmp/pull.log"),
         )
 
     def test_on_phase_started_falls_back_to_direct_call_on_runtime_error(self) -> None:
@@ -41,11 +41,11 @@ class ExecutionReporterTests(TestCase):
         reporter = execution_reporting.ExecutionReporter(screen)
 
         reporter.on_phase_started(
-            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
         )
 
         screen.show_phase_started.assert_called_once_with(
-            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            "pull", "Pulling image repo:tag", Path("/test-tmp/pull.log")
         )
 
     def test_on_phase_progress_dispatches_expected_values(self) -> None:
@@ -80,8 +80,8 @@ class ExecutionReporterTests(TestCase):
         del screen.app
         reporter = execution_reporting.ExecutionReporter(screen)
 
-        reporter.on_phase_failed("build", "failed", Path("/tmp/build.log"))
+        reporter.on_phase_failed("build", "failed", Path("/test-tmp/build.log"))
 
         screen.show_phase_failed.assert_called_once_with(
-            "build", "failed", Path("/tmp/build.log")
+            "build", "failed", Path("/test-tmp/build.log")
         )

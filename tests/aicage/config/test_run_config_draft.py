@@ -10,12 +10,12 @@ from aicage.registry.image_selection.models import ImageSelection
 class RunConfigDraftTests(TestCase):
     def test_create_run_config_draft_reads_existing_docker_args(self) -> None:
         project_cfg = ProjectConfig(
-            path="/tmp/project",
+            path="/test-tmp/project",
             agents={"codex": AgentConfig(docker_args="--existing")},
         )
 
         draft = create_run_config_draft(
-            Path("/tmp/project"),
+            Path("/test-tmp/project"),
             "codex",
             project_cfg,
             _build_parsed(),
@@ -143,7 +143,7 @@ def _build_draft(
     agent_cfg: AgentConfig,
     docker_args: str = "",
     shares: list[str] | None = None,
-    project_path: Path = Path("/tmp/project"),
+    project_path: Path = Path("/test-tmp/project"),
 ) -> RunConfigDraft:
     return create_run_config_draft(
         project_path,
