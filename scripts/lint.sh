@@ -47,3 +47,6 @@ fi
 
 # flake8
 flake8 .
+
+# bandit
+bandit --quiet -c .bandit.yml -r src 2>/dev/null
