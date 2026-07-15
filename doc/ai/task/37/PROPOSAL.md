@@ -22,7 +22,10 @@ The following points are agreed for the current direction:
 - agent selection stays fixed from CLI in the first increment
 - the overview UI should be shown on every start once introduced
 - CLI args should prefill the UI
-- `--yes` should suppress the new UI
+- menu selection should be explicit:
+  - `--menu textual`
+  - `--menu simple`
+  - `--menu none`
 
 ## Current problem
 
@@ -161,7 +164,9 @@ Current agreed direction:
 
 - the overview UI should be shown on every interactive start
 - CLI args should prefill values shown in the UI
-- `--yes` should continue without showing the overview UI
+- `--menu textual` should be the default
+- `--menu simple` should keep the classic prompt flow available
+- `--menu none` should bypass interactive menus and use defaults
 
 Temporary fallback paths may still exist during implementation, but they are not the intended steady-state behavior.
 
@@ -229,4 +234,5 @@ That keeps the first change:
 - low-risk
 - useful on its own
 
-Then add the always-shown overview UI in a second step, with `--yes` continuing as the non-interactive bypass.
+Then add the always-shown overview UI in a second step, with `--menu none` as the non-interactive bypass and
+`--menu simple` preserving the classic prompt flow when needed.

@@ -10,11 +10,14 @@
 3. On consecutive starts, should the initial overview be shown every time by default, or only when a new flag is passed
    and otherwise keep today’s “continue directly” behavior for now?
 4. For non-interactive usage, should CLI arguments still fully override the UI path when provided, or should they only
-   prefill values and still show the overview unless --yes is used?
+   prefill values and still show the overview unless `--menu none` is used?
 
 ## Answers
 
 1. Refactor first
 2. Yes
 3. Show every time - that's the reson why it shuold be reasonably slim in height.
-4. Prefill, `--yes` prevents showing the new UI, we may tweak that to show either config menu or none.
+4. Prefill. Current behavior is:
+   - `--menu textual` shows the Textual overview
+   - `--menu simple` uses the classic prompt flow
+   - `--menu none` skips interactive menus and uses defaults
