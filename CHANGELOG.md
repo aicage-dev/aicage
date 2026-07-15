@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-16
+
+### Added
+
+- Added a Textual-based configuration UI as the default interactive setup for `aicage <agent>`. It replaces the old
+  prompt-by-prompt flow with a single overview where users can review and adjust base image, extensions, bind mounts,
+  Docker socket access, and Docker arguments before starting.
+
+### Changed
+
+- Replaced `--yes` with `--menu textual|simple|none` to support the new UI while still allowing the classic
+  line-based prompts or a no-menu defaults flow.
+- Existing per-project agent configs can now be changed from the interactive UI instead of often requiring config
+  removal and a fresh setup.
+- Added an inline execution view in the Textual UI so required image pulls and builds report progress before the
+  container starts.
+
 ## [1.3.4] - 2026-07-11
 
 ### Changed
