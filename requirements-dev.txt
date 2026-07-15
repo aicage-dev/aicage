@@ -3,6 +3,7 @@
 check-jsonschema>=0.37.4,<1
 bandit>=1.9.1,<2
 flake8>=7.3.0,<8
+mypy>=1.18.2,<2
 pyright>=1.1.411,<2
 pymarkdownlnt>=0.9.38,<1
 pytest>=9.1.1,<10

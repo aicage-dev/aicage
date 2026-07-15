@@ -20,6 +20,9 @@ ruff check .
 # pyright (Python)
 pyright .
 
+# mypy (Python)
+mypy .
+
 # Ignore generated version metadata from setuptools-scm.
 if rg_output=$(rg -n --glob '*.py' --glob '!src/*/_version.py' '__all__' src); then
   printf '%s\n' "$rg_output"
