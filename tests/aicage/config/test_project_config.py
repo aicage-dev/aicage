@@ -33,7 +33,9 @@ class ProjectConfigTests(TestCase):
         cfg = ProjectConfig(
             path="/repo",
             agents={
-                "codex": AgentConfig(base="ubuntu", shares=["/test-tmp/one", "/test-tmp/two:ro"])
+                "codex": AgentConfig(
+                    base="ubuntu", shares=["/test-tmp/one", "/test-tmp/two:ro"]
+                )
             },
         )
         self.assertEqual(
