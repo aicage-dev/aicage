@@ -51,5 +51,8 @@ fi
 # flake8
 flake8 .
 
+# pylint (Python)
+PYTHONPATH=src pylint --ignore=.venv .
+
 # bandit
 bandit --quiet -c .bandit.yml -r src 2>/dev/null
