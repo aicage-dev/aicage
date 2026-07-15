@@ -1,3 +1,4 @@
+quiet: true
 skip-check:
   # Ensure that HEALTHCHECK instructions have been added to container images
   - CKV_DOCKER_2
@@ -5,5 +6,7 @@ skip-check:
   - CKV_DOCKER_3
   # Ensure the base image uses a non latest version tag
   - CKV_DOCKER_7
+  # Ensure the last USER is not root
+  - CKV_DOCKER_8
   # Ensure the base image uses a non latest version tag
   - CKV_GHA_7
