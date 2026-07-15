@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
@@ -90,13 +92,16 @@ jobs:
           HTTPS_PROXY: ${{ env.PROXY_URL }}
           ALL_PROXY: ${{ env.PROXY_URL }}
           NO_PROXY: localhost,127.0.0.1
+          TEST_NODE: ${{ matrix.test }}
         run: |
-          pytest -m proxy_integration ${{ matrix.test }}
+          pytest -m proxy_integration "$TEST_NODE"
 
       - name: "On failure: Collect aicage logs"
         if: failure()
+        env:
+          JOB_INDEX: ${{ strategy.job-index }}
         run: |
-          artifact_dir="$RUNNER_TEMP/aicage-logs-${{ strategy.job-index }}"
+          artifact_dir="$RUNNER_TEMP/aicage-logs-$JOB_INDEX"
           mkdir -p "$artifact_dir"
           while IFS= read -r path; do
             rel_path="${path#/}"
@@ -116,9 +121,11 @@ jobs:
           if-no-files-found: ignore
 
       - name: Verify proxy traffic in Squid logs
+        env:
+          EXPECTED_HOST: ${{ matrix.expected_host }}
         run: |
           docker logs squid-proxy > squid-access.log
           echo "Last proxy access lines:"
           tail -n 200 squid-access.log || true
-          grep -q '${{ matrix.expected_host }}' squid-access.log
+          grep -q "$EXPECTED_HOST" squid-access.log
           grep -Eq '(ghcr.io|registry-1.docker.io|auth.docker.io):443' squid-access.log
