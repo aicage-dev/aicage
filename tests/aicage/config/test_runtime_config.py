@@ -11,8 +11,7 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.config.runtime_config import RunConfig, load_run_config
 from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime.run_args import EnvVar
-from aicage.runtime.run_args import MountSpec
+from aicage.runtime.run_args import EnvVar, MountSpec
 
 
 class RuntimeConfigTests(TestCase):
