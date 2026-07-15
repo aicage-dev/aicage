@@ -59,7 +59,9 @@ class MountsTests(TestCase):
             mounts,
         )
 
-    def test_map_mount_requests_skips_nested_child_when_parent_selected_first(self) -> None:
+    def test_map_mount_requests_skips_nested_child_when_parent_selected_first(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root_path = Path(temp_dir).resolve()
             parent_path = root_path / "parent"
@@ -116,7 +118,9 @@ class MountsTests(TestCase):
             mounts,
         )
 
-    def test_map_mount_requests_keeps_nested_parent_when_read_only_differs(self) -> None:
+    def test_map_mount_requests_keeps_nested_parent_when_read_only_differs(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root_path = Path(temp_dir).resolve()
             parent_path = root_path / "parent"

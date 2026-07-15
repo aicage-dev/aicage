@@ -10,7 +10,9 @@ class ParseCliTests(TestCase):
     def test_parse_cli_with_docker_args(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--dry-run", "--network=host", "codex", "--foo"])
-        self.assertEqual("Docker args require '--' before the agent.", str(ctx.exception))
+        self.assertEqual(
+            "Docker args require '--' before the agent.", str(ctx.exception)
+        )
 
     def test_parse_cli_with_separator(self) -> None:
         parsed = parse_cli(["--dry-run", "--", "codex", "--bar"])
@@ -22,7 +24,16 @@ class ParseCliTests(TestCase):
         self.assertEqual([], parsed.shares)
 
     def test_parse_cli_with_separator_and_docker_args(self) -> None:
-        parsed = parse_cli(["--dry-run", "-v", "/run/docker.sock:/run/docker.sock", "--", "codex", "--bar"])
+        parsed = parse_cli(
+            [
+                "--dry-run",
+                "-v",
+                "/run/docker.sock:/run/docker.sock",
+                "--",
+                "codex",
+                "--bar",
+            ]
+        )
         self.assertTrue(parsed.dry_run)
         self.assertEqual("textual", parsed.menu)
         self.assertEqual("-v /run/docker.sock:/run/docker.sock", parsed.docker_args)
@@ -79,7 +90,9 @@ class ParseCliTests(TestCase):
     def test_parse_cli_requires_separator_for_docker_args(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["-v", "/tmp/folder:/tmp/folder", "codex"])
-        self.assertEqual("Docker args require '--' before the agent.", str(ctx.exception))
+        self.assertEqual(
+            "Docker args require '--' before the agent.", str(ctx.exception)
+        )
 
     def test_parse_cli_config_info(self) -> None:
         parsed = parse_cli(["--config", "info"])
@@ -120,12 +133,17 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_info_rejects_agent(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "info", "codex"])
-        self.assertEqual("No agent value is allowed with '--config info'.", str(ctx.exception))
+        self.assertEqual(
+            "No agent value is allowed with '--config info'.", str(ctx.exception)
+        )
 
     def test_parse_cli_config_rejects_too_many_values(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "remove", "codex", "extra"])
-        self.assertEqual("Too many values for --config. Use '--config remove [agent]'.", str(ctx.exception))
+        self.assertEqual(
+            "Too many values for --config. Use '--config remove [agent]'.",
+            str(ctx.exception),
+        )
 
     def test_parse_cli_flags_before_separator(self) -> None:
         parsed = parse_cli(
@@ -171,5 +189,8 @@ class ParseCliTests(TestCase):
 
         output = stdout.getvalue()
         self.assertIn("aicage --config\n", output)
-        self.assertIn("--config [<cmd>] Run config command: default info, or remove [agent].", output)
+        self.assertIn(
+            "--config [<cmd>] Run config command: default info, or remove [agent].",
+            output,
+        )
         self.assertIn("--menu <mode>", output)

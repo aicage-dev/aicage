@@ -12,6 +12,7 @@ _ACCEPT_HEADERS = ",".join(
     ]
 )
 
+
 def get_manifest_digest(registry: str, repository: str, reference: str) -> str | None:
     url = f"https://{registry}/v2/{repository}/manifests/{reference}"
     headers = {"Accept": _ACCEPT_HEADERS}

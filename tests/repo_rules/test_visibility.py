@@ -32,7 +32,9 @@ class VisibilityRulesTests(TestCase):
                 if _has_private_segment(imported):
                     violations.append(f"{path.relative_to(repo_root)}:{imported}")
 
-        self.assertEqual([], violations, f"Found private imports in __init__.py: {violations}")
+        self.assertEqual(
+            [], violations, f"Found private imports in __init__.py: {violations}"
+        )
 
     def test_src_init_files_have_no_methods(self) -> None:
         repo_root = _repo_root()
@@ -69,7 +71,11 @@ class VisibilityRulesTests(TestCase):
                 if not _package_starts_with(current_package, private_package):
                     violations.append(f"{path.relative_to(repo_root)}:{imported}")
 
-        self.assertEqual([], violations, f"Found private module imports across packages: {violations}")
+        self.assertEqual(
+            [],
+            violations,
+            f"Found private module imports across packages: {violations}",
+        )
 
     def test_src_has_no_runtime_imports_or_exec(self) -> None:
         repo_root = _repo_root()
@@ -77,9 +83,13 @@ class VisibilityRulesTests(TestCase):
         violations: list[str] = []
         for path in src_dir.rglob("*.py"):
             tree = _parse_tree(path)
-            violations.extend(_runtime_import_violations(tree, path.relative_to(repo_root)))
+            violations.extend(
+                _runtime_import_violations(tree, path.relative_to(repo_root))
+            )
 
-        self.assertEqual([], violations, f"Found runtime imports or exec/eval usage: {violations}")
+        self.assertEqual(
+            [], violations, f"Found runtime imports or exec/eval usage: {violations}"
+        )
 
     def test_public_symbols_are_used_outside_module(self) -> None:
         repo_root = _repo_root()
@@ -164,17 +174,23 @@ def _iter_function_defs(tree: ast.AST) -> list[ast.FunctionDef | ast.AsyncFuncti
     ]
 
 
-def _iter_imported_modules(tree: ast.AST, current_package: list[str], src_dir: Path) -> list[str]:
+def _iter_imported_modules(
+    tree: ast.AST, current_package: list[str], src_dir: Path
+) -> list[str]:
     imported_modules: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported_modules.append(alias.name)
         elif isinstance(node, ast.ImportFrom):
-            resolved_module_name = _resolve_import_from_module_name(node, current_package)
+            resolved_module_name = _resolve_import_from_module_name(
+                node, current_package
+            )
             if resolved_module_name is None:
                 continue
-            imported_modules.extend(_import_from_targets(resolved_module_name, node.names, src_dir))
+            imported_modules.extend(
+                _import_from_targets(resolved_module_name, node.names, src_dir)
+            )
     return imported_modules
 
 
@@ -192,7 +208,9 @@ def _resolve_import_from_module_name(
     return None
 
 
-def _import_from_targets(module_name: str, aliases: list[ast.alias], src_dir: Path) -> list[str]:
+def _import_from_targets(
+    module_name: str, aliases: list[ast.alias], src_dir: Path
+) -> list[str]:
     imported_modules = [module_name]
     for alias in aliases:
         if alias.name == "*":
@@ -316,7 +334,10 @@ def _call_name(node: ast.Call, aliases: _RuntimeImportAliases) -> str | None:
         elif name in aliases.import_module:
             function_name = "importlib.import_module"
     elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-        if node.func.value.id in aliases.importlib and node.func.attr == "import_module":
+        if (
+            node.func.value.id in aliases.importlib
+            and node.func.attr == "import_module"
+        ):
             function_name = "importlib.import_module"
     return function_name
 
@@ -370,7 +391,9 @@ def _collect_symbol_usage(modules: dict[str, _ModuleInfo]) -> dict[str, set[str]
         current_package = _current_package(module_name, info.path)
         tree = _parse_tree(info.path)
         alias_map = _collect_import_aliases(tree, current_package, set(modules))
-        for imported_module, imported_symbol in _collect_from_imports(tree, current_package):
+        for imported_module, imported_symbol in _collect_from_imports(
+            tree, current_package
+        ):
             if imported_module in usage:
                 usage[imported_module].add(imported_symbol)
         for node in ast.walk(tree):
@@ -475,7 +498,9 @@ def _collect_import_aliases(
     for node in ast.walk(tree):
         if not isinstance(node, ast.ImportFrom):
             continue
-        module_parts = _resolve_relative_module(node.module, node.level, current_package)
+        module_parts = _resolve_relative_module(
+            node.module, node.level, current_package
+        )
         if not module_parts:
             continue
         module_name = ".".join(module_parts)
@@ -496,7 +521,9 @@ def _collect_from_imports(
     for node in ast.walk(tree):
         if not isinstance(node, ast.ImportFrom):
             continue
-        module_parts = _resolve_relative_module(node.module, node.level, current_package)
+        module_parts = _resolve_relative_module(
+            node.module, node.level, current_package
+        )
         if not module_parts:
             continue
         module_name = ".".join(module_parts)

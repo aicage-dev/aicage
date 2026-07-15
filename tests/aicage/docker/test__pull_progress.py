@@ -39,7 +39,10 @@ class PullProgressTests(TestCase):
         with (
             mock.patch("sys.stdout", stdout),
             mock.patch.object(stdout, "isatty", return_value=True),
-            mock.patch("aicage.docker._pull_progress.shutil.get_terminal_size", return_value=mock.Mock(columns=200)),
+            mock.patch(
+                "aicage.docker._pull_progress.shutil.get_terminal_size",
+                return_value=mock.Mock(columns=200),
+            ),
         ):
             progress = PullProgress()
             for offset, event in enumerate(events, start=1):
@@ -62,8 +65,13 @@ class PullProgressTests(TestCase):
             mock.patch("sys.stderr.isatty", return_value=False),
         ):
             progress = PullProgress()
-            progress.consume_event({"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0)
-            self.assertEqual("[waiting for layer sizes...]", progress.progress_details())
+            progress.consume_event(
+                {"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}},
+                1.0,
+            )
+            self.assertEqual(
+                "[waiting for layer sizes...]", progress.progress_details()
+            )
             self.assertIsNone(progress.progress_current())
             self.assertIsNone(progress.progress_total())
 
@@ -84,7 +92,9 @@ class PullProgressTests(TestCase):
     def test_progress_current_returns_aggregate_downloaded_bytes(self) -> None:
         progress = PullProgress()
 
-        progress.consume_event({"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0)
+        progress.consume_event(
+            {"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0
+        )
         self.assertIsNone(progress.progress_current())
 
         progress.consume_event(
@@ -118,7 +128,9 @@ class PullProgressTests(TestCase):
     def test_progress_total_returns_aggregate_total_bytes(self) -> None:
         progress = PullProgress()
 
-        progress.consume_event({"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0)
+        progress.consume_event(
+            {"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}, 1.0
+        )
         self.assertIsNone(progress.progress_total())
 
         progress.consume_event(

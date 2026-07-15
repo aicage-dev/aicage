@@ -2,7 +2,13 @@ from pathlib import Path
 from typing import Any
 
 from aicage.config._base_exclude import is_base_excluded, normalize_exclude
-from aicage.config._yaml import expect_bool, expect_keys, expect_string, maybe_str_list, read_str_list
+from aicage.config._yaml import (
+    expect_bool,
+    expect_keys,
+    expect_string,
+    maybe_str_list,
+    read_str_list,
+)
 from aicage.config.agent._validation import validate_agent_mapping
 from aicage.config.agent.models import (
     AGENT_FULL_NAME_KEY,
@@ -30,9 +36,13 @@ def build_agent_metadata(
 ) -> AgentMetadata:
     normalized_mapping = validate_agent_mapping(agent_mapping)
     agent_path = _read_agent_path(normalized_mapping)
-    base_exclude = maybe_str_list(normalized_mapping.get(BASE_EXCLUDE_KEY), BASE_EXCLUDE_KEY) or []
+    base_exclude = (
+        maybe_str_list(normalized_mapping.get(BASE_EXCLUDE_KEY), BASE_EXCLUDE_KEY) or []
+    )
     base_distro_exclude = (
-        maybe_str_list(normalized_mapping.get(BASE_DISTRO_EXCLUDE_KEY), BASE_DISTRO_EXCLUDE_KEY)
+        maybe_str_list(
+            normalized_mapping.get(BASE_DISTRO_EXCLUDE_KEY), BASE_DISTRO_EXCLUDE_KEY
+        )
         or []
     )
     build_local = expect_bool(normalized_mapping.get(BUILD_LOCAL_KEY), BUILD_LOCAL_KEY)
@@ -46,8 +56,12 @@ def build_agent_metadata(
     return AgentMetadata(
         agent_path_files=agent_path.files,
         agent_path_directories=agent_path.directories,
-        agent_full_name=expect_string(normalized_mapping.get(AGENT_FULL_NAME_KEY), AGENT_FULL_NAME_KEY),
-        agent_homepage=expect_string(normalized_mapping.get(AGENT_HOMEPAGE_KEY), AGENT_HOMEPAGE_KEY),
+        agent_full_name=expect_string(
+            normalized_mapping.get(AGENT_FULL_NAME_KEY), AGENT_FULL_NAME_KEY
+        ),
+        agent_homepage=expect_string(
+            normalized_mapping.get(AGENT_HOMEPAGE_KEY), AGENT_HOMEPAGE_KEY
+        ),
         build_local=build_local,
         valid_bases=valid_bases,
         base_exclude=base_exclude,
@@ -74,7 +88,9 @@ def _read_agent_path(mapping: dict[str, Any]) -> _AgentPath:
         optional={AGENT_PATH_FILES_KEY, AGENT_PATH_DIRECTORIES_KEY},
         context=AGENT_PATH_KEY,
     )
-    files = read_str_list(raw.get(AGENT_PATH_FILES_KEY, []), f"{AGENT_PATH_KEY}.{AGENT_PATH_FILES_KEY}")
+    files = read_str_list(
+        raw.get(AGENT_PATH_FILES_KEY, []), f"{AGENT_PATH_KEY}.{AGENT_PATH_FILES_KEY}"
+    )
     directories = read_str_list(
         raw.get(AGENT_PATH_DIRECTORIES_KEY, []),
         f"{AGENT_PATH_KEY}.{AGENT_PATH_DIRECTORIES_KEY}",

@@ -10,16 +10,22 @@ class ExecutionReporterTests(TestCase):
         del screen.app
         reporter = execution_reporting.ExecutionReporter(screen)
 
-        reporter.on_phase_started("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+        reporter.on_phase_started(
+            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+        )
 
-        screen.show_phase_started.assert_called_once_with("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+        screen.show_phase_started.assert_called_once_with(
+            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+        )
 
     def test_on_phase_started_dispatches_via_app_thread_bridge(self) -> None:
         screen = mock.Mock()
         screen.app = mock.Mock()
         reporter = execution_reporting.ExecutionReporter(screen)
 
-        reporter.on_phase_started("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+        reporter.on_phase_started(
+            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+        )
 
         screen.app.call_from_thread.assert_called_once_with(
             screen.show_phase_started,
@@ -34,9 +40,13 @@ class ExecutionReporterTests(TestCase):
         screen.app.call_from_thread.side_effect = RuntimeError("same thread")
         reporter = execution_reporting.ExecutionReporter(screen)
 
-        reporter.on_phase_started("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+        reporter.on_phase_started(
+            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+        )
 
-        screen.show_phase_started.assert_called_once_with("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+        screen.show_phase_started.assert_called_once_with(
+            "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+        )
 
     def test_on_phase_progress_dispatches_expected_values(self) -> None:
         screen = mock.Mock()
@@ -72,4 +82,6 @@ class ExecutionReporterTests(TestCase):
 
         reporter.on_phase_failed("build", "failed", Path("/tmp/build.log"))
 
-        screen.show_phase_failed.assert_called_once_with("build", "failed", Path("/tmp/build.log"))
+        screen.show_phase_failed.assert_called_once_with(
+            "build", "failed", Path("/tmp/build.log")
+        )

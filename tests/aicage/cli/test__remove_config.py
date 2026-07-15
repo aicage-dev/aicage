@@ -14,7 +14,9 @@ class RemoveConfigTests(TestCase):
             store = mock.Mock()
             store.project_config_path.return_value = config_path
             with (
-                mock.patch("aicage.cli._remove_config.SettingsStore", return_value=store),
+                mock.patch(
+                    "aicage.cli._remove_config.SettingsStore", return_value=store
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 remove_config.remove_project_config()
@@ -30,7 +32,9 @@ class RemoveConfigTests(TestCase):
             store = mock.Mock()
             store.project_config_path.return_value = config_path
             with (
-                mock.patch("aicage.cli._remove_config.SettingsStore", return_value=store),
+                mock.patch(
+                    "aicage.cli._remove_config.SettingsStore", return_value=store
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 remove_config.remove_project_config()
@@ -46,7 +50,9 @@ class RemoveConfigTests(TestCase):
             store = mock.Mock()
             store.project_config_path.return_value = config_path
             with (
-                mock.patch("aicage.cli._remove_config.SettingsStore", return_value=store),
+                mock.patch(
+                    "aicage.cli._remove_config.SettingsStore", return_value=store
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 remove_config.remove_project_config("codex")
@@ -64,7 +70,9 @@ class RemoveConfigTests(TestCase):
             store.project_config_path.return_value = config_path
             store.load_project.return_value = project_cfg
             with (
-                mock.patch("aicage.cli._remove_config.SettingsStore", return_value=store),
+                mock.patch(
+                    "aicage.cli._remove_config.SettingsStore", return_value=store
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 remove_config.remove_project_config("codex")
@@ -78,12 +86,16 @@ class RemoveConfigTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "project.yml"
             config_path.write_text("agents: {codex: {}}", encoding="utf-8")
-            project_cfg = ProjectConfig(path=tmp_dir, agents={"codex": AgentConfig(base="ubuntu")})
+            project_cfg = ProjectConfig(
+                path=tmp_dir, agents={"codex": AgentConfig(base="ubuntu")}
+            )
             store = mock.Mock()
             store.project_config_path.return_value = config_path
             store.load_project.return_value = project_cfg
             with (
-                mock.patch("aicage.cli._remove_config.SettingsStore", return_value=store),
+                mock.patch(
+                    "aicage.cli._remove_config.SettingsStore", return_value=store
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 remove_config.remove_project_config("codex")

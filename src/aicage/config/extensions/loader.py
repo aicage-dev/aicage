@@ -17,11 +17,9 @@ _DOCKERFILE_NAME: str = "Dockerfile"
 
 
 class _HashWriter(Protocol):
-    def update(self, data: bytes, /) -> None:
-        ...
+    def update(self, data: bytes, /) -> None: ...
 
-    def hexdigest(self) -> str:
-        ...
+    def hexdigest(self) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -49,12 +47,16 @@ def load_extensions() -> dict[str, ExtensionMetadata]:
         shares = read_str_list_or_empty(mapping.get("shares"))
         scripts_dir = entry / _SCRIPTS_DIRNAME
         if not scripts_dir.is_dir() and not shares:
-            raise ConfigError(f"Extension '{extension_id}' must define shares or provide scripts/ directory.")
+            raise ConfigError(
+                f"Extension '{extension_id}' must define shares or provide scripts/ directory."
+            )
         dockerfile_path = entry / _DOCKERFILE_NAME
         extensions[extension_id] = ExtensionMetadata(
             extension_id=extension_id,
             name=expect_string(mapping.get(_EXTENSION_NAME_KEY), _EXTENSION_NAME_KEY),
-            description=expect_string(mapping.get(_EXTENSION_DESCRIPTION_KEY), _EXTENSION_DESCRIPTION_KEY),
+            description=expect_string(
+                mapping.get(_EXTENSION_DESCRIPTION_KEY), _EXTENSION_DESCRIPTION_KEY
+            ),
             shares=shares,
             directory=entry,
             scripts_dir=scripts_dir,

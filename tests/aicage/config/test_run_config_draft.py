@@ -114,7 +114,9 @@ class RunConfigDraftTests(TestCase):
 
     def test_image_selection_changed_detects_base_extension_change(self) -> None:
         draft = _build_draft(
-            AgentConfig(base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=["marker"]),
+            AgentConfig(
+                base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=["marker"]
+            ),
         )
 
         self.assertFalse(draft.image_selection_changed())
@@ -135,6 +137,7 @@ class RunConfigDraftTests(TestCase):
 
         self.assertIsNone(draft.agent_cfg.image_ref)
         self.assertEqual({"one": True}, draft.agent_cfg.extension_mounts)
+
 
 def _build_draft(
     agent_cfg: AgentConfig,

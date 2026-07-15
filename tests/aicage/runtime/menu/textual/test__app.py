@@ -114,7 +114,11 @@ class OverviewAppTests(TestCase):
         app = _build_app(setup_needed=lambda _selection: False)
 
         with (
-            mock.patch.object(app, "_confirm_undecided_built_in_shares", new=mock.AsyncMock(return_value=True)),
+            mock.patch.object(
+                app,
+                "_confirm_undecided_built_in_shares",
+                new=mock.AsyncMock(return_value=True),
+            ),
             mock.patch.object(app, "_finish") as finish_mock,
             mock.patch.object(app, "_run_execution") as run_execution_mock,
         ):
@@ -130,8 +134,14 @@ class OverviewAppTests(TestCase):
         )
 
         with (
-            mock.patch.object(app, "_confirm_undecided_built_in_shares", new=mock.AsyncMock(return_value=True)),
-            mock.patch.object(app, "_show_execution_screen") as show_execution_screen_mock,
+            mock.patch.object(
+                app,
+                "_confirm_undecided_built_in_shares",
+                new=mock.AsyncMock(return_value=True),
+            ),
+            mock.patch.object(
+                app, "_show_execution_screen"
+            ) as show_execution_screen_mock,
             mock.patch.object(app, "_run_execution") as run_execution_mock,
         ):
             asyncio.run(_app.OverviewApp._accept.__wrapped__(app))
@@ -139,7 +149,9 @@ class OverviewAppTests(TestCase):
         show_execution_screen_mock.assert_called_once_with()
         run_execution_mock.assert_called_once()
 
-    def test_show_execution_screen_marks_execution_running_and_updates_subtitle(self) -> None:
+    def test_show_execution_screen_marks_execution_running_and_updates_subtitle(
+        self,
+    ) -> None:
         app = _build_app()
         overview = mock.Mock()
         execution_screen = mock.Mock()
@@ -195,15 +207,23 @@ class OverviewAppTests(TestCase):
         app = _build_app()
 
         with mock.patch.object(app, "_edit_section") as edit_mock:
-            app.on_overview_edit_section_requested(Overview.EditSectionRequested("base"))
+            app.on_overview_edit_section_requested(
+                Overview.EditSectionRequested("base")
+            )
 
         edit_mock.assert_called_once_with("base")
 
-    def test_on_overview_edit_custom_share_requested_opens_custom_share_editor(self) -> None:
-        app = _build_app(agent_cfg=AgentConfig(base="ubuntu", shares=["/tmp/project/logs"]))
+    def test_on_overview_edit_custom_share_requested_opens_custom_share_editor(
+        self,
+    ) -> None:
+        app = _build_app(
+            agent_cfg=AgentConfig(base="ubuntu", shares=["/tmp/project/logs"])
+        )
 
         with mock.patch.object(app, "_edit_custom_share") as edit_mock:
-            app.on_overview_edit_custom_share_requested(Overview.EditCustomShareRequested("/tmp/project/logs"))
+            app.on_overview_edit_custom_share_requested(
+                Overview.EditCustomShareRequested("/tmp/project/logs")
+            )
 
         edit_mock.assert_called_once_with("/tmp/project/logs")
 
@@ -221,12 +241,18 @@ class OverviewAppTests(TestCase):
         ):
             asyncio.run(_app.OverviewApp._add_share.__wrapped__(app))
 
-        self.assertEqual([CustomShareValue("/tmp/project/logs")], app._state.custom_shares)
+        self.assertEqual(
+            [CustomShareValue("/tmp/project/logs")], app._state.custom_shares
+        )
         apply_shell_width_mock.assert_called_once_with()
         refresh_mock.assert_called_once_with()
 
-    def test_confirm_undecided_built_in_shares_persists_enabled_mount_and_custom_shares(self) -> None:
-        built_in_share = BuiltInShareValue("git_support", "gitconfig", "Git config", "/tmp/gitconfig", None, True)
+    def test_confirm_undecided_built_in_shares_persists_enabled_mount_and_custom_shares(
+        self,
+    ) -> None:
+        built_in_share = BuiltInShareValue(
+            "git_support", "gitconfig", "Git config", "/tmp/gitconfig", None, True
+        )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = [built_in_share]
@@ -234,7 +260,9 @@ class OverviewAppTests(TestCase):
             CustomShareValue("/tmp/project/logs"),
             CustomShareValue("/tmp/project/data"),
         ]
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue("docker", "Docker socket", None, True)
+        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
+            "docker", "Docker socket", None, True
+        )
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
@@ -243,7 +271,9 @@ class OverviewAppTests(TestCase):
                 "_push_section_screen",
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
-                        docker_options=[DockerOptionValue("docker", "Docker socket", None, True)],
+                        docker_options=[
+                            DockerOptionValue("docker", "Docker socket", None, True)
+                        ],
                         git_support_shares=[built_in_share],
                         extension_shares=[],
                     )
@@ -255,14 +285,20 @@ class OverviewAppTests(TestCase):
         self.assertTrue(accepted)
         self.assertTrue(app._draft.agent_cfg.mounts.gitconfig)
         self.assertTrue(app._draft.agent_cfg.mounts.docker)
-        self.assertEqual(["/tmp/project/logs", "/tmp/project/data"], app._draft.agent_cfg.shares)
+        self.assertEqual(
+            ["/tmp/project/logs", "/tmp/project/data"], app._draft.agent_cfg.shares
+        )
 
-    def test_confirm_undecided_built_in_shares_persists_deselected_docker_socket_from_popup(self) -> None:
+    def test_confirm_undecided_built_in_shares_persists_deselected_docker_socket_from_popup(
+        self,
+    ) -> None:
         app = _build_app()
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = []
         overview.current_custom_shares.return_value = []
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue("docker", "Docker socket", None, True)
+        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
+            "docker", "Docker socket", None, True
+        )
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
@@ -271,7 +307,9 @@ class OverviewAppTests(TestCase):
                 "_push_section_screen",
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
-                        docker_options=[DockerOptionValue("docker", "Docker socket", None, False)],
+                        docker_options=[
+                            DockerOptionValue("docker", "Docker socket", None, False)
+                        ],
                         git_support_shares=[],
                         extension_shares=[],
                     )
@@ -283,23 +321,33 @@ class OverviewAppTests(TestCase):
         self.assertTrue(accepted)
         self.assertFalse(app._draft.agent_cfg.mounts.docker)
 
-    def test_confirm_undecided_built_in_shares_returns_false_when_confirmation_cancels(self) -> None:
-        built_in_share = BuiltInShareValue("git_support", "gitconfig", "Git config", "/tmp/gitconfig", None, True)
+    def test_confirm_undecided_built_in_shares_returns_false_when_confirmation_cancels(
+        self,
+    ) -> None:
+        built_in_share = BuiltInShareValue(
+            "git_support", "gitconfig", "Git config", "/tmp/gitconfig", None, True
+        )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = [built_in_share]
         overview.current_custom_shares.return_value = []
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue("docker", "Docker socket", None, False)
+        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
+            "docker", "Docker socket", None, False
+        )
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
-            mock.patch.object(app, "_push_section_screen", new=mock.AsyncMock(return_value=None)),
+            mock.patch.object(
+                app, "_push_section_screen", new=mock.AsyncMock(return_value=None)
+            ),
         ):
             accepted = asyncio.run(app._confirm_undecided_built_in_shares())
 
         self.assertFalse(accepted)
 
-    def test_confirm_undecided_built_in_shares_persists_extension_share_selection(self) -> None:
+    def test_confirm_undecided_built_in_shares_persists_extension_share_selection(
+        self,
+    ) -> None:
         extension_share = BuiltInShareValue(
             "extension",
             "gh",
@@ -315,7 +363,9 @@ class OverviewAppTests(TestCase):
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = [extension_share]
         overview.current_custom_shares.return_value = []
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue("docker", "Docker socket", None, False)
+        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
+            "docker", "Docker socket", None, False
+        )
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
@@ -337,25 +387,39 @@ class OverviewAppTests(TestCase):
         self.assertEqual({"gh": True}, app._draft.agent_cfg.extension_mounts)
 
     def test_edit_custom_share_removes_share(self) -> None:
-        app = _build_app(agent_cfg=AgentConfig(base="ubuntu", shares=["/tmp/project/logs", "/tmp/project/data"]))
+        app = _build_app(
+            agent_cfg=AgentConfig(
+                base="ubuntu", shares=["/tmp/project/logs", "/tmp/project/data"]
+            )
+        )
 
         with (
             mock.patch.object(
                 app,
                 "_push_section_screen",
-                new=mock.AsyncMock(return_value=ShareEditorResult("/tmp/project/logs", True)),
+                new=mock.AsyncMock(
+                    return_value=ShareEditorResult("/tmp/project/logs", True)
+                ),
             ),
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(_app.OverviewApp._edit_custom_share.__wrapped__(app, "/tmp/project/logs"))
+            asyncio.run(
+                _app.OverviewApp._edit_custom_share.__wrapped__(
+                    app, "/tmp/project/logs"
+                )
+            )
 
-        self.assertEqual([CustomShareValue("/tmp/project/data")], app._state.custom_shares)
+        self.assertEqual(
+            [CustomShareValue("/tmp/project/data")], app._state.custom_shares
+        )
         apply_shell_width_mock.assert_called_once_with()
         refresh_mock.assert_called_once_with()
 
     def test_edit_custom_share_replaces_share(self) -> None:
-        app = _build_app(agent_cfg=AgentConfig(base="ubuntu", shares=["/tmp/project/logs"]))
+        app = _build_app(
+            agent_cfg=AgentConfig(base="ubuntu", shares=["/tmp/project/logs"])
+        )
 
         with (
             mock.patch.object(
@@ -366,9 +430,15 @@ class OverviewAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(_app.OverviewApp._edit_custom_share.__wrapped__(app, "/tmp/project/logs"))
+            asyncio.run(
+                _app.OverviewApp._edit_custom_share.__wrapped__(
+                    app, "/tmp/project/logs"
+                )
+            )
 
-        self.assertEqual([CustomShareValue("/tmp/project/data")], app._state.custom_shares)
+        self.assertEqual(
+            [CustomShareValue("/tmp/project/data")], app._state.custom_shares
+        )
         apply_shell_width_mock.assert_called_once_with()
         refresh_mock.assert_called_once_with()
 
@@ -380,7 +450,9 @@ class OverviewAppTests(TestCase):
         with (
             mock.patch.object(app, "_overview", return_value=overview),
             mock.patch.object(app, "_focus_last_section") as focus_last_section_mock,
-            mock.patch.object(app, "push_screen_wait", new=mock.AsyncMock(return_value=None)),
+            mock.patch.object(
+                app, "push_screen_wait", new=mock.AsyncMock(return_value=None)
+            ),
         ):
             asyncio.run(app._push_section_screen(mock.Mock()))
 

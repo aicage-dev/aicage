@@ -16,7 +16,10 @@ from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
-from aicage.runtime.menu.prompts.confirm import prompt_persist_docker_args, prompt_persist_shares
+from aicage.runtime.menu.prompts.confirm import (
+    prompt_persist_docker_args,
+    prompt_persist_shares,
+)
 from aicage.runtime.menu.textual.entry import edit_draft_with_textual_app
 
 
@@ -26,7 +29,9 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
     bases = load_bases()
     agents = load_agents(bases)
     _require_known_agent(agent, agents)
-    draft = create_run_config_draft(project_path, agent, store.load_project(project_path), parsed)
+    draft = create_run_config_draft(
+        project_path, agent, store.load_project(project_path), parsed
+    )
     context = ConfigContext(
         store=store,
         project_cfg=draft.project_cfg,
@@ -74,7 +79,9 @@ def _require_known_agent(agent: str, agents: dict[str, AgentMetadata]) -> None:
     if agent in agents:
         return
     if agent == "config":
-        raise RegistryError("Unknown agent 'config'. Use '--config' for config commands.")
+        raise RegistryError(
+            "Unknown agent 'config'. Use '--config' for config commands."
+        )
     raise RegistryError(f"Unknown agent '{agent}'.")
 
 
@@ -106,7 +113,9 @@ def _execute_image_setup(
     selection: ImageSelection,
     reporter: OperationReporter,
 ) -> None:
-    ensure_image(_setup_run_config(project_path, agent, context, selection), reporter=reporter)
+    ensure_image(
+        _setup_run_config(project_path, agent, context, selection), reporter=reporter
+    )
 
 
 def _image_setup_needed(run_config: RunConfig) -> bool:

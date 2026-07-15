@@ -60,7 +60,9 @@ class EnsureLocalImageTests(TestCase):
                 "aicage.registry.agent_build.ensure.AgentVersionChecker"
             ) as checker_cls,
         ):
-            checker_cls.return_value.get_version.side_effect = RegistryError("version failed")
+            checker_cls.return_value.get_version.side_effect = RegistryError(
+                "version failed"
+            )
             with self.assertRaises(RegistryError):
                 ensure_module.ensure(run_config)
 
@@ -79,15 +81,15 @@ class EnsureLocalImageTests(TestCase):
             mock.patch(
                 "aicage.registry.agent_build.ensure.AgentVersionChecker"
             ) as checker_cls,
-            mock.patch(
-                "aicage.registry.agent_build.ensure.run_build"
-            ) as build_mock,
+            mock.patch("aicage.registry.agent_build.ensure.run_build") as build_mock,
         ):
             ensure_module.ensure(run_config)
         checker_cls.assert_not_called()
         build_mock.assert_not_called()
 
-    def test_ensure_raises_when_base_refresh_fails_and_agent_image_missing(self) -> None:
+    def test_ensure_raises_when_base_refresh_fails_and_agent_image_missing(
+        self,
+    ) -> None:
         run_config = build_run_config()
         with (
             mock.patch(

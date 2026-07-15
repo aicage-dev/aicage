@@ -21,14 +21,22 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     Docker args are captured as an opaque string; precedence is resolved later.
     """
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--dry-run", action="store_true", help="Print docker run command without executing.")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print docker run command without executing.",
+    )
     parser.add_argument(
         "--menu",
         choices=["textual", "simple", "none"],
         default="textual",
         help="Select menu mode: textual, simple, or none.",
     )
-    parser.add_argument("--docker", action="store_true", help="Mount the host Docker socket into the container.")
+    parser.add_argument(
+        "--docker",
+        action="store_true",
+        help="Mount the host Docker socket into the container.",
+    )
     parser.add_argument(
         "--share",
         action="append",
@@ -40,7 +48,9 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         nargs="*",
         help="Perform config actions such as the default info or 'remove [agent]'.",
     )
-    parser.add_argument("-h", "--help", action="store_true", help="Show help message and exit.")
+    parser.add_argument(
+        "-h", "--help", action="store_true", help="Show help message and exit."
+    )
     pre_argv, post_argv = _split_argv(argv)
 
     opts: argparse.Namespace
@@ -85,7 +95,9 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
 
     if opts.config is not None:
         config_tokens: list[str] = opts.config
-        config_action, config_agent = _validate_config_action(config_tokens, opts, remaining, post_argv)
+        config_action, config_agent = _validate_config_action(
+            config_tokens, opts, remaining, post_argv
+        )
         return ParsedArgs(
             opts.dry_run,
             "",
@@ -143,10 +155,19 @@ def _validate_config_action(
     config_action = _normalize_config_action(raw_action)
     if config_action not in _VALID_CONFIG_ACTIONS:
         raise CliError(f"Unknown config action: {raw_action}")
-    config_agent = config_tokens[1] if len(config_tokens) == _MAX_CONFIG_TOKENS else None
+    config_agent = (
+        config_tokens[1] if len(config_tokens) == _MAX_CONFIG_TOKENS else None
+    )
     if config_action == "info" and config_agent is not None:
         raise CliError("No agent value is allowed with '--config info'.")
-    if remaining or post_argv or opts.docker or opts.dry_run or opts.share or opts.menu != "textual":
+    if (
+        remaining
+        or post_argv
+        or opts.docker
+        or opts.dry_run
+        or opts.share
+        or opts.menu != "textual"
+    ):
         raise CliError("No additional arguments are allowed with --config.")
     return config_action, config_agent
 
@@ -161,7 +182,9 @@ def _parse_agent_section(
         docker_args = " ".join(remaining).strip()
         return docker_args, post_argv[0], post_argv[1:]
     if not remaining:
-        raise CliError("Missing arguments. Provide an agent name (and optional docker args).")
+        raise CliError(
+            "Missing arguments. Provide an agent name (and optional docker args)."
+        )
     first: str = remaining[0]
     if first.startswith("-") or "=" in first:
         raise CliError("Docker args require '--' before the agent.")

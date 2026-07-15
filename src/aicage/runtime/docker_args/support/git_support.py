@@ -103,15 +103,25 @@ def git_support_prompt_items(
 
     git_config = resolve_git_config_path()
     if git_config and git_config.exists() and mounts_cfg.gitconfig is None:
-        git_items.append(_GitSupportPromptItem(MOUNT_GITCONFIG_KEY, "Git config (name/email)", git_config))
+        git_items.append(
+            _GitSupportPromptItem(
+                MOUNT_GITCONFIG_KEY, "Git config (name/email)", git_config
+            )
+        )
 
     git_root = resolve_git_root(project_path)
     if git_root and git_root != project_path and mounts_cfg.gitroot is None:
-        git_items.append(_GitSupportPromptItem(MOUNT_GITROOT_KEY, "Git root (repository access)", git_root))
+        git_items.append(
+            _GitSupportPromptItem(
+                MOUNT_GITROOT_KEY, "Git root (repository access)", git_root
+            )
+        )
 
     signing_enabled = is_commit_signing_enabled(project_path)
     signing_format = resolve_signing_format(project_path) if signing_enabled else None
-    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(project_path)
+    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(
+        project_path
+    )
 
     if ssh_needed and mounts_cfg.ssh is None:
         ssh_dir = resolve_ssh_dir()

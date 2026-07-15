@@ -31,7 +31,9 @@ def load_agents_from_directory(
     return agents
 
 
-def _find_agent_definition(agent_dir: Path, definition_files: tuple[str, ...], agent_label: str) -> Path:
+def _find_agent_definition(
+    agent_dir: Path, definition_files: tuple[str, ...], agent_label: str
+) -> Path:
     for filename in definition_files:
         candidate = agent_dir / filename
         if candidate.is_file():

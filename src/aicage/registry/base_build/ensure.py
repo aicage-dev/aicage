@@ -97,7 +97,9 @@ def _run_build(
     target_image_ref: str,
     reporter: OperationReporter | None,
 ) -> None:
-    old_digest = get_local_repo_digest_for_repo(target_image_ref, LOCAL_IMAGE_BASE_REPOSITORY)
+    old_digest = get_local_repo_digest_for_repo(
+        target_image_ref, LOCAL_IMAGE_BASE_REPOSITORY
+    )
     log_path = build_log_path(base)
     run_custom_base_build(
         build_root=base_dir,

@@ -18,8 +18,12 @@ def _check_for_update(current_version: str) -> str | None:
     logger = get_logger()
     host = host_from_url(_PYPI_URL)
     try:
-        request = urllib.request.Request(_PYPI_URL, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(request, timeout=PYPI_VERSION_CHECK_TIMEOUT_SECONDS) as response:
+        request = urllib.request.Request(
+            _PYPI_URL, headers={"Accept": "application/json"}
+        )
+        with urllib.request.urlopen(
+            request, timeout=PYPI_VERSION_CHECK_TIMEOUT_SECONDS
+        ) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError) as exc:
         logger.warning(
@@ -30,7 +34,11 @@ def _check_for_update(current_version: str) -> str | None:
         )
         return None
     except json.JSONDecodeError as exc:
-        logger.warning("Version check failed (operation=pypi_version_check, host=%s): %s", host, exc)
+        logger.warning(
+            "Version check failed (operation=pypi_version_check, host=%s): %s",
+            host,
+            exc,
+        )
         return None
 
     latest_version = str(payload.get("info", {}).get("version", "")).strip()

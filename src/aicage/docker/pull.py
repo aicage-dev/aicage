@@ -50,7 +50,9 @@ def _format_pull_event(event: object) -> str:
     return str(event).rstrip("\n")
 
 
-def _report_progress(reporter: OperationReporter, progress: PullProgress, event: object) -> None:
+def _report_progress(
+    reporter: OperationReporter, progress: PullProgress, event: object
+) -> None:
     if not isinstance(event, dict):
         return
     status = event.get("status")

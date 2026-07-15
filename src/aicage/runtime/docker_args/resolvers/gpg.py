@@ -5,7 +5,10 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.docker_args.support.git_support import resolve_gpg_home
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
-from aicage.runtime.docker_args.support.signing import is_commit_signing_enabled, resolve_signing_format
+from aicage.runtime.docker_args.support.signing import (
+    is_commit_signing_enabled,
+    resolve_signing_format,
+)
 
 
 def resolve(

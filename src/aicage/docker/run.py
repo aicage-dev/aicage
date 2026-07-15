@@ -27,7 +27,9 @@ def print_run_command(args: DockerRunArgs) -> None:
     print(shlex.join(command))
 
 
-def run_builder_version_check(image_ref: str, definition_dir: Path) -> subprocess.CompletedProcess[str]:
+def run_builder_version_check(
+    image_ref: str, definition_dir: Path
+) -> subprocess.CompletedProcess[str]:
     command = [
         "/bin/bash",
         "-c",
@@ -63,10 +65,11 @@ def run_builder_version_check(image_ref: str, definition_dir: Path) -> subproces
             stderr=process.stderr,
         )
     except subprocess.TimeoutExpired:
-        return subprocess.CompletedProcess(command, 124, stdout="", stderr="Version check timed out.")
+        return subprocess.CompletedProcess(
+            command, 124, stdout="", stderr="Version check timed out."
+        )
     except Exception as exc:
         return subprocess.CompletedProcess(command, 1, stdout="", stderr=str(exc))
-
 
 
 def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
@@ -75,7 +78,9 @@ def _assemble_docker_run(args: DockerRunArgs) -> list[str]:
     for env in args.env:
         cmd.extend(["-e", f"{env.name}={env.value}"])
     for mount in args.mounts:
-        append_mount(cmd, mount.host_path, mount.container_path, read_only=mount.read_only)
+        append_mount(
+            cmd, mount.host_path, mount.container_path, read_only=mount.read_only
+        )
 
     if args.merged_docker_args:
         cmd.extend(shlex.split(args.merged_docker_args))

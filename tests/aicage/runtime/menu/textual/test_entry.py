@@ -37,8 +37,12 @@ class OverviewEntryTests(TestCase):
             project_docker_args="--new",
         )
 
-        with mock.patch("aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock):
-            selection, project_docker_args = entry.edit_draft_with_textual_app(draft, context)
+        with mock.patch(
+            "aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock
+        ):
+            selection, project_docker_args = entry.edit_draft_with_textual_app(
+                draft, context
+            )
 
         parsed = draft.parsed
         if parsed is None:
@@ -62,19 +66,27 @@ class OverviewEntryTests(TestCase):
         app_mock.run.return_value = RuntimeError("boom")
 
         with (
-            mock.patch("aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock),
+            mock.patch(
+                "aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock
+            ),
             self.assertRaises(RuntimeError),
         ):
             entry.edit_draft_with_textual_app(draft, _build_context())
 
-    def test_edit_draft_with_textual_app_raises_keyboard_interrupt_on_cancel(self) -> None:
+    def test_edit_draft_with_textual_app_raises_keyboard_interrupt_on_cancel(
+        self,
+    ) -> None:
         draft = _build_draft(
-            agent_cfg=AgentConfig(base="ubuntu", docker_args="--existing", shares=["/repo/existing"]),
+            agent_cfg=AgentConfig(
+                base="ubuntu", docker_args="--existing", shares=["/repo/existing"]
+            ),
             parsed=ParsedArgs(False, "--new", "codex", [], True, ["logs"], None),
             project_path=Path("/repo"),
         )
 
-        with mock.patch("aicage.runtime.menu.textual.entry.OverviewApp.run", return_value=None):
+        with mock.patch(
+            "aicage.runtime.menu.textual.entry.OverviewApp.run", return_value=None
+        ):
             with self.assertRaises(KeyboardInterrupt):
                 entry.edit_draft_with_textual_app(draft, _build_context())
 

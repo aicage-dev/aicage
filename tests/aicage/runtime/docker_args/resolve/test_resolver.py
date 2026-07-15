@@ -32,12 +32,18 @@ class ResolverTests(TestCase):
             with (
                 mock.patch(
                     f"{_MODULE}.project.resolve",
-                    return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),
+                    return_value=ResolvedArgs(
+                        mounts=[MountRequest(host_path=project_path)]
+                    ),
                 ),
-                mock.patch(f"{_MODULE}.agent_config.resolve", return_value=ResolvedArgs()),
+                mock.patch(
+                    f"{_MODULE}.agent_config.resolve", return_value=ResolvedArgs()
+                ),
                 mock.patch(
                     f"{_MODULE}.git_config.resolve",
-                    return_value=ResolvedArgs(mounts=[MountRequest(host_path=git_config)]),
+                    return_value=ResolvedArgs(
+                        mounts=[MountRequest(host_path=git_config)]
+                    ),
                 ) as git_mock,
                 mock.patch(f"{_MODULE}.git_root.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.ssh_keys.resolve", return_value=ResolvedArgs()),
@@ -119,14 +125,22 @@ class ResolverTests(TestCase):
             with (
                 mock.patch(
                     f"{_MODULE}.project.resolve",
-                    return_value=ResolvedArgs(mounts=[MountRequest(host_path=project_path)]),
+                    return_value=ResolvedArgs(
+                        mounts=[MountRequest(host_path=project_path)]
+                    ),
                 ),
-                mock.patch(f"{_MODULE}.agent_config.resolve", return_value=ResolvedArgs()),
-                mock.patch(f"{_MODULE}.git_config.resolve", return_value=ResolvedArgs()),
+                mock.patch(
+                    f"{_MODULE}.agent_config.resolve", return_value=ResolvedArgs()
+                ),
+                mock.patch(
+                    f"{_MODULE}.git_config.resolve", return_value=ResolvedArgs()
+                ),
                 mock.patch(f"{_MODULE}.git_root.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.ssh_keys.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.gpg.resolve", return_value=ResolvedArgs()),
-                mock.patch(f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()),
+                mock.patch(
+                    f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()
+                ),
                 mock.patch(f"{_MODULE}.shares.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.Path.home", return_value=home_path),
             ):
@@ -202,7 +216,9 @@ class ResolverTests(TestCase):
         }
 
     def _build_context(self, project_path: Path) -> tuple[ProjectConfig, ConfigContext]:
-        project_cfg = ProjectConfig(path=str(project_path), agents={"codex": AgentConfig()})
+        project_cfg = ProjectConfig(
+            path=str(project_path), agents={"codex": AgentConfig()}
+        )
         context = ConfigContext(
             store=mock.Mock(),
             project_cfg=project_cfg,

@@ -30,7 +30,9 @@ def fetch_bearer_token(realm: str, service: str, scope: str) -> str | None:
     url = f"{realm}?{urllib.parse.urlencode(query)}"
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
-        with urllib.request.urlopen(request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(
+            request, timeout=REGISTRY_DIGEST_REQUEST_TIMEOUT_SECONDS
+        ) as response:
             payload = response.read().decode("utf-8")
     except urllib.error.URLError as exc:
         logger.warning(

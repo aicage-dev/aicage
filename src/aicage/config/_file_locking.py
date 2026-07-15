@@ -13,10 +13,14 @@ def _lock_project_config(project_config_path: Path) -> Iterator[None]:
     try:
         with _lock_file(project_config_path):
             yield
-    except portalocker.exceptions.LockException as exc:  # pragma: no cover - rare file lock failure
+    except (
+        portalocker.exceptions.LockException
+    ) as exc:  # pragma: no cover - rare file lock failure
         raise ConfigError(f"Failed to lock project configuration file: {exc}") from exc
 
 
 def _lock_file(path: Path) -> portalocker.Lock:
     path.parent.mkdir(parents=True, exist_ok=True)
-    return portalocker.Lock(str(path), timeout=PROJECT_FILE_LOCK_TIMEOUT_SECONDS, mode="a+")
+    return portalocker.Lock(
+        str(path), timeout=PROJECT_FILE_LOCK_TIMEOUT_SECONDS, mode="a+"
+    )

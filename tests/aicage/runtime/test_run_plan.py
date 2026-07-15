@@ -39,7 +39,9 @@ class RunPlanTests(TestCase):
         parsed = ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None)
         with (
             mock.patch.dict(os.environ, {}, clear=True),
-            mock.patch("aicage.runtime.run_plan.resolve_host_timezone", return_value=None),
+            mock.patch(
+                "aicage.runtime.run_plan.resolve_host_timezone", return_value=None
+            ),
         ):
             run_args = build_run_args(config, parsed)
 
@@ -72,7 +74,9 @@ class RunPlanTests(TestCase):
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
         with (
             mock.patch.dict(os.environ, {}, clear=True),
-            mock.patch("aicage.runtime.run_plan.resolve_host_timezone", return_value=None),
+            mock.patch(
+                "aicage.runtime.run_plan.resolve_host_timezone", return_value=None
+            ),
         ):
             run_args = build_run_args(config, parsed)
 
@@ -105,7 +109,9 @@ class RunPlanTests(TestCase):
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
         with (
             mock.patch.dict(os.environ, {}, clear=True),
-            mock.patch("aicage.runtime.run_plan.resolve_host_timezone", return_value=None),
+            mock.patch(
+                "aicage.runtime.run_plan.resolve_host_timezone", return_value=None
+            ),
         ):
             run_args = build_run_args(config, parsed)
 
@@ -135,15 +141,20 @@ class RunPlanTests(TestCase):
             env=[EnvVar(name="EXTRA", value="1")],
         )
         parsed = ParsedArgs(False, "", "codex", [], False, [], None)
-        with mock.patch.dict(
-            os.environ,
-            {
-                "HTTP_PROXY": "http://proxy-http:8080",
-                "HTTPS_PROXY": "http://proxy-https:8080",
-                "http_proxy": "http://ignored:8080",
-            },
-            clear=True,
-        ), mock.patch("aicage.runtime.run_plan.resolve_host_timezone", return_value=None):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {
+                    "HTTP_PROXY": "http://proxy-http:8080",
+                    "HTTPS_PROXY": "http://proxy-https:8080",
+                    "http_proxy": "http://ignored:8080",
+                },
+                clear=True,
+            ),
+            mock.patch(
+                "aicage.runtime.run_plan.resolve_host_timezone", return_value=None
+            ),
+        ):
             run_args = build_run_args(config, parsed)
 
         self.assertEqual(

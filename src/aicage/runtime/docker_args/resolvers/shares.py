@@ -22,8 +22,13 @@ def resolve(
         share_values = list(parsed.shares)
     if not share_values and not extension_shares:
         return ResolvedArgs()
-    share_mounts: list[ShareSpec] = resolve_share_specs([*share_values, *extension_shares], cwd)
-    mounts = [MountRequest(host_path=share.host_path, read_only=share.read_only) for share in share_mounts]
+    share_mounts: list[ShareSpec] = resolve_share_specs(
+        [*share_values, *extension_shares], cwd
+    )
+    mounts = [
+        MountRequest(host_path=share.host_path, read_only=share.read_only)
+        for share in share_mounts
+    ]
     return ResolvedArgs(mounts=mounts)
 
 

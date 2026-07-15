@@ -17,12 +17,16 @@ class AgentVersionImagesTests(TestCase):
                     "aicage.registry.agent_build.agent_version._images.get_local_repo_digest_for_repo",
                     return_value=None,
                 ) as local_mock,
-                mock.patch("aicage.registry.agent_build.agent_version._images.get_remote_digest") as remote_mock,
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._images.get_remote_digest"
+                ) as remote_mock,
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._images.resolve_verified_digest",
                     return_value="ghcr.io/aicage/aicage-image-util@sha256:verified",
                 ) as verify_mock,
-                mock.patch("aicage.registry.agent_build.agent_version._images.run_pull") as pull_mock,
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._images.run_pull"
+                ) as pull_mock,
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._images.cleanup_old_digest"
                 ) as cleanup_mock,
@@ -60,7 +64,9 @@ class AgentVersionImagesTests(TestCase):
                     "aicage.registry.agent_build.agent_version._images.resolve_verified_digest",
                     return_value="ghcr.io/aicage/aicage-image-util@sha256:new",
                 ),
-                mock.patch("aicage.registry.agent_build.agent_version._images.run_pull") as pull_mock,
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._images.run_pull"
+                ) as pull_mock,
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._images.cleanup_old_digest"
                 ) as cleanup_mock,
@@ -94,7 +100,9 @@ class AgentVersionImagesTests(TestCase):
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._images.resolve_verified_digest"
                 ) as verify_mock,
-                mock.patch("aicage.registry.agent_build.agent_version._images.run_pull") as pull_mock,
+                mock.patch(
+                    "aicage.registry.agent_build.agent_version._images.run_pull"
+                ) as pull_mock,
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._images.cleanup_old_digest"
                 ) as cleanup_mock,

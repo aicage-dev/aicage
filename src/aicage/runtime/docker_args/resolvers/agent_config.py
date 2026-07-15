@@ -12,5 +12,8 @@ def resolve(
     _ = parsed
     agent_metadata = context.agents[agent]
     agent_config: AgentConfig = resolve_agent_config(agent_metadata)
-    mounts = [MountRequest(host_path=host_path) for host_path in agent_config.agent_config_host]
+    mounts = [
+        MountRequest(host_path=host_path)
+        for host_path in agent_config.agent_config_host
+    ]
     return ResolvedArgs(mounts=mounts)

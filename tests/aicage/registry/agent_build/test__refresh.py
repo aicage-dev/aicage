@@ -19,7 +19,9 @@ class RefreshBaseDigestTests(TestCase):
                 "aicage.registry.agent_build._refresh.prompt_update_image",
                 return_value=False,
             ) as prompt_mock,
-            mock.patch("aicage.registry.agent_build._refresh.resolve_base_digest") as resolve_mock,
+            mock.patch(
+                "aicage.registry.agent_build._refresh.resolve_base_digest"
+            ) as resolve_mock,
         ):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
@@ -59,7 +61,9 @@ class RefreshBaseDigestTests(TestCase):
             "ghcr.io/aicage/aicage-image-base",
         )
 
-    def test_refresh_base_image_uses_verified_digest_when_local_matches_remote(self) -> None:
+    def test_refresh_base_image_uses_verified_digest_when_local_matches_remote(
+        self,
+    ) -> None:
         with (
             mock.patch(
                 "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
@@ -69,8 +73,12 @@ class RefreshBaseDigestTests(TestCase):
                 "aicage.registry.agent_build._refresh.resolve_verified_digest",
                 return_value="ghcr.io/aicage/aicage-image-base@sha256:local",
             ),
-            mock.patch("aicage.registry.agent_build._refresh.prompt_update_image") as prompt_mock,
-            mock.patch("aicage.registry.agent_build._refresh.resolve_base_digest") as resolve_mock,
+            mock.patch(
+                "aicage.registry.agent_build._refresh.prompt_update_image"
+            ) as prompt_mock,
+            mock.patch(
+                "aicage.registry.agent_build._refresh.resolve_base_digest"
+            ) as resolve_mock,
         ):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
@@ -90,7 +98,9 @@ class RefreshBaseDigestTests(TestCase):
                 "aicage.registry.agent_build._refresh.resolve_verified_digest",
                 side_effect=RegistryError("offline"),
             ),
-            mock.patch("aicage.registry.agent_build._refresh.resolve_base_digest") as resolve_mock,
+            mock.patch(
+                "aicage.registry.agent_build._refresh.resolve_base_digest"
+            ) as resolve_mock,
         ):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
