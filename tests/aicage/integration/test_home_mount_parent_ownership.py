@@ -21,10 +21,10 @@ def test_home_mount_parent_ownership_for_nested_mounts(
     command = (
         "set -euo pipefail; "
         "uid=$(id -u); gid=$(id -g); "
-        "test \"$(stat -c %u:%g \"$HOME\")\" = \"$uid:$gid\"; "
-        "test \"$(stat -c %u:%g \"$HOME/development\")\" = \"$uid:$gid\"; "
-        "mountpoint -q \"$HOME/development/github\"; "
-        "test -d \"$HOME/development/github/aicage/test\""
+        'test "$(stat -c %u:%g "$HOME")" = "$uid:$gid"; '
+        'test "$(stat -c %u:%g "$HOME/development")" = "$uid:$gid"; '
+        'mountpoint -q "$HOME/development/github"; '
+        'test -d "$HOME/development/github/aicage/test"'
     )
     exit_code, output = run_cli_pty(
         [
@@ -59,11 +59,11 @@ def test_nested_mount_dedup_prefers_parent_mount(
 
     command = (
         "set -euo pipefail; "
-        "parent=\"$HOME/development/github\"; "
-        "child=\"$HOME/development/github/aicage/test\"; "
+        'parent="$HOME/development/github"; '
+        'child="$HOME/development/github/aicage/test"; '
         "awk '{print $5}' /proc/self/mountinfo | grep -Fx \"$parent\" >/dev/null; "
         "! awk '{print $5}' /proc/self/mountinfo | grep -Fx \"$child\" >/dev/null; "
-        "printf ok > \"$child/dedup-ok.txt\""
+        'printf ok > "$child/dedup-ok.txt"'
     )
     exit_code, output = run_cli_pty(
         [
@@ -99,10 +99,10 @@ def test_workspace_path_is_usable_when_covered_by_parent_mount(
 
     command = (
         "set -euo pipefail; "
-        "! mountpoint -q \"$AICAGE_WORKSPACE\"; "
-        "mountpoint -q \"$HOME/development/github\"; "
-        "test -d \"$AICAGE_WORKSPACE\"; "
-        "printf keep > \"$AICAGE_WORKSPACE/workspace-owner.txt\""
+        '! mountpoint -q "$AICAGE_WORKSPACE"; '
+        'mountpoint -q "$HOME/development/github"; '
+        'test -d "$AICAGE_WORKSPACE"; '
+        'printf keep > "$AICAGE_WORKSPACE/workspace-owner.txt"'
     )
     exit_code, output = run_cli_pty(
         [
@@ -137,9 +137,9 @@ def test_home_file_mount_is_direct_not_symlinked(
 
     command = (
         "set -euo pipefail; "
-        "test -f \"$HOME/.aicage-direct-file\"; "
-        "test ! -L \"$HOME/.aicage-direct-file\"; "
-        "test \"$(cat \"$HOME/.aicage-direct-file\")\" = \"direct\""
+        'test -f "$HOME/.aicage-direct-file"; '
+        'test ! -L "$HOME/.aicage-direct-file"; '
+        'test "$(cat "$HOME/.aicage-direct-file")" = "direct"'
     )
     exit_code, output = run_cli_pty(
         [

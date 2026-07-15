@@ -11,7 +11,9 @@ from aicage.config.run_config_draft import create_run_config_draft
 
 
 class OverviewSelectionTests(TestCase):
-    def test_resolve_overview_selection_returns_base_image_ref_without_extensions(self) -> None:
+    def test_resolve_overview_selection_returns_base_image_ref_without_extensions(
+        self,
+    ) -> None:
         draft = create_run_config_draft(
             Path("/repo"),
             "codex",
@@ -45,19 +47,26 @@ class OverviewSelectionTests(TestCase):
             extensions={},
         )
 
-        with mock.patch("aicage.config.overview_selection.base_image_ref", return_value="repo:ubuntu"):
+        with mock.patch(
+            "aicage.config.overview_selection.base_image_ref",
+            return_value="repo:ubuntu",
+        ):
             selection = overview_selection.resolve_overview_selection(draft, context)
 
         self.assertEqual("ubuntu", selection.base)
         self.assertEqual("repo:ubuntu", selection.image_ref)
 
-    def test_resolve_overview_selection_uses_sorted_extensions_for_default_image_ref(self) -> None:
+    def test_resolve_overview_selection_uses_sorted_extensions_for_default_image_ref(
+        self,
+    ) -> None:
         draft = create_run_config_draft(
             Path("/repo"),
             "codex",
             ProjectConfig(
                 path="/repo",
-                agents={"codex": AgentConfig(base="ubuntu", extensions=["zeta", "alpha"])},
+                agents={
+                    "codex": AgentConfig(base="ubuntu", extensions=["zeta", "alpha"])
+                },
             ),
             ParsedArgs(False, "", "codex", [], False, [], None),
         )
@@ -89,9 +98,15 @@ class OverviewSelectionTests(TestCase):
         )
 
         with (
-            mock.patch("aicage.config.overview_selection.ensure_extensions_exist", return_value=False),
+            mock.patch(
+                "aicage.config.overview_selection.ensure_extensions_exist",
+                return_value=False,
+            ),
             mock.patch("aicage.config.overview_selection.write_extended_image_config"),
-            mock.patch("aicage.config.overview_selection.base_image_ref", return_value="repo:ubuntu"),
+            mock.patch(
+                "aicage.config.overview_selection.base_image_ref",
+                return_value="repo:ubuntu",
+            ),
         ):
             selection = overview_selection.resolve_overview_selection(draft, context)
 

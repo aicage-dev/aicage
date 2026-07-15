@@ -55,12 +55,16 @@ def resolve_verified_digest(image_ref: str) -> str:
     output = _format_cosign_output(result)
     if result.returncode == 0:
         if output:
-            logger.info("Image signature verification output for %s:\n%s", digest_ref, output)
+            logger.info(
+                "Image signature verification output for %s:\n%s", digest_ref, output
+            )
         _verify_manifest_annotations(digest_ref)
         logger.info("Image signature verification succeeded for %s", digest_ref)
         return digest_ref
     if output:
-        logger.error("Image signature verification output for %s:\n%s", digest_ref, output)
+        logger.error(
+            "Image signature verification output for %s:\n%s", digest_ref, output
+        )
     raise RegistryError(
         "Image signature verification failed for "
         f"{digest_ref}.\nCosign output:\n{output}"
@@ -98,13 +102,17 @@ def _cosign_identity_regexp_for_image(image_ref: str) -> str:
     repository = _repository_for_image(image_ref)
     parts = repository.split("/", 2)
     if len(parts) < _REPOSITORY_PARTS_WITH_OWNER:
-        raise RegistryError(f"Image ref '{image_ref}' does not contain a registry owner.")
+        raise RegistryError(
+            f"Image ref '{image_ref}' does not contain a registry owner."
+        )
     owner = parts[1]
     return COSIGN_IDENTITY_REGEXP_TEMPLATE.format(owner=owner)
 
 
 def _verify_manifest_annotations(image_ref: str) -> None:
-    expected_annotations = _OFFICIAL_IMAGE_ANNOTATIONS.get(_repository_for_image(image_ref))
+    expected_annotations = _OFFICIAL_IMAGE_ANNOTATIONS.get(
+        _repository_for_image(image_ref)
+    )
     if expected_annotations is None:
         return
 

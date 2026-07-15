@@ -17,7 +17,9 @@ class VersionCheckTests(TestCase):
         response = io.BytesIO(b"not-json")
         response.__enter__ = mock.Mock(return_value=response)
         response.__exit__ = mock.Mock(return_value=None)
-        with mock.patch("aicage.cli._version_check.urllib.request.urlopen", return_value=response):
+        with mock.patch(
+            "aicage.cli._version_check.urllib.request.urlopen", return_value=response
+        ):
             self.assertIsNone(version_check._check_for_update("1.0.0"))
 
     def test_check_for_update_handles_missing_version(self) -> None:
@@ -25,7 +27,9 @@ class VersionCheckTests(TestCase):
         response = io.BytesIO(payload)
         response.__enter__ = mock.Mock(return_value=response)
         response.__exit__ = mock.Mock(return_value=None)
-        with mock.patch("aicage.cli._version_check.urllib.request.urlopen", return_value=response):
+        with mock.patch(
+            "aicage.cli._version_check.urllib.request.urlopen", return_value=response
+        ):
             self.assertIsNone(version_check._check_for_update("1.0.0"))
 
     def test_check_for_update_returns_newer_version(self) -> None:
@@ -33,7 +37,9 @@ class VersionCheckTests(TestCase):
         response = io.BytesIO(payload)
         response.__enter__ = mock.Mock(return_value=response)
         response.__exit__ = mock.Mock(return_value=None)
-        with mock.patch("aicage.cli._version_check.urllib.request.urlopen", return_value=response):
+        with mock.patch(
+            "aicage.cli._version_check.urllib.request.urlopen", return_value=response
+        ):
             self.assertEqual("1.2.0", version_check._check_for_update("1.1.9"))
 
     def test_is_newer_compares_with_padding(self) -> None:
@@ -46,7 +52,10 @@ class VersionCheckTests(TestCase):
 
     def test_run_upgrade_handles_missing_command(self) -> None:
         with (
-            mock.patch("aicage.cli._version_check.subprocess.run", side_effect=FileNotFoundError("missing")),
+            mock.patch(
+                "aicage.cli._version_check.subprocess.run",
+                side_effect=FileNotFoundError("missing"),
+            ),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
             upgraded = version_check._run_upgrade()
@@ -63,7 +72,10 @@ class VersionCheckTests(TestCase):
             upgraded = version_check._run_upgrade()
 
         self.assertFalse(upgraded)
-        self.assertIn("Upgrade failed. Please run 'pipx upgrade aicage' manually.", stdout.getvalue())
+        self.assertIn(
+            "Upgrade failed. Please run 'pipx upgrade aicage' manually.",
+            stdout.getvalue(),
+        )
 
     def test_maybe_prompt_update_skips_unknown_version(self) -> None:
         with (
@@ -78,7 +90,9 @@ class VersionCheckTests(TestCase):
 
     def test_maybe_prompt_update_no_update(self) -> None:
         with (
-            mock.patch("aicage.cli._version_check._check_for_update", return_value=None),
+            mock.patch(
+                "aicage.cli._version_check._check_for_update", return_value=None
+            ),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
             updated = version_check.maybe_prompt_update("0.1.0")
@@ -88,8 +102,12 @@ class VersionCheckTests(TestCase):
 
     def test_maybe_prompt_update_non_tty(self) -> None:
         with (
-            mock.patch("aicage.cli._version_check._check_for_update", return_value="1.2.3"),
-            mock.patch("aicage.cli._version_check.prompt_update_aicage", return_value=False),
+            mock.patch(
+                "aicage.cli._version_check._check_for_update", return_value="1.2.3"
+            ),
+            mock.patch(
+                "aicage.cli._version_check.prompt_update_aicage", return_value=False
+            ),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
             updated = version_check.maybe_prompt_update("1.0.0")
@@ -101,9 +119,15 @@ class VersionCheckTests(TestCase):
     @staticmethod
     def test_maybe_prompt_update_yes_runs_upgrade() -> None:
         with (
-            mock.patch("aicage.cli._version_check._check_for_update", return_value="1.2.3"),
-            mock.patch("aicage.cli._version_check.prompt_update_aicage", return_value=True),
-            mock.patch("aicage.cli._version_check._run_upgrade", return_value=True) as upgrade_mock,
+            mock.patch(
+                "aicage.cli._version_check._check_for_update", return_value="1.2.3"
+            ),
+            mock.patch(
+                "aicage.cli._version_check.prompt_update_aicage", return_value=True
+            ),
+            mock.patch(
+                "aicage.cli._version_check._run_upgrade", return_value=True
+            ) as upgrade_mock,
         ):
             updated = version_check.maybe_prompt_update("1.0.0")
 

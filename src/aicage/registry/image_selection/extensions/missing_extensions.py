@@ -22,7 +22,9 @@ def ensure_extensions_exist(
         agent=agent,
         missing=missing,
         stored_image_ref=agent_cfg.image_ref or "",
-        project_config_path=context.store.project_config_path(Path(context.project_cfg.path)),
+        project_config_path=context.store.project_config_path(
+            Path(context.project_cfg.path)
+        ),
         other_projects=other_projects,
     )
     if choice == "fresh":

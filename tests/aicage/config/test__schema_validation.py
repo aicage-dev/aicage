@@ -37,9 +37,15 @@ class SchemaValidationTests(TestCase):
             validate_schema_mapping({}, schema, "example")
 
     def test_validate_schema_mapping_rejects_unknown_keys(self) -> None:
-        schema = {"properties": {"name": {"type": "string"}}, "required": [], "additionalProperties": False}
+        schema = {
+            "properties": {"name": {"type": "string"}},
+            "required": [],
+            "additionalProperties": False,
+        }
         with self.assertRaises(ConfigError):
-            validate_schema_mapping({"name": "agent", "extra": "value"}, schema, "example")
+            validate_schema_mapping(
+                {"name": "agent", "extra": "value"}, schema, "example"
+            )
 
     def test_validate_schema_mapping_rejects_nested_invalid_value(self) -> None:
         schema = {

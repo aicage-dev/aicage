@@ -57,7 +57,9 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         draft: RunConfigDraft,
         context: ConfigContext,
         setup_needed: Callable[[ImageSelection], bool] | None = None,
-        execute_setup: Callable[[ImageSelection, OperationReporter], None] | None = None,
+        execute_setup: (
+            Callable[[ImageSelection, OperationReporter], None] | None
+        ) = None,
     ) -> None:
         super().__init__()
         self._draft = draft
@@ -67,8 +69,12 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         self._running_execution = False
         self._state = OverviewState(
             last_section_id=None,
-            built_in_shares=shares_values(self._draft, self._config_context).built_in_shares,
-            custom_shares=[CustomShareValue(share) for share in self._draft.agent_cfg.shares],
+            built_in_shares=shares_values(
+                self._draft, self._config_context
+            ).built_in_shares,
+            custom_shares=[
+                CustomShareValue(share) for share in self._draft.agent_cfg.shares
+            ],
             docker_socket_enabled=bool(self._draft.agent_cfg.mounts.docker),
         )
         self.title = "aicage"
@@ -138,10 +144,14 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
     def on_overview_add_share_requested(self, _: Overview.AddShareRequested) -> None:
         self._add_share()
 
-    def on_overview_edit_section_requested(self, message: Overview.EditSectionRequested) -> None:
+    def on_overview_edit_section_requested(
+        self, message: Overview.EditSectionRequested
+    ) -> None:
         self._edit_section(message.section_id)
 
-    def on_overview_edit_custom_share_requested(self, message: Overview.EditCustomShareRequested) -> None:
+    def on_overview_edit_custom_share_requested(
+        self, message: Overview.EditCustomShareRequested
+    ) -> None:
         self._edit_custom_share(message.current_value)
 
     async def _edit_base(self) -> None:
@@ -157,14 +167,19 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
 
     async def _edit_extensions(self) -> None:
         selected = await self._push_section_screen(
-            ExtensionsScreen(_extension_options(self._config_context), list(self._draft.agent_cfg.extensions))
+            ExtensionsScreen(
+                _extension_options(self._config_context),
+                list(self._draft.agent_cfg.extensions),
+            )
         )
         if selected is not None and selected != self._draft.agent_cfg.extensions:
             self._draft.agent_cfg.extensions = selected
             self._draft.reset_extension_image()
 
     async def _edit_extras(self) -> None:
-        selected = await self._push_section_screen(DockerArgsScreen(extras_values(self._draft)))
+        selected = await self._push_section_screen(
+            DockerArgsScreen(extras_values(self._draft))
+        )
         if selected is None:
             return
         self._draft.agent_cfg.docker_args = selected.docker_args
@@ -181,7 +196,9 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
 
     @work(exclusive=True)
     async def _edit_custom_share(self, current_value: str) -> None:
-        result = await self._push_section_screen(ShareEditorScreen(current_value, allow_remove=True))
+        result = await self._push_section_screen(
+            ShareEditorScreen(current_value, allow_remove=True)
+        )
         if result is None:
             return
         if not update_custom_share(self._state, self._draft, current_value, result):
@@ -189,7 +206,9 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         self._apply_shell_width()
         self._refresh_sections()
 
-    async def _push_section_screen(self, screen: Screen[_ScreenResultT]) -> _ScreenResultT:
+    async def _push_section_screen(
+        self, screen: Screen[_ScreenResultT]
+    ) -> _ScreenResultT:
         overview = self._overview()
         overview.hide_shell()
         try:

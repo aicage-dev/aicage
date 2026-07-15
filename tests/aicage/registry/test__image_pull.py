@@ -61,8 +61,12 @@ class DockerInvocationTests(TestCase):
                     "aicage.docker.pull.get_docker_pull_client",
                     return_value=client,
                 ),
-                mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
-                mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
+                mock.patch(
+                    "aicage.registry._image_pull.cleanup_old_digest"
+                ) as cleanup_mock,
+                mock.patch(
+                    "aicage.registry._image_pull.pull_log_path", return_value=log_path
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 image_pull.pull_image(image_ref, reporter=reporter)
@@ -113,8 +117,12 @@ class DockerInvocationTests(TestCase):
                     "aicage.docker.pull.get_docker_pull_client",
                     return_value=client,
                 ),
-                mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
-                mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
+                mock.patch(
+                    "aicage.registry._image_pull.cleanup_old_digest"
+                ) as cleanup_mock,
+                mock.patch(
+                    "aicage.registry._image_pull.pull_log_path", return_value=log_path
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO),
             ):
                 with self.assertRaises(DockerException):
@@ -143,8 +151,12 @@ class DockerInvocationTests(TestCase):
                     "aicage.registry._image_pull.resolve_verified_digest"
                 ) as verify_mock,
                 mock.patch("aicage.docker.pull.get_docker_pull_client") as client_mock,
-                mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
-                mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
+                mock.patch(
+                    "aicage.registry._image_pull.cleanup_old_digest"
+                ) as cleanup_mock,
+                mock.patch(
+                    "aicage.registry._image_pull.pull_log_path", return_value=log_path
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 image_pull.pull_image(image_ref)
@@ -174,8 +186,12 @@ class DockerInvocationTests(TestCase):
                     "aicage.registry._image_pull.resolve_verified_digest"
                 ) as verify_mock,
                 mock.patch("aicage.docker.pull.get_docker_pull_client") as client_mock,
-                mock.patch("aicage.registry._image_pull.cleanup_old_digest") as cleanup_mock,
-                mock.patch("aicage.registry._image_pull.pull_log_path", return_value=log_path),
+                mock.patch(
+                    "aicage.registry._image_pull.cleanup_old_digest"
+                ) as cleanup_mock,
+                mock.patch(
+                    "aicage.registry._image_pull.pull_log_path", return_value=log_path
+                ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
                 image_pull.pull_image(image_ref)

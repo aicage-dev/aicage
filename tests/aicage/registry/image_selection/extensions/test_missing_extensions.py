@@ -25,7 +25,9 @@ class MissingExtensionsTests(TestCase):
                 scripts_dir=Path(tmp_dir),
                 dockerfile_path=None,
             )
-            agent_cfg = AgentConfig(extensions=["extra"], image_ref="aicage:codex-ubuntu")
+            agent_cfg = AgentConfig(
+                extensions=["extra"], image_ref="aicage:codex-ubuntu"
+            )
             context = self._context(tmp_dir, agent_cfg, extensions={"extra": extension})
 
             with mock.patch(
@@ -41,7 +43,9 @@ class MissingExtensionsTests(TestCase):
 
     def test_ensure_extensions_exist_resets_on_fresh_choice(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            agent_cfg = AgentConfig(extensions=["extra"], image_ref="aicage:codex-ubuntu")
+            agent_cfg = AgentConfig(
+                extensions=["extra"], image_ref="aicage:codex-ubuntu"
+            )
             context = self._context(tmp_dir, agent_cfg)
 
             with mock.patch(
@@ -59,7 +63,9 @@ class MissingExtensionsTests(TestCase):
 
     def test_ensure_extensions_exist_raises_on_exit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            agent_cfg = AgentConfig(extensions=["extra"], image_ref="aicage:codex-ubuntu")
+            agent_cfg = AgentConfig(
+                extensions=["extra"], image_ref="aicage:codex-ubuntu"
+            )
             context = self._context(tmp_dir, agent_cfg)
 
             with mock.patch(
@@ -74,7 +80,9 @@ class MissingExtensionsTests(TestCase):
 
     def test_ensure_extensions_exist_raises_on_invalid_choice(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            agent_cfg = AgentConfig(extensions=["extra"], image_ref="aicage:codex-ubuntu")
+            agent_cfg = AgentConfig(
+                extensions=["extra"], image_ref="aicage:codex-ubuntu"
+            )
             context = self._context(tmp_dir, agent_cfg)
 
             with mock.patch(
@@ -122,7 +130,9 @@ class MissingExtensionsTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             store = mock.Mock()
             store.projects_dir = Path(tmp_dir)
-            (Path(tmp_dir) / "one.yml").write_text("path: /tmp/project\n", encoding="utf-8")
+            (Path(tmp_dir) / "one.yml").write_text(
+                "path: /tmp/project\n", encoding="utf-8"
+            )
             context = self._context(tmp_dir, AgentConfig())
             context.store = store
             with mock.patch(
@@ -171,7 +181,9 @@ class MissingExtensionsTests(TestCase):
     ) -> ConfigContext:
         store = mock.Mock()
         store.projects_dir = Path(tmp_dir)
-        project_cfg = ProjectConfig(path=str(Path(tmp_dir) / "project"), agents={"codex": agent_cfg})
+        project_cfg = ProjectConfig(
+            path=str(Path(tmp_dir) / "project"), agents={"codex": agent_cfg}
+        )
         return ConfigContext(
             store=store,
             project_cfg=project_cfg,

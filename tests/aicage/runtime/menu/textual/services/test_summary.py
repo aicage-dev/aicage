@@ -2,7 +2,11 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
-from aicage.runtime.menu.textual._models import BuiltInShareValue, ExtrasValues, SharesValues
+from aicage.runtime.menu.textual._models import (
+    BuiltInShareValue,
+    ExtrasValues,
+    SharesValues,
+)
 from aicage.runtime.menu.textual.services import summary
 
 from .._test_support import _build_context, _build_draft
@@ -39,7 +43,9 @@ class OverviewSummaryTests(TestCase):
             AgentConfig(base="ubuntu", shares=["/tmp/logs"]),
             ParsedArgs(False, "", "codex", [], False, [], None),
         )
-        built_in_share = BuiltInShareValue("git_support", "gitconfig", "Git config", "/tmp/gitconfig", True, True)
+        built_in_share = BuiltInShareValue(
+            "git_support", "gitconfig", "Git config", "/tmp/gitconfig", True, True
+        )
 
         with mock.patch(
             "aicage.runtime.menu.textual.services.summary.built_in_share_values",
@@ -57,7 +63,16 @@ class OverviewSummaryTests(TestCase):
         summary_text = summary._shares_summary(
             SharesValues(
                 ["/tmp/logs"],
-                [BuiltInShareValue("git_support", "gitconfig", "Git config", "/tmp/gitconfig", None, True)],
+                [
+                    BuiltInShareValue(
+                        "git_support",
+                        "gitconfig",
+                        "Git config",
+                        "/tmp/gitconfig",
+                        None,
+                        True,
+                    )
+                ],
             )
         )
 

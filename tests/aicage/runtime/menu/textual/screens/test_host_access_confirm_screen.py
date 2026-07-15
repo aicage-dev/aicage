@@ -1,25 +1,37 @@
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.textual._models import BuiltInShareValue, DockerOptionValue, HostAccessConfirmValues
+from aicage.runtime.menu.textual._models import (
+    BuiltInShareValue,
+    DockerOptionValue,
+    HostAccessConfirmValues,
+)
 from aicage.runtime.menu.textual.screens import host_access_confirm_screen
 
 
 class BuiltInShareConfirmScreenTests(TestCase):
     def test_compose_builds_screen_widgets(self) -> None:
-        screen = host_access_confirm_screen.HostAccessConfirmScreen([_docker_option()], [_share()], [])
+        screen = host_access_confirm_screen.HostAccessConfirmScreen(
+            [_docker_option()], [_share()], []
+        )
 
         widgets = list(screen.compose())
 
         self.assertEqual(1, len(widgets))
 
     def test_on_mount_focuses_ok_button(self) -> None:
-        screen = host_access_confirm_screen.HostAccessConfirmScreen([_docker_option()], [_share()], [])
+        screen = host_access_confirm_screen.HostAccessConfirmScreen(
+            [_docker_option()], [_share()], []
+        )
         ok_button = mock.Mock()
 
         def query_one_side_effect(selector: str, _expected_type: object) -> mock.Mock:
             if selector == "#ok":
                 return ok_button
-            if selector in {"#docker_confirm_list", "#git_support_confirm_list", "#extension_confirm_list"}:
+            if selector in {
+                "#docker_confirm_list",
+                "#git_support_confirm_list",
+                "#extension_confirm_list",
+            }:
                 raise host_access_confirm_screen.NoMatches("not present")
             raise AssertionError(f"Unexpected selector: {selector}")
 
@@ -28,7 +40,9 @@ class BuiltInShareConfirmScreenTests(TestCase):
 
         ok_button.focus.assert_called_once_with()
 
-    def test_on_mount_clears_initial_highlight_for_present_selection_lists(self) -> None:
+    def test_on_mount_clears_initial_highlight_for_present_selection_lists(
+        self,
+    ) -> None:
         screen = host_access_confirm_screen.HostAccessConfirmScreen(
             [_docker_option()],
             [_share()],
@@ -97,13 +111,31 @@ class BuiltInShareConfirmScreenTests(TestCase):
 
         dismiss_mock.assert_called_once_with(
             HostAccessConfirmValues(
-                docker_options=[DockerOptionValue("docker", "Docker socket", None, True)],
+                docker_options=[
+                    DockerOptionValue("docker", "Docker socket", None, True)
+                ],
                 git_support_shares=[
-                    BuiltInShareValue("git_support", "ssh", "SSH", "/home/user/.ssh", None, True),
-                    BuiltInShareValue("git_support", "gitconfig", "Git config", "/home/user/.gitconfig", None, False),
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", "/home/user/.ssh", None, True
+                    ),
+                    BuiltInShareValue(
+                        "git_support",
+                        "gitconfig",
+                        "Git config",
+                        "/home/user/.gitconfig",
+                        None,
+                        False,
+                    ),
                 ],
                 extension_shares=[
-                    BuiltInShareValue("extension", "gh", "Extension gh", "/home/user/.config/gh", None, True)
+                    BuiltInShareValue(
+                        "extension",
+                        "gh",
+                        "Extension gh",
+                        "/home/user/.config/gh",
+                        None,
+                        True,
+                    )
                 ],
             )
         )
@@ -112,7 +144,9 @@ class BuiltInShareConfirmScreenTests(TestCase):
         screen = host_access_confirm_screen.HostAccessConfirmScreen(
             [],
             [
-                BuiltInShareValue("git_support", "ssh", "SSH", "/home/user/.ssh", None, True),
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/home/user/.ssh", None, True
+                ),
                 BuiltInShareValue(
                     "git_support",
                     "gitconfig",
@@ -122,7 +156,16 @@ class BuiltInShareConfirmScreenTests(TestCase):
                     False,
                 ),
             ],
-            [BuiltInShareValue("extension", "gh", "Extension gh", "/home/user/.config/gh:ro", None, True)],
+            [
+                BuiltInShareValue(
+                    "extension",
+                    "gh",
+                    "Extension gh",
+                    "/home/user/.config/gh:ro",
+                    None,
+                    True,
+                )
+            ],
         )
 
         git_rows = list(screen._git_support_selection_list()._options)
@@ -130,9 +173,13 @@ class BuiltInShareConfirmScreenTests(TestCase):
 
         self.assertEqual("SSH       : /home/user/.ssh", git_rows[0].prompt)
         self.assertEqual("Git config: /home/user/.gitconfig", git_rows[1].prompt)
-        self.assertEqual("Extension gh: Read-only: /home/user/.config/gh", extension_rows[0].prompt)
+        self.assertEqual(
+            "Extension gh: Read-only: /home/user/.config/gh", extension_rows[0].prompt
+        )
 
-    def test_on_selection_list_selection_toggled_syncs_extension_group_rows(self) -> None:
+    def test_on_selection_list_selection_toggled_syncs_extension_group_rows(
+        self,
+    ) -> None:
         screen = host_access_confirm_screen.HostAccessConfirmScreen(
             [],
             [],
@@ -160,15 +207,23 @@ class BuiltInShareConfirmScreenTests(TestCase):
         event = mock.Mock()
         event.selection_list.id = "extension_confirm_list"
         event.selection.value = "builtin:extension:gcloud:/home/user/.config/gcloud"
-        event.selection_list.selected = ["builtin:extension:gcloud:/home/user/.config/gcloud"]
+        event.selection_list.selected = [
+            "builtin:extension:gcloud:/home/user/.config/gcloud"
+        ]
 
         screen.on_selection_list_selection_toggled(event)
 
-        event.selection_list.select.assert_any_call("builtin:extension:gcloud:/home/user/.config/gcloud")
-        event.selection_list.select.assert_any_call("builtin:extension:gcloud:/home/user/.boto")
+        event.selection_list.select.assert_any_call(
+            "builtin:extension:gcloud:/home/user/.config/gcloud"
+        )
+        event.selection_list.select.assert_any_call(
+            "builtin:extension:gcloud:/home/user/.boto"
+        )
 
     def test_on_button_pressed_dispatches_ok(self) -> None:
-        screen = host_access_confirm_screen.HostAccessConfirmScreen([_docker_option()], [_share()], [])
+        screen = host_access_confirm_screen.HostAccessConfirmScreen(
+            [_docker_option()], [_share()], []
+        )
         event = mock.Mock()
         event.button.id = "ok"
 
@@ -184,7 +239,9 @@ def _share() -> BuiltInShareValue:
 
 
 def _extension_share() -> BuiltInShareValue:
-    return BuiltInShareValue("extension", "gh", "Extension gh", "/home/user/.config/gh", None, True)
+    return BuiltInShareValue(
+        "extension", "gh", "Extension gh", "/home/user/.config/gh", None, True
+    )
 
 
 def _docker_option() -> DockerOptionValue:

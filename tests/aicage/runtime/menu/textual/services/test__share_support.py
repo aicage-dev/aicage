@@ -44,19 +44,33 @@ class ShareSupportTests(TestCase):
                 "aicage.runtime.menu.textual.services._share_support.resolve_signing_format",
                 return_value=None,
             ),
-            mock.patch("aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes", return_value=False),
+            mock.patch(
+                "aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes",
+                return_value=False,
+            ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
                 return_value=Path("/tmp/ssh"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
-            values = _share_support.built_in_share_values(draft, _build_context().extensions)
+            values = _share_support.built_in_share_values(
+                draft, _build_context().extensions
+            )
 
         self.assertEqual(
             [
-                BuiltInShareValue("git_support", "gitconfig", "Git config", "/tmp/gitconfig", None, True),
-                BuiltInShareValue("git_support", "gitroot", "Git root", "/repo", None, True),
+                BuiltInShareValue(
+                    "git_support",
+                    "gitconfig",
+                    "Git config",
+                    "/tmp/gitconfig",
+                    None,
+                    True,
+                ),
+                BuiltInShareValue(
+                    "git_support", "gitroot", "Git root", "/repo", None, True
+                ),
             ],
             values,
         )
@@ -68,7 +82,9 @@ class ShareSupportTests(TestCase):
             project_path=Path("/project"),
         )
 
-        values = _share_support.built_in_share_values(draft, _build_context().extensions)
+        values = _share_support.built_in_share_values(
+            draft, _build_context().extensions
+        )
 
         self.assertEqual(
             [
@@ -84,14 +100,18 @@ class ShareSupportTests(TestCase):
             [item for item in values if item.source == "extension"],
         )
 
-    def test_built_in_share_values_split_multiple_extension_shares_into_rows(self) -> None:
+    def test_built_in_share_values_split_multiple_extension_shares_into_rows(
+        self,
+    ) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu", extensions=["gcloud"]),
             parsed=ParsedArgs(False, "", "codex", [], False, [], None),
             project_path=Path("/project"),
         )
 
-        values = _share_support.built_in_share_values(draft, _build_context().extensions)
+        values = _share_support.built_in_share_values(
+            draft, _build_context().extensions
+        )
 
         self.assertEqual(
             [
@@ -117,7 +137,9 @@ class ShareSupportTests(TestCase):
             [item for item in values if item.source == "extension"],
         )
 
-    def test_built_in_share_values_includes_ssh_mount_when_ssh_signing_enabled(self) -> None:
+    def test_built_in_share_values_includes_ssh_mount_when_ssh_signing_enabled(
+        self,
+    ) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, [], None),
@@ -140,21 +162,28 @@ class ShareSupportTests(TestCase):
                 "aicage.runtime.menu.textual.services._share_support.resolve_signing_format",
                 return_value="ssh",
             ),
-            mock.patch("aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes", return_value=False),
+            mock.patch(
+                "aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes",
+                return_value=False,
+            ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
                 return_value=Path("/tmp/ssh"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
-            values = _share_support.built_in_share_values(draft, _build_context().extensions)
+            values = _share_support.built_in_share_values(
+                draft, _build_context().extensions
+            )
 
         self.assertIn(
             BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/ssh", None, True),
             values,
         )
 
-    def test_built_in_share_values_includes_gnupg_mount_when_non_ssh_signing_enabled(self) -> None:
+    def test_built_in_share_values_includes_gnupg_mount_when_non_ssh_signing_enabled(
+        self,
+    ) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, [], None),
@@ -177,16 +206,23 @@ class ShareSupportTests(TestCase):
                 "aicage.runtime.menu.textual.services._share_support.resolve_signing_format",
                 return_value="openpgp",
             ),
-            mock.patch("aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes", return_value=False),
+            mock.patch(
+                "aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes",
+                return_value=False,
+            ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_gpg_home",
                 return_value=Path("/tmp/gnupg"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
-            values = _share_support.built_in_share_values(draft, _build_context().extensions)
+            values = _share_support.built_in_share_values(
+                draft, _build_context().extensions
+            )
 
         self.assertIn(
-            BuiltInShareValue("git_support", "gnupg", "GnuPG", "/tmp/gnupg", None, True),
+            BuiltInShareValue(
+                "git_support", "gnupg", "GnuPG", "/tmp/gnupg", None, True
+            ),
             values,
         )

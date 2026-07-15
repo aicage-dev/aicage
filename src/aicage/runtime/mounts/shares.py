@@ -23,7 +23,9 @@ def resolve_share_specs(
         if share.host_path in mounted_hosts:
             continue
         mounted_hosts.add(share.host_path)
-        share_mounts.append(ShareSpec(host_path=share.host_path, read_only=share.read_only))
+        share_mounts.append(
+            ShareSpec(host_path=share.host_path, read_only=share.read_only)
+        )
     return share_mounts
 
 

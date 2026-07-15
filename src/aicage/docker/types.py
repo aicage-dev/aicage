@@ -11,4 +11,3 @@ class ImageRefRepository:
 class RegistryApiConfig:
     registry_api_url: str
     registry_api_token_url: str
-

@@ -55,7 +55,9 @@ def test_local_custom_extension_rebuilds_on_agent_version(
     assert updated.agent_version != "0.0.0"
     assert_old_image_replaced(old_image_ref, record.image_ref)
 
-    extended_record = ExtendedBuildStore().load(f"{DEFAULT_EXTENDED_IMAGE_NAME}:forge-ubuntu-marker")
+    extended_record = ExtendedBuildStore().load(
+        f"{DEFAULT_EXTENDED_IMAGE_NAME}:forge-ubuntu-marker"
+    )
     assert extended_record is not None
     expected_base_layer = get_last_rootfs_layer(extended_record.base_image)
     assert_rootfs_layer_present(expected_base_layer, extended_record.image_ref)

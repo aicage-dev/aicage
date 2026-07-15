@@ -3,8 +3,10 @@ from pathlib import Path
 from .._fixtures import join_yaml
 
 
-def extension_definition(name: str, description: str, extra_lines: list[str] | None = None) -> str:
-    lines = [f"name: \"{name}\"", f"description: \"{description}\""]
+def extension_definition(
+    name: str, description: str, extra_lines: list[str] | None = None
+) -> str:
+    lines = [f'name: "{name}"', f'description: "{description}"']
     if extra_lines:
         lines.extend(extra_lines)
     return join_yaml(lines)

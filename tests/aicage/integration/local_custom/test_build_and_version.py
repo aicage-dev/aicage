@@ -16,7 +16,9 @@ from .._helpers import (
 pytestmark = pytest.mark.integration
 
 
-def test_custom_agent_build_and_version(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_custom_agent_build_and_version(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     monkeypatch.setattr(
         paths_module,

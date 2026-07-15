@@ -14,7 +14,9 @@ from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.run_args import DockerRunArgs
 
 
-def _build_run_args(image_ref: str, merged_docker_args: str, agent_args: list[str]) -> DockerRunArgs:
+def _build_run_args(
+    image_ref: str, merged_docker_args: str, agent_args: list[str]
+) -> DockerRunArgs:
     return DockerRunArgs(
         image_ref=image_ref,
         merged_docker_args=merged_docker_args,
@@ -46,8 +48,9 @@ def _build_run_config(project_path: Path, image_ref: str) -> RunConfig:
     )
 
 
-def _build_agents_and_bases(
-) -> tuple[dict[str, BaseMetadata], dict[str, AgentMetadata]]:
+def _build_agents_and_bases() -> (
+    tuple[dict[str, BaseMetadata], dict[str, AgentMetadata]]
+):
     bases = {
         "alpine": BaseMetadata(
             from_image="alpine:latest",
@@ -97,7 +100,9 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, [], "info", None, "none"),
+                return_value=ParsedArgs(
+                    False, "", "", [], False, [], "info", None, "none"
+                ),
             ),
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=True),
             mock.patch(
@@ -116,12 +121,16 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, [], "info", None, "none"),
+                return_value=ParsedArgs(
+                    False, "", "", [], False, [], "info", None, "none"
+                ),
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
-            mock.patch("aicage.cli.entrypoint.set_non_interactive_defaults") as set_defaults_mock,
+            mock.patch(
+                "aicage.cli.entrypoint.set_non_interactive_defaults"
+            ) as set_defaults_mock,
         ):
             exit_code = main([])
 
@@ -150,7 +159,9 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, [], "remove", "codex"),
+                return_value=ParsedArgs(
+                    False, "", "", [], False, [], "remove", "codex"
+                ),
             ),
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
@@ -177,12 +188,20 @@ class EntrypointTests(TestCase):
             with (
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
-                    return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
+                    return_value=ParsedArgs(
+                        False, "--cli", "codex", ["--flag"], False, [], None
+                    ),
                 ),
-                mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
-                mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
+                mock.patch(
+                    "aicage.cli.entrypoint.maybe_prompt_update", return_value=False
+                ),
+                mock.patch(
+                    "aicage.cli.entrypoint.load_run_config", return_value=run_config
+                ),
                 mock.patch("aicage.cli.entrypoint.ensure_image"),
-                mock.patch("aicage.cli.entrypoint.build_run_args", return_value=run_args),
+                mock.patch(
+                    "aicage.cli.entrypoint.build_run_args", return_value=run_args
+                ),
                 mock.patch("aicage.cli.entrypoint.run_container") as run_mock,
             ):
                 exit_code = main([])
@@ -205,12 +224,20 @@ class EntrypointTests(TestCase):
             with (
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
-                    return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
+                    return_value=ParsedArgs(
+                        False, "--cli", "codex", ["--flag"], False, [], None
+                    ),
                 ),
-                mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
-                mock.patch("aicage.cli.entrypoint.load_run_config", return_value=run_config),
+                mock.patch(
+                    "aicage.cli.entrypoint.maybe_prompt_update", return_value=False
+                ),
+                mock.patch(
+                    "aicage.cli.entrypoint.load_run_config", return_value=run_config
+                ),
                 mock.patch("aicage.cli.entrypoint.ensure_image"),
-                mock.patch("aicage.cli.entrypoint.build_run_args", return_value=run_args),
+                mock.patch(
+                    "aicage.cli.entrypoint.build_run_args", return_value=run_args
+                ),
                 mock.patch("aicage.cli.entrypoint.run_container"),
             ):
                 exit_code = main([])
@@ -222,7 +249,9 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
+                return_value=ParsedArgs(
+                    False, "--cli", "codex", ["--flag"], False, [], None
+                ),
             ),
             mock.patch("aicage.cli.entrypoint.get_logger", return_value=logger),
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
@@ -243,22 +272,30 @@ class EntrypointTests(TestCase):
             "[aicage] More details in log: ",
             stderr.getvalue(),
         )
-        logger.exception.assert_called_once_with("Unhandled exception during CLI execution")
+        logger.exception.assert_called_once_with(
+            "Unhandled exception during CLI execution"
+        )
 
     def test_main_handles_unexpected_exception_without_message(self) -> None:
         logger = mock.Mock()
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None),
+                return_value=ParsedArgs(
+                    False, "--cli", "codex", ["--flag"], False, [], None
+                ),
             ),
             mock.patch("aicage.cli.entrypoint.get_logger", return_value=logger),
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
-            mock.patch("aicage.cli.entrypoint.load_run_config", side_effect=RuntimeError()),
+            mock.patch(
+                "aicage.cli.entrypoint.load_run_config", side_effect=RuntimeError()
+            ),
             mock.patch("sys.stderr", new_callable=io.StringIO) as stderr,
         ):
             exit_code = main([])
 
         self.assertEqual(1, exit_code)
         self.assertIn("[aicage] RuntimeError", stderr.getvalue())
-        logger.exception.assert_called_once_with("Unhandled exception during CLI execution")
+        logger.exception.assert_called_once_with(
+            "Unhandled exception during CLI execution"
+        )

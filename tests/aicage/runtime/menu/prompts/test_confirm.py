@@ -1,6 +1,11 @@
 from unittest import TestCase, mock
 
-from aicage.config.project_config import MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY, MOUNT_SSH_KEY
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+)
 from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.menu.prompts import confirm
 
@@ -21,13 +26,17 @@ class PromptConfirmTests(TestCase):
         ):
             self.assertTrue(confirm._prompt_yes_no("Continue?", default=False))
 
-    def test__prompt_yes_no_uses_default_when_non_interactive_defaults_enabled(self) -> None:
+    def test__prompt_yes_no_uses_default_when_non_interactive_defaults_enabled(
+        self,
+    ) -> None:
         with (
             mock.patch(
                 "aicage.runtime.menu.prompts.confirm.non_interactive_defaults_enabled",
                 return_value=True,
             ),
-            mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt") as tty_mock,
+            mock.patch(
+                "aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"
+            ) as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
             choice = confirm._prompt_yes_no("Continue?", default=True)
@@ -36,7 +45,9 @@ class PromptConfirmTests(TestCase):
         input_mock.assert_not_called()
 
     def test_prompt_persist_docker_socket_delegates(self) -> None:
-        with mock.patch("aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
+        with mock.patch(
+            "aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True
+        ) as prompt_mock:
             self.assertTrue(confirm.prompt_persist_docker_socket())
         prompt_mock.assert_called_once_with(
             "Persist mounting the Docker socket for this project?",
@@ -68,7 +79,9 @@ class PromptConfirmTests(TestCase):
             selected = confirm.prompt_mount_git_support(git_items, [])
         self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_SSH_KEY], selected)
 
-    def test_prompt_mount_git_support_uses_all_when_non_interactive_defaults_enabled(self) -> None:
+    def test_prompt_mount_git_support_uses_all_when_non_interactive_defaults_enabled(
+        self,
+    ) -> None:
         git_items = [
             (MOUNT_GITCONFIG_KEY, "Git config (name/email): /tmp/gitconfig"),
             (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /tmp/gnupg"),
@@ -78,7 +91,9 @@ class PromptConfirmTests(TestCase):
                 "aicage.runtime.menu.prompts.confirm.non_interactive_defaults_enabled",
                 return_value=True,
             ),
-            mock.patch("aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt") as tty_mock,
+            mock.patch(
+                "aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"
+            ) as tty_mock,
             mock.patch("builtins.input") as input_mock,
         ):
             selected = confirm.prompt_mount_git_support(git_items, [])
@@ -97,7 +112,9 @@ class PromptConfirmTests(TestCase):
             selected = confirm.prompt_mount_git_support(git_items, extension_items)
 
         self.assertEqual([MOUNT_GITCONFIG_KEY, "gh"], selected)
-        printed_lines = [args[0] if args else "" for args, _ in print_mock.call_args_list]
+        printed_lines = [
+            args[0] if args else "" for args, _ in print_mock.call_args_list
+        ]
         self.assertIn("Enable Git support in the container by mounting:", printed_lines)
         self.assertIn("Mounts from extensions:", printed_lines)
 
@@ -112,7 +129,9 @@ class PromptConfirmTests(TestCase):
         self.assertIn("Duplicate selection '2' is not allowed.", str(context.exception))
 
     def test_prompt_persist_docker_args_replaces_existing(self) -> None:
-        with mock.patch("aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
+        with mock.patch(
+            "aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True
+        ) as prompt_mock:
             self.assertTrue(confirm.prompt_persist_docker_args("-it", "--rm"))
         prompt_mock.assert_called_once_with(
             "Persist docker run args '-it' for this project (replacing '--rm')?",
@@ -120,15 +139,23 @@ class PromptConfirmTests(TestCase):
         )
 
     def test_prompt_persist_shares_adds_shares(self) -> None:
-        with mock.patch("aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
-            self.assertTrue(confirm.prompt_persist_shares(["/tmp/share"], ["/tmp/one", "/tmp/two:ro"]))
+        with mock.patch(
+            "aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True
+        ) as prompt_mock:
+            self.assertTrue(
+                confirm.prompt_persist_shares(
+                    ["/tmp/share"], ["/tmp/one", "/tmp/two:ro"]
+                )
+            )
         prompt_mock.assert_called_once_with(
             "Persist share mounts '/tmp/share' for this project (adding to 2 existing share(s))?",
             default=True,
         )
 
     def test_prompt_update_aicage_delegates(self) -> None:
-        with mock.patch("aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
+        with mock.patch(
+            "aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True
+        ) as prompt_mock:
             self.assertTrue(confirm.prompt_update_aicage("0.9.4", "0.9.5"))
         prompt_mock.assert_called_once_with(
             "A newer version of aicage is available (installed: 0.9.4, latest: 0.9.5). Update now?",
@@ -136,8 +163,12 @@ class PromptConfirmTests(TestCase):
         )
 
     def test_prompt_update_image_delegates(self) -> None:
-        with mock.patch("aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True) as prompt_mock:
-            self.assertTrue(confirm.prompt_update_image("ghcr.io/aicage/aicage:codex-fedora"))
+        with mock.patch(
+            "aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True
+        ) as prompt_mock:
+            self.assertTrue(
+                confirm.prompt_update_image("ghcr.io/aicage/aicage:codex-fedora")
+            )
         prompt_mock.assert_called_once_with(
             "A newer version of Docker image 'ghcr.io/aicage/aicage:codex-fedora' is available. Pull now?",
             default=True,

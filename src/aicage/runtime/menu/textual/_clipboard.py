@@ -41,7 +41,11 @@ def clipboard_command() -> list[str] | None:
         return ["pbcopy"] if shutil.which("pbcopy") else None
     if system == "Windows":
         return ["clip"] if shutil.which("clip") else None
-    for command in (["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]):
+    for command in (
+        ["wl-copy"],
+        ["xclip", "-selection", "clipboard"],
+        ["xsel", "--clipboard", "--input"],
+    ):
         if shutil.which(command[0]):
             return command
     return None

@@ -25,5 +25,4 @@ class Resolver(Protocol):
         context: ConfigContext,
         agent: str,
         parsed: ParsedArgs | None,
-    ) -> ResolvedArgs:
-        ...
+    ) -> ResolvedArgs: ...

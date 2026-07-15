@@ -23,7 +23,9 @@ def update_custom_share(
     result: ShareEditorResult,
 ) -> bool:
     if result.remove:
-        state.custom_shares = [item for item in state.custom_shares if item.value != current_value]
+        state.custom_shares = [
+            item for item in state.custom_shares if item.value != current_value
+        ]
         return True
     if result.share is None:
         return False

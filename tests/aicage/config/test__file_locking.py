@@ -14,7 +14,9 @@ class FileLockingTests(TestCase):
             def __exit__(self, exc_type, exc, tb):
                 return False
 
-        with mock.patch("aicage.config._file_locking.portalocker.Lock", return_value=FakeLock()) as lock_mock:
+        with mock.patch(
+            "aicage.config._file_locking.portalocker.Lock", return_value=FakeLock()
+        ) as lock_mock:
             project_path = Path("/tmp/aicage/test/project/lockfile")
             with file_locking._lock_project_config(project_path):
                 pass

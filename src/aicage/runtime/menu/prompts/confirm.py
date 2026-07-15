@@ -31,8 +31,10 @@ def prompt_persist_docker_socket() -> bool:
         print(
             "Info: You must enable 'Expose daemon on tcp://localhost:2375 without TLS' "
             "in Docker Desktop settings to use --docker on Windows."
+        )
+    return _prompt_yes_no(
+        "Persist mounting the Docker socket for this project?", default=True
     )
-    return _prompt_yes_no("Persist mounting the Docker socket for this project?", default=True)
 
 
 def prompt_mount_git_support(
@@ -55,9 +57,13 @@ def prompt_mount_git_support(
             print(f"  {idx}) {description}")
     if extension_items:
         print("Mounts from extensions:")
-        for idx, (_, description) in enumerate(extension_items, start=len(git_items) + 1):
+        for idx, (_, description) in enumerate(
+            extension_items, start=len(git_items) + 1
+        ):
             print(f"  {idx}) {description}")
-    response = input("Select mounts (comma-separated numbers) [all, default on Enter]: ").strip()
+    response = input(
+        "Select mounts (comma-separated numbers) [all, default on Enter]: "
+    ).strip()
     if not response:
         selected = set(range(1, len(items) + 1))
     else:
@@ -71,17 +77,23 @@ def _parse_number_selection(response: str, max_value: int) -> set[int]:
     selected: set[int] = set()
     tokens = [item.strip() for item in response.split(",") if item.strip()]
     if not tokens:
-        raise RuntimeExecutionError("Invalid selection ''. Provide comma-separated numbers, e.g. 1,2.")
+        raise RuntimeExecutionError(
+            "Invalid selection ''. Provide comma-separated numbers, e.g. 1,2."
+        )
     for token in tokens:
         if not token.isdigit():
-            raise RuntimeExecutionError(f"Invalid selection '{token}'. Use numbers between 1 and {max_value}.")
+            raise RuntimeExecutionError(
+                f"Invalid selection '{token}'. Use numbers between 1 and {max_value}."
+            )
         value = int(token)
         if value < 1 or value > max_value:
             raise RuntimeExecutionError(
                 f"Invalid selection '{token}'. Pick a number between 1 and {max_value}."
             )
         if value in selected:
-            raise RuntimeExecutionError(f"Duplicate selection '{token}' is not allowed.")
+            raise RuntimeExecutionError(
+                f"Duplicate selection '{token}' is not allowed."
+            )
         selected.add(value)
     return selected
 
@@ -117,7 +129,6 @@ def prompt_update_aicage(installed_version: str, latest_version: str) -> bool:
 
 def prompt_update_image(image_ref: str) -> bool:
     question = (
-        f"A newer version of Docker image '{image_ref}' is available. "
-        "Pull now?"
+        f"A newer version of Docker image '{image_ref}' is available. " "Pull now?"
     )
     return _prompt_yes_no(question, default=True)

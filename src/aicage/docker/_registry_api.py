@@ -11,19 +11,27 @@ from .errors import RegistryDiscoveryError
 from .types import RegistryApiConfig
 
 
-def _fetch_pull_token_for_repository(api_config: RegistryApiConfig, repository: str) -> str:
+def _fetch_pull_token_for_repository(
+    api_config: RegistryApiConfig, repository: str
+) -> str:
     url = f"{api_config.registry_api_token_url}:{repository}:pull"
     data, _ = _fetch_json(url, None)
     token = data.get("token")
     if not token:
-        raise RegistryDiscoveryError(f"Missing token while querying registry for {repository}.")
+        raise RegistryDiscoveryError(
+            f"Missing token while querying registry for {repository}."
+        )
     return token
 
 
-def _fetch_json(url: str, headers: dict[str, str] | None) -> tuple[dict[str, Any], Mapping[str, str]]:
+def _fetch_json(
+    url: str, headers: dict[str, str] | None
+) -> tuple[dict[str, Any], Mapping[str, str]]:
     request = urllib.request.Request(url, headers=headers or {})
     try:
-        with urllib.request.urlopen(request, timeout=DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(
+            request, timeout=DOCKER_REGISTRY_REQUEST_TIMEOUT_SECONDS
+        ) as response:
             payload = response.read().decode("utf-8")
             response_headers = response.headers
     except urllib.error.HTTPError as exc:
@@ -40,5 +48,7 @@ def _fetch_json(url: str, headers: dict[str, str] | None) -> tuple[dict[str, Any
     try:
         data = json.loads(payload)
     except json.JSONDecodeError as exc:
-        raise RegistryDiscoveryError(f"Invalid JSON from registry endpoint {url}: {exc}") from exc
+        raise RegistryDiscoveryError(
+            f"Invalid JSON from registry endpoint {url}: {exc}"
+        ) from exc
     return data, response_headers

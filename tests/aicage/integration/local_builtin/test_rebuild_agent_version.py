@@ -17,7 +17,9 @@ from .._helpers import (
 pytestmark = pytest.mark.integration
 
 
-def test_local_builtin_agent_rebuilds(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_local_builtin_agent_rebuilds(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     require_integration()
     workspace, env = setup_workspace(monkeypatch, tmp_path, "claude")
     run_agent_version(env, workspace, "claude")

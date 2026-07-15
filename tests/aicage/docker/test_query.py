@@ -68,7 +68,9 @@ class LocalQueryTests(TestCase):
         logger.warning.assert_called_once()
 
     def test_get_local_repo_digest(self) -> None:
-        image = ImageRefRepository(image_ref="repo:tag", repository="ghcr.io/aicage/aicage")
+        image = ImageRefRepository(
+            image_ref="repo:tag", repository="ghcr.io/aicage/aicage"
+        )
         with mock.patch(
             "aicage.docker.query.get_docker_client",
             return_value=FakeClient(None),
@@ -100,7 +102,9 @@ class LocalQueryTests(TestCase):
             "aicage.docker.query.get_docker_client",
             return_value=FakeClient(None),
         ):
-            self.assertIsNone(get_local_repo_digest_for_repo("repo:tag", "ghcr.io/aicage/aicage"))
+            self.assertIsNone(
+                get_local_repo_digest_for_repo("repo:tag", "ghcr.io/aicage/aicage")
+            )
 
         payload = ["ghcr.io/aicage/aicage@sha256:deadbeef", "other@sha256:skip"]
         with mock.patch(
@@ -119,7 +123,9 @@ class LocalQueryTests(TestCase):
 
         with mock.patch(
             "aicage.docker.query.get_docker_client",
-            return_value=FakeClient(FakeImage(repo_digests=[], rootfs={"Layers": ["a", "b"]})),
+            return_value=FakeClient(
+                FakeImage(repo_digests=[], rootfs={"Layers": ["a", "b"]})
+            ),
         ):
             layers = get_local_rootfs_layers("repo:tag")
         self.assertEqual(["a", "b"], layers)
@@ -169,7 +175,9 @@ class LocalQueryTests(TestCase):
         logger = mock.Mock()
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=logger),
-            mock.patch("aicage.docker.query.get_local_repo_digest_for_repo") as digest_mock,
+            mock.patch(
+                "aicage.docker.query.get_local_repo_digest_for_repo"
+            ) as digest_mock,
         ):
             cleanup_old_digest(
                 repository="ghcr.io/aicage/aicage",

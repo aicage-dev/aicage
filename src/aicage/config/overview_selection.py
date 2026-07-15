@@ -9,7 +9,9 @@ from aicage.config.extended_images import (
 from aicage.config.image_refs import default_extended_image_ref
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.errors import RegistryError
-from aicage.registry.image_selection.extensions.missing_extensions import ensure_extensions_exist
+from aicage.registry.image_selection.extensions.missing_extensions import (
+    ensure_extensions_exist,
+)
 from aicage.registry.image_selection.extensions.refs import base_image_ref
 from aicage.registry.image_selection.models import ImageSelection
 
@@ -20,27 +22,37 @@ def resolve_overview_selection(
 ) -> ImageSelection:
     agent_cfg = draft.agent_cfg
     if not agent_cfg.base:
-        raise RuntimeError(f"Base must be set before resolving overview selection for agent '{draft.agent}'.")
+        raise RuntimeError(
+            f"Base must be set before resolving overview selection for agent '{draft.agent}'."
+        )
     agent_metadata = _require_agent_metadata(draft.agent, context)
     if agent_cfg.base not in filter_bases(context, agent_metadata):
-        raise RegistryError(f"Base '{agent_cfg.base}' is not valid for agent '{draft.agent}'.")
+        raise RegistryError(
+            f"Base '{agent_cfg.base}' is not valid for agent '{draft.agent}'."
+        )
     if agent_cfg.extensions:
         _resolve_extended_image_ref(draft, context)
     else:
-        agent_cfg.image_ref = base_image_ref(agent_metadata, draft.agent, agent_cfg.base, context)
+        agent_cfg.image_ref = base_image_ref(
+            agent_metadata, draft.agent, agent_cfg.base, context
+        )
 
     return ImageSelection(
         image_ref=agent_cfg.image_ref or "",
         base=agent_cfg.base,
         extensions=list(agent_cfg.extensions),
-        base_image_ref=base_image_ref(agent_metadata, draft.agent, agent_cfg.base, context),
+        base_image_ref=base_image_ref(
+            agent_metadata, draft.agent, agent_cfg.base, context
+        ),
     )
 
 
 def _resolve_extended_image_ref(draft: RunConfigDraft, context: ConfigContext) -> None:
     reset = ensure_extensions_exist(draft.agent, context)
     if reset:
-        raise RuntimeError("Interactive configuration was reset unexpectedly after extension validation.")
+        raise RuntimeError(
+            "Interactive configuration was reset unexpectedly after extension validation."
+        )
     image_ref = draft.agent_cfg.image_ref or _default_extended_image_ref(
         draft.agent,
         draft.agent_cfg.base or "",

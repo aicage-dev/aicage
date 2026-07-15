@@ -39,7 +39,9 @@ class PullDecisionTests(TestCase):
                 return_value=True,
             ) as prompt_mock,
         ):
-            self.assertTrue(_pull_decision.decide_pull("ghcr.io/aicage/aicage:codex-fedora"))
+            self.assertTrue(
+                _pull_decision.decide_pull("ghcr.io/aicage/aicage:codex-fedora")
+            )
         prompt_mock.assert_called_once_with("ghcr.io/aicage/aicage:codex-fedora")
 
     def test_decide_pull_returns_false_when_user_keeps_local_image(self) -> None:
@@ -57,5 +59,7 @@ class PullDecisionTests(TestCase):
                 return_value=False,
             ) as prompt_mock,
         ):
-            self.assertFalse(_pull_decision.decide_pull("ghcr.io/aicage/aicage:codex-fedora"))
+            self.assertFalse(
+                _pull_decision.decide_pull("ghcr.io/aicage/aicage:codex-fedora")
+            )
         prompt_mock.assert_called_once_with("ghcr.io/aicage/aicage:codex-fedora")

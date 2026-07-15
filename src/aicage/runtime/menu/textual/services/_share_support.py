@@ -1,7 +1,12 @@
 from pathlib import Path
 
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY, MOUNT_SSH_KEY
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+)
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.docker_args.support.git_support import (
@@ -11,14 +16,23 @@ from aicage.runtime.docker_args.support.git_support import (
     resolve_ssh_dir,
     uses_ssh_remotes,
 )
-from aicage.runtime.docker_args.support.signing import is_commit_signing_enabled, resolve_signing_format
-from aicage.runtime.mounts.shares import ShareSpec, merge_share_values, resolve_share_specs
+from aicage.runtime.docker_args.support.signing import (
+    is_commit_signing_enabled,
+    resolve_signing_format,
+)
+from aicage.runtime.mounts.shares import (
+    ShareSpec,
+    merge_share_values,
+    resolve_share_specs,
+)
 
 from .._models import BuiltInShareValue
 from .._mount_display import extension_label, git_support_label
 
 
-def normalize_shares_from_editor(draft: RunConfigDraft, raw_shares: list[str]) -> list[str]:
+def normalize_shares_from_editor(
+    draft: RunConfigDraft, raw_shares: list[str]
+) -> list[str]:
     try:
         return merge_share_values(raw_shares, [], draft.project_path)[0]
     except RuntimeExecutionError:
@@ -63,7 +77,9 @@ def built_in_share_values(
 
     signing_enabled = is_commit_signing_enabled(project_path)
     signing_format = resolve_signing_format(project_path) if signing_enabled else None
-    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(project_path)
+    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(
+        project_path
+    )
     if ssh_needed:
         ssh_dir = resolve_ssh_dir()
         if ssh_dir.exists():
@@ -93,7 +109,9 @@ def built_in_share_values(
                 )
             )
 
-    built_in_shares.extend(_extension_share_values(draft, project_path, available_extensions))
+    built_in_shares.extend(
+        _extension_share_values(draft, project_path, available_extensions)
+    )
     return built_in_shares
 
 

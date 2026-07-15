@@ -21,11 +21,15 @@ class _DockerHostSpec:
 def get_active_docker_host() -> _DockerHostSpec:
     env_host = os.environ.get(DOCKER_HOST)
     if env_host:
-        return _DockerHostSpec(host=env_host, socket_path=_parse_unix_socket_path(env_host))
+        return _DockerHostSpec(
+            host=env_host, socket_path=_parse_unix_socket_path(env_host)
+        )
 
     context_host = _read_active_context_docker_host()
     if context_host:
-        return _DockerHostSpec(host=context_host, socket_path=_parse_unix_socket_path(context_host))
+        return _DockerHostSpec(
+            host=context_host, socket_path=_parse_unix_socket_path(context_host)
+        )
 
     return _DockerHostSpec(
         host=_DEFAULT_DOCKER_HOST,
@@ -58,7 +62,13 @@ def is_rootless_docker() -> bool:
 def _read_active_context_docker_host() -> str | None:
     try:
         process = run_docker_command_capture(
-            ["docker", "context", "inspect", "--format", "{{json .Endpoints.docker.Host}}"],
+            [
+                "docker",
+                "context",
+                "inspect",
+                "--format",
+                "{{json .Endpoints.docker.Host}}",
+            ],
             check=True,
             text=True,
         )

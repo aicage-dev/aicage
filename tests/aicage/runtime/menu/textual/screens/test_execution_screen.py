@@ -25,7 +25,9 @@ class ExecutionScreenTests(TestCase):
             "query_one",
             side_effect=[status, progress, details, build_info, progress, details, log],
         ):
-            screen.show_phase_started("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+            screen.show_phase_started(
+                "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            )
 
         status.update.assert_called_once_with("Pulling image repo:tag")
         progress.update.assert_called_once_with(total=None, progress=0)
@@ -46,7 +48,18 @@ class ExecutionScreenTests(TestCase):
         with mock.patch.object(
             screen,
             "query_one",
-            side_effect=[status, image_ref, log_path, progress, details, build_info, progress, details, log, log],
+            side_effect=[
+                status,
+                image_ref,
+                log_path,
+                progress,
+                details,
+                build_info,
+                progress,
+                details,
+                log,
+                log,
+            ],
         ):
             screen.show_phase_started(
                 "build",
@@ -73,9 +86,22 @@ class ExecutionScreenTests(TestCase):
         with mock.patch.object(
             screen,
             "query_one",
-            side_effect=[status, progress, details, build_info, progress, details, log, status, details, progress],
+            side_effect=[
+                status,
+                progress,
+                details,
+                build_info,
+                progress,
+                details,
+                log,
+                status,
+                details,
+                progress,
+            ],
         ):
-            screen.show_phase_started("pull", "Pulling image repo:tag", Path("/tmp/pull.log"))
+            screen.show_phase_started(
+                "pull", "Pulling image repo:tag", Path("/tmp/pull.log")
+            )
             screen.show_phase_progress(
                 "pull",
                 "5 B/10 B layers 0/1 downloading 1",
@@ -102,8 +128,12 @@ class ExecutionScreenTests(TestCase):
         progress = mock.Mock()
         details = mock.Mock()
 
-        with mock.patch.object(screen, "query_one", side_effect=[status, details, progress]):
-            screen.show_phase_progress("pull", "[waiting for layer sizes...]", None, None)
+        with mock.patch.object(
+            screen, "query_one", side_effect=[status, details, progress]
+        ):
+            screen.show_phase_progress(
+                "pull", "[waiting for layer sizes...]", None, None
+            )
 
         details.update.assert_called_once_with("[waiting for layer sizes...]")
         progress.update.assert_called_once_with(total=None, progress=0)
@@ -144,7 +174,9 @@ class ExecutionScreenTests(TestCase):
         build_info = mock.Mock()
         log = mock.Mock()
 
-        with mock.patch.object(screen, "query_one", side_effect=[status, log_path, build_info, log]):
+        with mock.patch.object(
+            screen, "query_one", side_effect=[status, log_path, build_info, log]
+        ):
             screen.show_phase_failed("build", "Build failed", Path("/tmp/build.log"))
 
         status.update.assert_called_once_with("Build failed")
@@ -160,7 +192,9 @@ class ExecutionScreenTests(TestCase):
         app = mock.Mock()
 
         with (
-            mock.patch.object(type(screen), "app", new_callable=mock.PropertyMock, return_value=app),
+            mock.patch.object(
+                type(screen), "app", new_callable=mock.PropertyMock, return_value=app
+            ),
             mock.patch(
                 "aicage.runtime.menu.textual.screens.execution_screen._clipboard.copy_to_clipboard"
             ) as copy_mock,

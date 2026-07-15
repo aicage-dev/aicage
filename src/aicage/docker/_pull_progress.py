@@ -54,7 +54,10 @@ class PullProgress:
             return
         if not self._should_render():
             return
-        if now - self._last_render_at < _MIN_RENDER_INTERVAL_SECONDS and status != "Pull complete":
+        if (
+            now - self._last_render_at < _MIN_RENDER_INTERVAL_SECONDS
+            and status != "Pull complete"
+        ):
             return
 
         line = self._render_line()
@@ -95,9 +98,15 @@ class PullProgress:
 
         downloaded_bytes = sum(layer.current for layer in self._layers.values())
         total_bytes = sum(layer.total for layer in self._layers.values())
-        completed_layers = sum(1 for layer in self._layers.values() if _is_complete(layer))
-        downloading_layers = sum(1 for layer in self._layers.values() if layer.status == "Downloading")
-        extracting_layers = sum(1 for layer in self._layers.values() if layer.status == "Extracting")
+        completed_layers = sum(
+            1 for layer in self._layers.values() if _is_complete(layer)
+        )
+        downloading_layers = sum(
+            1 for layer in self._layers.values() if layer.status == "Downloading"
+        )
+        extracting_layers = sum(
+            1 for layer in self._layers.values() if layer.status == "Extracting"
+        )
         known_layers = len(self._layers)
 
         details = (

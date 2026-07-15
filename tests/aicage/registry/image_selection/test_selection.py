@@ -28,7 +28,9 @@ class ImageSelectionTests(TestCase):
             context.project_cfg.agents["codex"] = AgentConfig(base="debian")
             selection = select_agent_image("codex", context)
 
-            self.assertEqual(f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-debian", selection.image_ref)
+            self.assertEqual(
+                f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-debian", selection.image_ref
+            )
             store.save_project.assert_not_called()
 
     def test_select_agent_image_prompts_and_marks_dirty(self) -> None:
@@ -53,7 +55,9 @@ class ImageSelectionTests(TestCase):
             store.save_project.assert_not_called()
 
     def test_select_agent_image_raises_without_bases(self) -> None:
-        context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=[])
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=[]
+        )
         with self.assertRaises(RegistryError):
             select_agent_image("codex", context)
 
@@ -91,8 +95,12 @@ class ImageSelectionTests(TestCase):
             store.save_project.assert_not_called()
 
     @staticmethod
-    def test_select_agent_image_uses_fresh_selection_when_image_ref_has_no_base() -> None:
-        context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])
+    def test_select_agent_image_uses_fresh_selection_when_image_ref_has_no_base() -> (
+        None
+    ):
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+        )
         agent_cfg = AgentConfig(image_ref="aicage:codex-ubuntu")
         context.project_cfg.agents["codex"] = agent_cfg
         with mock.patch(
@@ -109,8 +117,12 @@ class ImageSelectionTests(TestCase):
 
     @staticmethod
     def test_select_agent_image_resets_on_missing_extensions() -> None:
-        context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])
-        agent_cfg = AgentConfig(base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=["extra"])
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+        )
+        agent_cfg = AgentConfig(
+            base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=["extra"]
+        )
         context.project_cfg.agents["codex"] = agent_cfg
         with (
             mock.patch(
@@ -131,8 +143,12 @@ class ImageSelectionTests(TestCase):
         fresh_mock.assert_called_once()
 
     def test_select_agent_image_uses_stored_image_ref(self) -> None:
-        context = build_context(mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"])
-        agent_cfg = AgentConfig(base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=[])
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/tmp/project"), bases=["ubuntu"]
+        )
+        agent_cfg = AgentConfig(
+            base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=[]
+        )
         context.project_cfg.agents["codex"] = agent_cfg
         selection = select_agent_image("codex", context)
         self.assertEqual("aicage:codex-ubuntu", selection.image_ref)

@@ -35,7 +35,9 @@ def _load_custom_base(base_name: str) -> BaseMetadata:
     mapping = validate_base_mapping(load_yaml(definition_path))
     return BaseMetadata(
         from_image=expect_string(mapping.get(_FROM_IMAGE_KEY), _FROM_IMAGE_KEY),
-        base_image_distro=expect_string(mapping.get(_BASE_IMAGE_DISTRO_KEY), _BASE_IMAGE_DISTRO_KEY),
+        base_image_distro=expect_string(
+            mapping.get(_BASE_IMAGE_DISTRO_KEY), _BASE_IMAGE_DISTRO_KEY
+        ),
         base_image_description=expect_string(
             mapping.get(_BASE_IMAGE_DESCRIPTION_KEY),
             _BASE_IMAGE_DESCRIPTION_KEY,

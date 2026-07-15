@@ -91,7 +91,10 @@ class LocalBuildDigestTests(TestCase):
                 mock.patch(
                     "aicage.registry.agent_build._digest.cleanup_old_digest"
                 ) as cleanup_mock,
-                mock.patch("aicage.registry.agent_build._digest.pull_log_path", return_value=Path(tmp_dir)),
+                mock.patch(
+                    "aicage.registry.agent_build._digest.pull_log_path",
+                    return_value=Path(tmp_dir),
+                ),
             ):
                 digest = _digest.resolve_base_digest(
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
@@ -118,7 +121,10 @@ class LocalBuildDigestTests(TestCase):
                 mock.patch(
                     "aicage.registry.agent_build._digest.cleanup_old_digest"
                 ) as cleanup_mock,
-                mock.patch("aicage.registry.agent_build._digest.pull_log_path", return_value=Path(tmp_dir)),
+                mock.patch(
+                    "aicage.registry.agent_build._digest.pull_log_path",
+                    return_value=Path(tmp_dir),
+                ),
             ):
                 with self.assertRaises(RegistryError) as exc:
                     _digest.resolve_base_digest(
@@ -146,7 +152,10 @@ class LocalBuildDigestTests(TestCase):
                 mock.patch(
                     "aicage.registry.agent_build._digest.cleanup_old_digest"
                 ) as cleanup_mock,
-                mock.patch("aicage.registry.agent_build._digest.pull_log_path", return_value=Path(tmp_dir)),
+                mock.patch(
+                    "aicage.registry.agent_build._digest.pull_log_path",
+                    return_value=Path(tmp_dir),
+                ),
             ):
                 digest = _digest.resolve_base_digest(
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",

@@ -11,7 +11,9 @@ class RegistryDigestTests(TestCase):
                 "aicage.registry.digest._registry.head_request",
                 return_value=(200, {"Docker-Content-Digest": "sha256:abc"}),
             ),
-            mock.patch("aicage.registry.digest._registry.fetch_bearer_token") as token_mock,
+            mock.patch(
+                "aicage.registry.digest._registry.fetch_bearer_token"
+            ) as token_mock,
         ):
             digest = registry.get_manifest_digest("ghcr.io", "org/repo", "latest")
         self.assertEqual("sha256:abc", digest)
@@ -36,7 +38,7 @@ class RegistryDigestTests(TestCase):
     def test_get_manifest_digest_returns_none_for_basic_auth(self) -> None:
         with mock.patch(
             "aicage.registry.digest._registry.head_request",
-            return_value=(401, {"WWW-Authenticate": "Basic realm=\"x\""}),
+            return_value=(401, {"WWW-Authenticate": 'Basic realm="x"'}),
         ):
             digest = registry.get_manifest_digest("ghcr.io", "org/repo", "latest")
         self.assertIsNone(digest)

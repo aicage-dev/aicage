@@ -36,7 +36,9 @@ class DigestAuthTests(TestCase):
 
     def test_fetch_bearer_token_accepts_access_token(self) -> None:
         response = mock.Mock()
-        response.read.return_value = json.dumps({"access_token": "token"}).encode("utf-8")
+        response.read.return_value = json.dumps({"access_token": "token"}).encode(
+            "utf-8"
+        )
         response.__enter__ = mock.Mock(return_value=response)
         response.__exit__ = mock.Mock(return_value=None)
         with mock.patch(

@@ -22,7 +22,9 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
     if not run_config.selection.extensions:
         raise RegistryError("No extensions selected for extended image build.")
 
-    resolved = _resolve_extensions(run_config.selection.extensions, run_config.context.extensions)
+    resolved = _resolve_extensions(
+        run_config.selection.extensions, run_config.context.extensions
+    )
     combined_hash = _combined_extension_hash(resolved)
     store = BuildStore()
     image_ref = run_config.selection.image_ref
@@ -50,7 +52,9 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
 
 
 def build_needed(run_config: RunConfig) -> bool:
-    resolved = _resolve_extensions(run_config.selection.extensions, run_config.context.extensions)
+    resolved = _resolve_extensions(
+        run_config.selection.extensions, run_config.context.extensions
+    )
     combined_hash = _combined_extension_hash(resolved)
     store = BuildStore()
     return should_rebuild(

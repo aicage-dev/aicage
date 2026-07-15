@@ -12,7 +12,9 @@ class DockerPullTests(TestCase):
         client.api.pull.return_value = [{"status": "downloaded"}, b"done\n"]
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
-            with mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client):
+            with mock.patch(
+                "aicage.docker.pull.get_docker_pull_client", return_value=client
+            ):
                 run_pull("ghcr.io/aicage/aicage:latest", log_path)
 
             payload = log_path.read_text(encoding="utf-8")
@@ -38,14 +40,18 @@ class DockerPullTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
             with (
-                mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client),
+                mock.patch(
+                    "aicage.docker.pull.get_docker_pull_client", return_value=client
+                ),
                 mock.patch("sys.stdout", stdout),
                 mock.patch.object(stdout, "isatty", return_value=True),
                 mock.patch(
                     "aicage.docker._pull_progress.shutil.get_terminal_size",
                     return_value=mock.Mock(columns=200),
                 ),
-                mock.patch("aicage.docker.pull.time.monotonic", side_effect=[1.0, 2.0, 3.0]),
+                mock.patch(
+                    "aicage.docker.pull.time.monotonic", side_effect=[1.0, 2.0, 3.0]
+                ),
             ):
                 run_pull("ghcr.io/aicage/aicage:latest", log_path)
 
@@ -71,7 +77,9 @@ class DockerPullTests(TestCase):
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
-            with mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client):
+            with mock.patch(
+                "aicage.docker.pull.get_docker_pull_client", return_value=client
+            ):
                 run_pull("ghcr.io/aicage/aicage:latest", log_path, reporter=reporter)
 
         reporter.on_phase_started.assert_called_once()
@@ -92,13 +100,19 @@ class DockerPullTests(TestCase):
 
     def test_run_pull_without_reporter_skips_reporting_seam(self) -> None:
         client = mock.Mock()
-        client.api.pull.return_value = [{"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}]
+        client.api.pull.return_value = [
+            {"status": "Pulling fs layer", "id": "layer-a", "progressDetail": {}}
+        ]
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
             with (
-                mock.patch("aicage.docker.pull.get_docker_pull_client", return_value=client),
-                mock.patch("aicage.docker.pull._report_progress") as report_progress_mock,
+                mock.patch(
+                    "aicage.docker.pull.get_docker_pull_client", return_value=client
+                ),
+                mock.patch(
+                    "aicage.docker.pull._report_progress"
+                ) as report_progress_mock,
             ):
                 run_pull("ghcr.io/aicage/aicage:latest", log_path)
 

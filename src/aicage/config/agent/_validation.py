@@ -25,7 +25,11 @@ def validate_agent_mapping(mapping: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_required_files(agent_name: str, agent_dir: Path) -> None:
-    missing = [name for name in ("install.sh", "version.sh") if not (agent_dir / name).is_file()]
+    missing = [
+        name
+        for name in ("install.sh", "version.sh")
+        if not (agent_dir / name).is_file()
+    ]
     if missing:
         raise ConfigError(f"Agent '{agent_name}' is missing {', '.join(missing)}.")
 

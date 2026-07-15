@@ -22,7 +22,9 @@ def run_build(
     logger = get_logger()
     operation_reporter = reporter or default_operation_reporter()
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    operation_reporter.on_phase_started("build", f"Building local image {image_ref}", log_path)
+    operation_reporter.on_phase_started(
+        "build", f"Building local image {image_ref}", log_path
+    )
     logger.info("Building local image %s (logs: %s)", image_ref, log_path)
 
     dockerfile_path = find_packaged_path("agent-build/Dockerfile")
@@ -52,12 +54,16 @@ def run_build(
         )
     if returncode != 0:
         logger.error("Local image build failed for %s (logs: %s)", image_ref, log_path)
-        operation_reporter.on_phase_failed("build", f"Local image build failed for {image_ref}", log_path)
+        operation_reporter.on_phase_failed(
+            "build", f"Local image build failed for {image_ref}", log_path
+        )
         raise DockerError(
             f"Local image build failed for {image_ref}. See log at {log_path}."
         )
 
-    operation_reporter.on_phase_finished("build", f"Local image build finished for {image_ref}")
+    operation_reporter.on_phase_finished(
+        "build", f"Local image build finished for {image_ref}"
+    )
     logger.info("Local image build succeeded for %s", image_ref)
 
 
@@ -76,7 +82,11 @@ def run_extended_build(
         f"Building extended image {run_config.selection.image_ref}",
         log_path,
     )
-    logger.info("Building extended image %s (logs: %s)", run_config.selection.image_ref, log_path)
+    logger.info(
+        "Building extended image %s (logs: %s)",
+        run_config.selection.image_ref,
+        log_path,
+    )
 
     dockerfile_builtin = find_packaged_path("extension-build/Dockerfile")
     current_image_ref = base_image_ref
@@ -148,7 +158,9 @@ def run_custom_base_build(
     operation_reporter = reporter or default_operation_reporter()
     dockerfile_path = build_root / "Dockerfile"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    operation_reporter.on_phase_started("build", f"Building custom base image {image_ref}", log_path)
+    operation_reporter.on_phase_started(
+        "build", f"Building custom base image {image_ref}", log_path
+    )
     logger.info("Building custom base image %s (logs: %s)", image_ref, log_path)
 
     command = [
@@ -171,7 +183,9 @@ def run_custom_base_build(
             operation_reporter,
         )
     if returncode != 0:
-        logger.error("Custom base image build failed for %s (logs: %s)", image_ref, log_path)
+        logger.error(
+            "Custom base image build failed for %s (logs: %s)", image_ref, log_path
+        )
         operation_reporter.on_phase_failed(
             "build",
             f"Custom base image build failed for {image_ref}",
@@ -181,7 +195,9 @@ def run_custom_base_build(
             f"Custom base image build failed for {image_ref}. See log at {log_path}."
         )
 
-    operation_reporter.on_phase_finished("build", f"Custom base image build finished for {image_ref}")
+    operation_reporter.on_phase_finished(
+        "build", f"Custom base image build finished for {image_ref}"
+    )
     logger.info("Custom base image build succeeded for %s", image_ref)
 
 
@@ -193,7 +209,9 @@ def _build_context_dir(run_config: RunConfig, dockerfile_path: Path) -> Path:
     return local_definition_dir.parent.parent
 
 
-def _intermediate_image_ref(run_config: RunConfig, extension: ExtensionMetadata, idx: int) -> str:
+def _intermediate_image_ref(
+    run_config: RunConfig, extension: ExtensionMetadata, idx: int
+) -> str:
     repository, _ = _parse_image_ref(run_config.selection.image_ref)
     tag = f"tmp-{run_config.agent}-{run_config.selection.base}-{idx + 1}-{extension.extension_id}"
     tag = tag.lower().replace("/", "-")
@@ -241,4 +259,6 @@ def _run_build_command(
                 reporter.on_phase_log("build", stripped)
             return process.wait()
     except FileNotFoundError as exc:
-        raise DockerError("Docker CLI not found. Install Docker and ensure it is on PATH.") from exc
+        raise DockerError(
+            "Docker CLI not found. Install Docker and ensure it is on PATH."
+        ) from exc

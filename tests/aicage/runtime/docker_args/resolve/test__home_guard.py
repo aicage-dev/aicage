@@ -12,7 +12,9 @@ class HomeGuardTests(TestCase):
     def test_validate_home_mount_safety_rejects_home_mount(self) -> None:
         home_path = Path("/tmp/home").resolve()
         mounts = [
-            MountSpec(host_path=home_path, container_path=container_project_path(home_path)),
+            MountSpec(
+                host_path=home_path, container_path=container_project_path(home_path)
+            ),
         ]
 
         with self.assertRaises(AicageError) as ctx:
@@ -73,9 +75,17 @@ class HomeGuardTests(TestCase):
             project_path.mkdir()
 
             with (
-                mock.patch("aicage.runtime.docker_args.resolve.resolver._validate_home_mount_safety") as guard_mock,
-                mock.patch("aicage.runtime.docker_args.resolve.resolver._resolver_sequence", return_value=()),
-                mock.patch("aicage.runtime.docker_args.resolve.resolver.Path.home", return_value=home_path),
+                mock.patch(
+                    "aicage.runtime.docker_args.resolve.resolver._validate_home_mount_safety"
+                ) as guard_mock,
+                mock.patch(
+                    "aicage.runtime.docker_args.resolve.resolver._resolver_sequence",
+                    return_value=(),
+                ),
+                mock.patch(
+                    "aicage.runtime.docker_args.resolve.resolver.Path.home",
+                    return_value=home_path,
+                ),
             ):
                 context = mock.Mock()
                 context.project_cfg = mock.Mock(path=str(project_path))

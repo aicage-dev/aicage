@@ -28,7 +28,10 @@ class BaseScreen(CancelableScreen[str | None]):
             Container(
                 Header(show_clock=False, classes="app_header"),
                 Static("Choose Base", classes="screen_title"),
-                Static("Pick the runtime image used inside the container.", classes="screen_hint"),
+                Static(
+                    "Pick the runtime image used inside the container.",
+                    classes="screen_hint",
+                ),
                 DataTable(id="base_table", classes="base_table"),
                 Horizontal(
                     Button("Cancel", id="cancel", variant="default"),
@@ -47,7 +50,9 @@ class BaseScreen(CancelableScreen[str | None]):
         table.add_column("base", key=_BASE_COLUMN_KEY)
         table.add_column("distro", key=_DISTRO_COLUMN_KEY)
         table.add_column("source", key=_SOURCE_COLUMN_KEY)
-        table.add_column("description", key=_DESCRIPTION_COLUMN_KEY, width=_DESCRIPTION_WIDTH)
+        table.add_column(
+            "description", key=_DESCRIPTION_COLUMN_KEY, width=_DESCRIPTION_WIDTH
+        )
         selected_index = 0
         for index, (base, metadata) in enumerate(self._bases.items()):
             table.add_row(

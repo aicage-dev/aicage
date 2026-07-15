@@ -11,7 +11,7 @@ class ShareMountsTests(TestCase):
     def test_merge_share_values_merges_cli_over_existing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            existing = [f"{cwd / 'shared'}:ro", str(cwd / 'existing')]
+            existing = [f"{cwd / 'shared'}:ro", str(cwd / "existing")]
             cli = ["shared", "new"]
 
             merged, new_shares = merge_share_values(cli, existing, cwd)

@@ -35,7 +35,9 @@ def _apply_git_and_extension_mount_preferences(
     agent_cfg: AgentConfig,
     available_extensions: dict[str, ExtensionMetadata],
 ) -> None:
-    mount_prompt_prefs = resolve_mount_prompt_prefs(project_path, agent_cfg, available_extensions)
+    mount_prompt_prefs = resolve_mount_prompt_prefs(
+        project_path, agent_cfg, available_extensions
+    )
     if mount_prompt_prefs is None:
         return
     for key in (
@@ -53,7 +55,11 @@ def _apply_docker_socket_preference(
     agent_cfg: AgentConfig,
     parsed: ParsedArgs | None,
 ) -> None:
-    if parsed is None or not parsed.docker_socket or getattr(agent_cfg.mounts, MOUNT_DOCKER_KEY) is not None:
+    if (
+        parsed is None
+        or not parsed.docker_socket
+        or getattr(agent_cfg.mounts, MOUNT_DOCKER_KEY) is not None
+    ):
         return
     if prompt_persist_docker_socket():
         setattr(agent_cfg.mounts, MOUNT_DOCKER_KEY, True)
