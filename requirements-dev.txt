@@ -5,6 +5,7 @@ bandit>=1.9.1,<2
 flake8>=7.3.0,<8
 mypy>=1.18.2,<2
 pyright>=1.1.411,<2
+pylint>=3.3.8,<4
 pymarkdownlnt>=0.9.38,<1
 pytest>=9.1.1,<10
 pytest-cov>=7.1.0,<8
