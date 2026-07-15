@@ -2,10 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "AICAGE agent definition",
   "type": "object",
-  "required": [
-    "agent_full_name",
-    "agent_homepage"
-  ],
+  "required": ["agent_full_name", "agent_homepage"],
   "properties": {
     "agent_path": {
       "type": "object",

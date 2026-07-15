@@ -2,10 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "AICAGE extension definition",
   "type": "object",
-  "required": [
-    "name",
-    "description"
-  ],
+  "required": ["name", "description"],
   "properties": {
     "name": {
       "type": "string",
