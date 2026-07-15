@@ -32,11 +32,19 @@ class HostAccessTests(TestCase):
     def test_current_built_in_shares_updates_enabled_state(self) -> None:
         values = host_access.current_built_in_shares(
             {"builtin:git_support:ssh"},
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                )
+            ],
         )
 
         self.assertEqual(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
             values,
         )
 
@@ -131,7 +139,9 @@ class HostAccessTests(TestCase):
 
     def test_build_confirmation_request_filters_newly_enabled_values(self) -> None:
         built_in_shares = [
-            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True),
+            BuiltInShareValue(
+                "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+            ),
             BuiltInShareValue(
                 "extension", "gh", "Extension gh", "/test-tmp/.config/gh", False, True
             ),
@@ -152,7 +162,9 @@ class HostAccessTests(TestCase):
         confirmed = HostAccessConfirmValues(
             docker_options=[DockerOptionValue("docker", "Docker socket", None, False)],
             git_support_shares=[
-                BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                )
             ],
             extension_shares=[],
         )
@@ -164,7 +176,11 @@ class HostAccessTests(TestCase):
         )
 
         self.assertEqual(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)],
+            [
+                BuiltInShareValue(
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                )
+            ],
             merged_shares,
         )
         self.assertEqual(
@@ -180,9 +196,16 @@ class HostAccessTests(TestCase):
         host_access.apply_confirmed_host_access(
             draft,
             [
-                BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True),
                 BuiltInShareValue(
-                    "extension", "gh", "Extension gh", "/test-tmp/.config/gh", None, False
+                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                ),
+                BuiltInShareValue(
+                    "extension",
+                    "gh",
+                    "Extension gh",
+                    "/test-tmp/.config/gh",
+                    None,
+                    False,
                 ),
             ],
             [CustomShareValue("/test-tmp/logs")],

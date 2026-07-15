@@ -17,9 +17,7 @@ _MODULE = "aicage.runtime.docker_args.support.git_support"
 
 class GitSupportTests(TestCase):
     def test_resolve_git_config_path_parses_first_file(self) -> None:
-        output = (
-            "file:/home/user/.gitconfig user.name=Name\nfile:/test-tmp/other key=value\n"
-        )
+        output = "file:/home/user/.gitconfig user.name=Name\nfile:/test-tmp/other key=value\n"
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
             path = git_support.resolve_git_config_path()
         self.assertEqual(Path("/home/user/.gitconfig"), path)
@@ -121,7 +119,9 @@ class GitSupportTests(TestCase):
     def test_git_support_prompt_items(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
-        git_items = [(MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")]
+        git_items = [
+            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")
+        ]
 
         with (
             mock.patch(
