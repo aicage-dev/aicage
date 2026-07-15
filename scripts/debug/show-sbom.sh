@@ -33,7 +33,7 @@ while [[ $# -gt 0 ]]; do
       PLATFORM="$2"
       shift 2
       ;;
-    -h|--help)
+    -h | --help)
       usage
       ;;
     --)
@@ -67,8 +67,8 @@ AVAILABLE_PLATFORMS="$(
   printf '%s\n' "${SBOM_JSON}" | jq -r 'keys | join(", ")'
 )"
 
-printf '%s\n' "${SBOM_JSON}" \
-  | jq -e --arg platform "${PLATFORM}" '
+printf '%s\n' "${SBOM_JSON}" |
+  jq -e --arg platform "${PLATFORM}" '
       if .[$platform] == null then
         error("No SPDX SBOM found for platform " + $platform)
       end

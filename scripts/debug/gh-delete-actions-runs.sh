@@ -48,8 +48,8 @@ delete_run() {
 
   # 204 = deleted
   curl -fsS -o /dev/null -w "%{http_code}\n" "${hdrs[@]}" \
-    -X DELETE "${API}/repos/${OWNER}/${REPO}/actions/runs/${run_id}" \
-  | awk -v id="$run_id" '
+    -X DELETE "${API}/repos/${OWNER}/${REPO}/actions/runs/${run_id}" |
+    awk -v id="$run_id" '
       $1=="204"{print "deleted run_id="id; next}
       {print "FAILED run_id="id" http="$1; exit 1}
     '

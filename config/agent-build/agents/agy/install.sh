@@ -8,7 +8,7 @@ curl \
   --retry-all-errors \
   --retry-delay 2 \
   --max-time 300 \
-  https://antigravity.google/cli/install.sh | \
+  https://antigravity.google/cli/install.sh |
   bash
 
 # Ensure the binary is on the global PATH for the runtime user.
