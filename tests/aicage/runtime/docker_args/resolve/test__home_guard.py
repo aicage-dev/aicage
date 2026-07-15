@@ -10,7 +10,7 @@ from aicage.runtime.run_args import MountSpec
 
 class HomeGuardTests(TestCase):
     def test_validate_home_mount_safety_rejects_home_mount(self) -> None:
-        home_path = Path("/tmp/home").resolve()
+        home_path = Path("/test-tmp/home").resolve()
         mounts = [
             MountSpec(
                 host_path=home_path, container_path=container_project_path(home_path)
@@ -32,7 +32,7 @@ class HomeGuardTests(TestCase):
         )
 
     def test_validate_home_mount_safety_rejects_parent_of_home_mount(self) -> None:
-        home_path = Path("/tmp/home/user").resolve()
+        home_path = Path("/test-tmp/home/user").resolve()
         mounts = [
             MountSpec(
                 host_path=home_path.parent,
@@ -56,11 +56,11 @@ class HomeGuardTests(TestCase):
 
     @staticmethod
     def test_validate_home_mount_safety_allows_non_home_mount() -> None:
-        home_path = Path("/tmp/home").resolve()
+        home_path = Path("/test-tmp/home").resolve()
         mounts = [
             MountSpec(
-                host_path=Path("/tmp/project"),
-                container_path=container_project_path(Path("/tmp/project")),
+                host_path=Path("/test-tmp/project"),
+                container_path=container_project_path(Path("/test-tmp/project")),
             ),
         ]
 

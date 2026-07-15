@@ -27,8 +27,8 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
-            [CustomShareValue("/tmp/logs")],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [CustomShareValue("/test-tmp/logs")],
             False,
         )
 
@@ -52,12 +52,12 @@ class SharesOverviewTests(TestCase):
             }[selector]
 
         container.query_one.side_effect = query_one_side_effect
-        state = OverviewState(None, [], [CustomShareValue("/tmp/logs:ro")], False)
+        state = OverviewState(None, [], [CustomShareValue("/test-tmp/logs:ro")], False)
 
         _shares.refresh_shares(container, state)
 
         selection_list.add_options.assert_called_once_with(
-            [("Read-only: /tmp/logs", "custom:/tmp/logs:ro", True)]
+            [("Read-only: /test-tmp/logs", "custom:/test-tmp/logs:ro", True)]
         )
 
     def test_refresh_shares_aligns_prefixless_mounts_with_built_in_items(self) -> None:
@@ -76,8 +76,8 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
-            [CustomShareValue("/tmp/logs")],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [CustomShareValue("/test-tmp/logs")],
             False,
         )
 
@@ -85,26 +85,26 @@ class SharesOverviewTests(TestCase):
 
         selection_list.add_options.assert_called_once_with(
             [
-                ("SSH: /tmp/.ssh", "builtin:git_support:ssh", True),
-                ("   : /tmp/logs", "custom:/tmp/logs", True),
+                ("SSH: /test-tmp/.ssh", "builtin:git_support:ssh", True),
+                ("   : /test-tmp/logs", "custom:/test-tmp/logs", True),
             ]
         )
 
     def test_merge_built_in_shares_preserves_current_enabled_state(self) -> None:
         values = _shares.merge_built_in_shares(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, False)],
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
         )
 
         self.assertEqual(
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
             values,
         )
 
     def test_current_custom_shares_returns_copy(self) -> None:
-        state = OverviewState(None, [], [CustomShareValue("/tmp/logs")], False)
+        state = OverviewState(None, [], [CustomShareValue("/test-tmp/logs")], False)
 
         values = _shares.current_custom_shares(state)
 
-        self.assertEqual([CustomShareValue("/tmp/logs")], values)
+        self.assertEqual([CustomShareValue("/test-tmp/logs")], values)
         self.assertIsNot(values, state.custom_shares)

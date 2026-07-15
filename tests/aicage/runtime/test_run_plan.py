@@ -15,7 +15,7 @@ from aicage.runtime.run_plan import _host_timezone_env, build_run_args
 
 class RunPlanTests(TestCase):
     def test_build_run_args_merges_docker_args(self) -> None:
-        project_path = Path("/tmp/project")
+        project_path = Path("/test-tmp/project")
         config = RunConfig(
             project_path=project_path,
             agent="codex",
@@ -49,7 +49,7 @@ class RunPlanTests(TestCase):
         self.assertEqual(["--flag"], run_args.agent_args)
 
     def test_build_run_args_uses_mounts_from_config(self) -> None:
-        project_path = Path("/tmp/project")
+        project_path = Path("/test-tmp/project")
         mount = mock.Mock()
         config = RunConfig(
             project_path=project_path,
@@ -83,7 +83,7 @@ class RunPlanTests(TestCase):
         self.assertEqual([mount], run_args.mounts)
 
     def test_build_run_args_uses_env_from_config(self) -> None:
-        project_path = Path("/tmp/project")
+        project_path = Path("/test-tmp/project")
         mount = mock.Mock()
         env = [EnvVar(name="EXTRA", value="1")]
         config = RunConfig(
@@ -119,7 +119,7 @@ class RunPlanTests(TestCase):
         self.assertEqual(env, run_args.env)
 
     def test_build_run_args_appends_proxy_env_from_host(self) -> None:
-        project_path = Path("/tmp/project")
+        project_path = Path("/test-tmp/project")
         config = RunConfig(
             project_path=project_path,
             agent="codex",
@@ -167,7 +167,7 @@ class RunPlanTests(TestCase):
         )
 
     def test_build_run_args_appends_timezone_env(self) -> None:
-        project_path = Path("/tmp/project")
+        project_path = Path("/test-tmp/project")
         config = RunConfig(
             project_path=project_path,
             agent="codex",
@@ -220,7 +220,7 @@ class RunPlanTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/base"),
+                local_definition_dir=Path("/test-tmp/base"),
             )
         }
 
@@ -234,6 +234,6 @@ class RunPlanTests(TestCase):
                 agent_homepage="https://example.com",
                 build_local=False,
                 valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
-                local_definition_dir=Path("/tmp/agent"),
+                local_definition_dir=Path("/test-tmp/agent"),
             )
         }

@@ -15,29 +15,29 @@ class OverviewTests(TestCase):
     def test_compose_builds_widgets(self) -> None:
         widgets = list(
             Overview(
-                "codex", "/tmp/project", OverviewState(None, [], [], False)
+                "codex", "/test-tmp/project", OverviewState(None, [], [], False)
             ).compose()
         )
 
         self.assertEqual(1, len(widgets))
 
     def test_compose_includes_project_path_row(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
 
-        self.assertEqual("/tmp/project", overview._project_path)
+        self.assertEqual("/test-tmp/project", overview._project_path)
 
     def test_compose_formats_agent_and_project_context(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
 
         self.assertEqual("codex", overview._agent)
-        self.assertEqual("/tmp/project", overview._project_path)
+        self.assertEqual("/test-tmp/project", overview._project_path)
         self.assertEqual("Agent:   codex", overview._context_line("Agent:", "codex"))
         self.assertEqual(
-            "Project: /tmp/project", overview._context_line("Project:", "/tmp/project")
+            "Project: /test-tmp/project", overview._context_line("Project:", "/test-tmp/project")
         )
 
     def test_on_button_pressed_posts_accept_message(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         overview.post_message = mock.Mock()
         event = mock.Mock()
         event.button.id = "ok"
@@ -51,11 +51,11 @@ class OverviewTests(TestCase):
     def test_on_selection_list_selected_changed_updates_built_in_shares(self) -> None:
         state = OverviewState(
             None,
-            [BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/.ssh", None, True)],
+            [BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)],
             [],
             False,
         )
-        overview = Overview("codex", "/tmp/project", state)
+        overview = Overview("codex", "/test-tmp/project", state)
         event = mock.Mock()
         event.selection_list.id = "shares_overview_list"
         event.selection_list.selected = []
@@ -67,15 +67,15 @@ class OverviewTests(TestCase):
     def test_on_selection_list_selection_toggled_posts_custom_share_message(
         self,
     ) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         overview.post_message = mock.Mock()
         event = mock.Mock()
         event.selection_list.id = "shares_overview_list"
-        event.selection.value = "custom:/tmp/logs"
+        event.selection.value = "custom:/test-tmp/logs"
 
         overview.on_selection_list_selection_toggled(event)
 
-        event.selection_list.select.assert_called_once_with("custom:/tmp/logs")
+        event.selection_list.select.assert_called_once_with("custom:/test-tmp/logs")
         self.assertIsInstance(
             overview.post_message.call_args.args[0], Overview.EditCustomShareRequested
         )
@@ -85,7 +85,7 @@ class OverviewTests(TestCase):
     ) -> None:
         overview = Overview(
             "codex",
-            "/tmp/project",
+            "/test-tmp/project",
             OverviewState(
                 None,
                 [
@@ -93,19 +93,19 @@ class OverviewTests(TestCase):
                         "extension",
                         "gcloud",
                         "Extension gcloud",
-                        "/tmp/gcloud",
+                        "/test-tmp/gcloud",
                         None,
                         True,
-                        "gcloud:/tmp/gcloud",
+                        "gcloud:/test-tmp/gcloud",
                     ),
                     BuiltInShareValue(
                         "extension",
                         "gcloud",
                         "Extension gcloud",
-                        "/tmp/boto",
+                        "/test-tmp/boto",
                         None,
                         True,
-                        "gcloud:/tmp/boto",
+                        "gcloud:/test-tmp/boto",
                     ),
                 ],
                 [],
@@ -114,20 +114,20 @@ class OverviewTests(TestCase):
         )
         event = mock.Mock()
         event.selection_list.id = "shares_overview_list"
-        event.selection.value = "builtin:extension:gcloud:/tmp/gcloud"
-        event.selection_list.selected = ["builtin:extension:gcloud:/tmp/gcloud"]
+        event.selection.value = "builtin:extension:gcloud:/test-tmp/gcloud"
+        event.selection_list.selected = ["builtin:extension:gcloud:/test-tmp/gcloud"]
 
         overview.on_selection_list_selection_toggled(event)
 
         event.selection_list.select.assert_any_call(
-            "builtin:extension:gcloud:/tmp/gcloud"
+            "builtin:extension:gcloud:/test-tmp/gcloud"
         )
         event.selection_list.select.assert_any_call(
-            "builtin:extension:gcloud:/tmp/boto"
+            "builtin:extension:gcloud:/test-tmp/boto"
         )
 
     def test_refresh_from_updates_overview_widgets(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         shell = mock.Mock()
         shell.styles = mock.Mock()
         base_button = mock.Mock()
@@ -179,15 +179,15 @@ class OverviewTests(TestCase):
     def test_apply_shell_width_sets_fixed_width(self) -> None:
         overview = Overview(
             "codex",
-            "/tmp/project",
+            "/test-tmp/project",
             OverviewState(
                 None,
                 [
                     BuiltInShareValue(
-                        "git_support", "ssh", "SSH", "/tmp/.ssh", None, True
+                        "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
                     )
                 ],
-                [CustomShareValue("/tmp/logs")],
+                [CustomShareValue("/test-tmp/logs")],
                 False,
             ),
         )
@@ -201,7 +201,7 @@ class OverviewTests(TestCase):
         self.assertEqual(shell.styles.width, shell.styles.max_width)
 
     def test_focus_default_focuses_ok_button(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         button = mock.Mock(spec=Button)
         overview.query_one = mock.Mock(return_value=button)
 
@@ -210,7 +210,7 @@ class OverviewTests(TestCase):
         button.focus.assert_called_once_with()
 
     def test_focus_section_focuses_section_button(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         button = mock.Mock(spec=Button)
         overview.query_one = mock.Mock(return_value=button)
 
@@ -219,7 +219,7 @@ class OverviewTests(TestCase):
         button.focus.assert_called_once_with()
 
     def test_hide_shell_hides_shell(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         shell = mock.Mock()
         overview.query_one = mock.Mock(return_value=shell)
 
@@ -228,7 +228,7 @@ class OverviewTests(TestCase):
         self.assertFalse(shell.display)
 
     def test_show_shell_shows_shell(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         shell = mock.Mock()
         overview.query_one = mock.Mock(return_value=shell)
 
@@ -239,12 +239,12 @@ class OverviewTests(TestCase):
     def test_current_built_in_shares_returns_selected_state(self) -> None:
         overview = Overview(
             "codex",
-            "/tmp/project",
+            "/test-tmp/project",
             OverviewState(
                 None,
                 [
                     BuiltInShareValue(
-                        "git_support", "ssh", "SSH", "/tmp/.ssh", None, False
+                        "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
                     )
                 ],
                 [],
@@ -260,8 +260,8 @@ class OverviewTests(TestCase):
         self.assertTrue(values[0].enabled)
 
     def test_current_custom_shares_returns_copy(self) -> None:
-        state = OverviewState(None, [], [CustomShareValue("/tmp/logs")], False)
-        overview = Overview("codex", "/tmp/project", state)
+        state = OverviewState(None, [], [CustomShareValue("/test-tmp/logs")], False)
+        overview = Overview("codex", "/test-tmp/project", state)
 
         values = overview.current_custom_shares()
 
@@ -269,7 +269,7 @@ class OverviewTests(TestCase):
         self.assertIsNot(state.custom_shares, values)
 
     def test_current_docker_socket_enabled_returns_selected_state(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         selection_list = mock.Mock(spec=SelectionList)
         selection_list.selected = ["docker:socket"]
         overview.query_one = mock.Mock(return_value=selection_list)
@@ -281,7 +281,7 @@ class OverviewTests(TestCase):
 
 class OverviewAsyncTests(IsolatedAsyncioTestCase):
     async def test_on_button_pressed_posts_section_message(self) -> None:
-        overview = Overview("codex", "/tmp/project", OverviewState(None, [], [], False))
+        overview = Overview("codex", "/test-tmp/project", OverviewState(None, [], [], False))
         overview.post_message = mock.Mock()
         event = mock.Mock()
         event.button.id = "base"

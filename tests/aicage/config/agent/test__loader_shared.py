@@ -15,7 +15,7 @@ class LoaderSharedTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path("/tmp/base"),
+                local_definition_dir=Path("/test-tmp/base"),
             )
         }
         with tempfile.TemporaryDirectory() as tmp_dir:

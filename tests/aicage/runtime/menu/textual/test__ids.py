@@ -16,7 +16,7 @@ class IdsTests(TestCase):
 
     def test_custom_share_selection_key_formats_value(self) -> None:
         self.assertEqual(
-            "custom:/tmp/logs", _ids.custom_share_selection_key("/tmp/logs")
+            "custom:/test-tmp/logs", _ids.custom_share_selection_key("/test-tmp/logs")
         )
 
     def test_docker_selection_key_formats_value(self) -> None:

@@ -15,10 +15,10 @@ class RegistryLogsTests(TestCase):
 
     def test_pull_log_path_uses_base_dir(self) -> None:
         with (
-            mock.patch("aicage.registry._logs.IMAGE_PULL_LOG_DIR", Path("/tmp/logs")),
+            mock.patch("aicage.registry._logs.IMAGE_PULL_LOG_DIR", Path("/test-tmp/logs")),
             mock.patch("aicage.registry._logs.timestamp", return_value="stamp"),
         ):
             log_path = _logs.pull_log_path("ghcr.io/aicage/aicage:codex-ubuntu")
         self.assertEqual(
-            Path("/tmp/logs") / "ghcr.io_aicage_aicage_codex-ubuntu-stamp.log", log_path
+            Path("/test-tmp/logs") / "ghcr.io_aicage_aicage_codex-ubuntu-stamp.log", log_path
         )

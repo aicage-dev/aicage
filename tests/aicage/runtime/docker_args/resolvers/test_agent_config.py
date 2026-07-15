@@ -12,7 +12,7 @@ from aicage.runtime.docker_args.support.resolver_types import MountRequest, Reso
 
 class AgentConfigResolverTests(TestCase):
     def test_resolve_maps_agent_config_paths(self) -> None:
-        host_paths = [Path("/tmp/agent/.codex"), Path("/tmp/agent/.config/codex")]
+        host_paths = [Path("/test-tmp/agent/.codex"), Path("/test-tmp/agent/.config/codex")]
         runtime_agent_config = RuntimeAgentConfig(
             agent_path_files=[],
             agent_path_directories=["~/.codex", "~/.config/codex"],
@@ -25,11 +25,11 @@ class AgentConfigResolverTests(TestCase):
             agent_homepage="https://example.com",
             build_local=False,
             valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
-            local_definition_dir=Path("/tmp/agent"),
+            local_definition_dir=Path("/test-tmp/agent"),
         )
         context = ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents={"codex": agent_metadata},
             bases={},
             extensions={},

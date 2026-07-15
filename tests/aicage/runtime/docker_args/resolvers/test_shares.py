@@ -14,7 +14,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_returns_empty_when_no_shares_exist(self) -> None:
         context = ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases={},
             extensions={},
@@ -129,8 +129,8 @@ class ShareResolverTests(TestCase):
                         name="GitHub CLI",
                         description="Desc",
                         shares=["~/.config/gh", "data"],
-                        directory=Path("/tmp/ext"),
-                        scripts_dir=Path("/tmp/ext/scripts"),
+                        directory=Path("/test-tmp/ext"),
+                        scripts_dir=Path("/test-tmp/ext/scripts"),
                         dockerfile_path=None,
                     )
                 },
@@ -178,8 +178,8 @@ class ShareResolverTests(TestCase):
                         name="GitHub CLI",
                         description="Desc",
                         shares=["~/.config/gh"],
-                        directory=Path("/tmp/ext"),
-                        scripts_dir=Path("/tmp/ext/scripts"),
+                        directory=Path("/test-tmp/ext"),
+                        scripts_dir=Path("/test-tmp/ext/scripts"),
                         dockerfile_path=None,
                     )
                 },

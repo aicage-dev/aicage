@@ -23,14 +23,14 @@ class GitRootTests(TestCase):
         context = build_context(agent_cfg)
         with (
             mock.patch(
-                f"{_MODULE}.resolve_git_root", return_value=Path("/tmp/project")
+                f"{_MODULE}.resolve_git_root", return_value=Path("/test-tmp/project")
             ),
         ):
             resolved = git_root.resolve(context, "codex", build_parsed())
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_git_root_mount_respects_pref(self) -> None:
-        root_path = Path("/tmp/root")
+        root_path = Path("/test-tmp/root")
         agent_cfg = AgentConfig(mounts=_AgentMounts(gitroot=False))
         context = build_context(agent_cfg)
         with mock.patch(
@@ -41,7 +41,7 @@ class GitRootTests(TestCase):
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_git_root_mount_uses_preference(self) -> None:
-        root_path = Path("/tmp/root")
+        root_path = Path("/test-tmp/root")
         agent_cfg = AgentConfig(mounts=_AgentMounts(gitroot=True))
         context = build_context(agent_cfg)
         with mock.patch(

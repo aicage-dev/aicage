@@ -18,7 +18,7 @@ class AgentConfigTests(TestCase):
                     agent_homepage="https://example.com",
                     build_local=False,
                     valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
-                    local_definition_dir=Path("/tmp/agent"),
+                    local_definition_dir=Path("/test-tmp/agent"),
                 )
             }
             config = resolve_agent_config(agents["codex"])
@@ -36,7 +36,7 @@ class AgentConfigTests(TestCase):
                     agent_homepage="https://example.com",
                     build_local=False,
                     valid_bases={"ubuntu": "ghcr.io/aicage/aicage:claude-ubuntu"},
-                    local_definition_dir=Path("/tmp/agent"),
+                    local_definition_dir=Path("/test-tmp/agent"),
                 )
             }
             config = resolve_agent_config(agents["claude"])
@@ -56,7 +56,7 @@ class AgentConfigTests(TestCase):
                     agent_homepage="https://example.com",
                     build_local=False,
                     valid_bases={"ubuntu": "ghcr.io/aicage/aicage:plain-ubuntu"},
-                    local_definition_dir=Path("/tmp/agent"),
+                    local_definition_dir=Path("/test-tmp/agent"),
                 )
             }
             config = resolve_agent_config(agents["plain"])

@@ -157,7 +157,7 @@ class PromptTests(TestCase):
         agents = PromptTests._agents_with_bases(bases)
         return ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents=agents,
             bases=base_entries,
             extensions={},
@@ -176,7 +176,7 @@ class PromptTests(TestCase):
             agent_homepage="https://example.com",
             build_local=False,
             valid_bases={name: f"repo:{name}" for name in bases},
-            local_definition_dir=Path("/tmp/codex"),
+            local_definition_dir=Path("/test-tmp/codex"),
             base_exclude=base_exclude or [],
             base_distro_exclude=base_distro_exclude or [],
         )
@@ -190,7 +190,7 @@ class PromptTests(TestCase):
                 base_image_description="Default",
                 architectures=["amd64", "arm64"],
                 build_local=False,
-                local_definition_dir=Path(f"/tmp/{name}"),
+                local_definition_dir=Path(f"/test-tmp/{name}"),
             )
             for name in bases
         }
@@ -205,6 +205,6 @@ class PromptTests(TestCase):
                 agent_homepage="https://example.com",
                 build_local=False,
                 valid_bases={name: f"repo:{name}" for name in bases},
-                local_definition_dir=Path("/tmp/codex"),
+                local_definition_dir=Path("/test-tmp/codex"),
             )
         }

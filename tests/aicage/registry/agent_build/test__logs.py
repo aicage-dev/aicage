@@ -17,11 +17,11 @@ class AgentBuildLogsTests(TestCase):
         with (
             mock.patch(
                 "aicage.registry.agent_build._logs.IMAGE_BUILD_LOG_DIR",
-                Path("/tmp/logs"),
+                Path("/test-tmp/logs"),
             ),
             mock.patch(
                 "aicage.registry.agent_build._logs.timestamp", return_value="stamp"
             ),
         ):
             build_log = _logs.build_log_path("claude", "ubuntu")
-        self.assertEqual(Path("/tmp/logs") / "claude-ubuntu-stamp.log", build_log)
+        self.assertEqual(Path("/test-tmp/logs") / "claude-ubuntu-stamp.log", build_log)

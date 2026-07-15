@@ -133,7 +133,7 @@ class EnsureCustomBaseImageTests(TestCase):
             base_image_description="Custom",
             architectures=["amd64", "arm64"],
             build_local=True,
-            local_definition_dir=Path("/tmp/custom-base"),
+            local_definition_dir=Path("/test-tmp/custom-base"),
         )
         with (
             mock.patch(
@@ -161,7 +161,7 @@ class EnsureCustomBaseImageTests(TestCase):
             ) as cleanup_mock,
             mock.patch(
                 "aicage.registry.base_build.ensure.build_log_path",
-                return_value=Path("/tmp/logs/custom-base.log"),
+                return_value=Path("/test-tmp/logs/custom-base.log"),
             ),
             mock.patch(
                 "aicage.registry.base_build.ensure.now_iso",
@@ -169,7 +169,7 @@ class EnsureCustomBaseImageTests(TestCase):
             ),
         ):
             store_cls.return_value.load.return_value = None
-            _ensure.ensure("custom", base_metadata, Path("/tmp/custom-base"))
+            _ensure.ensure("custom", base_metadata, Path("/test-tmp/custom-base"))
 
         build_mock.assert_called_once()
         cleanup_mock.assert_called_once_with(
@@ -193,7 +193,7 @@ class EnsureCustomBaseImageTests(TestCase):
             mock.patch("aicage.registry.base_build.ensure.run_custom_base_build"),
             mock.patch(
                 "aicage.registry.base_build.ensure.build_log_path",
-                return_value=Path("/tmp/logs/custom-base.log"),
+                return_value=Path("/test-tmp/logs/custom-base.log"),
             ),
             mock.patch(
                 "aicage.registry.base_build.ensure.now_iso",
@@ -204,7 +204,7 @@ class EnsureCustomBaseImageTests(TestCase):
             _ensure.ensure(
                 "custom",
                 base_metadata,
-                Path("/tmp/custom-base"),
+                Path("/test-tmp/custom-base"),
             )
         digest_mock.assert_called_once_with("ubuntu:latest")
 
@@ -244,7 +244,7 @@ class EnsureCustomBaseImageTests(TestCase):
             base_image_description="Custom",
             architectures=["amd64", "arm64"],
             build_local=True,
-            local_definition_dir=Path("/tmp/base"),
+            local_definition_dir=Path("/test-tmp/base"),
         )
 
 

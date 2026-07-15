@@ -12,7 +12,7 @@ from aicage.registry.image_selection.models import ImageSelection
 
 def build_run_config(
     build_local: bool = True,
-    local_definition_dir: Path = Path("/tmp/agent"),
+    local_definition_dir: Path = Path("/test-tmp/agent"),
 ) -> RunConfig:
     return _build_run_config(
         build_local=build_local,
@@ -22,17 +22,17 @@ def build_run_config(
 
 def build_custom_run_config() -> RunConfig:
     return _build_run_config(
-        build_local=True, local_definition_dir=Path("/tmp/definition")
+        build_local=True, local_definition_dir=Path("/test-tmp/definition")
     )
 
 
 def build_extended_run_config() -> RunConfig:
     return RunConfig(
-        project_path=Path("/tmp/project"),
+        project_path=Path("/test-tmp/project"),
         agent="codex",
         context=ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases={},
             extensions={},
@@ -51,7 +51,7 @@ def build_extended_run_config() -> RunConfig:
 
 def build_agents_and_bases(
     build_local: bool = True,
-    local_definition_dir: Path = Path("/tmp/agent"),
+    local_definition_dir: Path = Path("/test-tmp/agent"),
 ) -> tuple[dict[str, BaseMetadata], dict[str, AgentMetadata]]:
     bases = {
         "ubuntu": BaseMetadata(
@@ -60,7 +60,7 @@ def build_agents_and_bases(
             base_image_description="Default",
             architectures=["amd64", "arm64"],
             build_local=False,
-            local_definition_dir=Path("/tmp/base"),
+            local_definition_dir=Path("/test-tmp/base"),
         )
     }
     agents = {
@@ -83,11 +83,11 @@ def _build_run_config(build_local: bool, local_definition_dir: Path) -> RunConfi
         local_definition_dir=local_definition_dir,
     )
     return RunConfig(
-        project_path=Path("/tmp/project"),
+        project_path=Path("/test-tmp/project"),
         agent="claude",
         context=ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/tmp/project", agents={}),
+            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
             agents=agents,
             bases=bases,
             extensions={},

@@ -37,7 +37,7 @@ class GpgHomeTests(TestCase):
         self.assertEqual(ResolvedArgs(), resolved)
 
     def test_resolve_gpg_mount_respects_pref(self) -> None:
-        gpg_home = Path("/tmp/gpg")
+        gpg_home = Path("/test-tmp/gpg")
         agent_cfg = AgentConfig(mounts=_AgentMounts(gnupg=False))
         context = build_context(agent_cfg)
         with (

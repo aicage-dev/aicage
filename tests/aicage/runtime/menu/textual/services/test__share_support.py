@@ -30,7 +30,7 @@ class ShareSupportTests(TestCase):
         with (
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_git_config_path",
-                return_value=Path("/tmp/gitconfig"),
+                return_value=Path("/test-tmp/gitconfig"),
             ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_git_root",
@@ -50,7 +50,7 @@ class ShareSupportTests(TestCase):
             ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
-                return_value=Path("/tmp/ssh"),
+                return_value=Path("/test-tmp/ssh"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
@@ -64,7 +64,7 @@ class ShareSupportTests(TestCase):
                     "git_support",
                     "gitconfig",
                     "Git config",
-                    "/tmp/gitconfig",
+                    "/test-tmp/gitconfig",
                     None,
                     True,
                 ),
@@ -168,7 +168,7 @@ class ShareSupportTests(TestCase):
             ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
-                return_value=Path("/tmp/ssh"),
+                return_value=Path("/test-tmp/ssh"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
@@ -177,7 +177,7 @@ class ShareSupportTests(TestCase):
             )
 
         self.assertIn(
-            BuiltInShareValue("git_support", "ssh", "SSH", "/tmp/ssh", None, True),
+            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/ssh", None, True),
             values,
         )
 
@@ -212,7 +212,7 @@ class ShareSupportTests(TestCase):
             ),
             mock.patch(
                 "aicage.runtime.menu.textual.services._share_support.resolve_gpg_home",
-                return_value=Path("/tmp/gnupg"),
+                return_value=Path("/test-tmp/gnupg"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
@@ -222,7 +222,7 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                "git_support", "gnupg", "GnuPG", "/tmp/gnupg", None, True
+                "git_support", "gnupg", "GnuPG", "/test-tmp/gnupg", None, True
             ),
             values,
         )

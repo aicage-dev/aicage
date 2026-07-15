@@ -42,7 +42,7 @@ class SshKeyTests(TestCase):
     def test_resolve_ssh_mount_respects_pref(self) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(ssh=False))
         context = build_context(agent_cfg)
-        ssh_dir = Path("/tmp/ssh")
+        ssh_dir = Path("/test-tmp/ssh")
         with (
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
             mock.patch(f"{_MODULE}.resolve_signing_format", return_value="ssh"),
