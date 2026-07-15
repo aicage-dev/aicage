@@ -21,9 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed config editing to a draft-based flow so interactive changes are only persisted after final confirmation and
   cancellation discards partial edits.
 - Existing per-project agent configs can now be updated from the interactive menu instead of requiring config removal
-  for common changes such as base image, extensions, bind mounts, Docker socket access, or Docker arguments.
-- Docker arguments are now stored per agent in project config while still accepting legacy project-level
-  `docker_args` on read.
+  for many common changes such as base image, extensions, bind mounts, Docker socket access, or Docker arguments.
 - Fresh image selection no longer offers previously saved extended images as base choices.
 
 ## [1.3.4] - 2026-07-11
