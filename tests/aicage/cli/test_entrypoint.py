@@ -139,6 +139,37 @@ class EntrypointTests(TestCase):
         info_mock.assert_called_once()
         load_mock.assert_not_called()
 
+    def test_main_skips_ensure_for_textual_menu(self) -> None:
+        run_config = _build_run_config(Path("/test-tmp/project"), "repo:tag")
+
+        with (
+            mock.patch(
+                "aicage.cli.entrypoint.parse_cli",
+                return_value=ParsedArgs(
+                    False, "", "codex", [], False, [], None, None, "textual"
+                ),
+            ),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch(
+                "aicage.cli.entrypoint.set_non_interactive_defaults"
+            ) as set_defaults_mock,
+            mock.patch(
+                "aicage.cli.entrypoint.load_run_config", return_value=run_config
+            ),
+            mock.patch(
+                "aicage.cli.entrypoint.build_run_args",
+                return_value=_build_run_args("repo:tag", "", []),
+            ),
+            mock.patch("aicage.cli.entrypoint.ensure_image") as ensure_image_mock,
+            mock.patch("aicage.cli.entrypoint.run_container") as run_container_mock,
+        ):
+            exit_code = main(["codex"])
+
+        self.assertEqual(0, exit_code)
+        set_defaults_mock.assert_called_once_with(False)
+        ensure_image_mock.assert_not_called()
+        run_container_mock.assert_called_once()
+
     def test_main_config_remove(self) -> None:
         with (
             mock.patch(

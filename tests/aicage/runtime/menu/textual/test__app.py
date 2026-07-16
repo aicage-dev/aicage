@@ -172,7 +172,15 @@ class OverviewAppTests(TestCase):
     def test_finish_execution_clears_execution_flag(self) -> None:
         app = _build_app()
         app._running_execution = True
-        result = mock.Mock()
+        result = _app._OverviewResult(
+            ImageSelection(
+                image_ref="ref",
+                base="ubuntu",
+                extensions=[],
+                base_image_ref="ref",
+            ),
+            "--project",
+        )
 
         with mock.patch.object(app, "_finish") as finish_mock:
             app._finish_execution(result, None)

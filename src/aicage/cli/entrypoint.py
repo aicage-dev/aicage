@@ -38,7 +38,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             run_config: RunConfig = load_run_config(parsed.agent, parsed)
             run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
             logger.info("Resolved run config for agent %s", run_config.agent)
-            ensure_image(run_config)
+            if parsed.menu != "textual":
+                ensure_image(run_config)
 
             if parsed.dry_run:
                 print_run_command(run_args)
