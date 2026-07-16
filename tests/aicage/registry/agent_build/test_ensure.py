@@ -156,6 +156,7 @@ class EnsureLocalImageTests(TestCase):
             state_dir = Path(tmp_dir) / "state"
             log_dir = Path(tmp_dir) / "logs"
             run_config = build_run_config()
+            reporter = mock.Mock()
 
             with (
                 mock.patch(
@@ -173,7 +174,7 @@ class EnsureLocalImageTests(TestCase):
                 mock.patch(
                     "aicage.registry.agent_build.ensure.refresh_base_image",
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
-                ),
+                ) as refresh_mock,
                 mock.patch(
                     "aicage.registry.agent_build.ensure.run_build"
                 ) as build_mock,
@@ -189,9 +190,11 @@ class EnsureLocalImageTests(TestCase):
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_module.ensure(run_config)
+                ensure_module.ensure(run_config, reporter=reporter)
 
             build_mock.assert_called_once()
+            refresh_mock.assert_called_once()
+            self.assertEqual(reporter, refresh_mock.call_args.kwargs["reporter"])
             cleanup_mock.assert_called_once_with(
                 "aicage",
                 "sha256:old",

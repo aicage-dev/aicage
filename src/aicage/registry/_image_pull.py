@@ -17,7 +17,15 @@ def pull_image(image_ref: str, reporter: OperationReporter | None = None) -> Non
         logger.info("Image pull not required for %s", image_ref)
         return
 
-    resolve_verified_digest(image_ref)
     log_path = pull_log_path(image_ref)
+    if reporter is not None:
+        reporter.on_phase_started("pull", f"Preparing image {image_ref}", log_path)
+        reporter.on_phase_progress(
+            "pull",
+            "Resolving digest and verifying image signature",
+            None,
+            None,
+        )
+    resolve_verified_digest(image_ref)
     run_pull(image_ref, log_path, reporter=reporter)
     cleanup_old_digest(repository, local_digest, image_ref)

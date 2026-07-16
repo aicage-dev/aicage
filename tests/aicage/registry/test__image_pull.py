@@ -89,7 +89,26 @@ class DockerInvocationTests(TestCase):
                 json.loads(log_lines[1]),
             )
             self.assertEqual([("repo:tag", True, True)], api.calls)
-            reporter.on_phase_started.assert_called_once()
+            reporter.on_phase_started.assert_has_calls(
+                [
+                    mock.call(
+                        "pull",
+                        "Preparing image repo:tag",
+                        log_path,
+                    ),
+                    mock.call(
+                        "pull",
+                        "Pulling image repo:tag",
+                        log_path,
+                    ),
+                ]
+            )
+            reporter.on_phase_progress.assert_any_call(
+                "pull",
+                "Resolving digest and verifying image signature",
+                None,
+                None,
+            )
 
     def test_pull_image_raises_on_sdk_error(self) -> None:
         image_ref = "repo:tag"

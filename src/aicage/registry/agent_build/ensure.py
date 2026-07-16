@@ -47,6 +47,7 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
             base_image = refresh_base_image(
                 base_image_ref=base_image,
                 base_repository=base_repo,
+                reporter=reporter,
             )
         except RegistryError:
             if not local_image_exists(image_ref):

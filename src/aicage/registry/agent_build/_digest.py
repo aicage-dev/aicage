@@ -1,6 +1,7 @@
 from aicage._logging import get_logger
 from aicage.docker.pull import run_pull
 from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
+from aicage.docker.reporting import OperationReporter
 from aicage.registry._errors import RegistryError
 from aicage.registry._logs import pull_log_path
 from aicage.registry._signature import resolve_verified_digest
@@ -9,6 +10,7 @@ from aicage.registry._signature import resolve_verified_digest
 def resolve_base_digest(
     base_image_ref: str,
     base_repository: str,
+    reporter: OperationReporter | None = None,
 ) -> str:
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
@@ -25,7 +27,7 @@ def resolve_base_digest(
 
     log_path = pull_log_path(base_image_ref)
     try:
-        run_pull(base_image_ref, log_path)
+        run_pull(base_image_ref, log_path, reporter=reporter)
     except RegistryError:
         if local_digest:
             logger.warning(

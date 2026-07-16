@@ -1,5 +1,6 @@
 from aicage._logging import get_logger
 from aicage.docker.query import get_local_repo_digest_for_repo
+from aicage.docker.reporting import OperationReporter
 from aicage.registry._errors import RegistryError
 from aicage.registry._signature import resolve_verified_digest
 from aicage.runtime.menu.prompts.confirm import prompt_update_image
@@ -10,6 +11,7 @@ from ._digest import resolve_base_digest
 def refresh_base_image(
     base_image_ref: str,
     base_repository: str,
+    reporter: OperationReporter | None = None,
 ) -> str:
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
@@ -27,4 +29,4 @@ def refresh_base_image(
     if local_digest and not prompt_update_image(base_image_ref):
         logger.info("Base image pull not required for %s", base_image_ref)
         return f"{base_repository}@{local_digest}"
-    return resolve_base_digest(base_image_ref, base_repository)
+    return resolve_base_digest(base_image_ref, base_repository, reporter=reporter)
