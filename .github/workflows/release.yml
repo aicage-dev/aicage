@@ -61,9 +61,14 @@ jobs:
       - name: Update cosign digest constant
         env:
           COSIGN_DIGEST: ${{ steps.cosign.outputs.digest }}
+        # /_COSIGN_IMAGE_DIGEST: str = \(/     <- ADDRESS: only act on lines matching this
+        # {                                     <- start a command block for that address
+        #     N;                                <- pull in the next line too
+        #     s#"sha256:[0-9a-f]+"#"${COSIGN_DIGEST}"#   <- the s### command
+        # }                                     <- end block
         run: |
-          sed -i \
-            "s/^_COSIGN_IMAGE_DIGEST: str = .*/_COSIGN_IMAGE_DIGEST: str = \"${COSIGN_DIGEST}\"/" \
+          sed -i -E \
+            -e "/_COSIGN_IMAGE_DIGEST: str = \(/{N; s#\"sha256:[0-9a-f]+\"#\"${COSIGN_DIGEST}\"#}" \
             src/aicage/constants.py
 
       - name: Syncing metadata and agents with sub-project 'aicage-image'
