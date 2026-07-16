@@ -87,6 +87,13 @@ class EnsureImageTests(TestCase):
         ):
             assert image_setup_needed(run_config) is True
 
+    @staticmethod
+    def test_image_setup_needed_true_for_local_build_without_running_preflight(
+    ) -> None:
+        run_config = _run_config(build_local=True, extensions=[])
+
+        assert image_setup_needed(run_config) is True
+
 
 def _run_config(
     build_local: bool,

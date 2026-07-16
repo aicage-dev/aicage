@@ -83,7 +83,7 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
     )
 
 
-def build_needed(run_config: RunConfig) -> bool:
+def _build_needed(run_config: RunConfig) -> bool:
     agent_metadata = run_config.context.agents[run_config.agent]
     definition_dir = agent_metadata.local_definition_dir
     base_metadata = run_config.context.bases[run_config.selection.base]

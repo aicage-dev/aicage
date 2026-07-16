@@ -279,6 +279,6 @@ class EnsureLocalImageTests(TestCase):
             ) as checker_cls,
         ):
             checker_cls.return_value.get_version.return_value = "1.2.3"
-            assert ensure_module.build_needed(run_config) is True
+            assert ensure_module._build_needed(run_config) is True
 
         should_rebuild_mock.assert_called_once()
