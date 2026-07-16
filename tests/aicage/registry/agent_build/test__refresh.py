@@ -5,6 +5,34 @@ from aicage.registry.agent_build import _refresh
 
 
 class RefreshBaseDigestTests(TestCase):
+    def test_refresh_base_image_plan_requests_confirmation_when_digests_differ(
+        self,
+    ) -> None:
+        with (
+            mock.patch(
+                "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
+                return_value="sha256:local",
+            ),
+            mock.patch(
+                "aicage.registry.agent_build._refresh.resolve_verified_digest",
+                return_value="ghcr.io/aicage/aicage-image-base@sha256:remote",
+            ),
+        ):
+            plan = _refresh.refresh_base_image_plan(
+                base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                base_repository="ghcr.io/aicage/aicage-image-base",
+            )
+
+        self.assertIsNone(plan.resolved_base_image_ref)
+        self.assertEqual(
+            "ghcr.io/aicage/aicage-image-base@sha256:local",
+            plan.local_base_image_ref,
+        )
+        self.assertEqual(
+            "ghcr.io/aicage/aicage-image-base:ubuntu",
+            plan.confirm_update_image_ref,
+        )
+
     def test_refresh_base_image_uses_local_digest_when_user_declines_pull(self) -> None:
         with (
             mock.patch(

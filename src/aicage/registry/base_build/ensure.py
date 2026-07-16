@@ -32,6 +32,22 @@ def ensure(
     store = BuildStore()
     source_digest = get_remote_digest(base_metadata.from_image)
 
+    def _run_build() -> None:
+        old_digest = None
+        if local_exists:
+            old_digest = get_local_repo_digest_for_repo(
+                target_image_ref, LOCAL_IMAGE_BASE_REPOSITORY
+            )
+        log_path = build_log_path(base)
+        run_custom_base_build(
+            build_root=base_dir,
+            from_image=base_metadata.from_image,
+            image_ref=target_image_ref,
+            log_path=log_path,
+            reporter=reporter,
+        )
+        cleanup_old_digest(LOCAL_IMAGE_BASE_REPOSITORY, old_digest, target_image_ref)
+
     maybe_build(
         load_record=lambda: store.load(base),
         should_rebuild=lambda record: _should_rebuild(
@@ -40,13 +56,7 @@ def ensure(
             base_metadata=base_metadata,
             source_digest=source_digest,
         ),
-        run_build=lambda: _run_build(
-            base=base,
-            base_metadata=base_metadata,
-            base_dir=base_dir,
-            target_image_ref=target_image_ref,
-            reporter=reporter,
-        ),
+        run_build=_run_build,
         save_record=lambda: store.save(
             BuildRecord(
                 base=base,
@@ -88,24 +98,3 @@ def _should_rebuild(
     if source_digest and record.from_image_digest != source_digest:
         return True
     return False
-
-
-def _run_build(
-    base: str,
-    base_metadata: BaseMetadata,
-    base_dir: Path,
-    target_image_ref: str,
-    reporter: OperationReporter | None,
-) -> None:
-    old_digest = get_local_repo_digest_for_repo(
-        target_image_ref, LOCAL_IMAGE_BASE_REPOSITORY
-    )
-    log_path = build_log_path(base)
-    run_custom_base_build(
-        build_root=base_dir,
-        from_image=base_metadata.from_image,
-        image_ref=target_image_ref,
-        log_path=log_path,
-        reporter=reporter,
-    )
-    cleanup_old_digest(LOCAL_IMAGE_BASE_REPOSITORY, old_digest, target_image_ref)

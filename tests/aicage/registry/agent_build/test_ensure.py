@@ -244,6 +244,10 @@ class EnsureLocalImageTests(TestCase):
                     return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
                 ),
                 mock.patch(
+                    "aicage.registry.agent_build._plan.base_layer_missing",
+                    return_value=False,
+                ),
+                mock.patch(
                     "aicage.registry.agent_build.ensure.run_build"
                 ) as build_mock,
                 mock.patch(
@@ -282,3 +286,23 @@ class EnsureLocalImageTests(TestCase):
             assert ensure_module._build_needed(run_config) is True
 
         should_rebuild_mock.assert_called_once()
+
+    @staticmethod
+    def test_setup_plan_reports_confirmation_when_base_refresh_requires_it() -> None:
+        run_config = build_run_config()
+
+        with mock.patch(
+            "aicage.registry.agent_build.ensure.refresh_base_image_plan",
+            return_value=mock.Mock(
+                confirm_update_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                resolved_base_image_ref=None,
+                local_base_image_ref="ghcr.io/aicage/aicage-image-base@sha256:local",
+            ),
+        ):
+            plan = ensure_module.setup_plan(run_config)
+
+        assert plan.needs_setup is True
+        assert (
+            plan.confirm_update_image_ref
+            == "ghcr.io/aicage/aicage-image-base:ubuntu"
+        )

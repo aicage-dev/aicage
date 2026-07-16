@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
+from typing import TypeAlias
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.agent.loader import load_agents
@@ -10,7 +12,11 @@ from aicage.config.extensions.loader import load_extensions
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft, create_run_config_draft
 from aicage.docker.reporting import OperationReporter
-from aicage.registry.ensure_image import ensure_image, image_setup_needed
+from aicage.registry.ensure_image import (
+    ensure_image,
+    image_setup_needed,
+    image_setup_plan,
+)
 from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
@@ -21,6 +27,8 @@ from aicage.runtime.menu.prompts.confirm import (
     prompt_persist_shares,
 )
 from aicage.runtime.menu.textual.entry import edit_draft_with_textual_app
+
+_ConfirmImageUpdate: TypeAlias = Callable[[str], bool]
 
 
 def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
@@ -43,15 +51,17 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
         selection, project_docker_args = edit_draft_with_textual_app(
             draft,
             context,
-            setup_needed=lambda selection: _image_setup_needed(
+            setup_plan=lambda selection: image_setup_plan(
                 _setup_run_config(project_path, agent, context, selection)
             ),
-            execute_setup=lambda selection, reporter: _execute_image_setup(
-                project_path,
-                agent,
-                context,
-                selection,
+            setup_needed=lambda selection, confirm_update: _image_setup_needed(
+                _setup_run_config(project_path, agent, context, selection),
+                confirm_update,
+            ),
+            execute_setup=lambda selection, reporter, confirm_update: _execute_image_setup(
+                _setup_run_config(project_path, agent, context, selection),
                 reporter,
+                confirm_update,
             ),
         )
     else:
@@ -107,19 +117,18 @@ def _persist_shares(draft: RunConfigDraft) -> None:
 
 
 def _execute_image_setup(
-    project_path: Path,
-    agent: str,
-    context: ConfigContext,
-    selection: ImageSelection,
+    run_config: RunConfig,
     reporter: OperationReporter,
+    confirm_update: _ConfirmImageUpdate,
 ) -> None:
-    ensure_image(
-        _setup_run_config(project_path, agent, context, selection), reporter=reporter
-    )
+    ensure_image(run_config, reporter=reporter, confirm_update=confirm_update)
 
 
-def _image_setup_needed(run_config: RunConfig) -> bool:
-    return image_setup_needed(run_config)
+def _image_setup_needed(
+    run_config: RunConfig,
+    confirm_update: _ConfirmImageUpdate,
+) -> bool:
+    return image_setup_needed(run_config, confirm_update)
 
 
 def _setup_run_config(

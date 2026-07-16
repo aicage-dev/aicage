@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 from aicage._logging import get_logger
@@ -15,18 +16,34 @@ from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._build_flow import maybe_build
 from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
+from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from ..base_build.ensure import build_needed as base_build_needed
 from ..base_build.ensure import ensure as ensure_base_build
 from ._logs import build_log_path
 from ._plan import should_rebuild
-from ._refresh import refresh_base_image
+from ._refresh import (
+    BaseRefreshPlan,
+    ConfirmImageUpdate,
+    refresh_base_image,
+    refresh_base_image_plan,
+)
 from ._refs import base_repository, get_base_image_ref
 from ._store import BuildRecord, BuildStore
 from .agent_version.checker import AgentVersionChecker
 
 
-def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> None:
+@dataclass(frozen=True)
+class _AgentBuildSetupPlan:
+    needs_setup: bool
+    confirm_update_image_ref: str | None = None
+
+
+def ensure(
+    run_config: RunConfig,
+    reporter: OperationReporter | None = None,
+    confirm_update: ConfirmImageUpdate | None = None,
+) -> None:
     agent_metadata = run_config.context.agents[run_config.agent]
     definition_dir = agent_metadata.local_definition_dir
 
@@ -48,6 +65,7 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
                 base_image_ref=base_image,
                 base_repository=base_repo,
                 reporter=reporter,
+                confirm_update=confirm_update or prompt_update_image,
             )
         except RegistryError:
             if not local_image_exists(image_ref):
@@ -81,6 +99,64 @@ def ensure(run_config: RunConfig, reporter: OperationReporter | None = None) -> 
             )
         ),
     )
+
+
+def setup_plan(run_config: RunConfig) -> _AgentBuildSetupPlan:
+    agent_metadata = run_config.context.agents[run_config.agent]
+    definition_dir = agent_metadata.local_definition_dir
+    base_metadata = run_config.context.bases[run_config.selection.base]
+    custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
+    base_image = get_base_image_ref(run_config)
+    image_ref = run_config.selection.base_image_ref
+    if custom_base:
+        if base_build_needed(
+            run_config.selection.base,
+            base_metadata,
+            base_image,
+        ):
+            return _AgentBuildSetupPlan(needs_setup=True)
+    base_repo = base_repository(run_config)
+    if not custom_base:
+        try:
+            refresh_plan = refresh_base_image_plan(
+                base_image_ref=base_image,
+                base_repository=base_repo,
+            )
+        except RegistryError:
+            return _AgentBuildSetupPlan(needs_setup=not local_image_exists(image_ref))
+        if refresh_plan.confirm_update_image_ref is not None:
+            return _AgentBuildSetupPlan(
+                needs_setup=True,
+                confirm_update_image_ref=refresh_plan.confirm_update_image_ref,
+            )
+        resolved_base_image = _resolved_base_image_ref(refresh_plan)
+        if resolved_base_image is not None:
+            base_image = resolved_base_image
+
+    store = BuildStore()
+    agent_version = _get_agent_version(run_config, agent_metadata, definition_dir)
+    return _AgentBuildSetupPlan(
+        needs_setup=should_rebuild(
+            run_config=run_config,
+            record=store.load(run_config.agent, run_config.selection.base),
+            agent_version=agent_version,
+            base_image_ref=base_image,
+        )
+    )
+
+
+def build_needed(
+    run_config: RunConfig,
+    confirm_update: ConfirmImageUpdate | None = None,
+) -> bool:
+    plan = setup_plan(run_config)
+    if plan.confirm_update_image_ref is not None:
+        if confirm_update is None:
+            return True
+        if not confirm_update(plan.confirm_update_image_ref):
+            return False
+        return True
+    return plan.needs_setup
 
 
 def _build_needed(run_config: RunConfig) -> bool:
@@ -149,3 +225,9 @@ def _run_build(
         reporter=reporter,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
+
+
+def _resolved_base_image_ref(plan: BaseRefreshPlan) -> str | None:
+    if plan.resolved_base_image_ref is not None:
+        return plan.resolved_base_image_ref
+    return plan.local_base_image_ref

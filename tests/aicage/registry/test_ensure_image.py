@@ -5,7 +5,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
-from aicage.registry.ensure_image import ensure_image, image_setup_needed
+from aicage.registry.ensure_image import ensure_image, image_setup_needed, image_setup_plan
 
 
 class EnsureImageTests(TestCase):
@@ -94,6 +94,22 @@ class EnsureImageTests(TestCase):
         run_config = _run_config(build_local=True, extensions=[])
 
         assert image_setup_needed(run_config) is True
+
+    @staticmethod
+    def test_image_setup_plan_reports_confirmation_when_remote_pull_differs() -> None:
+        run_config = _run_config(build_local=False, extensions=[])
+
+        with mock.patch(
+            "aicage.registry.ensure_image.pull_decision_plan",
+            return_value=mock.Mock(
+                should_pull=False,
+                confirm_update_image_ref=run_config.selection.base_image_ref,
+            ),
+        ):
+            plan = image_setup_plan(run_config)
+
+        assert plan.needs_setup is True
+        assert plan.confirm_update_image_ref == run_config.selection.base_image_ref
 
 
 def _run_config(

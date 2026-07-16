@@ -4,6 +4,22 @@ from aicage.registry import _pull_decision
 
 
 class PullDecisionTests(TestCase):
+    def test_pull_decision_plan_requests_confirmation_when_digests_differ(self) -> None:
+        with (
+            mock.patch(
+                "aicage.registry._pull_decision.get_local_repo_digest",
+                return_value="sha256:local",
+            ),
+            mock.patch(
+                "aicage.registry._pull_decision.get_remote_digest",
+                return_value="sha256:remote",
+            ),
+        ):
+            plan = _pull_decision.pull_decision_plan("image:tag")
+
+        self.assertFalse(plan.should_pull)
+        self.assertEqual("image:tag", plan.confirm_update_image_ref)
+
     def test_decide_pull_returns_true_when_local_missing(self) -> None:
         with mock.patch(
             "aicage.registry._pull_decision.get_local_repo_digest",

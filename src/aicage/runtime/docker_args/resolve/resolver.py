@@ -6,11 +6,7 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.errors import AicageError
 from aicage.paths import container_project_path
-from aicage.runtime.docker_args.support.resolver_types import (
-    MountRequest,
-    ResolvedArgs,
-    Resolver,
-)
+from aicage.runtime.docker_args.support.resolver_types import ResolvedArgs, Resolver
 from aicage.runtime.env_vars import AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
 
@@ -41,7 +37,7 @@ def resolve_docker_args(
     mount_requests = list(chain.from_iterable(item.mounts for item in resolved))
     env = list(chain.from_iterable(item.env for item in resolved))
     host_home = Path.home().resolve()
-    mounts = _map_mount_requests(mount_requests)
+    mounts = map_mount_requests(mount_requests)
     _validate_home_mount_safety(mounts, host_home)
     workspace_path = container_project_path(project_path)
     env.append(EnvVar(name=AICAGE_WORKSPACE, value=workspace_path.as_posix()))
@@ -68,12 +64,6 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
         docker_socket.resolve,
         shares.resolve,
     )
-
-
-def _map_mount_requests(
-    requests: list[MountRequest],
-) -> list[MountSpec]:
-    return map_mount_requests(requests)
 
 
 def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> None:

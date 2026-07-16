@@ -4,15 +4,23 @@ from aicage.docker.pull import run_pull
 from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
 from aicage.docker.reporting import OperationReporter
 from aicage.registry._logs import pull_log_path
-from aicage.registry._pull_decision import decide_pull
+from aicage.registry._pull_decision import ConfirmImageUpdate, decide_pull
 from aicage.registry._signature import resolve_verified_digest
 
 
-def pull_image(image_ref: str, reporter: OperationReporter | None = None) -> None:
+def pull_image(
+    image_ref: str,
+    reporter: OperationReporter | None = None,
+    confirm_update: ConfirmImageUpdate | None = None,
+) -> None:
     logger = get_logger()
     repository = f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}"
     local_digest = get_local_repo_digest_for_repo(image_ref, repository)
-    should_pull = decide_pull(image_ref)
+    should_pull = (
+        decide_pull(image_ref)
+        if confirm_update is None
+        else decide_pull(image_ref, confirm_update)
+    )
     if not should_pull:
         logger.info("Image pull not required for %s", image_ref)
         return

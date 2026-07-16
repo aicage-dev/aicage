@@ -4,6 +4,7 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
+from aicage.registry.ensure_image import ImageSetupPlan
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu.textual import _app
 from aicage.runtime.menu.textual._models import (
@@ -112,7 +113,11 @@ class OverviewAppTests(TestCase):
         finish_mock.assert_called_once_with(None)
 
     def test_accept_finishes_directly_when_setup_not_needed(self) -> None:
-        app = _build_app(setup_needed=lambda _selection: False)
+        app = _build_app(
+            setup_plan=lambda _selection: ImageSetupPlan(needs_setup=False),
+            setup_needed=lambda _selection, _confirm_update: False,
+            execute_setup=lambda _selection, _reporter, _confirm_update: None,
+        )
 
         with (
             mock.patch.object(
@@ -130,8 +135,9 @@ class OverviewAppTests(TestCase):
 
     def test_accept_shows_execution_screen_when_setup_needed(self) -> None:
         app = _build_app(
-            setup_needed=lambda _selection: True,
-            execute_setup=lambda _selection, _reporter: None,
+            setup_plan=lambda _selection: ImageSetupPlan(needs_setup=True),
+            setup_needed=lambda _selection, _confirm_update: True,
+            execute_setup=lambda _selection, _reporter, _confirm_update: None,
         )
 
         with (
@@ -506,6 +512,7 @@ class OverviewAppTests(TestCase):
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
+    setup_plan=None,
     setup_needed=None,
     execute_setup=None,
 ) -> _app.OverviewApp:
@@ -519,6 +526,7 @@ def _build_app(
                 ParsedArgs(False, "", "codex", [], False, [], None),
             ),
             _build_context(),
+            setup_plan,
             setup_needed,
             execute_setup,
         )
