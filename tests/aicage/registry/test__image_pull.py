@@ -71,7 +71,7 @@ class DockerInvocationTests(TestCase):
             ):
                 image_pull.pull_image(image_ref, reporter=reporter)
             remote_mock.assert_not_called()
-            verify_mock.assert_called_once_with(image_ref)
+            verify_mock.assert_called_once_with(image_ref, reporter=reporter)
             cleanup_mock.assert_called_once_with(
                 f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}",
                 "sha256:old",
@@ -147,7 +147,7 @@ class DockerInvocationTests(TestCase):
                 with self.assertRaises(DockerException):
                     image_pull.pull_image(image_ref)
             remote_mock.assert_not_called()
-            verify_mock.assert_called_once_with(image_ref)
+            verify_mock.assert_called_once_with(image_ref, reporter=None)
             cleanup_mock.assert_not_called()
 
     def test_pull_image_skips_when_up_to_date(self) -> None:

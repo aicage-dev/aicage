@@ -21,6 +21,7 @@ from aicage.docker.query import (
     get_local_repo_digest_for_repo,
     local_image_exists,
 )
+from aicage.docker.reporting import OperationReporter
 from aicage.registry._errors import RegistryError
 from aicage.registry._logs import pull_log_path
 from aicage.registry.digest.remote_digest import get_remote_digest
@@ -42,14 +43,17 @@ _OFFICIAL_IMAGE_ANNOTATIONS: dict[str, dict[str, str]] = {
 _REPOSITORY_PARTS_WITH_OWNER: int = 3
 
 
-def resolve_verified_digest(image_ref: str) -> str:
+def resolve_verified_digest(
+    image_ref: str,
+    reporter: OperationReporter | None = None,
+) -> str:
     logger = get_logger()
     digest = get_remote_digest(image_ref)
     if digest is None:
         raise RegistryError(f"Failed to resolve remote digest for {image_ref}.")
 
     digest_ref = _with_digest(image_ref, digest)
-    _ensure_cosign_image()
+    _ensure_cosign_image(reporter=reporter)
     logger.info("Verifying image signature for %s", digest_ref)
     result = _run_cosign_verify(digest_ref)
     output = _format_cosign_output(result)
@@ -166,7 +170,7 @@ def _format_cosign_output(result: subprocess.CompletedProcess[str]) -> str:
     return "\n".join(part for part in parts if part)
 
 
-def _ensure_cosign_image() -> None:
+def _ensure_cosign_image(reporter: OperationReporter | None = None) -> None:
     logger = get_logger()
     repository = _repository_for_image(COSIGN_IMAGE_REF)
     local_digest = get_local_repo_digest_for_repo(COSIGN_IMAGE_REF, repository)
@@ -175,7 +179,7 @@ def _ensure_cosign_image() -> None:
         return
     logger.info("Pulling cosign image %s for signature verification", COSIGN_IMAGE_REF)
     log_path = pull_log_path(COSIGN_IMAGE_REF)
-    run_pull(COSIGN_IMAGE_REF, log_path)
+    run_pull(COSIGN_IMAGE_REF, log_path, reporter=reporter)
     cleanup_old_digest(repository, local_digest, COSIGN_IMAGE_REF)
 
 

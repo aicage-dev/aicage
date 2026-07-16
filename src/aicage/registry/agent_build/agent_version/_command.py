@@ -6,6 +6,7 @@ from pathlib import Path
 
 from aicage._logging import get_logger
 from aicage.constants import HOST_VERSION_CHECK_TIMEOUT_SECONDS
+from aicage.docker.reporting import OperationReporter
 from aicage.docker.run import run_builder_version_check
 
 from ._images import ensure_version_check_image
@@ -20,9 +21,13 @@ class _CommandResult:
     error: str
 
 
-def run_version_check_image(image_ref: str, definition_dir: Path) -> _CommandResult:
+def run_version_check_image(
+    image_ref: str,
+    definition_dir: Path,
+    reporter: OperationReporter | None = None,
+) -> _CommandResult:
     try:
-        ensure_version_check_image(image_ref)
+        ensure_version_check_image(image_ref, reporter=reporter)
     except Exception as exc:
         get_logger().warning("Version check image preparation failed: %s", exc)
         return _CommandResult(success=False, output="", error=str(exc))

@@ -26,6 +26,6 @@ def pull_image(image_ref: str, reporter: OperationReporter | None = None) -> Non
             None,
             None,
         )
-    resolve_verified_digest(image_ref)
+    resolve_verified_digest(image_ref, reporter=reporter)
     run_pull(image_ref, log_path, reporter=reporter)
     cleanup_old_digest(repository, local_digest, image_ref)

@@ -121,12 +121,14 @@ def _get_agent_version(
     run_config: RunConfig,
     agent_metadata: AgentMetadata,
     definition_dir: Path,
+    reporter: OperationReporter | None = None,
 ) -> str:
     checker = AgentVersionChecker()
     return checker.get_version(
         run_config.agent,
         agent_metadata,
         definition_dir,
+        reporter=reporter,
     )
 
 

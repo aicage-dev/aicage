@@ -10,6 +10,7 @@ class AgentVersionImagesTests(TestCase):
     @staticmethod
     def test_ensure_version_check_image_pulls_when_local_missing() -> None:
         image_ref = VERSION_CHECK_IMAGE
+        reporter = mock.Mock()
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
             with (
@@ -35,11 +36,13 @@ class AgentVersionImagesTests(TestCase):
                     return_value=log_path,
                 ),
             ):
-                _images.ensure_version_check_image(image_ref=image_ref)
+                _images.ensure_version_check_image(
+                    image_ref=image_ref, reporter=reporter
+                )
         local_mock.assert_called_once()
         remote_mock.assert_not_called()
-        verify_mock.assert_called_once_with(image_ref)
-        pull_mock.assert_called_once_with(image_ref, log_path)
+        verify_mock.assert_called_once_with(image_ref, reporter=reporter)
+        pull_mock.assert_called_once_with(image_ref, log_path, reporter=reporter)
         cleanup_mock.assert_called_once_with(
             "ghcr.io/aicage/aicage-image-util",
             None,
@@ -49,6 +52,7 @@ class AgentVersionImagesTests(TestCase):
     @staticmethod
     def test_ensure_version_check_image_cleans_old_digest_after_pull() -> None:
         image_ref = VERSION_CHECK_IMAGE
+        reporter = mock.Mock()
         with tempfile.TemporaryDirectory() as tmp_dir:
             log_path = Path(tmp_dir) / "pull.log"
             with (
@@ -75,8 +79,10 @@ class AgentVersionImagesTests(TestCase):
                     return_value=log_path,
                 ),
             ):
-                _images.ensure_version_check_image(image_ref=image_ref)
-        pull_mock.assert_called_once_with(image_ref, log_path)
+                _images.ensure_version_check_image(
+                    image_ref=image_ref, reporter=reporter
+                )
+        pull_mock.assert_called_once_with(image_ref, log_path, reporter=reporter)
         cleanup_mock.assert_called_once_with(
             "ghcr.io/aicage/aicage-image-util",
             "sha256:old",

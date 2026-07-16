@@ -96,10 +96,11 @@ class AgentVersionCommandTests(TestCase):
     def test_run_version_check_image_returns_error_on_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             definition_dir = Path(tmp_dir)
+            reporter = mock.Mock()
             with (
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._command.ensure_version_check_image"
-                ),
+                ) as ensure_mock,
                 mock.patch(
                     "aicage.registry.agent_build.agent_version._command.run_builder_version_check",
                     return_value=CompletedProcess([], 1, stdout="", stderr="failed"),
@@ -108,9 +109,14 @@ class AgentVersionCommandTests(TestCase):
                 result = _command.run_version_check_image(
                     "ghcr.io/aicage/aicage-image-util:agent-version",
                     definition_dir,
+                    reporter=reporter,
                 )
             self.assertFalse(result.success)
             self.assertEqual("failed", result.error)
+            ensure_mock.assert_called_once_with(
+                "ghcr.io/aicage/aicage-image-util:agent-version",
+                reporter=reporter,
+            )
 
     def test_run_version_check_image_returns_error_on_prepare_exception(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

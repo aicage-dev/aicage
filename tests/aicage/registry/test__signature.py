@@ -127,6 +127,7 @@ class SignatureVerificationTests(TestCase):
     @staticmethod
     def test_resolve_verified_digest_pulls_cosign_image_when_missing() -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
+        reporter = mock.Mock()
         with (
             mock.patch(
                 "aicage.registry._signature.get_remote_digest",
@@ -157,10 +158,10 @@ class SignatureVerificationTests(TestCase):
             ),
             mock.patch("aicage.registry._signature._verify_manifest_annotations"),
         ):
-            _signature.resolve_verified_digest(image_ref)
+            _signature.resolve_verified_digest(image_ref, reporter=reporter)
         log_mock.assert_called_once_with(constants.COSIGN_IMAGE_REF)
         pull_mock.assert_called_once_with(
-            constants.COSIGN_IMAGE_REF, log_mock.return_value
+            constants.COSIGN_IMAGE_REF, log_mock.return_value, reporter=reporter
         )
         cleanup_mock.assert_called_once_with(
             "ghcr.io/sigstore/cosign/cosign",

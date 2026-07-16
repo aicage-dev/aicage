@@ -15,7 +15,7 @@ def resolve_base_digest(
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
     try:
-        digest_ref = resolve_verified_digest(base_image_ref)
+        digest_ref = resolve_verified_digest(base_image_ref, reporter=reporter)
     except RegistryError:
         if not local_digest:
             raise
