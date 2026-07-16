@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-07-16
+
+### Fixed
+
+- Fixed the published PyPI package for `1.4.x` releases so `aicage` installs and starts correctly again when
+  installed from PyPI.
+
+### Internal
+
+- Added a release smoke test that installs the built wheel and runs `aicage --version` before publishing to PyPI.
+
 ## [1.4.0] - 2026-07-16
 
 ### Added
