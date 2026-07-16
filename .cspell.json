@@ -44,6 +44,7 @@
     "conftest",
     "contextlib",
     "contextmanager",
+    "cooldown",
     "coredump",
     "creds",
     "dataclasses",
