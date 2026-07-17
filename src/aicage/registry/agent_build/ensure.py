@@ -154,7 +154,7 @@ def build_needed(
         if confirm_update is None:
             return True
         if not confirm_update(plan.confirm_update_image_ref):
-            return False
+            return plan.needs_setup
         return True
     return plan.needs_setup
 

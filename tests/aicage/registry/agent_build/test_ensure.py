@@ -306,3 +306,33 @@ class EnsureLocalImageTests(TestCase):
             plan.confirm_update_image_ref
             == "ghcr.io/aicage/aicage-image-base:ubuntu"
         )
+
+    @staticmethod
+    def test_build_needed_keeps_rebuild_requirement_when_user_declines_update() -> None:
+        run_config = build_run_config()
+
+        with mock.patch(
+            "aicage.registry.agent_build.ensure.setup_plan",
+            return_value=mock.Mock(
+                needs_setup=True,
+                confirm_update_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+            ),
+        ):
+            result = ensure_module.build_needed(run_config, lambda _image_ref: False)
+
+        assert result is True
+
+    @staticmethod
+    def test_build_needed_returns_true_when_user_accepts_update() -> None:
+        run_config = build_run_config()
+
+        with mock.patch(
+            "aicage.registry.agent_build.ensure.setup_plan",
+            return_value=mock.Mock(
+                needs_setup=False,
+                confirm_update_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+            ),
+        ):
+            result = ensure_module.build_needed(run_config, lambda _image_ref: True)
+
+        assert result is True

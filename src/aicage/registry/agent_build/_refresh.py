@@ -5,7 +5,7 @@ from aicage._logging import get_logger
 from aicage.docker.query import get_local_repo_digest_for_repo
 from aicage.docker.reporting import OperationReporter
 from aicage.registry._errors import RegistryError
-from aicage.registry._signature import resolve_verified_digest
+from aicage.registry.digest.remote_digest import get_remote_digest
 from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from ._digest import resolve_base_digest
@@ -50,18 +50,19 @@ def refresh_base_image_plan(
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
     local_ref = _local_base_image_ref(base_repository, local_digest)
-    try:
-        digest_ref = resolve_verified_digest(base_image_ref, reporter=reporter)
-    except RegistryError:
+    remote_digest = get_remote_digest(base_image_ref)
+    if remote_digest is None:
         if local_ref is None:
-            raise
+            raise RegistryError(
+                f"Failed to resolve remote digest for {base_image_ref}."
+            )
         logger.warning("Base image digest check failed; using local base image.")
         return BaseRefreshPlan(
             resolved_base_image_ref=local_ref,
             local_base_image_ref=local_ref,
         )
 
-    remote_digest = digest_ref.split("@", 1)[1]
+    digest_ref = f"{base_repository}@{remote_digest}"
     if remote_digest == local_digest:
         return BaseRefreshPlan(
             resolved_base_image_ref=digest_ref,
