@@ -15,7 +15,7 @@ LABEL org.opencontainers.image.title="aicage" \
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Agent installers ----------------------------------------------------------
+# Agent installers
 RUN --mount=type=bind,source=agents/,target=/tmp/agents,readonly \
     mkdir -p /tmp/agents-run/${AGENT} && \
     cp -R /tmp/agents/${AGENT}/. /tmp/agents-run/${AGENT}/ && \

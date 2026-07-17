@@ -79,7 +79,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
             "  --menu <mode>    Choose menu mode: textual (default), simple, or none.\n"
-            "  --docker         Mount /var/run/docker.sock into the container.\n"
+            "  --docker         Mount /run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
