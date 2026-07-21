@@ -1,5 +1,6 @@
 from textual import work
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.content import Content
 
 from aicage.config.resources import find_packaged_path
@@ -11,6 +12,7 @@ class ImageUpdateApp(App[bool | None]):
     CSS_PATH = find_packaged_path("textual/app.tcss")
     ENABLE_COMMAND_PALETTE = False
     INLINE_PADDING = 0
+    BINDINGS = [Binding("ctrl+c", "cancel", "Cancel")]
 
     def __init__(self, image_ref: str) -> None:
         super().__init__()
@@ -29,6 +31,9 @@ class ImageUpdateApp(App[bool | None]):
 
     def on_mount(self) -> None:
         self._show_image_update_confirmation()
+
+    def action_cancel(self) -> None:
+        self.exit(None)
 
     @work(exclusive=True)
     async def _show_image_update_confirmation(self) -> None:

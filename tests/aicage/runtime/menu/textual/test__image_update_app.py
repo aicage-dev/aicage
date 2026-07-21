@@ -32,6 +32,14 @@ class ImageUpdateAppTests(TestCase):
 
         show_mock.assert_called_once_with()
 
+    def test_action_cancel_exits_none(self) -> None:
+        app = _image_update_app.ImageUpdateApp("repo:tag")
+
+        with mock.patch.object(app, "exit") as exit_mock:
+            app.action_cancel()
+
+        exit_mock.assert_called_once_with(None)
+
     def test_show_image_update_confirmation_exits_bool_result(self) -> None:
         app = _image_update_app.ImageUpdateApp("repo:tag")
 
