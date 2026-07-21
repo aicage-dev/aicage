@@ -2,7 +2,7 @@ from unittest import TestCase, mock
 
 from aicage.runtime.menu.textual._models import BuiltInShareValue, CustomShareValue
 from aicage.runtime.menu.textual._state import OverviewState
-from aicage.runtime.menu.textual.overview import _shares
+from aicage.runtime.menu.textual.views.overview import _shares
 
 
 class SharesOverviewTests(TestCase):

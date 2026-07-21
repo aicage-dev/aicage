@@ -3,10 +3,10 @@ from typing import Any
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, SelectionList, Static
 
-from .._ids import built_in_identity
-from .._models import BuiltInShareValue, CustomShareValue
-from .._mount_display import mount_selection_rows, overview_mount_list_items
-from .._state import OverviewState
+from ..._ids import built_in_identity
+from ..._models import BuiltInShareValue, CustomShareValue
+from ..._mount_display import mount_selection_rows, overview_mount_list_items
+from ..._state import OverviewState
 
 
 def share_widgets(state: OverviewState) -> list[Horizontal | SelectionList]:

@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.textual.screens import execution_screen
+from aicage.runtime.menu.textual.views import execution_screen
 
 
 class ExecutionScreenTests(TestCase):
@@ -198,7 +198,7 @@ class ExecutionScreenTests(TestCase):
                 type(screen), "app", new_callable=mock.PropertyMock, return_value=app
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.screens.execution_screen._clipboard.copy_to_clipboard"
+                "aicage.runtime.menu.textual.views.execution_screen._clipboard.copy_to_clipboard"
             ) as copy_mock,
         ):
             screen.on_button_pressed(event)

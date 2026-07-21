@@ -1,6 +1,6 @@
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.textual.screens import _screen_support as screen_support
+from aicage.runtime.menu.textual.views import _screen_support as screen_support
 
 
 class ScreenSupportTests(TestCase):

@@ -5,7 +5,7 @@ from aicage.runtime.menu.textual._models import (
     DockerOptionValue,
     HostAccessConfirmValues,
 )
-from aicage.runtime.menu.textual.screens import host_access_confirm_screen
+from aicage.runtime.menu.textual.views import host_access_confirm_screen
 
 
 class BuiltInShareConfirmScreenTests(TestCase):

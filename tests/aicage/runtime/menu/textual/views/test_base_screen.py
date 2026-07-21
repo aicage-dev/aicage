@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 from textual.widgets._data_table import RowKey
 
 from aicage.config.base.models import BaseMetadata
-from aicage.runtime.menu.textual.screens import base_screen
+from aicage.runtime.menu.textual.views import base_screen
 
 
 class BaseScreenTests(TestCase):

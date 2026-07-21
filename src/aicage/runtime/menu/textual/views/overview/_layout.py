@@ -1,6 +1,6 @@
 from rich.cells import cell_len
 
-from .._models import BuiltInShareValue, CustomShareValue
+from ..._models import BuiltInShareValue, CustomShareValue
 
 
 def shell_width(

@@ -13,7 +13,7 @@ from aicage.runtime.menu.textual._models import (
     HostAccessConfirmValues,
     ShareEditorResult,
 )
-from aicage.runtime.menu.textual.overview.view import Overview
+from aicage.runtime.menu.textual.views.overview.view import Overview
 
 from ._test_support import _build_context, _build_draft
 
