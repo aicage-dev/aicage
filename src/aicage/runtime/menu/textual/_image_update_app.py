@@ -19,8 +19,5 @@ class ImageUpdateApp(TextualApp[bool | None]):
 
     @work(exclusive=True)
     async def _show_image_update_confirmation(self) -> None:
-        await self._show_image_update_confirmation_impl()
-
-    async def _show_image_update_confirmation_impl(self) -> None:
         result = await self.push_screen_wait(ImageUpdateConfirmScreen(self._image_ref))
         self.exit(bool(result))

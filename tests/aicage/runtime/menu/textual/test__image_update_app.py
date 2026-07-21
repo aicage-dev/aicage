@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, cast
 from unittest import TestCase, mock
 
 from aicage.runtime.menu.textual import _image_update_app
@@ -49,6 +50,6 @@ class ImageUpdateAppTests(TestCase):
             ),
             mock.patch.object(app, "exit") as exit_mock,
         ):
-            asyncio.run(app._show_image_update_confirmation_impl())
+            asyncio.run(cast(Any, app._show_image_update_confirmation).__wrapped__(app))
 
         exit_mock.assert_called_once_with(True)

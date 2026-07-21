@@ -72,9 +72,6 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
 
     @work(exclusive=True)
     async def _accept(self) -> None:
-        await self._accept_impl()
-
-    async def _accept_impl(self) -> None:
         accepted = await self._confirm_undecided_built_in_shares()
         if not accepted:
             return
@@ -153,9 +150,6 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
 
     @work(exclusive=True)
     async def _add_share(self) -> None:
-        await self._add_share_impl()
-
-    async def _add_share_impl(self) -> None:
         result = await self._push_view(ShareEditorScreen())
         if result is None or result.share is None:
             return
@@ -166,9 +160,6 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
 
     @work(exclusive=True)
     async def _edit_custom_share(self, current_value: str) -> None:
-        await self._edit_custom_share_impl(current_value)
-
-    async def _edit_custom_share_impl(self, current_value: str) -> None:
         result = await self._push_view(
             ShareEditorScreen(current_value, allow_remove=True)
         )
