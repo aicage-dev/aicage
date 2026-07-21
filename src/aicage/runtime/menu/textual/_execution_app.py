@@ -40,7 +40,10 @@ class ExecutionApp(App[BaseException | None]):
         self._run_execution()
 
     def action_cancel(self) -> None:
-        _interrupt_process()
+        try:
+            os.killpg(os.getpgrp(), signal.SIGINT)
+        except (OSError, PermissionError):
+            signal.raise_signal(signal.SIGINT)
 
     @work(thread=True, exclusive=True)
     def _run_execution(self) -> None:
@@ -51,10 +54,3 @@ class ExecutionApp(App[BaseException | None]):
         except BaseException as exc:
             error = exc
         self.call_from_thread(self.exit, error)
-
-
-def _interrupt_process() -> None:
-    try:
-        os.killpg(os.getpgrp(), signal.SIGINT)
-    except (OSError, PermissionError):
-        signal.raise_signal(signal.SIGINT)

@@ -8,7 +8,6 @@ from textual.content import Content
 from textual.screen import Screen
 
 from aicage.config.context import ConfigContext
-from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.resources import find_packaged_path
 from aicage.config.run_config_draft import RunConfigDraft
@@ -147,7 +146,10 @@ class ConfigApp(App[_ConfigResult | None]):
     async def _edit_extensions(self) -> None:
         selected = await self._push_view(
             ExtensionsScreen(
-                _extension_options(self._config_context),
+                sorted(
+                    self._config_context.extensions.values(),
+                    key=lambda item: item.extension_id,
+                ),
                 list(self._draft.agent_cfg.extensions),
             )
         )
@@ -252,7 +254,3 @@ class ConfigApp(App[_ConfigResult | None]):
             custom_shares=[CustomShareValue(share) for share in self._draft.agent_cfg.shares],
             docker_socket_enabled=bool(self._draft.agent_cfg.mounts.docker),
         )
-
-
-def _extension_options(context: ConfigContext) -> list[ExtensionMetadata]:
-    return sorted(context.extensions.values(), key=lambda item: item.extension_id)

@@ -33,15 +33,15 @@ class ExecutionAppTests(TestCase):
 
         run_mock.assert_called_once_with()
 
-    def test_action_cancel_calls_interrupt_process(self) -> None:
+    def test_action_cancel_interrupts_process_group(self) -> None:
         app = _execution_app.ExecutionApp(mock.Mock())
 
         with mock.patch(
-            "aicage.runtime.menu.textual._execution_app._interrupt_process"
-        ) as interrupt_mock:
+            "aicage.runtime.menu.textual._execution_app.os.killpg"
+        ) as killpg_mock:
             app.action_cancel()
 
-        interrupt_mock.assert_called_once_with()
+        killpg_mock.assert_called_once()
 
     def test_run_execution_exits_with_error(self) -> None:
         operation = mock.Mock(side_effect=RuntimeError("boom"))
