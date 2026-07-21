@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path, PurePosixPath
+from types import SimpleNamespace
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
@@ -11,6 +12,7 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.config.runtime_config import RunConfig, load_run_config
 from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
+from aicage.runtime.menu.interaction import create_runtime_interaction
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 
@@ -52,7 +54,6 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.resolve_docker_args",
                     return_value=(mounts, env),
                 ),
-                mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                 mock.patch(
                     "aicage.config.runtime_config.load_extensions", return_value={}
                 ),
@@ -64,17 +65,8 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.load_agents",
                     return_value=self._get_agents(),
                 ),
-                mock.patch(
-                    "aicage.config.runtime_config.select_agent_image",
-                    return_value=ImageSelection(
-                        image_ref="ref",
-                        base="ubuntu",
-                        extensions=[],
-                        base_image_ref="ref",
-                    ),
-                ),
             ):
-                run_config = load_run_config("codex")
+                run_config = load_run_config("codex", self._interaction())
 
         self.assertIsInstance(run_config, RunConfig)
         self.assertEqual("--project", run_config.project_docker_args)
@@ -118,7 +110,6 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.resolve_docker_args",
                     return_value=([], []),
                 ),
-                mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                 mock.patch(
                     "aicage.config.runtime_config.load_extensions", return_value={}
                 ),
@@ -131,7 +122,7 @@ class RuntimeConfigTests(TestCase):
                     return_value=self._get_agents(),
                 ),
                 mock.patch(
-                    "aicage.config.runtime_config.select_agent_image",
+                    "aicage.runtime.menu.interaction.select_agent_image",
                     return_value=ImageSelection(
                         image_ref="ref",
                         base="ubuntu",
@@ -140,11 +131,16 @@ class RuntimeConfigTests(TestCase):
                     ),
                 ),
                 mock.patch(
-                    "aicage.config.runtime_config.prompt_persist_docker_args",
+                    "aicage.runtime.menu.interaction.prompt_persist_docker_args",
                     return_value=True,
                 ),
+                mock.patch("aicage.runtime.menu.interaction.apply_mount_preferences"),
             ):
-                run_config = load_run_config("codex", parsed)
+                run_config = load_run_config(
+                    "codex",
+                    create_runtime_interaction("none"),
+                    parsed,
+                )
 
         self.assertEqual("--existing", run_config.project_docker_args)
 
@@ -172,7 +168,6 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.resolve_docker_args",
                     return_value=([], []),
                 ),
-                mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                 mock.patch(
                     "aicage.config.runtime_config.load_extensions", return_value={}
                 ),
@@ -184,17 +179,8 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.load_agents",
                     return_value=self._get_agents(),
                 ),
-                mock.patch(
-                    "aicage.config.runtime_config.select_agent_image",
-                    return_value=ImageSelection(
-                        image_ref="ref",
-                        base="ubuntu",
-                        extensions=[],
-                        base_image_ref="ref",
-                    ),
-                ),
             ):
-                run_config = load_run_config("codex")
+                run_config = load_run_config("codex", self._interaction())
 
         self.assertEqual("ubuntu", run_config.selection.base)
 
@@ -235,7 +221,6 @@ class RuntimeConfigTests(TestCase):
                         "aicage.config.runtime_config.resolve_docker_args",
                         return_value=([], []),
                     ),
-                    mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                     mock.patch(
                         "aicage.config.runtime_config.load_extensions", return_value={}
                     ),
@@ -248,7 +233,7 @@ class RuntimeConfigTests(TestCase):
                         return_value=self._get_agents(),
                     ),
                     mock.patch(
-                        "aicage.config.runtime_config.select_agent_image",
+                        "aicage.runtime.menu.interaction.select_agent_image",
                         return_value=ImageSelection(
                             image_ref="ref",
                             base="ubuntu",
@@ -257,11 +242,18 @@ class RuntimeConfigTests(TestCase):
                         ),
                     ),
                     mock.patch(
-                        "aicage.config.runtime_config.prompt_persist_shares",
+                        "aicage.runtime.menu.interaction.prompt_persist_shares",
                         return_value=True,
                     ),
+                    mock.patch(
+                        "aicage.runtime.menu.interaction.apply_mount_preferences"
+                    ),
                 ):
-                    load_run_config("codex", parsed)
+                    load_run_config(
+                        "codex",
+                        create_runtime_interaction("none"),
+                        parsed,
+                    )
 
                 updated_cfg = store.load_project(project_path)
 
@@ -316,7 +308,6 @@ class RuntimeConfigTests(TestCase):
                         "aicage.config.runtime_config.resolve_docker_args",
                         return_value=([], []),
                     ),
-                    mock.patch("aicage.config.runtime_config.apply_mount_preferences"),
                     mock.patch(
                         "aicage.config.runtime_config.load_extensions", return_value={}
                     ),
@@ -329,7 +320,7 @@ class RuntimeConfigTests(TestCase):
                         return_value=self._get_agents(),
                     ),
                     mock.patch(
-                        "aicage.config.runtime_config.select_agent_image",
+                        "aicage.runtime.menu.interaction.select_agent_image",
                         return_value=ImageSelection(
                             image_ref="ref",
                             base="ubuntu",
@@ -338,11 +329,18 @@ class RuntimeConfigTests(TestCase):
                         ),
                     ),
                     mock.patch(
-                        "aicage.config.runtime_config.prompt_persist_shares",
+                        "aicage.runtime.menu.interaction.prompt_persist_shares",
                         prompt_mock,
                     ),
+                    mock.patch(
+                        "aicage.runtime.menu.interaction.apply_mount_preferences"
+                    ),
                 ):
-                    load_run_config("codex", parsed)
+                    load_run_config(
+                        "codex",
+                        create_runtime_interaction("none"),
+                        parsed,
+                    )
 
                 updated_cfg = store.load_project(project_path)
 
@@ -388,21 +386,21 @@ class RuntimeConfigTests(TestCase):
                 config_action=None,
             )
 
-            def overview_side_effect(
+            def interaction_side_effect(
                 draft: RunConfigDraft,
                 _context: object,
-                **_kwargs: object,
-            ) -> tuple[ImageSelection, str]:
+                _agent: str,
+            ) -> object:
                 draft.prefill_for_overview()
                 draft.consume_overview_prefill()
-                return (
-                    ImageSelection(
+                return SimpleNamespace(
+                    selection=ImageSelection(
                         image_ref="ref",
                         base="ubuntu",
                         extensions=[],
                         base_image_ref="ref",
                     ),
-                    "--new",
+                    project_docker_args="--new",
                 )
 
             with (
@@ -427,21 +425,19 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.load_agents",
                     return_value=self._get_agents(),
                 ),
-                mock.patch(
-                    "aicage.config.runtime_config.edit_draft_with_textual_app",
-                    side_effect=overview_side_effect,
-                ),
             ):
-                run_config = load_run_config("codex", parsed)
+                run_config = load_run_config(
+                    "codex",
+                    self._interaction(side_effect=interaction_side_effect),
+                    parsed,
+                )
 
         self.assertEqual("--new", run_config.project_docker_args)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual([], parsed.shares)
         self.assertFalse(parsed.docker_socket)
 
-    def test_load_run_config_applies_mount_preferences_before_runtime_resolution(
-        self,
-    ) -> None:
+    def test_load_run_config_calls_interaction_before_runtime_resolution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project_path = Path(tmp_dir) / "project"
             project_path.mkdir()
@@ -459,7 +455,20 @@ class RuntimeConfigTests(TestCase):
                 config_action=None,
                 menu="none",
             )
-            apply_mount_preferences_mock = mock.Mock()
+            call_order: list[str] = []
+
+            def configure_run_side_effect(*_args: object, **_kwargs: object) -> object:
+                call_order.append("configure")
+                return self._selection_result()
+
+            def resolve_docker_args_side_effect(
+                *_args: object, **_kwargs: object
+            ) -> tuple[list[object], list[object]]:
+                call_order.append("resolve")
+                return [], []
+
+            interaction = self._interaction()
+            interaction.configure_run.side_effect = configure_run_side_effect
             with (
                 mock.patch(
                     "aicage.config.runtime_config.SettingsStore", new=store_factory
@@ -469,7 +478,7 @@ class RuntimeConfigTests(TestCase):
                 ),
                 mock.patch(
                     "aicage.config.runtime_config.resolve_docker_args",
-                    return_value=([], []),
+                    side_effect=resolve_docker_args_side_effect,
                 ),
                 mock.patch(
                     "aicage.config.runtime_config.load_extensions", return_value={}
@@ -482,25 +491,14 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.load_agents",
                     return_value=self._get_agents(),
                 ),
-                mock.patch(
-                    "aicage.config.runtime_config.select_agent_image",
-                    return_value=ImageSelection(
-                        image_ref="ref",
-                        base="ubuntu",
-                        extensions=[],
-                        base_image_ref="ref",
-                    ),
-                ),
-                mock.patch(
-                    "aicage.config.runtime_config.apply_mount_preferences",
-                    apply_mount_preferences_mock,
-                ),
             ):
-                load_run_config("codex", parsed)
+                load_run_config("codex", interaction, parsed)
 
-        apply_mount_preferences_mock.assert_called_once()
+        self.assertEqual(["configure", "resolve"], call_order)
 
-    def test_load_run_config_rejects_unknown_config_agent_before_overview(self) -> None:
+    def test_load_run_config_rejects_unknown_config_agent_before_interaction(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project_path = Path(tmp_dir) / "project"
             project_path.mkdir()
@@ -518,6 +516,7 @@ class RuntimeConfigTests(TestCase):
                 config_action=None,
                 menu="textual",
             )
+            interaction = self._interaction()
             with (
                 mock.patch(
                     "aicage.config.runtime_config.SettingsStore", new=store_factory
@@ -536,12 +535,9 @@ class RuntimeConfigTests(TestCase):
                     "aicage.config.runtime_config.load_agents",
                     return_value=self._get_agents(),
                 ),
-                mock.patch(
-                    "aicage.config.runtime_config.edit_draft_with_textual_app"
-                ) as overview_mock,
             ):
                 with self.assertRaises(RegistryError) as raised:
-                    load_run_config("config", parsed)
+                    load_run_config("config", interaction, parsed)
 
         self.assertEqual(
             (
@@ -550,7 +546,30 @@ class RuntimeConfigTests(TestCase):
             ),
             str(raised.exception),
         )
-        overview_mock.assert_not_called()
+        interaction.configure_run.assert_not_called()
+
+    @staticmethod
+    def _selection_result() -> object:
+        return SimpleNamespace(
+            selection=ImageSelection(
+                image_ref="ref",
+                base="ubuntu",
+                extensions=[],
+                base_image_ref="ref",
+            ),
+            project_docker_args="--project",
+        )
+
+    @classmethod
+    def _interaction(
+        cls,
+        side_effect: object | None = None,
+    ) -> mock.Mock:
+        interaction = mock.Mock()
+        interaction.configure_run.return_value = cls._selection_result()
+        if side_effect is not None:
+            interaction.configure_run.side_effect = side_effect
+        return interaction
 
     @staticmethod
     def _get_bases() -> dict[str, BaseMetadata]:

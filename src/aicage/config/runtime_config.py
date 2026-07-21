@@ -1,6 +1,4 @@
-from collections.abc import Callable
 from pathlib import Path
-from typing import TypeAlias
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.agent.loader import load_agents
@@ -10,28 +8,17 @@ from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import load_extensions
 from aicage.config.run_config import RunConfig
-from aicage.config.run_config_draft import RunConfigDraft, create_run_config_draft
-from aicage.docker.reporting import OperationReporter
-from aicage.registry.ensure_image import (
-    ensure_image,
-    image_setup_needed,
-    image_setup_plan,
-)
+from aicage.config.run_config_draft import create_run_config_draft
 from aicage.registry.errors import RegistryError
-from aicage.registry.image_selection.models import ImageSelection
-from aicage.registry.image_selection.selection import select_agent_image
-from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
-from aicage.runtime.menu.prompts.confirm import (
-    prompt_persist_docker_args,
-    prompt_persist_shares,
-)
-from aicage.runtime.menu.textual.entry import edit_draft_with_textual_app
-
-_ConfirmImageUpdate: TypeAlias = Callable[[str], bool]
+from aicage.runtime.menu.interaction import RuntimeInteraction
 
 
-def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
+def load_run_config(
+    agent: str,
+    interaction: RuntimeInteraction,
+    parsed: ParsedArgs | None = None,
+) -> RunConfig:
     store = SettingsStore()
     project_path = Path.cwd().resolve()
     bases = load_bases()
@@ -47,30 +34,7 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
         bases=bases,
         extensions=load_extensions(),
     )
-    if parsed is not None and parsed.menu == "textual":
-        selection, project_docker_args = edit_draft_with_textual_app(
-            draft,
-            context,
-            setup_plan=lambda selection: image_setup_plan(
-                _setup_run_config(project_path, agent, context, selection)
-            ),
-            setup_needed=lambda selection, confirm_update: _image_setup_needed(
-                _setup_run_config(project_path, agent, context, selection),
-                confirm_update,
-            ),
-            execute_setup=lambda selection, reporter, confirm_update: _execute_image_setup(
-                _setup_run_config(project_path, agent, context, selection),
-                reporter,
-                confirm_update,
-            ),
-        )
-    else:
-        selection = select_agent_image(agent, context)
-        draft.apply_selection(selection)
-        _persist_docker_args(draft)
-        _persist_shares(draft)
-        apply_mount_preferences(context, agent, parsed)
-        project_docker_args = draft.existing_project_docker_args
+    result = interaction.configure_run(draft, context, agent)
     mounts, env = resolve_docker_args(context, agent, parsed)
     store.save_project(project_path, draft.project_cfg)
 
@@ -78,8 +42,8 @@ def load_run_config(agent: str, parsed: ParsedArgs | None = None) -> RunConfig:
         project_path=project_path,
         agent=agent,
         context=context,
-        selection=selection,
-        project_docker_args=project_docker_args,
+        selection=result.selection,
+        project_docker_args=result.project_docker_args,
         mounts=mounts,
         env=env,
     )
@@ -106,56 +70,3 @@ def _unknown_agent_message(
         return message
     agent_list = ", ".join(sorted(agents))
     return f"{message} Available agents: {agent_list}."
-
-
-def _persist_docker_args(draft: RunConfigDraft) -> None:
-    if draft.parsed is None or not draft.parsed.docker_args:
-        return
-    existing = draft.agent_cfg.docker_args
-    if existing == draft.parsed.docker_args:
-        return
-    draft.persist_docker_args(
-        prompt_persist_docker_args(draft.parsed.docker_args, existing),
-    )
-
-
-def _persist_shares(draft: RunConfigDraft) -> None:
-    if draft.parsed is None:
-        return
-    existing_shares = list(draft.agent_cfg.shares)
-    new_shares = draft.persist_shares(False)
-    if not new_shares:
-        return
-    draft.persist_shares(prompt_persist_shares(new_shares, existing_shares))
-
-
-def _execute_image_setup(
-    run_config: RunConfig,
-    reporter: OperationReporter,
-    confirm_update: _ConfirmImageUpdate,
-) -> None:
-    ensure_image(run_config, reporter=reporter, confirm_update=confirm_update)
-
-
-def _image_setup_needed(
-    run_config: RunConfig,
-    confirm_update: _ConfirmImageUpdate,
-) -> bool:
-    return image_setup_needed(run_config, confirm_update)
-
-
-def _setup_run_config(
-    project_path: Path,
-    agent: str,
-    context: ConfigContext,
-    selection: ImageSelection,
-) -> RunConfig:
-    return RunConfig(
-        project_path=project_path,
-        agent=agent,
-        context=context,
-        selection=selection,
-        project_docker_args="",
-        mounts=[],
-        env=[],
-    )
