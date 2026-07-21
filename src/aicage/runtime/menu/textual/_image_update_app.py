@@ -11,8 +11,7 @@ class ImageUpdateApp(TextualApp[bool | None]):
         self._image_ref = image_ref
 
     def compose(self) -> ComposeResult:
-        if False:
-            yield
+        yield from ()
 
     def on_mount(self) -> None:
         self._show_image_update_confirmation()
