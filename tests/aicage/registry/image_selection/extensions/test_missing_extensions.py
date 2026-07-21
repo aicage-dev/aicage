@@ -32,16 +32,19 @@ class MissingExtensionsTests(TestCase):
             context = self._context(tmp_dir, agent_cfg, extensions={"extra": extension})
             save_project_mock = context.store.save_project
 
+            selection_interaction = mock.Mock()
             with mock.patch(
-                "aicage.registry.image_selection.extensions.missing_extensions.prompt_for_missing_extensions"
-            ) as prompt_mock:
+                "aicage.registry.image_selection.extensions.missing_extensions._find_projects_using_image",
+                return_value=[],
+            ):
                 result = ensure_extensions_exist(
                     agent="codex",
                     context=context,
+                    selection_interaction=selection_interaction,
                 )
 
             self.assertFalse(result)
-            prompt_mock.assert_not_called()
+            selection_interaction.choose_missing_extensions.assert_not_called()
             assert isinstance(save_project_mock, Mock)
             save_project_mock.assert_not_called()
 
@@ -53,14 +56,13 @@ class MissingExtensionsTests(TestCase):
             context = self._context(tmp_dir, agent_cfg)
             save_project_mock = context.store.save_project
 
-            with mock.patch(
-                "aicage.registry.image_selection.extensions.missing_extensions.prompt_for_missing_extensions",
-                return_value="fresh",
-            ):
-                result = ensure_extensions_exist(
-                    agent="codex",
-                    context=context,
-                )
+            selection_interaction = mock.Mock()
+            selection_interaction.choose_missing_extensions.return_value = "fresh"
+            result = ensure_extensions_exist(
+                agent="codex",
+                context=context,
+                selection_interaction=selection_interaction,
+            )
 
             self.assertTrue(result)
             self.assertNotIn("codex", context.project_cfg.agents)
@@ -74,15 +76,14 @@ class MissingExtensionsTests(TestCase):
             )
             context = self._context(tmp_dir, agent_cfg)
 
-            with mock.patch(
-                "aicage.registry.image_selection.extensions.missing_extensions.prompt_for_missing_extensions",
-                return_value="exit",
-            ):
-                with self.assertRaises(RegistryError):
-                    ensure_extensions_exist(
-                        agent="codex",
-                        context=context,
-                    )
+            selection_interaction = mock.Mock()
+            selection_interaction.choose_missing_extensions.return_value = "exit"
+            with self.assertRaises(RegistryError):
+                ensure_extensions_exist(
+                    agent="codex",
+                    context=context,
+                    selection_interaction=selection_interaction,
+                )
 
     def test_ensure_extensions_exist_raises_on_invalid_choice(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -91,15 +92,14 @@ class MissingExtensionsTests(TestCase):
             )
             context = self._context(tmp_dir, agent_cfg)
 
-            with mock.patch(
-                "aicage.registry.image_selection.extensions.missing_extensions.prompt_for_missing_extensions",
-                return_value="later",
-            ):
-                with self.assertRaises(RegistryError):
-                    ensure_extensions_exist(
-                        agent="codex",
-                        context=context,
-                    )
+            selection_interaction = mock.Mock()
+            selection_interaction.choose_missing_extensions.return_value = "later"
+            with self.assertRaises(RegistryError):
+                ensure_extensions_exist(
+                    agent="codex",
+                    context=context,
+                    selection_interaction=selection_interaction,
+                )
 
     def test_find_projects_using_image_matches(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

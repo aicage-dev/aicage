@@ -33,11 +33,7 @@ class ExtensionHandlerTests(TestCase):
                 context=context,
             )
             save_project_mock = context.store.save_project
-            with mock.patch(
-                "aicage.registry.image_selection.extensions.handler.prompt_for_extensions",
-                return_value=[],
-            ):
-                result = handle_extension_selection(selection)
+            result = handle_extension_selection(selection, _selection_interaction([]))
 
             self.assertEqual(
                 f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu", result.image_ref
@@ -62,18 +58,16 @@ class ExtensionHandlerTests(TestCase):
             save_project_mock = context.store.save_project
             with (
                 mock.patch(
-                    "aicage.registry.image_selection.extensions.handler.prompt_for_extensions",
-                    return_value=["extra"],
-                ),
-                mock.patch(
-                    "aicage.registry.image_selection.extensions.handler.prompt_for_image_ref",
-                    return_value=f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom",
-                ),
-                mock.patch(
                     "aicage.registry.image_selection.extensions.handler.write_extended_image_config"
                 ) as write_mock,
             ):
-                result = handle_extension_selection(selection)
+                result = handle_extension_selection(
+                    selection,
+                    _selection_interaction(
+                        ["extra"],
+                        f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom",
+                    ),
+                )
 
             self.assertEqual(f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom", result.image_ref)
             self.assertEqual(["extra"], agent_cfg.extensions)
@@ -125,3 +119,13 @@ class ExtensionHandlerTests(TestCase):
             bases=bases,
             extensions={},
         )
+
+
+def _selection_interaction(
+    extensions: list[str],
+    image_ref: str = "",
+) -> mock.Mock:
+    interaction = mock.Mock()
+    interaction.choose_extensions.return_value = extensions
+    interaction.choose_image_ref.return_value = image_ref
+    return interaction

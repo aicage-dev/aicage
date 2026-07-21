@@ -4,10 +4,10 @@ from aicage.config.project_config import AgentConfig
 from aicage.registry._errors import RegistryError
 from aicage.runtime.menu.default_base import resolve_default_base
 
-from ...runtime.menu.prompts.base import BaseSelectionRequest, prompt_for_base
 from ._metadata import available_bases, require_agent_metadata
 from .extensions.context import ExtensionSelectionContext
 from .extensions.handler import handle_extension_selection
+from .interaction import BaseChoiceRequest, SelectionInteraction
 from .models import ImageSelection
 
 
@@ -15,6 +15,7 @@ def fresh_selection(
     agent: str,
     context: ConfigContext,
     extensions: dict[str, ExtensionMetadata],
+    selection_interaction: SelectionInteraction,
 ) -> ImageSelection:
     agent_metadata = require_agent_metadata(agent, context)
     bases = available_bases(agent, context)
@@ -23,8 +24,8 @@ def fresh_selection(
             f"No base images found for agent '{agent}' in config context."
         )
 
-    base = prompt_for_base(
-        BaseSelectionRequest(
+    base = selection_interaction.choose_base(
+        BaseChoiceRequest(
             agent=agent,
             context=context,
             agent_metadata=agent_metadata,
@@ -41,5 +42,6 @@ def fresh_selection(
             agent_metadata=agent_metadata,
             extensions=extensions,
             context=context,
-        )
+        ),
+        selection_interaction,
     )

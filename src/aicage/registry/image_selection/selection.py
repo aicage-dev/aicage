@@ -7,10 +7,15 @@ from .extensions.context import ExtensionSelectionContext
 from .extensions.handler import handle_extension_selection
 from .extensions.missing_extensions import ensure_extensions_exist
 from .extensions.refs import base_image_ref
+from .interaction import SelectionInteraction
 from .models import ImageSelection
 
 
-def select_agent_image(agent: str, context: ConfigContext) -> ImageSelection:
+def select_agent_image(
+    agent: str,
+    context: ConfigContext,
+    selection_interaction: SelectionInteraction,
+) -> ImageSelection:
     extensions = context.extensions
     agent_cfg = context.project_cfg.agents.setdefault(agent, AgentConfig())
     agent_metadata = require_agent_metadata(agent, context)
@@ -18,15 +23,21 @@ def select_agent_image(agent: str, context: ConfigContext) -> ImageSelection:
 
     if agent_cfg.image_ref:
         if base is None:
-            return fresh_selection(agent, context, extensions)
+            return fresh_selection(agent, context, extensions, selection_interaction)
         validate_base(agent, base, context)
         if agent_cfg.extensions:
             reset = ensure_extensions_exist(
                 context=context,
                 agent=agent,
+                selection_interaction=selection_interaction,
             )
             if reset:
-                return fresh_selection(agent, context, extensions)
+                return fresh_selection(
+                    agent,
+                    context,
+                    extensions,
+                    selection_interaction,
+                )
         return ImageSelection(
             image_ref=agent_cfg.image_ref,
             base=base,
@@ -35,7 +46,7 @@ def select_agent_image(agent: str, context: ConfigContext) -> ImageSelection:
         )
 
     if not base:
-        return fresh_selection(agent, context, extensions)
+        return fresh_selection(agent, context, extensions, selection_interaction)
 
     validate_base(agent, base, context)
     return handle_extension_selection(
@@ -46,5 +57,6 @@ def select_agent_image(agent: str, context: ConfigContext) -> ImageSelection:
             agent_metadata=agent_metadata,
             extensions=extensions,
             context=context,
-        )
+        ),
+        selection_interaction,
     )

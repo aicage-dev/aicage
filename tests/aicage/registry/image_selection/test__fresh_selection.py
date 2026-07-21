@@ -16,10 +16,6 @@ class ImageSelectionFreshTests(TestCase):
         )
         with (
             mock.patch(
-                "aicage.registry.image_selection._fresh_selection.prompt_for_base",
-                return_value="ubuntu",
-            ),
-            mock.patch(
                 "aicage.registry.image_selection._fresh_selection.handle_extension_selection",
                 return_value=ImageSelection(
                     image_ref="aicage:codex-ubuntu",
@@ -33,6 +29,7 @@ class ImageSelectionFreshTests(TestCase):
                 agent="codex",
                 context=context,
                 extensions={},
+                selection_interaction=_selection_interaction(),
             )
         self.assertEqual("aicage:codex-ubuntu", selection.image_ref)
         handle_mock.assert_called_once()
@@ -50,4 +47,11 @@ class ImageSelectionFreshTests(TestCase):
                     agent="codex",
                     context=context,
                     extensions={},
+                    selection_interaction=mock.Mock(),
                 )
+
+
+def _selection_interaction() -> mock.Mock:
+    interaction = mock.Mock()
+    interaction.choose_base.return_value = "ubuntu"
+    return interaction

@@ -22,7 +22,6 @@ from aicage.registry.extension_build.ensure import (
     build_needed as extension_build_needed,
 )
 from aicage.registry.extension_build.ensure import ensure as ensure_extended_image
-from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 
 @dataclass(frozen=True)
@@ -31,12 +30,16 @@ class ImageSetupPlan:
     confirm_update_image_ref: str | None = None
 
 
+def _confirm_update_pull(_: str) -> bool:
+    return True
+
+
 def ensure_image(
     run_config: RunConfig,
     reporter: OperationReporter | None = None,
     confirm_update: ConfirmImageUpdate | None = None,
 ) -> None:
-    resolved_confirm_update = confirm_update or prompt_update_image
+    resolved_confirm_update = confirm_update or _confirm_update_pull
     agent_metadata = run_config.context.agents[run_config.agent]
     base_metadata = run_config.context.bases[run_config.selection.base]
     custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
@@ -82,11 +85,15 @@ def image_setup_needed(
     run_config: RunConfig,
     confirm_update: ConfirmImageUpdate | None = None,
 ) -> bool:
+    resolved_confirm_update = confirm_update or _confirm_update_pull
     agent_metadata = run_config.context.agents[run_config.agent]
     base_metadata = run_config.context.bases[run_config.selection.base]
     custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
     if not agent_metadata.build_local and not custom_base:
-        pull_needed = decide_pull(run_config.selection.base_image_ref, confirm_update)
+        pull_needed = decide_pull(
+            run_config.selection.base_image_ref,
+            resolved_confirm_update,
+        )
     else:
         if confirm_update is None:
             return True

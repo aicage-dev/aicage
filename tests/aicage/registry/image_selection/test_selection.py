@@ -26,7 +26,7 @@ class ImageSelectionTests(TestCase):
             store = mock.Mock(spec=SettingsStore)
             context = build_context(store, project_path, bases=["debian", "ubuntu"])
             context.project_cfg.agents["codex"] = AgentConfig(base="debian")
-            selection = select_agent_image("codex", context)
+            selection = select_agent_image("codex", context, mock.Mock())
 
             self.assertEqual(
                 f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-debian", selection.image_ref
@@ -45,11 +45,11 @@ class ImageSelectionTests(TestCase):
                     Path(tmp_dir) / "extended-images",
                 ),
                 mock.patch(
-                    "aicage.registry.image_selection._fresh_selection.prompt_for_base",
+                    "aicage.registry.image_selection._fresh_selection.handle_extension_selection",
                     return_value="alpine",
                 ),
             ):
-                select_agent_image("codex", context)
+                select_agent_image("codex", context, _selection_interaction())
 
             self.assertEqual("alpine", context.project_cfg.agents["codex"].base)
             store.save_project.assert_not_called()
@@ -59,7 +59,7 @@ class ImageSelectionTests(TestCase):
             mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=[]
         )
         with self.assertRaises(RegistryError):
-            select_agent_image("codex", context)
+            select_agent_image("codex", context, mock.Mock())
 
     def test_select_agent_image_raises_on_invalid_base(self) -> None:
         context = build_context(
@@ -69,7 +69,7 @@ class ImageSelectionTests(TestCase):
             agents={"codex": AgentConfig(base="alpine")},
         )
         with self.assertRaises(RegistryError):
-            select_agent_image("codex", context)
+            select_agent_image("codex", context, mock.Mock())
 
     def test_select_agent_image_build_local_uses_local_tag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -89,7 +89,7 @@ class ImageSelectionTests(TestCase):
                 extensions=self._extensions,
             )
             context.project_cfg.agents["claude"] = AgentConfig(base="ubuntu")
-            selection = select_agent_image("claude", context)
+            selection = select_agent_image("claude", context, mock.Mock())
 
             self.assertEqual("aicage:claude-ubuntu", selection.image_ref)
             store.save_project.assert_not_called()
@@ -112,7 +112,7 @@ class ImageSelectionTests(TestCase):
                 base_image_ref=f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu",
             ),
         ) as fresh_mock:
-            select_agent_image("codex", context)
+            select_agent_image("codex", context, mock.Mock())
         fresh_mock.assert_called_once()
 
     @staticmethod
@@ -139,7 +139,7 @@ class ImageSelectionTests(TestCase):
                 ),
             ) as fresh_mock,
         ):
-            select_agent_image("codex", context)
+            select_agent_image("codex", context, mock.Mock())
         fresh_mock.assert_called_once()
 
     def test_select_agent_image_uses_stored_image_ref(self) -> None:
@@ -150,7 +150,7 @@ class ImageSelectionTests(TestCase):
             base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=[]
         )
         context.project_cfg.agents["codex"] = agent_cfg
-        selection = select_agent_image("codex", context)
+        selection = select_agent_image("codex", context, mock.Mock())
         self.assertEqual("aicage:codex-ubuntu", selection.image_ref)
 
     def test_select_agent_image_raises_when_agent_missing(self) -> None:
@@ -162,4 +162,13 @@ class ImageSelectionTests(TestCase):
             extensions=self._extensions,
         )
         with self.assertRaises(RegistryError):
-            select_agent_image("codex", context)
+            select_agent_image("codex", context, mock.Mock())
+
+
+def _selection_interaction() -> mock.Mock:
+    interaction = mock.Mock()
+    interaction.choose_base.return_value = "alpine"
+    interaction.choose_extensions.return_value = []
+    interaction.choose_image_ref.return_value = ""
+    interaction.choose_missing_extensions.return_value = "fresh"
+    return interaction
