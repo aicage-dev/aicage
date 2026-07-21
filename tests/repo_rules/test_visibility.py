@@ -77,6 +77,21 @@ class VisibilityRulesTests(TestCase):
             f"Found private module imports across packages: {violations}",
         )
 
+    def test_src_private_symbols_not_imported_outside_module(self) -> None:
+        repo_root = _repo_root()
+        src_dir = repo_root / "src"
+        violations: list[str] = []
+        for path in src_dir.rglob("*.py"):
+            tree = _parse_tree(path)
+            for imported in _iter_private_symbol_imports(tree, path, src_dir):
+                violations.append(f"{path.relative_to(repo_root)}:{imported}")
+
+        self.assertEqual(
+            [],
+            violations,
+            f"Found private symbol imports across modules: {violations}",
+        )
+
     def test_src_has_no_runtime_imports_or_exec(self) -> None:
         repo_root = _repo_root()
         src_dir = repo_root / "src"
@@ -158,6 +173,10 @@ def _current_package(module_name: str, path: Path) -> list[str]:
     return parts[:-1]
 
 
+def _is_dunder_name(name: str) -> bool:
+    return name.startswith("__") and name.endswith("__")
+
+
 def _is_root_version_import(module_name: str, imported: str) -> bool:
     return "." not in module_name and imported == f"{module_name}._version"
 
@@ -192,6 +211,32 @@ def _iter_imported_modules(
                 _import_from_targets(resolved_module_name, node.names, src_dir)
             )
     return imported_modules
+
+
+def _iter_private_symbol_imports(
+    tree: ast.AST, path: Path, src_dir: Path
+) -> list[str]:
+    current_module = _module_name_from_path(path, src_dir)
+    current_package = _current_package(current_module, path)
+    imports: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        resolved_module_name = _resolve_import_from_module_name(node, current_package)
+        if resolved_module_name is None:
+            continue
+        for alias in node.names:
+            if (
+                not alias.name.startswith("_")
+                or alias.name == "*"
+                or _is_dunder_name(alias.name)
+            ):
+                continue
+            imported_name = f"{resolved_module_name}.{alias.name}"
+            if _imported_module_exists(imported_name, src_dir):
+                continue
+            imports.append(imported_name)
+    return imports
 
 
 def _resolve_import_from_module_name(
