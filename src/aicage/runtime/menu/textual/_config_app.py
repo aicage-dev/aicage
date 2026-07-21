@@ -2,14 +2,12 @@ from dataclasses import dataclass
 from typing import TypeVar
 
 from textual import work
-from textual.app import App, ComposeResult
+from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.content import Content
 from textual.screen import Screen
 
 from aicage.config.context import ConfigContext
 from aicage.config.overview_selection import resolve_overview_selection
-from aicage.config.resources import find_packaged_path
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.extensions.missing_extensions import (
     ensure_extensions_exist,
@@ -19,6 +17,7 @@ from aicage.registry.image_selection.models import ImageSelection
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
 from ._models import CustomShareValue, HostAccessConfirmValues
 from ._state import OverviewState
+from ._textual_app import TextualApp
 from .services.base_support import base_metadata_for_draft, ensure_base_default
 from .services.custom_share_flow import add_custom_share, update_custom_share
 from .services.host_access_flow import confirm_and_apply_host_access
@@ -39,24 +38,18 @@ class _ConfigResult:
     project_docker_args: str
 
 
-class ConfigApp(App[_ConfigResult | None]):
-    CSS_PATH = find_packaged_path("textual/app.tcss")
-    ENABLE_COMMAND_PALETTE = False
-    INLINE_PADDING = 0
-
+class ConfigApp(TextualApp[_ConfigResult | None]):
     BINDINGS = [
         Binding("enter", "accept", "OK"),
         Binding("escape", "cancel", "Cancel"),
-        Binding("ctrl+c", "cancel", "Cancel"),
+        *TextualApp.BINDINGS,
     ]
 
     def __init__(self, draft: RunConfigDraft, context: ConfigContext) -> None:
-        super().__init__()
+        super().__init__("container config")
         self._draft = draft
         self._config_context = context
         self._state = self._initial_state()
-        self.title = "aicage"
-        self.sub_title = "container config"
 
     def compose(self) -> ComposeResult:
         yield Overview(
@@ -64,11 +57,6 @@ class ConfigApp(App[_ConfigResult | None]):
             self._draft.project_cfg.path,
             self._state,
         )
-
-    def format_title(self, title: str, sub_title: str) -> Content:
-        if not sub_title:
-            return Content.from_markup(f"[b]{title}[/b]")
-        return Content.from_markup(f"[b]{title}[/b] [dim]— {sub_title}[/dim]")
 
     def on_mount(self) -> None:
         ensure_base_default(self._draft, self._config_context)
