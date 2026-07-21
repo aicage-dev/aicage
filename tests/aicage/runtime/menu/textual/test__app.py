@@ -18,15 +18,15 @@ from aicage.runtime.menu.textual.overview.view import Overview
 from ._test_support import _build_context, _build_draft
 
 
-class OverviewAppTests(TestCase):
+class TextualAppTests(TestCase):
     def test_command_palette_is_disabled(self) -> None:
-        self.assertFalse(_app.OverviewApp.ENABLE_COMMAND_PALETTE)
+        self.assertFalse(_app.TextualApp.ENABLE_COMMAND_PALETTE)
 
     def test_inline_padding_is_disabled(self) -> None:
-        self.assertEqual(0, _app.OverviewApp.INLINE_PADDING)
+        self.assertEqual(0, _app.TextualApp.INLINE_PADDING)
 
     def test_for_config(self) -> None:
-        app = _app.OverviewApp.for_config(
+        app = _app.TextualApp.for_config(
             _build_draft(
                 AgentConfig(base="ubuntu"),
                 ParsedArgs(False, "", "codex", [], False, [], None),
@@ -37,12 +37,12 @@ class OverviewAppTests(TestCase):
         self.assertEqual("container config", app.sub_title)
 
     def test_for_image_update_confirmation(self) -> None:
-        app = _app.OverviewApp.for_image_update_confirmation("repo:tag")
+        app = _app.TextualApp.for_image_update_confirmation("repo:tag")
 
         self.assertEqual("container setup", app.sub_title)
 
     def test_for_execution(self) -> None:
-        app = _app.OverviewApp.for_execution(mock.Mock())
+        app = _app.TextualApp.for_execution(mock.Mock())
 
         self.assertEqual("container setup", app.sub_title)
 
@@ -99,12 +99,12 @@ class OverviewAppTests(TestCase):
         self.assertEqual("ubuntu", app._draft.agent_cfg.base)
 
     def test_init_sets_container_setup_subtitle_for_execution_mode(self) -> None:
-        app = _app.OverviewApp.for_execution(mock.Mock())
+        app = _app.TextualApp.for_execution(mock.Mock())
 
         self.assertEqual("container setup", app.sub_title)
 
     def test_compose_yields_execution_screen_for_execution_mode(self) -> None:
-        app = _app.OverviewApp.for_execution(mock.Mock())
+        app = _app.TextualApp.for_execution(mock.Mock())
 
         widgets = list(app.compose())
 
@@ -112,7 +112,7 @@ class OverviewAppTests(TestCase):
         self.assertIsInstance(widgets[0], _app.ExecutionScreen)
 
     def test_on_mount_starts_confirmation_for_image_update_mode(self) -> None:
-        app = _app.OverviewApp.for_image_update_confirmation("repo:tag")
+        app = _app.TextualApp.for_image_update_confirmation("repo:tag")
 
         with mock.patch.object(app, "_show_image_update_confirmation") as show_mock:
             app.on_mount()
@@ -120,7 +120,7 @@ class OverviewAppTests(TestCase):
         show_mock.assert_called_once_with()
 
     def test_on_mount_starts_execution_for_execution_mode(self) -> None:
-        app = _app.OverviewApp.for_execution(mock.Mock())
+        app = _app.TextualApp.for_execution(mock.Mock())
 
         with mock.patch.object(app, "_run_execution") as run_mock:
             app.on_mount()
@@ -450,7 +450,7 @@ class OverviewAppTests(TestCase):
 
     def test_finish_exits_with_result(self) -> None:
         app = _build_app()
-        result = _app._OverviewResult(
+        result = _app._ConfigResult(
             ImageSelection(
                 image_ref="ref",
                 base="ubuntu",
@@ -491,12 +491,12 @@ class OverviewAppTests(TestCase):
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
-) -> _app.OverviewApp:
+) -> _app.TextualApp:
     with mock.patch(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
         return_value=built_in_shares or [],
     ):
-        return _app.OverviewApp.for_config(
+        return _app.TextualApp.for_config(
             _build_draft(
                 agent_cfg or AgentConfig(base="ubuntu"),
                 ParsedArgs(False, "", "codex", [], False, [], None),

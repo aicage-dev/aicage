@@ -38,7 +38,7 @@ _ImageSetupOperation = Callable[[OperationReporter], None]
 
 
 @dataclass(frozen=True)
-class _OverviewResult:
+class _ConfigResult:
     selection: ImageSelection
     project_docker_args: str
 
@@ -59,8 +59,8 @@ class _ExecutionSession:
     operation: _ImageSetupOperation
 
 
-class OverviewApp(App[_OverviewResult | bool | BaseException | None]):
-    CSS_PATH = find_packaged_path("textual/overview/app.tcss")
+class TextualApp(App[_ConfigResult | bool | BaseException | None]):
+    CSS_PATH = find_packaged_path("textual/app.tcss")
     ENABLE_COMMAND_PALETTE = False
     INLINE_PADDING = 0
 
@@ -85,15 +85,15 @@ class OverviewApp(App[_OverviewResult | bool | BaseException | None]):
         cls,
         draft: RunConfigDraft,
         context: ConfigContext,
-    ) -> "OverviewApp":
+    ) -> "TextualApp":
         return cls(_ConfigSession(draft, context))
 
     @classmethod
-    def for_image_update_confirmation(cls, image_ref: str) -> "OverviewApp":
+    def for_image_update_confirmation(cls, image_ref: str) -> "TextualApp":
         return cls(_ImageUpdateSession(image_ref))
 
     @classmethod
-    def for_execution(cls, operation: _ImageSetupOperation) -> "OverviewApp":
+    def for_execution(cls, operation: _ImageSetupOperation) -> "TextualApp":
         return cls(_ExecutionSession(operation))
 
     def compose(self) -> ComposeResult:
@@ -144,7 +144,7 @@ class OverviewApp(App[_OverviewResult | bool | BaseException | None]):
         accepted = await self._confirm_undecided_built_in_shares()
         if not accepted:
             return
-        result = _OverviewResult(
+        result = _ConfigResult(
             selection=resolve_overview_selection(
                 config_session.draft,
                 config_session.context,
@@ -265,7 +265,7 @@ class OverviewApp(App[_OverviewResult | bool | BaseException | None]):
             overview.show_shell()
             self._focus_last_section()
 
-    def _finish(self, result: _OverviewResult | None) -> None:
+    def _finish(self, result: _ConfigResult | None) -> None:
         self.exit(result)
 
     def _focus_last_section(self) -> None:
@@ -365,19 +365,19 @@ class OverviewApp(App[_OverviewResult | bool | BaseException | None]):
     def _require_config_session(self) -> _ConfigSession:
         session = self._config_session()
         if session is None:
-            raise RuntimeError("OverviewApp is not running in config mode.")
+            raise RuntimeError("TextualApp is not running in config mode.")
         return session
 
     def _require_image_update_session(self) -> _ImageUpdateSession:
         session = self._image_update_session()
         if session is None:
-            raise RuntimeError("OverviewApp is not running in image-update mode.")
+            raise RuntimeError("TextualApp is not running in image-update mode.")
         return session
 
     def _require_execution_session(self) -> _ExecutionSession:
         session = self._execution_session()
         if session is None:
-            raise RuntimeError("OverviewApp is not running in execution mode.")
+            raise RuntimeError("TextualApp is not running in execution mode.")
         return session
 
     @property

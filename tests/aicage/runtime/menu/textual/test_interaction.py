@@ -100,7 +100,7 @@ class EditDraftWithTextualAppTests(TestCase):
         )
 
         with mock.patch(
-            "aicage.runtime.menu.textual.interaction.OverviewApp.for_config",
+            "aicage.runtime.menu.textual.interaction.TextualApp.for_config",
             return_value=app_mock,
         ):
             selection, project_docker_args = interaction._edit_draft_with_textual_app(
@@ -130,7 +130,7 @@ class EditDraftWithTextualAppTests(TestCase):
 
         with (
             mock.patch(
-                "aicage.runtime.menu.textual.interaction.OverviewApp.for_config",
+                "aicage.runtime.menu.textual.interaction.TextualApp.for_config",
                 return_value=app_mock,
             ),
             self.assertRaises(RuntimeError),
@@ -152,7 +152,7 @@ class EditDraftWithTextualAppTests(TestCase):
 
         with (
             mock.patch(
-                "aicage.runtime.menu.textual.interaction.OverviewApp.for_config",
+                "aicage.runtime.menu.textual.interaction.TextualApp.for_config",
                 return_value=app_mock,
             ),
             self.assertRaises(KeyboardInterrupt),
@@ -164,7 +164,7 @@ class EditDraftWithTextualAppTests(TestCase):
         app_mock.run.return_value = None
 
         with mock.patch(
-            "aicage.runtime.menu.textual.interaction.OverviewApp.for_image_update_confirmation",
+            "aicage.runtime.menu.textual.interaction.TextualApp.for_image_update_confirmation",
             return_value=app_mock,
         ):
             self.assertFalse(interaction._confirm_image_update_with_textual_app("repo:tag"))
@@ -176,7 +176,7 @@ class EditDraftWithTextualAppTests(TestCase):
 
         with (
             mock.patch(
-                "aicage.runtime.menu.textual.interaction.OverviewApp.for_execution",
+                "aicage.runtime.menu.textual.interaction.TextualApp.for_execution",
                 return_value=app_mock,
             ),
             self.assertRaises(RuntimeError),
