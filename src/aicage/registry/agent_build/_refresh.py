@@ -6,7 +6,6 @@ from aicage.docker.query import get_local_repo_digest_for_repo
 from aicage.docker.reporting import OperationReporter
 from aicage.registry._errors import RegistryError
 from aicage.registry.digest.remote_digest import get_remote_digest
-from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from ._digest import resolve_base_digest
 
@@ -20,11 +19,15 @@ class BaseRefreshPlan:
     confirm_update_image_ref: str | None = None
 
 
+def _confirm_update_pull(_: str) -> bool:
+    return True
+
+
 def refresh_base_image(
     base_image_ref: str,
     base_repository: str,
     reporter: OperationReporter | None = None,
-    confirm_update: ConfirmImageUpdate | None = None,
+    confirm_update: ConfirmImageUpdate = _confirm_update_pull,
 ) -> str:
     logger = get_logger()
     plan = refresh_base_image_plan(base_image_ref, base_repository, reporter=reporter)
@@ -33,7 +36,7 @@ def refresh_base_image(
         if resolved is None:
             raise RegistryError(f"Failed to resolve base image for {base_image_ref}.")
         return resolved
-    if not (confirm_update or prompt_update_image)(plan.confirm_update_image_ref):
+    if not confirm_update(plan.confirm_update_image_ref):
         logger.info("Base image pull not required for %s", base_image_ref)
         local_ref = plan.local_base_image_ref
         if local_ref is None:

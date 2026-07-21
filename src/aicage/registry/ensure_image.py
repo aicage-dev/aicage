@@ -22,6 +22,7 @@ from aicage.registry.extension_build.ensure import (
     build_needed as extension_build_needed,
 )
 from aicage.registry.extension_build.ensure import ensure as ensure_extended_image
+from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 
 @dataclass(frozen=True)
@@ -35,25 +36,21 @@ def ensure_image(
     reporter: OperationReporter | None = None,
     confirm_update: ConfirmImageUpdate | None = None,
 ) -> None:
+    resolved_confirm_update = confirm_update or prompt_update_image
     agent_metadata = run_config.context.agents[run_config.agent]
     base_metadata = run_config.context.bases[run_config.selection.base]
     custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
     if not agent_metadata.build_local and not custom_base:
-        if confirm_update is None:
-            pull_image(run_config.selection.base_image_ref, reporter=reporter)
-        else:
-            pull_image(
-                run_config.selection.base_image_ref,
-                reporter=reporter,
-                confirm_update=confirm_update,
-            )
-    elif confirm_update is None:
-        ensure_agent_image(run_config, reporter=reporter)
+        pull_image(
+            run_config.selection.base_image_ref,
+            reporter=reporter,
+            confirm_update=resolved_confirm_update,
+        )
     else:
         ensure_agent_image(
             run_config,
             reporter=reporter,
-            confirm_update=confirm_update,
+            confirm_update=resolved_confirm_update,
         )
     if run_config.selection.extensions:
         ensure_extended_image(run_config, reporter=reporter)

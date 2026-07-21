@@ -16,7 +16,6 @@ from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._build_flow import maybe_build
 from aicage.registry._errors import RegistryError
 from aicage.registry._time import now_iso
-from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from ..base_build.ensure import build_needed as base_build_needed
 from ..base_build.ensure import ensure as ensure_base_build
@@ -39,10 +38,14 @@ class _AgentBuildSetupPlan:
     confirm_update_image_ref: str | None = None
 
 
+def _confirm_update_pull(_: str) -> bool:
+    return True
+
+
 def ensure(
     run_config: RunConfig,
     reporter: OperationReporter | None = None,
-    confirm_update: ConfirmImageUpdate | None = None,
+    confirm_update: ConfirmImageUpdate = _confirm_update_pull,
 ) -> None:
     agent_metadata = run_config.context.agents[run_config.agent]
     definition_dir = agent_metadata.local_definition_dir
@@ -65,7 +68,7 @@ def ensure(
                 base_image_ref=base_image,
                 base_repository=base_repo,
                 reporter=reporter,
-                confirm_update=confirm_update or prompt_update_image,
+                confirm_update=confirm_update,
             )
         except RegistryError:
             if not local_image_exists(image_ref):

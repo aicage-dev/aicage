@@ -6,6 +6,7 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry.ensure_image import ensure_image, image_setup_needed, image_setup_plan
+from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 
 class EnsureImageTests(TestCase):
@@ -23,7 +24,9 @@ class EnsureImageTests(TestCase):
             ensure_image(run_config, reporter=reporter)
 
         pull_mock.assert_called_once_with(
-            run_config.selection.base_image_ref, reporter=reporter
+            run_config.selection.base_image_ref,
+            reporter=reporter,
+            confirm_update=prompt_update_image,
         )
         local_mock.assert_not_called()
         extended_mock.assert_not_called()
@@ -44,7 +47,11 @@ class EnsureImageTests(TestCase):
             ensure_image(run_config, reporter=reporter)
 
         pull_mock.assert_not_called()
-        local_mock.assert_called_once_with(run_config, reporter=reporter)
+        local_mock.assert_called_once_with(
+            run_config,
+            reporter=reporter,
+            confirm_update=prompt_update_image,
+        )
 
     @staticmethod
     def test_ensure_image_runs_extended_build() -> None:
@@ -58,7 +65,11 @@ class EnsureImageTests(TestCase):
         ):
             ensure_image(run_config, reporter=reporter)
 
-        local_mock.assert_called_once_with(run_config, reporter=reporter)
+        local_mock.assert_called_once_with(
+            run_config,
+            reporter=reporter,
+            confirm_update=prompt_update_image,
+        )
         extended_mock.assert_called_once_with(run_config, reporter=reporter)
 
     @staticmethod
