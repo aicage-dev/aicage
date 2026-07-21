@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
+from typing import TypeAlias
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
@@ -11,32 +13,41 @@ from aicage.config.project_config import (
     MOUNT_SSH_KEY,
     AgentConfig,
 )
-from aicage.runtime.menu.prompts.confirm import prompt_persist_docker_socket
 
-from .support.mount_prompt import resolve_mount_prompt_prefs
+from .support.mount_prompt import MountSelectionPrompt, resolve_mount_prompt_prefs
+
+_ConfirmPreference: TypeAlias = Callable[[], bool]
 
 
 def apply_mount_preferences(
     context: ConfigContext,
     agent: str,
     parsed: ParsedArgs | None,
+    select_mounts: MountSelectionPrompt,
+    confirm_persist_docker_socket: _ConfirmPreference,
 ) -> None:
     agent_cfg = context.project_cfg.agents.setdefault(agent, AgentConfig())
     _apply_git_and_extension_mount_preferences(
         Path(context.project_cfg.path).resolve(),
         agent_cfg,
         context.extensions,
+        select_mounts,
     )
-    _apply_docker_socket_preference(agent_cfg, parsed)
+    _apply_docker_socket_preference(
+        agent_cfg,
+        parsed,
+        confirm_persist_docker_socket,
+    )
 
 
 def _apply_git_and_extension_mount_preferences(
     project_path: Path,
     agent_cfg: AgentConfig,
     available_extensions: dict[str, ExtensionMetadata],
+    select_mounts: MountSelectionPrompt,
 ) -> None:
     mount_prompt_prefs = resolve_mount_prompt_prefs(
-        project_path, agent_cfg, available_extensions
+        project_path, agent_cfg, available_extensions, select_mounts
     )
     if mount_prompt_prefs is None:
         return
@@ -54,6 +65,7 @@ def _apply_git_and_extension_mount_preferences(
 def _apply_docker_socket_preference(
     agent_cfg: AgentConfig,
     parsed: ParsedArgs | None,
+    confirm_persist_docker_socket: _ConfirmPreference,
 ) -> None:
     if (
         parsed is None
@@ -61,5 +73,5 @@ def _apply_docker_socket_preference(
         or getattr(agent_cfg.mounts, MOUNT_DOCKER_KEY) is not None
     ):
         return
-    if prompt_persist_docker_socket():
+    if confirm_persist_docker_socket():
         setattr(agent_cfg.mounts, MOUNT_DOCKER_KEY, True)

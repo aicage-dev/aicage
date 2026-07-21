@@ -3,6 +3,7 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.menu import interaction
+from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from .textual._test_support import _build_context, _build_draft
 
@@ -80,7 +81,10 @@ class PrepareImageTests(TestCase):
         with mock.patch("aicage.runtime.menu.interaction.ensure_image") as ensure_mock:
             resolved.prepare_image(run_config)
 
-        ensure_mock.assert_called_once_with(run_config)
+        ensure_mock.assert_called_once_with(
+            run_config,
+            confirm_update=prompt_update_image,
+        )
 
     def test_prepare_image_uses_textual_setup_for_textual_interaction(self) -> None:
         resolved = interaction.create_runtime_interaction("textual")

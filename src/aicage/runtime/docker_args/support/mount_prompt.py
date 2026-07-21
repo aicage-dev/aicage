@@ -1,13 +1,16 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.project_config import AgentConfig
-from aicage.runtime.menu.prompts.confirm import prompt_mount_git_support
 from aicage.runtime.mounts.shares import ShareSpec, resolve_share_specs
 
 from .git_support import git_support_prompt_items
+
+MountSelectionPrompt = Callable[
+    [list[tuple[str, str]], list[tuple[str, str]]], list[str]
+]
 
 
 @dataclass(frozen=True)
@@ -26,6 +29,7 @@ def resolve_mount_prompt_prefs(
     project_path: Path,
     agent_cfg: AgentConfig,
     available_extensions: dict[str, ExtensionMetadata],
+    select_mounts: MountSelectionPrompt,
 ) -> _MountPromptPrefs | None:
     git_items = git_support_prompt_items(project_path, agent_cfg.mounts)
     extension_items = _extension_mount_prompt_items(
@@ -38,7 +42,7 @@ def resolve_mount_prompt_prefs(
         return None
 
     selected = set(
-        prompt_mount_git_support(
+        select_mounts(
             list(git_items),
             _format_extension_prompt_items(extension_items),
         )

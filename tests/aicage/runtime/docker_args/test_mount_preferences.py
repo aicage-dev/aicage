@@ -26,7 +26,13 @@ class MountPreferencesTests(TestCase):
                 extension_mounts={"marker": True},
             ),
         ):
-            apply_mount_preferences(context, "codex", _build_parsed())
+            apply_mount_preferences(
+                context,
+                "codex",
+                _build_parsed(),
+                mock.Mock(),
+                mock.Mock(),
+            )
 
         self.assertTrue(agent_cfg.mounts.gitconfig)
         self.assertFalse(agent_cfg.mounts.gitroot)
@@ -38,11 +44,16 @@ class MountPreferencesTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts())
         context = _build_context(agent_cfg)
 
-        with (
-            mock.patch(f"{_MODULE}.resolve_mount_prompt_prefs", return_value=None),
-            mock.patch(f"{_MODULE}.prompt_persist_docker_socket", return_value=True),
-        ):
-            apply_mount_preferences(context, "codex", _build_parsed(docker_socket=True))
+        confirm_persist = mock.Mock(return_value=True)
+
+        with mock.patch(f"{_MODULE}.resolve_mount_prompt_prefs", return_value=None):
+            apply_mount_preferences(
+                context,
+                "codex",
+                _build_parsed(docker_socket=True),
+                mock.Mock(),
+                confirm_persist,
+            )
 
         self.assertTrue(agent_cfg.mounts.docker)
 
@@ -52,13 +63,18 @@ class MountPreferencesTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts(docker=False))
         context = _build_context(agent_cfg)
 
-        with (
-            mock.patch(f"{_MODULE}.resolve_mount_prompt_prefs", return_value=None),
-            mock.patch(f"{_MODULE}.prompt_persist_docker_socket") as prompt_mock,
-        ):
-            apply_mount_preferences(context, "codex", _build_parsed(docker_socket=True))
+        confirm_persist = mock.Mock()
 
-        prompt_mock.assert_not_called()
+        with mock.patch(f"{_MODULE}.resolve_mount_prompt_prefs", return_value=None):
+            apply_mount_preferences(
+                context,
+                "codex",
+                _build_parsed(docker_socket=True),
+                mock.Mock(),
+                confirm_persist,
+            )
+
+        confirm_persist.assert_not_called()
 
 
 def _build_context(agent_cfg: AgentConfig) -> ConfigContext:
