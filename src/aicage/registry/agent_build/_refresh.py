@@ -22,7 +22,7 @@ def refresh_base_image(
     reporter: OperationReporter | None = None,
 ) -> str:
     logger = get_logger()
-    plan = refresh_base_image_plan(base_image_ref, base_repository, reporter=reporter)
+    plan = refresh_base_image_plan(base_image_ref, base_repository)
     if not plan.needs_confirmation:
         return plan.image_ref
     if not update_approved:
@@ -34,7 +34,6 @@ def refresh_base_image(
 def refresh_base_image_plan(
     base_image_ref: str,
     base_repository: str,
-    reporter: OperationReporter | None = None,
 ) -> _BaseRefreshPlan:
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
