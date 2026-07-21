@@ -15,7 +15,7 @@ from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
-from aicage.registry.ensure_image import ensure_image
+from aicage.runtime.menu.interaction import create_runtime_interaction
 from aicage.runtime.menu.prompts.mode import set_non_interactive_defaults
 from aicage.runtime.run_args import DockerRunArgs
 from aicage.runtime.run_plan import build_run_args
@@ -28,6 +28,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         parsed: ParsedArgs = parse_cli(parsed_argv)
         set_non_interactive_defaults(parsed.menu == "none")
+        interaction = create_runtime_interaction(parsed.menu)
         if maybe_prompt_update(__version__):
             _restart_with_current_args(parsed_argv)
         if parsed.config_action == "info":
@@ -35,11 +36,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif parsed.config_action == "remove":
             remove_project_config(parsed.config_agent)
         else:
-            run_config: RunConfig = load_run_config(parsed.agent, parsed)
+            run_config: RunConfig = load_run_config(parsed.agent, interaction, parsed)
             run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
             logger.info("Resolved run config for agent %s", run_config.agent)
-            if parsed.menu != "textual":
-                ensure_image(run_config)
+            interaction.prepare_image(run_config)
 
             if parsed.dry_run:
                 print_run_command(run_args)

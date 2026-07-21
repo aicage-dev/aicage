@@ -43,26 +43,17 @@ class RefreshBaseDigestTests(TestCase):
                 "aicage.registry.agent_build._refresh.get_remote_digest",
                 return_value="sha256:remote",
             ),
-            mock.patch(
-                "aicage.registry.agent_build._refresh.resolve_verified_digest"
-            ) as resolve_mock,
         ):
             _refresh.refresh_base_image_plan(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
             )
 
-        resolve_mock.assert_not_called()
-
     def test_refresh_base_image_uses_local_digest_when_user_declines_pull(self) -> None:
         with (
             mock.patch(
                 "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
                 return_value="sha256:local",
-            ),
-            mock.patch(
-                "aicage.registry.agent_build._refresh.resolve_verified_digest",
-                return_value="ghcr.io/aicage/aicage-image-base@sha256:remote",
             ),
             mock.patch(
                 "aicage.registry.agent_build._refresh.prompt_update_image",
@@ -86,10 +77,6 @@ class RefreshBaseDigestTests(TestCase):
             mock.patch(
                 "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
                 return_value="sha256:local",
-            ),
-            mock.patch(
-                "aicage.registry.agent_build._refresh.resolve_verified_digest",
-                return_value="ghcr.io/aicage/aicage-image-base@sha256:remote",
             ),
             mock.patch(
                 "aicage.registry.agent_build._refresh.prompt_update_image",

@@ -1,6 +1,5 @@
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TypeAlias, TypeVar
+from typing import TypeVar
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -13,8 +12,6 @@ from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.resources import find_packaged_path
 from aicage.config.run_config_draft import RunConfigDraft
-from aicage.docker.reporting import OperationReporter
-from aicage.registry.ensure_image import ImageSetupPlan
 from aicage.registry.image_selection.models import ImageSelection
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
@@ -26,15 +23,12 @@ from .screens.docker_args_screen import DockerArgsScreen
 from .screens.execution_screen import ExecutionScreen
 from .screens.extensions_screen import ExtensionsScreen
 from .screens.host_access_confirm_screen import HostAccessConfirmScreen
-from .screens.image_update_confirm_screen import ImageUpdateConfirmScreen
 from .screens.share_editor_screen import ShareEditorScreen
 from .services.base_support import base_metadata_for_draft, ensure_base_default
 from .services.custom_share_flow import add_custom_share, update_custom_share
-from .services.execution_reporting import ExecutionReporter
 from .services.host_access_flow import confirm_and_apply_host_access
 from .services.summary import extras_values, shares_values
 
-_ConfirmImageUpdate: TypeAlias = Callable[[str], bool]
 _ScreenResultT = TypeVar("_ScreenResultT")
 
 
@@ -59,20 +53,10 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         self,
         draft: RunConfigDraft,
         context: ConfigContext,
-        setup_plan: Callable[[ImageSelection], ImageSetupPlan] | None = None,
-        setup_needed: Callable[[ImageSelection, _ConfirmImageUpdate], bool] | None = None,
-        execute_setup: (
-            Callable[[ImageSelection, OperationReporter, _ConfirmImageUpdate], None]
-            | None
-        ) = None,
     ) -> None:
         super().__init__()
         self._draft = draft
         self._config_context = context
-        self._setup_plan = setup_plan
-        self._setup_needed = setup_needed
-        self._execute_setup = execute_setup
-        self._running_execution = False
         self._state = OverviewState(
             last_section_id=None,
             built_in_shares=shares_values(
@@ -104,8 +88,6 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         self._overview().focus_default()
 
     def action_accept(self) -> None:
-        if self._running_execution:
-            return
         self._accept()
 
     def action_cancel(self) -> None:
@@ -123,23 +105,7 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
             selection=resolve_overview_selection(self._draft, self._config_context),
             project_docker_args=self._draft.agent_cfg.docker_args,
         )
-        if (
-            self._setup_plan is None
-            or
-            self._setup_needed is None
-            or self._execute_setup is None
-        ):
-            self._finish(result)
-            return
-        setup_plan = self._setup_plan(result.selection)
-        confirm_update = await self._confirm_image_update(setup_plan)
-        if confirm_update is None:
-            return
-        if not self._setup_needed(result.selection, confirm_update):
-            self._finish(result)
-            return
-        self._show_execution_screen()
-        self._run_execution(result, confirm_update)
+        self._finish(result)
 
     @work(exclusive=True)
     async def _edit_section(self, section_id: str) -> None:
@@ -255,48 +221,8 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
     def _refresh_sections(self) -> None:
         self._overview().refresh_from(self._draft, self._config_context)
 
-    def _build_execution_reporting(self) -> tuple[ExecutionScreen, ExecutionReporter]:
-        screen = self._execution_screen()
-        return screen, ExecutionReporter(screen)
-
     def _execution_screen(self) -> ExecutionScreen:
         return self.query_one(ExecutionScreen)
-
-    def _show_execution_screen(self) -> None:
-        self._running_execution = True
-        self.sub_title = "container setup"
-        overview = self._overview()
-        execution_screen = self._execution_screen()
-        overview.display = False
-        execution_screen.display = True
-        execution_screen.focus()
-
-    @work(thread=True, exclusive=True)
-    def _run_execution(
-        self,
-        result: _OverviewResult,
-        confirm_update: _ConfirmImageUpdate,
-    ) -> None:
-        _, reporter = self._build_execution_reporting()
-        error: BaseException | None = None
-        try:
-            if self._execute_setup is None:
-                raise RuntimeError("Missing Textual setup executor.")
-            self._execute_setup(result.selection, reporter, confirm_update)
-        except BaseException as exc:
-            error = exc
-        self.call_from_thread(self._finish_execution, result, error)
-
-    def _finish_execution(
-        self,
-        result: _OverviewResult,
-        error: BaseException | None,
-    ) -> None:
-        self._running_execution = False
-        if error is not None:
-            self.exit(error)
-            return
-        self._finish(result)
 
     async def _confirm_undecided_built_in_shares(self) -> bool:
         overview = self._overview()
@@ -325,40 +251,6 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
             )
         )
 
-    async def _confirm_image_update(
-        self,
-        setup_plan: ImageSetupPlan,
-    ) -> _ConfirmImageUpdate | None:
-        if setup_plan.confirm_update_image_ref is None:
-            return _keep_local_image
-        should_update = await self._push_section_screen(
-            ImageUpdateConfirmScreen(setup_plan.confirm_update_image_ref)
-        )
-        if should_update is None:
-            return None
-        return _confirm_image_update_choice(
-            setup_plan.confirm_update_image_ref,
-            should_update,
-        )
-
 
 def _extension_options(context: ConfigContext) -> list[ExtensionMetadata]:
     return sorted(context.extensions.values(), key=lambda item: item.extension_id)
-
-
-def _keep_local_image(_: str) -> bool:
-    return False
-
-
-def _confirm_image_update_choice(
-    image_ref: str,
-    should_update: bool,
-) -> _ConfirmImageUpdate:
-    def _confirm(candidate_image_ref: str) -> bool:
-        if candidate_image_ref != image_ref:
-            raise RuntimeError(
-                f"Unexpected image update request for '{candidate_image_ref}'."
-            )
-        return should_update
-
-    return _confirm

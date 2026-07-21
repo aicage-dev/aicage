@@ -4,7 +4,6 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
-from aicage.registry.ensure_image import ImageSetupPlan
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu.textual import _app
 from aicage.runtime.menu.textual._models import (
@@ -86,15 +85,6 @@ class OverviewAppTests(TestCase):
 
         accept_mock.assert_called_once_with()
 
-    def test_action_accept_ignores_request_during_execution(self) -> None:
-        app = _build_app()
-        app._running_execution = True
-
-        with mock.patch.object(app, "_accept") as accept_mock:
-            app.action_accept()
-
-        accept_mock.assert_not_called()
-
     def test_action_cancel_exits_none(self) -> None:
         app = _build_app()
 
@@ -103,21 +93,8 @@ class OverviewAppTests(TestCase):
 
         finish_mock.assert_called_once_with(None)
 
-    def test_action_cancel_exits_none_during_execution(self) -> None:
+    def test_accept_async_finishes_when_host_access_confirmed(self) -> None:
         app = _build_app()
-        app._running_execution = True
-
-        with mock.patch.object(app, "_finish") as finish_mock:
-            app.action_cancel()
-
-        finish_mock.assert_called_once_with(None)
-
-    def test_accept_finishes_directly_when_setup_not_needed(self) -> None:
-        app = _build_app(
-            setup_plan=lambda _selection: ImageSetupPlan(needs_setup=False),
-            setup_needed=lambda _selection, _confirm_update: False,
-            execute_setup=lambda _selection, _reporter, _confirm_update: None,
-        )
 
         with (
             mock.patch.object(
@@ -126,73 +103,25 @@ class OverviewAppTests(TestCase):
                 new=mock.AsyncMock(return_value=True),
             ),
             mock.patch.object(app, "_finish") as finish_mock,
-            mock.patch.object(app, "_run_execution") as run_execution_mock,
         ):
             asyncio.run(app._accept_async())
 
         finish_mock.assert_called_once()
-        run_execution_mock.assert_not_called()
 
-    def test_accept_shows_execution_screen_when_setup_needed(self) -> None:
-        app = _build_app(
-            setup_plan=lambda _selection: ImageSetupPlan(needs_setup=True),
-            setup_needed=lambda _selection, _confirm_update: True,
-            execute_setup=lambda _selection, _reporter, _confirm_update: None,
-        )
+    def test_accept_async_stops_when_host_access_rejected(self) -> None:
+        app = _build_app()
 
         with (
             mock.patch.object(
                 app,
                 "_confirm_undecided_built_in_shares",
-                new=mock.AsyncMock(return_value=True),
+                new=mock.AsyncMock(return_value=False),
             ),
-            mock.patch.object(
-                app, "_show_execution_screen"
-            ) as show_execution_screen_mock,
-            mock.patch.object(app, "_run_execution") as run_execution_mock,
+            mock.patch.object(app, "_finish") as finish_mock,
         ):
             asyncio.run(app._accept_async())
 
-        show_execution_screen_mock.assert_called_once_with()
-        run_execution_mock.assert_called_once()
-
-    def test_show_execution_screen_marks_execution_running_and_updates_subtitle(
-        self,
-    ) -> None:
-        app = _build_app()
-        overview = mock.Mock()
-        execution_screen = mock.Mock()
-
-        with (
-            mock.patch.object(app, "_overview", return_value=overview),
-            mock.patch.object(app, "_execution_screen", return_value=execution_screen),
-        ):
-            app._show_execution_screen()
-
-        self.assertTrue(app._running_execution)
-        self.assertEqual("container setup", app.sub_title)
-        self.assertFalse(overview.display)
-        self.assertTrue(execution_screen.display)
-        execution_screen.focus.assert_called_once_with()
-
-    def test_finish_execution_clears_execution_flag(self) -> None:
-        app = _build_app()
-        app._running_execution = True
-        result = _app._OverviewResult(
-            ImageSelection(
-                image_ref="ref",
-                base="ubuntu",
-                extensions=[],
-                base_image_ref="ref",
-            ),
-            "--project",
-        )
-
-        with mock.patch.object(app, "_finish") as finish_mock:
-            app._finish_execution(result, None)
-
-        self.assertFalse(app._running_execution)
-        finish_mock.assert_called_once_with(result)
+        finish_mock.assert_not_called()
 
     def test_on_overview_accept_requested_dispatches_ok(self) -> None:
         app = _build_app()
@@ -512,9 +441,6 @@ class OverviewAppTests(TestCase):
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
-    setup_plan=None,
-    setup_needed=None,
-    execute_setup=None,
 ) -> _app.OverviewApp:
     with mock.patch(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
@@ -526,7 +452,4 @@ def _build_app(
                 ParsedArgs(False, "", "codex", [], False, [], None),
             ),
             _build_context(),
-            setup_plan,
-            setup_needed,
-            execute_setup,
         )
