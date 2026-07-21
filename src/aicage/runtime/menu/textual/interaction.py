@@ -6,6 +6,7 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.docker.reporting import OperationReporter
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
+from aicage.runtime.menu.prompts.interaction import SimpleInteraction
 
 from ._config_app import ConfigApp
 from ._execution_app import ExecutionApp
@@ -68,8 +69,7 @@ def _edit_draft_with_textual_app(
 
 
 def _confirm_update_aicage(installed_version: str, latest_version: str) -> bool:
-    del installed_version, latest_version
-    return True
+    return SimpleInteraction().confirm_aicage_update(installed_version, latest_version)
 
 
 def _confirm_image_update_with_textual_app(image_ref: str) -> bool:

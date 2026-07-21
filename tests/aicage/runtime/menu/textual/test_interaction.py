@@ -57,12 +57,17 @@ class TextualInteractionTests(TestCase):
         confirm_mock.assert_called_once_with("repo:tag")
 
     def test_confirm_aicage_update(self) -> None:
-        confirmed = interaction.TextualInteraction().confirm_aicage_update(
-            "1.0.0",
-            "1.1.0",
-        )
+        with mock.patch(
+            "aicage.runtime.menu.prompts.interaction.SimpleInteraction.confirm_aicage_update",
+            return_value=False,
+        ) as confirm_mock:
+            confirmed = interaction.TextualInteraction().confirm_aicage_update(
+                "1.0.0",
+                "1.1.0",
+            )
 
-        self.assertTrue(confirmed)
+        self.assertFalse(confirmed)
+        confirm_mock.assert_called_once_with("1.0.0", "1.1.0")
 
 
 class EditDraftWithTextualAppTests(TestCase):
