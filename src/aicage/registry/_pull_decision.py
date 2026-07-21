@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from dataclasses import dataclass
 
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
@@ -6,27 +5,21 @@ from aicage.docker.query import get_local_repo_digest
 from aicage.docker.types import ImageRefRepository
 from aicage.registry.digest.remote_digest import get_remote_digest
 
-ConfirmImageUpdate = Callable[[str], bool]
-
 
 @dataclass(frozen=True)
 class _PullDecisionPlan:
     should_pull: bool
-    confirm_update_image_ref: str | None = None
-
-
-def _confirm_update_pull(_: str) -> bool:
-    return True
+    needs_confirmation: bool = False
 
 
 def decide_pull(
     image_ref: str,
-    confirm_update: ConfirmImageUpdate = _confirm_update_pull,
+    update_approved: bool,
 ) -> bool:
     plan = pull_decision_plan(image_ref)
-    if plan.confirm_update_image_ref is None:
+    if not plan.needs_confirmation:
         return plan.should_pull
-    return confirm_update(plan.confirm_update_image_ref)
+    return update_approved
 
 
 def pull_decision_plan(image_ref: str) -> _PullDecisionPlan:
@@ -49,5 +42,5 @@ def pull_decision_plan(image_ref: str) -> _PullDecisionPlan:
         return _PullDecisionPlan(should_pull=False)
     return _PullDecisionPlan(
         should_pull=False,
-        confirm_update_image_ref=image_ref,
+        needs_confirmation=True,
     )

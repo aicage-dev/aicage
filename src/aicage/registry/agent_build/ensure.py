@@ -22,8 +22,6 @@ from ..base_build.ensure import ensure as ensure_base_build
 from ._logs import build_log_path
 from ._plan import should_rebuild
 from ._refresh import (
-    BaseRefreshPlan,
-    ConfirmImageUpdate,
     refresh_base_image,
     refresh_base_image_plan,
 )
@@ -35,17 +33,13 @@ from .agent_version.checker import AgentVersionChecker
 @dataclass(frozen=True)
 class _AgentBuildSetupPlan:
     needs_setup: bool
-    confirm_update_image_ref: str | None = None
-
-
-def _confirm_update_pull(_: str) -> bool:
-    return True
+    needs_update_confirmation: bool = False
 
 
 def ensure(
     run_config: RunConfig,
+    update_approved: bool,
     reporter: OperationReporter | None = None,
-    confirm_update: ConfirmImageUpdate = _confirm_update_pull,
 ) -> None:
     agent_metadata = run_config.context.agents[run_config.agent]
     definition_dir = agent_metadata.local_definition_dir
@@ -67,8 +61,8 @@ def ensure(
             base_image = refresh_base_image(
                 base_image_ref=base_image,
                 base_repository=base_repo,
+                update_approved=update_approved,
                 reporter=reporter,
-                confirm_update=confirm_update,
             )
         except RegistryError:
             if not local_image_exists(image_ref):
@@ -127,14 +121,12 @@ def setup_plan(run_config: RunConfig) -> _AgentBuildSetupPlan:
             )
         except RegistryError:
             return _AgentBuildSetupPlan(needs_setup=not local_image_exists(image_ref))
-        if refresh_plan.confirm_update_image_ref is not None:
+        if refresh_plan.needs_confirmation:
             return _AgentBuildSetupPlan(
                 needs_setup=True,
-                confirm_update_image_ref=refresh_plan.confirm_update_image_ref,
+                needs_update_confirmation=True,
             )
-        resolved_base_image = _resolved_base_image_ref(refresh_plan)
-        if resolved_base_image is not None:
-            base_image = resolved_base_image
+        base_image = refresh_plan.image_ref
 
     store = BuildStore()
     agent_version = _get_agent_version(run_config, agent_metadata, definition_dir)
@@ -148,18 +140,10 @@ def setup_plan(run_config: RunConfig) -> _AgentBuildSetupPlan:
     )
 
 
-def build_needed(
+def _build_needed_from_plan(
     run_config: RunConfig,
-    confirm_update: ConfirmImageUpdate | None = None,
 ) -> bool:
-    plan = setup_plan(run_config)
-    if plan.confirm_update_image_ref is not None:
-        if confirm_update is None:
-            return True
-        if not confirm_update(plan.confirm_update_image_ref):
-            return plan.needs_setup
-        return True
-    return plan.needs_setup
+    return setup_plan(run_config).needs_setup
 
 
 def _build_needed(run_config: RunConfig) -> bool:
@@ -179,10 +163,13 @@ def _build_needed(run_config: RunConfig) -> bool:
     base_repo = base_repository(run_config)
     if not custom_base:
         try:
-            base_image = refresh_base_image(
+            refresh_plan = refresh_base_image_plan(
                 base_image_ref=base_image,
                 base_repository=base_repo,
             )
+            if refresh_plan.needs_confirmation:
+                return True
+            base_image = refresh_plan.image_ref
         except RegistryError:
             return not local_image_exists(image_ref)
 
@@ -228,9 +215,3 @@ def _run_build(
         reporter=reporter,
     )
     cleanup_old_digest(image_repository, old_digest, image_ref)
-
-
-def _resolved_base_image_ref(plan: BaseRefreshPlan) -> str | None:
-    if plan.resolved_base_image_ref is not None:
-        return plan.resolved_base_image_ref
-    return plan.local_base_image_ref

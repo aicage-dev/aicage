@@ -23,15 +23,8 @@ class RefreshBaseDigestTests(TestCase):
                 base_repository="ghcr.io/aicage/aicage-image-base",
             )
 
-        self.assertIsNone(plan.resolved_base_image_ref)
-        self.assertEqual(
-            "ghcr.io/aicage/aicage-image-base@sha256:local",
-            plan.local_base_image_ref,
-        )
-        self.assertEqual(
-            "ghcr.io/aicage/aicage-image-base:ubuntu",
-            plan.confirm_update_image_ref,
-        )
+        self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", plan.image_ref)
+        self.assertTrue(plan.needs_confirmation)
 
     def test_refresh_base_image_plan_uses_remote_digest_without_verification(self) -> None:
         with (
@@ -50,7 +43,6 @@ class RefreshBaseDigestTests(TestCase):
             )
 
     def test_refresh_base_image_uses_local_digest_when_user_declines_pull(self) -> None:
-        confirm_update = mock.Mock(return_value=False)
         with (
             mock.patch(
                 "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
@@ -67,17 +59,13 @@ class RefreshBaseDigestTests(TestCase):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
-                confirm_update=confirm_update,
+                update_approved=False,
             )
         self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", digest)
-        confirm_update.assert_called_once_with(
-            "ghcr.io/aicage/aicage-image-base:ubuntu"
-        )
         resolve_mock.assert_not_called()
 
     def test_refresh_base_image_runs_pull_when_user_accepts_pull(self) -> None:
         reporter = mock.Mock()
-        confirm_update = mock.Mock(return_value=True)
         with (
             mock.patch(
                 "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
@@ -95,13 +83,10 @@ class RefreshBaseDigestTests(TestCase):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
+                update_approved=True,
                 reporter=reporter,
-                confirm_update=confirm_update,
             )
         self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:remote", digest)
-        confirm_update.assert_called_once_with(
-            "ghcr.io/aicage/aicage-image-base:ubuntu"
-        )
         resolve_mock.assert_called_once_with(
             "ghcr.io/aicage/aicage-image-base:ubuntu",
             "ghcr.io/aicage/aicage-image-base",
@@ -127,6 +112,7 @@ class RefreshBaseDigestTests(TestCase):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
+                update_approved=False,
             )
         self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", digest)
         resolve_mock.assert_not_called()
@@ -148,6 +134,7 @@ class RefreshBaseDigestTests(TestCase):
             digest = _refresh.refresh_base_image(
                 base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                 base_repository="ghcr.io/aicage/aicage-image-base",
+                update_approved=False,
             )
         self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", digest)
         resolve_mock.assert_not_called()
@@ -167,6 +154,7 @@ class RefreshBaseDigestTests(TestCase):
                 _refresh.refresh_base_image(
                     base_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
                     base_repository="ghcr.io/aicage/aicage-image-base",
+                    update_approved=False,
                 )
         self.assertIn("Failed to resolve remote digest", str(context.exception))
 
@@ -188,8 +176,5 @@ class RefreshBaseDigestTests(TestCase):
                 base_repository="ghcr.io/aicage/aicage-image-base",
             )
 
-        self.assertEqual(
-            "ghcr.io/aicage/aicage-image-base@sha256:local",
-            plan.resolved_base_image_ref,
-        )
-        self.assertIsNone(plan.confirm_update_image_ref)
+        self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", plan.image_ref)
+        self.assertFalse(plan.needs_confirmation)
