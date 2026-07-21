@@ -124,9 +124,7 @@ class RuntimeUpdateInteractionTests(TestCase):
             "aicage.runtime.menu.prompts.interaction.prompt_update_image",
             return_value=True,
         ) as prompt_mock:
-            confirmed = interaction.SimpleInteraction().confirm_image_update(
-                "repo:tag"
-            )
+            confirmed = interaction.SimpleInteraction().confirm_image_update("repo:tag")
 
         self.assertTrue(confirmed)
         prompt_mock.assert_called_once_with("repo:tag")

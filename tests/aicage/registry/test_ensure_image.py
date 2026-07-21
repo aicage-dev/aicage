@@ -110,9 +110,7 @@ class EnsureImageTests(TestCase):
             assert image_setup_plan(run_config).needs_setup is True
 
     @staticmethod
-    def test_image_setup_plan_true_for_local_build_without_running_preflight() -> (
-        None
-    ):
+    def test_image_setup_plan_true_for_local_build_without_running_preflight() -> None:
         run_config = _run_config(build_local=True, extensions=[])
 
         with mock.patch(

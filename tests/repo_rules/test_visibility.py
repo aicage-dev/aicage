@@ -213,9 +213,7 @@ def _iter_imported_modules(
     return imported_modules
 
 
-def _iter_private_symbol_imports(
-    tree: ast.AST, path: Path, src_dir: Path
-) -> list[str]:
+def _iter_private_symbol_imports(tree: ast.AST, path: Path, src_dir: Path) -> list[str]:
     current_module = _module_name_from_path(path, src_dir)
     current_package = _current_package(current_module, path)
     imports: list[str] = []

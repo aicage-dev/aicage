@@ -28,7 +28,9 @@ class RefreshBaseDigestTests(TestCase):
         )
         self.assertTrue(plan.needs_confirmation)
 
-    def test_refresh_base_image_plan_uses_remote_digest_without_verification(self) -> None:
+    def test_refresh_base_image_plan_uses_remote_digest_without_verification(
+        self,
+    ) -> None:
         with (
             mock.patch(
                 "aicage.registry.agent_build._refresh.get_local_repo_digest_for_repo",
@@ -178,5 +180,7 @@ class RefreshBaseDigestTests(TestCase):
                 base_repository="ghcr.io/aicage/aicage-image-base",
             )
 
-        self.assertEqual("ghcr.io/aicage/aicage-image-base@sha256:local", plan.image_ref)
+        self.assertEqual(
+            "ghcr.io/aicage/aicage-image-base@sha256:local", plan.image_ref
+        )
         self.assertFalse(plan.needs_confirmation)

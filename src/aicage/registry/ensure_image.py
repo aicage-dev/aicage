@@ -5,12 +5,8 @@ from aicage.docker.reporting import OperationReporter
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._image_pull import pull_image
 from aicage.registry._pull_decision import pull_decision_plan
-from aicage.registry.agent_build.ensure import (
-    ensure as ensure_agent_image,
-)
-from aicage.registry.agent_build.ensure import (
-    setup_plan as agent_build_setup_plan,
-)
+from aicage.registry.agent_build.ensure import ensure as ensure_agent_image
+from aicage.registry.agent_build.ensure import setup_plan as agent_build_setup_plan
 from aicage.registry.extension_build.ensure import (
     build_needed as extension_build_needed,
 )

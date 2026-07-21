@@ -49,8 +49,8 @@ class PrepareImageTests(TestCase):
             ),
             mock.patch("aicage.runtime.image_setup.ensure_image") as ensure_image_mock,
         ):
-            interaction.execute_image_setup.side_effect = (
-                lambda operation: operation(reporter)
+            interaction.execute_image_setup.side_effect = lambda operation: operation(
+                reporter
             )
             image_setup.prepare_image(run_config, interaction)
 
