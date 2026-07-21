@@ -229,7 +229,11 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
     def _initial_state(self) -> OverviewState:
         return OverviewState(
             last_section_id=None,
-            built_in_shares=shares_values(self._draft, self._config_context).built_in_shares,
-            custom_shares=[CustomShareValue(share) for share in self._draft.agent_cfg.shares],
+            built_in_shares=shares_values(
+                self._draft, self._config_context
+            ).built_in_shares,
+            custom_shares=[
+                CustomShareValue(share) for share in self._draft.agent_cfg.shares
+            ],
             docker_socket_enabled=bool(self._draft.agent_cfg.mounts.docker),
         )

@@ -130,9 +130,9 @@ class ConfigAppTests(TestCase):
         ensure_mock.assert_not_called()
         finish_mock.assert_not_called()
 
-    def test_accept_refreshes_sections_when_missing_extensions_are_removed(self) -> (
-        None
-    ):
+    def test_accept_refreshes_sections_when_missing_extensions_are_removed(
+        self,
+    ) -> None:
         app = _build_app()
 
         with (
@@ -312,9 +312,7 @@ class ConfigAppTests(TestCase):
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
-            mock.patch.object(
-                app, "_push_view", new=mock.AsyncMock(return_value=None)
-            ),
+            mock.patch.object(app, "_push_view", new=mock.AsyncMock(return_value=None)),
         ):
             accepted = asyncio.run(app._confirm_undecided_built_in_shares())
 

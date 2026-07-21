@@ -88,7 +88,9 @@ class MissingExtensionsTests(TestCase):
         self,
     ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            agent_cfg = AgentConfig(base="ubuntu", extensions=["extra"], image_ref="repo:tag")
+            agent_cfg = AgentConfig(
+                base="ubuntu", extensions=["extra"], image_ref="repo:tag"
+            )
             context = self._context(tmp_dir, agent_cfg)
 
             result = ensure_extensions_exist(

@@ -159,7 +159,9 @@ class EditDraftWithTextualAppTests(TestCase):
         ):
             interaction._edit_draft_with_textual_app(draft, _build_context())
 
-    def test__confirm_image_update_with_textual_app_returns_false_for_none(self) -> None:
+    def test__confirm_image_update_with_textual_app_returns_false_for_none(
+        self,
+    ) -> None:
         app_mock = mock.Mock()
         app_mock.run.return_value = None
 
@@ -167,7 +169,9 @@ class EditDraftWithTextualAppTests(TestCase):
             "aicage.runtime.menu.textual.interaction.ImageUpdateApp.run",
             return_value=None,
         ):
-            self.assertFalse(interaction._confirm_image_update_with_textual_app("repo:tag"))
+            self.assertFalse(
+                interaction._confirm_image_update_with_textual_app("repo:tag")
+            )
 
     def test__execute_image_setup_with_textual_app_raises_app_error(self) -> None:
         operation = mock.Mock()

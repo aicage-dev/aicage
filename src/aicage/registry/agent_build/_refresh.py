@@ -41,7 +41,9 @@ def refresh_base_image_plan(
     remote_digest = get_remote_digest(base_image_ref)
     if remote_digest is None:
         if local_ref is None:
-            raise RegistryError(f"Failed to resolve remote digest for {base_image_ref}.")
+            raise RegistryError(
+                f"Failed to resolve remote digest for {base_image_ref}."
+            )
         logger.warning("Base image digest check failed; using local base image.")
         return _BaseRefreshPlan(
             image_ref=local_ref,

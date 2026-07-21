@@ -82,9 +82,7 @@ class MountPromptTests(TestCase):
                     f"{_MODULE}.git_support_prompt_items", return_value=git_items
                 ),
             ):
-                select_mounts = mock.Mock(
-                    return_value=[MOUNT_GITCONFIG_KEY, "gh"]
-                )
+                select_mounts = mock.Mock(return_value=[MOUNT_GITCONFIG_KEY, "gh"])
                 prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                     project_path,
                     agent_cfg,

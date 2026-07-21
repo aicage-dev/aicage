@@ -8,7 +8,9 @@ from aicage.runtime.mounts.shares import ShareSpec, resolve_share_specs
 
 from .git_support import git_support_prompt_items
 
-MountSelectionPrompt = Callable[[list[tuple[str, str]], list[tuple[str, str]]], list[str]]
+MountSelectionPrompt = Callable[
+    [list[tuple[str, str]], list[tuple[str, str]]], list[str]
+]
 
 
 @dataclass(frozen=True)
