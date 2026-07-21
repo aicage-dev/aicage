@@ -129,13 +129,13 @@ class EntrypointTests(TestCase):
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
             mock.patch(
-                "aicage.cli.entrypoint.set_non_interactive_defaults"
-            ) as set_defaults_mock,
+                "aicage.cli.entrypoint.create_runtime_interaction"
+            ) as create_interaction_mock,
         ):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        set_defaults_mock.assert_called_once_with(True)
+        create_interaction_mock.assert_called_once_with("none")
         info_mock.assert_called_once()
         load_mock.assert_not_called()
 
@@ -152,9 +152,6 @@ class EntrypointTests(TestCase):
             ),
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
             mock.patch(
-                "aicage.cli.entrypoint.set_non_interactive_defaults"
-            ) as set_defaults_mock,
-            mock.patch(
                 "aicage.cli.entrypoint.create_runtime_interaction",
                 return_value=interaction,
             ) as create_interaction_mock,
@@ -165,14 +162,14 @@ class EntrypointTests(TestCase):
                 "aicage.cli.entrypoint.build_run_args",
                 return_value=_build_run_args("repo:tag", "", []),
             ),
+            mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
             mock.patch("aicage.cli.entrypoint.run_container") as run_container_mock,
         ):
             exit_code = main(["codex"])
 
         self.assertEqual(0, exit_code)
-        set_defaults_mock.assert_called_once_with(False)
         create_interaction_mock.assert_called_once_with("textual")
-        interaction.prepare_image.assert_called_once_with(run_config)
+        prepare_image_mock.assert_called_once_with(run_config, interaction)
         run_container_mock.assert_called_once()
 
     def test_main_config_remove(self) -> None:
@@ -242,12 +239,13 @@ class EntrypointTests(TestCase):
                 mock.patch(
                     "aicage.cli.entrypoint.build_run_args", return_value=run_args
                 ),
+                mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
                 mock.patch("aicage.cli.entrypoint.run_container") as run_mock,
             ):
                 exit_code = main([])
 
             self.assertEqual(0, exit_code)
-            interaction.prepare_image.assert_called_once_with(run_config)
+            prepare_image_mock.assert_called_once_with(run_config, interaction)
             run_mock.assert_called_once_with(run_args)
 
     def test_main_prompts_and_saves_base(self) -> None:
@@ -283,12 +281,13 @@ class EntrypointTests(TestCase):
                 mock.patch(
                     "aicage.cli.entrypoint.build_run_args", return_value=run_args
                 ),
+                mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
                 mock.patch("aicage.cli.entrypoint.run_container"),
             ):
                 exit_code = main([])
 
             self.assertEqual(0, exit_code)
-            interaction.prepare_image.assert_called_once_with(run_config)
+            prepare_image_mock.assert_called_once_with(run_config, interaction)
 
     def test_main_handles_unexpected_exception(self) -> None:
         logger = mock.Mock()

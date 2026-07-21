@@ -38,7 +38,8 @@ class OverviewEntryTests(TestCase):
         )
 
         with mock.patch(
-            "aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock
+            "aicage.runtime.menu.textual.entry.OverviewApp.for_config",
+            return_value=app_mock,
         ):
             selection, project_docker_args = entry.edit_draft_with_textual_app(
                 draft, context
@@ -67,7 +68,8 @@ class OverviewEntryTests(TestCase):
 
         with (
             mock.patch(
-                "aicage.runtime.menu.textual.entry.OverviewApp", return_value=app_mock
+                "aicage.runtime.menu.textual.entry.OverviewApp.for_config",
+                return_value=app_mock,
             ),
             self.assertRaises(RuntimeError),
         ):
@@ -85,9 +87,17 @@ class OverviewEntryTests(TestCase):
         )
 
         with mock.patch(
-            "aicage.runtime.menu.textual.entry.OverviewApp.run", return_value=None
+            "aicage.runtime.menu.textual.entry.OverviewApp.for_config"
         ):
-            with self.assertRaises(KeyboardInterrupt):
+            app_mock = mock.Mock()
+            app_mock.run.return_value = None
+            with (
+                mock.patch(
+                    "aicage.runtime.menu.textual.entry.OverviewApp.for_config",
+                    return_value=app_mock,
+                ),
+                self.assertRaises(KeyboardInterrupt),
+            ):
                 entry.edit_draft_with_textual_app(draft, _build_context())
 
         parsed = draft.parsed

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from aicage._logging import get_logger
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.filter import filter_bases
 from aicage.config.context import ConfigContext
@@ -8,7 +7,6 @@ from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.menu.default_base import resolve_default_base
 
 from ._tty import ensure_tty_for_prompt
-from .mode import non_interactive_defaults_enabled
 
 
 @dataclass(frozen=True)
@@ -28,15 +26,7 @@ class _BaseOption:
 def prompt_for_base(request: BaseSelectionRequest) -> str:
     bases = _base_options(request.context, request.agent_metadata)
     default_base = request.default_base or resolve_default_base(_available_bases(bases))
-    if non_interactive_defaults_enabled():
-        get_logger().info(
-            "Selected base '%s' for agent '%s' (non-interactive defaults)",
-            default_base,
-            request.agent,
-        )
-        return default_base
     ensure_tty_for_prompt()
-    logger = get_logger()
     title = f"Select base image for '{request.agent}' (runtime to use inside the container):"
 
     if bases:
@@ -66,7 +56,6 @@ def prompt_for_base(request: BaseSelectionRequest) -> str:
         raise RuntimeExecutionError(
             f"Invalid base '{choice}'. Valid options: {options}"
         )
-    logger.info("Selected base '%s' for agent '%s'", choice, request.agent)
     return choice
 
 

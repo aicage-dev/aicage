@@ -88,7 +88,10 @@ class VersionCheckTests(TestCase):
             mock.patch("aicage.cli._version_check._check_for_update") as check_mock,
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            updated = version_check.maybe_prompt_update(version_check._UNKNOWN_VERSION)
+            updated = version_check.maybe_prompt_update(
+                version_check._UNKNOWN_VERSION,
+                mock.Mock(),
+            )
 
         self.assertFalse(updated)
         check_mock.assert_not_called()
@@ -101,7 +104,7 @@ class VersionCheckTests(TestCase):
             ),
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            updated = version_check.maybe_prompt_update("0.1.0")
+            updated = version_check.maybe_prompt_update("0.1.0", mock.Mock())
 
         self.assertFalse(updated)
         self.assertEqual("", stdout.getvalue())
@@ -111,14 +114,16 @@ class VersionCheckTests(TestCase):
             mock.patch(
                 "aicage.cli._version_check._check_for_update", return_value="1.2.3"
             ),
-            mock.patch(
-                "aicage.cli._version_check.prompt_update_aicage", return_value=False
-            ),
+            mock.patch("aicage.cli._version_check._run_upgrade") as upgrade_mock,
             mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
         ):
-            updated = version_check.maybe_prompt_update("1.0.0")
+            updated = version_check.maybe_prompt_update(
+                "1.0.0",
+                mock.Mock(return_value=False),
+            )
 
         self.assertFalse(updated)
+        upgrade_mock.assert_not_called()
         output = stdout.getvalue()
         self.assertIn("Update with: pipx upgrade aicage", output)
 
@@ -129,13 +134,13 @@ class VersionCheckTests(TestCase):
                 "aicage.cli._version_check._check_for_update", return_value="1.2.3"
             ),
             mock.patch(
-                "aicage.cli._version_check.prompt_update_aicage", return_value=True
-            ),
-            mock.patch(
                 "aicage.cli._version_check._run_upgrade", return_value=True
             ) as upgrade_mock,
         ):
-            updated = version_check.maybe_prompt_update("1.0.0")
+            updated = version_check.maybe_prompt_update(
+                "1.0.0",
+                mock.Mock(return_value=True),
+            )
 
         assert updated
         upgrade_mock.assert_called_once()

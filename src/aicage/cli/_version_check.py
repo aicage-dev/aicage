@@ -3,15 +3,17 @@ import re
 import subprocess  # nosec B404 -- subprocess is required for the explicit pipx upgrade command.
 import urllib.error
 import urllib.request
+from collections.abc import Callable
+from typing import TypeAlias
 
 from aicage._logging import get_logger
 from aicage._network import classify_network_failure, host_from_url, require_http_url
 from aicage.constants import PYPI_VERSION_CHECK_TIMEOUT_SECONDS
-from aicage.runtime.menu.prompts.confirm import prompt_update_aicage
 
 _PYPI_URL: str = "https://pypi.org/pypi/aicage/json"
 _UPGRADE_COMMAND: str = "pipx upgrade aicage"
 _UNKNOWN_VERSION: str = "0.0.0"
+_UpdatePrompt: TypeAlias = Callable[[str, str], bool]
 
 
 def _check_for_update(current_version: str) -> str | None:
@@ -51,14 +53,17 @@ def _check_for_update(current_version: str) -> str | None:
     return None
 
 
-def maybe_prompt_update(current_version: str) -> bool:
+def maybe_prompt_update(
+    current_version: str,
+    confirm_update: _UpdatePrompt,
+) -> bool:
     if current_version == _UNKNOWN_VERSION:
         return False
     latest_version = _check_for_update(current_version)
     if not latest_version:
         return False
 
-    if prompt_update_aicage(current_version, latest_version):
+    if confirm_update(current_version, latest_version):
         return _run_upgrade()
     print(f"Update with: {_UPGRADE_COMMAND}")
     return False

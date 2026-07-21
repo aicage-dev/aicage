@@ -25,6 +25,27 @@ class OverviewAppTests(TestCase):
     def test_inline_padding_is_disabled(self) -> None:
         self.assertEqual(0, _app.OverviewApp.INLINE_PADDING)
 
+    def test_for_config(self) -> None:
+        app = _app.OverviewApp.for_config(
+            _build_draft(
+                AgentConfig(base="ubuntu"),
+                ParsedArgs(False, "", "codex", [], False, [], None),
+            ),
+            _build_context(),
+        )
+
+        self.assertEqual("container config", app.sub_title)
+
+    def test_for_image_update_confirmation(self) -> None:
+        app = _app.OverviewApp.for_image_update_confirmation("repo:tag")
+
+        self.assertEqual("container setup", app.sub_title)
+
+    def test_for_execution(self) -> None:
+        app = _app.OverviewApp.for_execution(mock.Mock())
+
+        self.assertEqual("container setup", app.sub_title)
+
     def test_init_sets_container_config_subtitle(self) -> None:
         app = _build_app()
 
@@ -76,6 +97,35 @@ class OverviewAppTests(TestCase):
             app.on_mount()
 
         self.assertEqual("ubuntu", app._draft.agent_cfg.base)
+
+    def test_init_sets_container_setup_subtitle_for_execution_mode(self) -> None:
+        app = _app.OverviewApp.for_execution(mock.Mock())
+
+        self.assertEqual("container setup", app.sub_title)
+
+    def test_compose_yields_execution_screen_for_execution_mode(self) -> None:
+        app = _app.OverviewApp.for_execution(mock.Mock())
+
+        widgets = list(app.compose())
+
+        self.assertEqual(1, len(widgets))
+        self.assertIsInstance(widgets[0], _app.ExecutionScreen)
+
+    def test_on_mount_starts_confirmation_for_image_update_mode(self) -> None:
+        app = _app.OverviewApp.for_image_update_confirmation("repo:tag")
+
+        with mock.patch.object(app, "_show_image_update_confirmation") as show_mock:
+            app.on_mount()
+
+        show_mock.assert_called_once_with()
+
+    def test_on_mount_starts_execution_for_execution_mode(self) -> None:
+        app = _app.OverviewApp.for_execution(mock.Mock())
+
+        with mock.patch.object(app, "_run_execution") as run_mock:
+            app.on_mount()
+
+        run_mock.assert_called_once_with()
 
     def test_action_accept_dispatches_async_accept(self) -> None:
         app = _build_app()
@@ -446,7 +496,7 @@ def _build_app(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
         return_value=built_in_shares or [],
     ):
-        return _app.OverviewApp(
+        return _app.OverviewApp.for_config(
             _build_draft(
                 agent_cfg or AgentConfig(base="ubuntu"),
                 ParsedArgs(False, "", "codex", [], False, [], None),

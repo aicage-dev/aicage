@@ -8,6 +8,11 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, ProjectConfig
 from aicage.config.run_config_draft import create_run_config_draft
+from aicage.registry.image_selection.interaction import (
+    BaseChoiceRequest,
+    ExtensionChoiceOption,
+    MissingExtensionsRequest,
+)
 
 
 class OverviewSelectionTests(TestCase):
@@ -111,3 +116,40 @@ class OverviewSelectionTests(TestCase):
             selection = overview_selection.resolve_overview_selection(draft, context)
 
         self.assertEqual("aicage-extended:codex-ubuntu-alpha-zeta", selection.image_ref)
+
+
+class OverviewSelectionInteractionTests(TestCase):
+    def test_choose_base(self) -> None:
+        with self.assertRaises(RuntimeError):
+            overview_selection._OverviewSelectionInteraction().choose_base(
+                BaseChoiceRequest(
+                    agent="codex",
+                    context=mock.Mock(),
+                    agent_metadata=mock.Mock(),
+                    default_base="ubuntu",
+                )
+            )
+
+    def test_choose_extensions(self) -> None:
+        with self.assertRaises(RuntimeError):
+            overview_selection._OverviewSelectionInteraction().choose_extensions(
+                [ExtensionChoiceOption(name="gh", description="GitHub CLI")]
+            )
+
+    def test_choose_image_ref(self) -> None:
+        with self.assertRaises(RuntimeError):
+            overview_selection._OverviewSelectionInteraction().choose_image_ref(
+                "repo:tag"
+            )
+
+    def test_choose_missing_extensions(self) -> None:
+        with self.assertRaises(RuntimeError):
+            overview_selection._OverviewSelectionInteraction().choose_missing_extensions(
+                MissingExtensionsRequest(
+                    agent="codex",
+                    missing=["gh"],
+                    stored_image_ref="repo:tag",
+                    project_config_path=Path("/repo/project.yml"),
+                    other_projects=[],
+                )
+            )
