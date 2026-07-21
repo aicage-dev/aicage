@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 from textual.widgets import Checkbox, Input, Static
 
 from aicage.runtime.menu.textual._models import ShareEditorResult
-from aicage.runtime.menu.textual.screens import share_editor_screen
+from aicage.runtime.menu.textual.views import share_editor_screen
 
 
 class AddShareScreenTests(TestCase):

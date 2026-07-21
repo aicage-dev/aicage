@@ -19,19 +19,19 @@ from aicage.registry.image_selection.models import ImageSelection
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
 from ._models import CustomShareValue, HostAccessConfirmValues
 from ._state import OverviewState
-from .overview.view import Overview
-from .screens.base_screen import BaseScreen
-from .screens.docker_args_screen import DockerArgsScreen
-from .screens.execution_screen import ExecutionScreen
-from .screens.extensions_screen import ExtensionsScreen
-from .screens.host_access_confirm_screen import HostAccessConfirmScreen
-from .screens.image_update_confirm_screen import ImageUpdateConfirmScreen
-from .screens.share_editor_screen import ShareEditorScreen
 from .services.base_support import base_metadata_for_draft, ensure_base_default
 from .services.custom_share_flow import add_custom_share, update_custom_share
 from .services.execution_reporting import ExecutionReporter
 from .services.host_access_flow import confirm_and_apply_host_access
 from .services.summary import extras_values, shares_values
+from .views.base_screen import BaseScreen
+from .views.docker_args_screen import DockerArgsScreen
+from .views.execution_screen import ExecutionScreen
+from .views.extensions_screen import ExtensionsScreen
+from .views.host_access_confirm_screen import HostAccessConfirmScreen
+from .views.image_update_confirm_screen import ImageUpdateConfirmScreen
+from .views.overview.view import Overview
+from .views.share_editor_screen import ShareEditorScreen
 
 _ScreenResultT = TypeVar("_ScreenResultT")
 _ImageSetupOperation = Callable[[OperationReporter], None]

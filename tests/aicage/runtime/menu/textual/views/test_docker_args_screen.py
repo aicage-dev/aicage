@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from aicage.runtime.menu.textual._models import ExtrasValues
-from aicage.runtime.menu.textual.screens import docker_args_screen
+from aicage.runtime.menu.textual.views import docker_args_screen
 
 
 class ExtrasScreenTests(TestCase):

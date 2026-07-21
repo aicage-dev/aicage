@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 from textual.widgets import Checkbox, Static, TextArea
 
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.runtime.menu.textual.screens import extensions_screen as screen_module
+from aicage.runtime.menu.textual.views import extensions_screen as screen_module
 
 
 class ExtensionsScreenTests(TestCase):
@@ -165,7 +165,7 @@ class ExtensionsScreenTests(TestCase):
                 type(screen), "app", new_callable=mock.PropertyMock, return_value=app
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.screens.extensions_screen._clipboard.copy_to_clipboard"
+                "aicage.runtime.menu.textual.views.extensions_screen._clipboard.copy_to_clipboard"
             ) as copy_mock,
         ):
             screen._copy_samples_command()

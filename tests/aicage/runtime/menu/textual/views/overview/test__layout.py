@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from aicage.runtime.menu.textual._models import BuiltInShareValue, CustomShareValue
-from aicage.runtime.menu.textual.overview import _layout
+from aicage.runtime.menu.textual.views.overview import _layout
 
 
 class LayoutTests(TestCase):

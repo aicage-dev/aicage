@@ -2,7 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from aicage.docker.reporting import OperationReporter
-from aicage.runtime.menu.textual.screens.execution_screen import ExecutionScreen
+from aicage.runtime.menu.textual.views.execution_screen import ExecutionScreen
 
 
 class ExecutionReporter(OperationReporter):

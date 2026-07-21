@@ -1,6 +1,6 @@
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.textual.screens import image_update_confirm_screen
+from aicage.runtime.menu.textual.views import image_update_confirm_screen
 
 
 class ImageUpdateConfirmScreenTests(TestCase):

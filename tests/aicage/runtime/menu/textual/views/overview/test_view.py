@@ -6,9 +6,9 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.menu.textual._models import BuiltInShareValue, CustomShareValue
 from aicage.runtime.menu.textual._state import OverviewState
-from aicage.runtime.menu.textual.overview.view import Overview
+from aicage.runtime.menu.textual.views.overview.view import Overview
 
-from .._test_support import _build_context, _build_draft
+from ..._test_support import _build_context, _build_draft
 
 
 class OverviewTests(TestCase):
@@ -181,7 +181,7 @@ class OverviewTests(TestCase):
             ),
             mock.patch.object(overview, "query_one", side_effect=query_one_side_effect),
             mock.patch(
-                "aicage.runtime.menu.textual.overview.view.shares_values"
+                "aicage.runtime.menu.textual.views.overview.view.shares_values"
             ) as shares_values,
         ):
             shares_values.return_value = mock.Mock(built_in_shares=[])
