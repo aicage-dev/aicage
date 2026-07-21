@@ -1,7 +1,6 @@
 import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
-from unittest.mock import Mock
 
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
@@ -22,7 +21,8 @@ from aicage.registry.image_selection.extensions.handler import (
 class ExtensionHandlerTests(TestCase):
     def test_handle_extension_selection_uses_base_when_none_selected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            context = self._context(tmp_dir)
+            save_project_mock = mock.Mock()
+            context = self._context(tmp_dir, save_project_mock)
             agent_cfg = AgentConfig()
             selection = ExtensionSelectionContext(
                 agent="codex",
@@ -32,19 +32,18 @@ class ExtensionHandlerTests(TestCase):
                 extensions={},
                 context=context,
             )
-            save_project_mock = context.store.save_project
             result = handle_extension_selection(selection, _selection_interaction([]))
 
             self.assertEqual(
                 f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu", result.image_ref
             )
             self.assertEqual([], agent_cfg.extensions)
-            assert isinstance(save_project_mock, Mock)
             save_project_mock.assert_not_called()
 
     def test_handle_extension_selection_persists_selection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            context = self._context(tmp_dir)
+            save_project_mock = mock.Mock()
+            context = self._context(tmp_dir, save_project_mock)
             agent_cfg = AgentConfig()
             extension = self._extension(tmp_dir, "extra")
             selection = ExtensionSelectionContext(
@@ -55,7 +54,6 @@ class ExtensionHandlerTests(TestCase):
                 extensions={"extra": extension},
                 context=context,
             )
-            save_project_mock = context.store.save_project
             with (
                 mock.patch(
                     "aicage.registry.image_selection.extensions.handler.write_extended_image_config"
@@ -72,7 +70,6 @@ class ExtensionHandlerTests(TestCase):
             self.assertEqual(f"{DEFAULT_EXTENDED_IMAGE_NAME}:custom", result.image_ref)
             self.assertEqual(["extra"], agent_cfg.extensions)
             write_mock.assert_called_once()
-            assert isinstance(save_project_mock, Mock)
             save_project_mock.assert_not_called()
 
     @staticmethod
@@ -101,7 +98,7 @@ class ExtensionHandlerTests(TestCase):
         )
 
     @staticmethod
-    def _context(tmp_dir: str) -> ConfigContext:
+    def _context(tmp_dir: str, save_project_mock: mock.Mock) -> ConfigContext:
         bases = {
             "ubuntu": BaseMetadata(
                 from_image="ubuntu:latest",
@@ -112,8 +109,10 @@ class ExtensionHandlerTests(TestCase):
                 local_definition_dir=Path("/test-tmp/ubuntu"),
             )
         }
+        store = mock.Mock()
+        store.save_project = save_project_mock
         return ConfigContext(
-            store=mock.Mock(),
+            store=store,
             project_cfg=ProjectConfig(path=str(Path(tmp_dir) / "project"), agents={}),
             agents={},
             bases=bases,

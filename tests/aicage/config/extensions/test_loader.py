@@ -2,9 +2,9 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
+from aicage.config._yaml_loader import load_yaml
 from aicage.config.errors import ConfigError
 from aicage.config.extensions import loader as extensions_module
-from aicage.config.yaml_loader import load_yaml
 
 from ._fixtures import extension_definition, join_yaml, write_extension
 

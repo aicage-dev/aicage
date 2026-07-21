@@ -26,20 +26,21 @@ def select_agent_image(
             return fresh_selection(agent, context, extensions, selection_interaction)
         validate_base(agent, base, context)
         if agent_cfg.extensions:
-            reset = ensure_extensions_exist(
-                context=context,
-                agent=agent,
-                selection_interaction=selection_interaction,
-            )
-            if reset:
-                return fresh_selection(
-                    agent,
-                    context,
-                    extensions,
-                    selection_interaction,
+            updated = ensure_extensions_exist(context=context, agent=agent)
+            if updated and not agent_cfg.extensions:
+                return ImageSelection(
+                    image_ref=base_image_ref(agent_metadata, agent, base, context),
+                    base=base,
+                    extensions=[],
+                    base_image_ref=base_image_ref(
+                        agent_metadata,
+                        agent,
+                        base,
+                        context,
+                    ),
                 )
         return ImageSelection(
-            image_ref=agent_cfg.image_ref,
+            image_ref=agent_cfg.image_ref or "",
             base=base,
             extensions=list(agent_cfg.extensions),
             base_image_ref=base_image_ref(agent_metadata, agent, base, context),

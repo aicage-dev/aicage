@@ -3,7 +3,6 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
     ExtensionChoiceOption,
-    MissingExtensionsRequest,
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
@@ -66,10 +65,6 @@ class _NonInteractiveSelectionInteraction:
 
     def choose_image_ref(self, default_ref: str) -> str:
         return default_ref
-
-    def choose_missing_extensions(self, request: MissingExtensionsRequest) -> str:
-        del request
-        return "exit"
 
 
 def create_none_interaction() -> _NoneInteraction:

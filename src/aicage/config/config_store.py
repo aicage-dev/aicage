@@ -6,8 +6,8 @@ import yaml
 
 from aicage.paths import PROJECTS_DIR
 
+from ._yaml_loader import load_yaml
 from .project_config import ProjectConfig
-from .yaml_loader import load_yaml
 
 
 class SettingsStore:

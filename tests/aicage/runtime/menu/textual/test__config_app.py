@@ -100,6 +100,10 @@ class ConfigAppTests(TestCase):
                 "_confirm_undecided_built_in_shares",
                 new=mock.AsyncMock(return_value=True),
             ),
+            mock.patch(
+                "aicage.runtime.menu.textual._config_app.ensure_extensions_exist",
+                return_value=False,
+            ),
             mock.patch.object(app, "_finish") as finish_mock,
         ):
             asyncio.run(app._accept_impl())
@@ -115,11 +119,38 @@ class ConfigAppTests(TestCase):
                 "_confirm_undecided_built_in_shares",
                 new=mock.AsyncMock(return_value=False),
             ),
+            mock.patch(
+                "aicage.runtime.menu.textual._config_app.ensure_extensions_exist"
+            ) as ensure_mock,
             mock.patch.object(app, "_finish") as finish_mock,
         ):
             asyncio.run(app._accept_impl())
 
+        ensure_mock.assert_not_called()
         finish_mock.assert_not_called()
+
+    def test_accept_refreshes_sections_when_missing_extensions_are_removed(self) -> (
+        None
+    ):
+        app = _build_app()
+
+        with (
+            mock.patch.object(
+                app,
+                "_confirm_undecided_built_in_shares",
+                new=mock.AsyncMock(return_value=True),
+            ),
+            mock.patch(
+                "aicage.runtime.menu.textual._config_app.ensure_extensions_exist",
+                return_value=True,
+            ),
+            mock.patch.object(app, "_refresh_sections") as refresh_mock,
+            mock.patch.object(app, "_finish") as finish_mock,
+        ):
+            asyncio.run(app._accept_impl())
+
+        refresh_mock.assert_called_once_with()
+        finish_mock.assert_called_once()
 
     def test_on_overview_accept_requested_dispatches_ok(self) -> None:
         app = _build_app()

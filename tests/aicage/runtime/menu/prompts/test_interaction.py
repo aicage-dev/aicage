@@ -5,7 +5,6 @@ from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
     ExtensionChoiceOption,
-    MissingExtensionsRequest,
 )
 from aicage.runtime.menu.prompts import interaction
 
@@ -104,26 +103,6 @@ class SimpleSelectionInteractionTests(TestCase):
 
         self.assertEqual("repo:tag", choice)
         prompt_mock.assert_called_once_with("repo:default")
-
-    def test_choose_missing_extensions(self) -> None:
-        request = MissingExtensionsRequest(
-            agent="codex",
-            missing=["gh"],
-            stored_image_ref="repo:tag",
-            project_config_path=mock.Mock(),
-            other_projects=[],
-        )
-
-        with mock.patch(
-            "aicage.runtime.menu.prompts.interaction.prompt_for_missing_extensions",
-            return_value="exit",
-        ) as prompt_mock:
-            choice = interaction._SimpleSelectionInteraction().choose_missing_extensions(
-                request
-            )
-
-        self.assertEqual("exit", choice)
-        prompt_mock.assert_called_once()
 
 
 class RuntimeUpdateInteractionTests(TestCase):

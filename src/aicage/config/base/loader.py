@@ -1,12 +1,12 @@
 from pathlib import Path
 
 from aicage.config._yaml import expect_bool, expect_string, read_str_list
+from aicage.config._yaml_loader import load_yaml
 from aicage.config.base._custom_loader import load_custom_bases
 from aicage.config.base._validation import validate_base_mapping
 from aicage.config.base.models import ARCHITECTURES_KEY, BUILD_LOCAL_KEY, BaseMetadata
 from aicage.config.errors import ConfigError
 from aicage.config.resources import find_packaged_path
-from aicage.config.yaml_loader import load_yaml
 
 _BASES_DIR_NAME: str = "base-build/bases"
 _BASE_DEFINITION_FILES: tuple[str, str] = ("base.yaml", "base.yml")

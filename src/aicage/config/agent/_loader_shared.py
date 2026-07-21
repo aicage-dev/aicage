@@ -1,11 +1,11 @@
 from pathlib import Path
 
+from aicage.config._yaml_loader import load_yaml
 from aicage.config.agent._metadata import build_agent_metadata
 from aicage.config.agent._validation import ensure_required_files
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.errors import ConfigError
-from aicage.config.yaml_loader import load_yaml
 
 
 def load_agents_from_directory(

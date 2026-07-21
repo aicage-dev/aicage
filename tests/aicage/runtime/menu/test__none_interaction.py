@@ -5,7 +5,6 @@ from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
     ExtensionChoiceOption,
-    MissingExtensionsRequest,
 )
 from aicage.runtime.menu import _none_interaction
 
@@ -93,18 +92,3 @@ class NonInteractiveSelectionInteractionTests(TestCase):
         choice = resolved.choose_image_ref("repo:default")
 
         self.assertEqual("repo:default", choice)
-
-    def test_choose_missing_extensions(self) -> None:
-        resolved = _none_interaction._NonInteractiveSelectionInteraction()
-
-        choice = resolved.choose_missing_extensions(
-            MissingExtensionsRequest(
-                agent="codex",
-                missing=["gh"],
-                stored_image_ref="repo:tag",
-                project_config_path=mock.Mock(),
-                other_projects=[],
-            )
-        )
-
-        self.assertEqual("exit", choice)
