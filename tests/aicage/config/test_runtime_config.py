@@ -544,7 +544,10 @@ class RuntimeConfigTests(TestCase):
                     load_run_config("config", parsed)
 
         self.assertEqual(
-            "Unknown agent 'config'. Use '--config' for config commands.",
+            (
+                "Unknown agent 'config'. Use '--config' for config commands. "
+                "Available agents: codex."
+            ),
             str(raised.exception),
         )
         overview_mock.assert_not_called()

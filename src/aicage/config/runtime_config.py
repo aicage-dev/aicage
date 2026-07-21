@@ -90,9 +90,22 @@ def _require_known_agent(agent: str, agents: dict[str, AgentMetadata]) -> None:
         return
     if agent == "config":
         raise RegistryError(
-            "Unknown agent 'config'. Use '--config' for config commands."
+            _unknown_agent_message(
+                "Unknown agent 'config'. Use '--config' for config commands.",
+                agents,
+            )
         )
-    raise RegistryError(f"Unknown agent '{agent}'.")
+    raise RegistryError(_unknown_agent_message(f"Unknown agent '{agent}'.", agents))
+
+
+def _unknown_agent_message(
+    message: str,
+    agents: dict[str, AgentMetadata],
+) -> str:
+    if not agents:
+        return message
+    agent_list = ", ".join(sorted(agents))
+    return f"{message} Available agents: {agent_list}."
 
 
 def _persist_docker_args(draft: RunConfigDraft) -> None:
