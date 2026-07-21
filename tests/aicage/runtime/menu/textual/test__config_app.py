@@ -1,11 +1,11 @@
 import asyncio
 from pathlib import Path
+from typing import Any, cast
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
-from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime.menu.textual import _app
+from aicage.runtime.menu.textual import _config_app
 from aicage.runtime.menu.textual._models import (
     BuiltInShareValue,
     CustomShareValue,
@@ -18,33 +18,20 @@ from aicage.runtime.menu.textual.views.overview.view import Overview
 from ._test_support import _build_context, _build_draft
 
 
-class TextualAppTests(TestCase):
+class ConfigAppTests(TestCase):
     def test_command_palette_is_disabled(self) -> None:
-        self.assertFalse(_app.TextualApp.ENABLE_COMMAND_PALETTE)
+        self.assertFalse(_config_app.ConfigApp.ENABLE_COMMAND_PALETTE)
 
     def test_inline_padding_is_disabled(self) -> None:
-        self.assertEqual(0, _app.TextualApp.INLINE_PADDING)
+        self.assertEqual(0, _config_app.ConfigApp.INLINE_PADDING)
 
-    def test_for_config(self) -> None:
-        app = _app.TextualApp.for_config(
-            _build_draft(
-                AgentConfig(base="ubuntu"),
-                ParsedArgs(False, "", "codex", [], False, [], None),
-            ),
-            _build_context(),
-        )
+    def test_compose_builds_overview(self) -> None:
+        app = _build_app()
 
-        self.assertEqual("container config", app.sub_title)
+        widgets = list(app.compose())
 
-    def test_for_image_update_confirmation(self) -> None:
-        app = _app.TextualApp.for_image_update_confirmation("repo:tag")
-
-        self.assertEqual("container setup", app.sub_title)
-
-    def test_for_execution(self) -> None:
-        app = _app.TextualApp.for_execution(mock.Mock())
-
-        self.assertEqual("container setup", app.sub_title)
+        self.assertEqual(1, len(widgets))
+        self.assertIsInstance(widgets[0], Overview)
 
     def test_init_sets_container_config_subtitle(self) -> None:
         app = _build_app()
@@ -57,15 +44,6 @@ class TextualAppTests(TestCase):
         title = app.format_title("aicage", "container config")
 
         self.assertEqual("aicage — container config", str(title))
-
-    def test_compose_builds_shell_widgets(self) -> None:
-        app = _build_app()
-
-        widgets = list(app.compose())
-
-        self.assertEqual(2, len(widgets))
-        self.assertIsInstance(widgets[0], Overview)
-        self.assertIsInstance(widgets[1], _app.ExecutionScreen)
 
     def test_on_mount_populates_table(self) -> None:
         app = _build_app()
@@ -98,35 +76,6 @@ class TextualAppTests(TestCase):
 
         self.assertEqual("ubuntu", app._draft.agent_cfg.base)
 
-    def test_init_sets_container_setup_subtitle_for_execution_mode(self) -> None:
-        app = _app.TextualApp.for_execution(mock.Mock())
-
-        self.assertEqual("container setup", app.sub_title)
-
-    def test_compose_yields_execution_screen_for_execution_mode(self) -> None:
-        app = _app.TextualApp.for_execution(mock.Mock())
-
-        widgets = list(app.compose())
-
-        self.assertEqual(1, len(widgets))
-        self.assertIsInstance(widgets[0], _app.ExecutionScreen)
-
-    def test_on_mount_starts_confirmation_for_image_update_mode(self) -> None:
-        app = _app.TextualApp.for_image_update_confirmation("repo:tag")
-
-        with mock.patch.object(app, "_show_image_update_confirmation") as show_mock:
-            app.on_mount()
-
-        show_mock.assert_called_once_with()
-
-    def test_on_mount_starts_execution_for_execution_mode(self) -> None:
-        app = _app.TextualApp.for_execution(mock.Mock())
-
-        with mock.patch.object(app, "_run_execution") as run_mock:
-            app.on_mount()
-
-        run_mock.assert_called_once_with()
-
     def test_action_accept_dispatches_async_accept(self) -> None:
         app = _build_app()
 
@@ -143,7 +92,7 @@ class TextualAppTests(TestCase):
 
         finish_mock.assert_called_once_with(None)
 
-    def test_accept_async_finishes_when_host_access_confirmed(self) -> None:
+    def test_accept_finishes_when_host_access_confirmed(self) -> None:
         app = _build_app()
 
         with (
@@ -154,11 +103,11 @@ class TextualAppTests(TestCase):
             ),
             mock.patch.object(app, "_finish") as finish_mock,
         ):
-            asyncio.run(app._accept_async())
+            asyncio.run(cast(Any, app._accept).__wrapped__(app))
 
         finish_mock.assert_called_once()
 
-    def test_accept_async_stops_when_host_access_rejected(self) -> None:
+    def test_accept_stops_when_host_access_rejected(self) -> None:
         app = _build_app()
 
         with (
@@ -169,7 +118,7 @@ class TextualAppTests(TestCase):
             ),
             mock.patch.object(app, "_finish") as finish_mock,
         ):
-            asyncio.run(app._accept_async())
+            asyncio.run(cast(Any, app._accept).__wrapped__(app))
 
         finish_mock.assert_not_called()
 
@@ -227,13 +176,13 @@ class TextualAppTests(TestCase):
         with (
             mock.patch.object(
                 app,
-                "_push_section_screen",
+                "_push_view",
                 new=mock.AsyncMock(return_value=ShareEditorResult("logs", False)),
             ),
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(app._add_share_async())
+            asyncio.run(cast(Any, app._add_share).__wrapped__(app))
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/logs")], app._state.custom_shares
@@ -262,7 +211,7 @@ class TextualAppTests(TestCase):
             mock.patch.object(app, "_overview", return_value=overview),
             mock.patch.object(
                 app,
-                "_push_section_screen",
+                "_push_view",
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[
@@ -299,7 +248,7 @@ class TextualAppTests(TestCase):
             mock.patch.object(app, "_overview", return_value=overview),
             mock.patch.object(
                 app,
-                "_push_section_screen",
+                "_push_view",
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[
@@ -333,7 +282,7 @@ class TextualAppTests(TestCase):
         with (
             mock.patch.object(app, "_overview", return_value=overview),
             mock.patch.object(
-                app, "_push_section_screen", new=mock.AsyncMock(return_value=None)
+                app, "_push_view", new=mock.AsyncMock(return_value=None)
             ),
         ):
             accepted = asyncio.run(app._confirm_undecided_built_in_shares())
@@ -366,7 +315,7 @@ class TextualAppTests(TestCase):
             mock.patch.object(app, "_overview", return_value=overview),
             mock.patch.object(
                 app,
-                "_push_section_screen",
+                "_push_view",
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[],
@@ -392,7 +341,7 @@ class TextualAppTests(TestCase):
         with (
             mock.patch.object(
                 app,
-                "_push_section_screen",
+                "_push_view",
                 new=mock.AsyncMock(
                     return_value=ShareEditorResult("/test-tmp/project/logs", True)
                 ),
@@ -400,7 +349,12 @@ class TextualAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(app._edit_custom_share_async("/test-tmp/project/logs"))
+            asyncio.run(
+                cast(Any, app._edit_custom_share).__wrapped__(
+                    app,
+                    "/test-tmp/project/logs",
+                )
+            )
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
@@ -416,13 +370,18 @@ class TextualAppTests(TestCase):
         with (
             mock.patch.object(
                 app,
-                "_push_section_screen",
+                "_push_view",
                 new=mock.AsyncMock(return_value=ShareEditorResult("data", False)),
             ),
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(app._edit_custom_share_async("/test-tmp/project/logs"))
+            asyncio.run(
+                cast(Any, app._edit_custom_share).__wrapped__(
+                    app,
+                    "/test-tmp/project/logs",
+                )
+            )
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
@@ -430,7 +389,7 @@ class TextualAppTests(TestCase):
         apply_shell_width_mock.assert_called_once_with()
         refresh_mock.assert_called_once_with()
 
-    def test_push_section_screen_restores_focus_to_launching_section(self) -> None:
+    def test_push_view_restores_focus_to_launching_section(self) -> None:
         app = _build_app()
         app._state.last_section_id = "base"
         overview = mock.Mock()
@@ -442,7 +401,7 @@ class TextualAppTests(TestCase):
                 app, "push_screen_wait", new=mock.AsyncMock(return_value=None)
             ),
         ):
-            asyncio.run(app._push_section_screen(mock.Mock()))
+            asyncio.run(app._push_view(mock.Mock()))
 
         overview.hide_shell.assert_called_once_with()
         overview.show_shell.assert_called_once_with()
@@ -450,14 +409,9 @@ class TextualAppTests(TestCase):
 
     def test_finish_exits_with_result(self) -> None:
         app = _build_app()
-        result = _app._ConfigResult(
-            ImageSelection(
-                image_ref="ref",
-                base="ubuntu",
-                extensions=[],
-                base_image_ref="ref",
-            ),
-            "--project",
+        result = _config_app._ConfigResult(
+            selection=mock.Mock(),
+            project_docker_args="--project",
         )
 
         with mock.patch.object(app, "exit") as exit_mock:
@@ -491,15 +445,16 @@ class TextualAppTests(TestCase):
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
-) -> _app.TextualApp:
+) -> _config_app.ConfigApp:
     with mock.patch(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
         return_value=built_in_shares or [],
     ):
-        return _app.TextualApp.for_config(
+        return _config_app.ConfigApp(
             _build_draft(
                 agent_cfg or AgentConfig(base="ubuntu"),
                 ParsedArgs(False, "", "codex", [], False, [], None),
+                project_path=Path("/test-tmp/project"),
             ),
             _build_context(),
         )
