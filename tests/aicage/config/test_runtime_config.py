@@ -526,7 +526,10 @@ class RuntimeConfigTests(TestCase):
                     load_run_config("config", interaction, parsed)
 
         self.assertEqual(
-            "Unknown agent 'config'. Use '--config' for config commands.",
+            (
+                "Unknown agent 'config'. Use '--config' for config commands. "
+                "Available agents: codex."
+            ),
             str(raised.exception),
         )
         interaction.configure_run.assert_not_called()
