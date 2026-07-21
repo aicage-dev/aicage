@@ -41,29 +41,3 @@ class PromptMissingExtensionsTests(TestCase):
             )
         self.assertEqual("exit", result)
         self.assertTrue(print_mock.called)
-
-    def test_prompt_for_missing_extensions_returns_default_when_non_interactive_defaults_enabled(
-        self,
-    ) -> None:
-        with (
-            mock.patch(
-                "aicage.runtime.menu.prompts.missing_extensions.non_interactive_defaults_enabled",
-                return_value=True,
-            ),
-            mock.patch(
-                "aicage.runtime.menu.prompts.missing_extensions.ensure_tty_for_prompt"
-            ) as tty_mock,
-            mock.patch("builtins.input") as input_mock,
-            mock.patch("builtins.print") as print_mock,
-        ):
-            result = prompt_for_missing_extensions(
-                agent="codex",
-                missing=["ext"],
-                stored_image_ref="",
-                project_config_path=Path("/test-tmp/project.yml"),
-                other_projects=[],
-            )
-        self.assertEqual("exit", result)
-        tty_mock.assert_not_called()
-        input_mock.assert_not_called()
-        print_mock.assert_not_called()

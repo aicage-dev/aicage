@@ -295,7 +295,6 @@ class RuntimeConfigTests(TestCase):
                     config_action=None,
                     menu="none",
                 )
-                prompt_mock = mock.Mock(return_value=True)
                 with (
                     mock.patch(
                         "aicage.config.runtime_config.SettingsStore", new=store_factory
@@ -329,10 +328,6 @@ class RuntimeConfigTests(TestCase):
                         ),
                     ),
                     mock.patch(
-                        "aicage.runtime.menu.interaction.prompt_persist_shares",
-                        prompt_mock,
-                    ),
-                    mock.patch(
                         "aicage.runtime.menu.interaction.apply_mount_preferences"
                     ),
                 ):
@@ -353,9 +348,6 @@ class RuntimeConfigTests(TestCase):
         self.assertEqual(
             [expected_existing, f"{expected_shared}:ro", expected_new],
             updated_cfg.agents["codex"].shares,
-        )
-        prompt_mock.assert_called_once_with(
-            [expected_new], [expected_existing, f"{expected_shared}:ro"]
         )
 
     def test_load_run_config_interactive_uses_overview_values_for_current_run(

@@ -2,8 +2,12 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
+from aicage.registry.image_selection.interaction import (
+    BaseChoiceRequest,
+    ExtensionChoiceOption,
+    MissingExtensionsRequest,
+)
 from aicage.runtime.menu import interaction
-from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 from .textual._test_support import _build_context, _build_draft
 
@@ -16,20 +20,36 @@ class CreateRuntimeInteractionTests(TestCase):
 
         self.assertEqual("_TextualInteraction", resolved.__class__.__name__)
 
-    def test_create_runtime_interaction_returns_prompt_interaction_for_non_textual_mode(
+    def test_create_runtime_interaction_returns_none_interaction_for_none_mode(
         self,
     ) -> None:
         resolved = interaction.create_runtime_interaction("none")
 
-        self.assertEqual("_PromptInteraction", resolved.__class__.__name__)
+        self.assertEqual("_NoneInteraction", resolved.__class__.__name__)
+
+    def test_create_runtime_interaction_returns_simple_interaction_for_simple_mode(
+        self,
+    ) -> None:
+        resolved = interaction.create_runtime_interaction("simple")
+
+        self.assertEqual("_SimpleInteraction", resolved.__class__.__name__)
 
 
 class ConfigureRunTests(TestCase):
-    def test_configure_run_uses_prompt_flow_for_non_textual_interaction(self) -> None:
-        resolved = interaction.create_runtime_interaction("none")
+    def test_configure_run_uses_prompt_flow_for_simple_interaction(self) -> None:
+        resolved = interaction.create_runtime_interaction("simple")
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "--cli", "codex", [], False, ["logs"], None, menu="none"),
+            ParsedArgs(
+                False,
+                "--cli",
+                "codex",
+                [],
+                False,
+                ["logs"],
+                None,
+                menu="simple",
+            ),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"
@@ -73,26 +93,113 @@ class ConfigureRunTests(TestCase):
         self.assertEqual("--project", result.project_docker_args)
 
 
-class PrepareImageTests(TestCase):
-    def test_prepare_image_uses_ensure_image_for_prompt_interaction(self) -> None:
-        resolved = interaction.create_runtime_interaction("none")
-        run_config = mock.Mock()
+class ExecuteImageSetupTests(TestCase):
+    def test_execute_image_setup_runs_operation_for_simple_interaction(self) -> None:
+        resolved = interaction.create_runtime_interaction("simple")
+        operation = mock.Mock()
 
-        with mock.patch("aicage.runtime.menu.interaction.ensure_image") as ensure_mock:
-            resolved.prepare_image(run_config)
+        resolved.execute_image_setup(operation)
 
-        ensure_mock.assert_called_once_with(
-            run_config,
-            confirm_update=prompt_update_image,
-        )
+        operation.assert_called_once_with(None)
 
-    def test_prepare_image_uses_textual_setup_for_textual_interaction(self) -> None:
+    def test_execute_image_setup_uses_textual_setup_for_textual_interaction(
+        self,
+    ) -> None:
         resolved = interaction.create_runtime_interaction("textual")
-        run_config = mock.Mock()
+        operation = mock.Mock()
 
         with mock.patch(
-            "aicage.runtime.menu.interaction.prepare_image_with_textual_app"
+            "aicage.runtime.menu.interaction.execute_image_setup_with_textual_app"
         ) as prepare_mock:
-            resolved.prepare_image(run_config)
+            resolved.execute_image_setup(operation)
 
-        prepare_mock.assert_called_once_with(run_config)
+        prepare_mock.assert_called_once_with(operation)
+
+
+class PromptSelectionInteractionTests(TestCase):
+    def test_choose_base(self) -> None:
+        request = BaseChoiceRequest(
+            agent="codex",
+            context=_build_context(),
+            agent_metadata=mock.Mock(),
+            default_base="ubuntu",
+        )
+
+        with mock.patch(
+            "aicage.runtime.menu.interaction.prompt_for_base",
+            return_value="ubuntu",
+        ) as prompt_mock:
+            choice = interaction._PromptSelectionInteraction().choose_base(request)
+
+        self.assertEqual("ubuntu", choice)
+        prompt_mock.assert_called_once()
+
+    def test_choose_extensions(self) -> None:
+        with mock.patch(
+            "aicage.runtime.menu.interaction.prompt_for_extensions",
+            return_value=["gh"],
+        ) as prompt_mock:
+            choice = interaction._PromptSelectionInteraction().choose_extensions(
+                [ExtensionChoiceOption(name="gh", description="GitHub CLI")]
+            )
+
+        self.assertEqual(["gh"], choice)
+        prompt_mock.assert_called_once()
+
+    def test_choose_image_ref(self) -> None:
+        with mock.patch(
+            "aicage.runtime.menu.interaction.prompt_for_image_ref",
+            return_value="repo:tag",
+        ) as prompt_mock:
+            choice = interaction._PromptSelectionInteraction().choose_image_ref(
+                "repo:default"
+            )
+
+        self.assertEqual("repo:tag", choice)
+        prompt_mock.assert_called_once_with("repo:default")
+
+    def test_choose_missing_extensions(self) -> None:
+        request = MissingExtensionsRequest(
+            agent="codex",
+            missing=["gh"],
+            stored_image_ref="repo:tag",
+            project_config_path=mock.Mock(),
+            other_projects=[],
+        )
+
+        with mock.patch(
+            "aicage.runtime.menu.interaction.prompt_for_missing_extensions",
+            return_value="exit",
+        ) as prompt_mock:
+            choice = interaction._PromptSelectionInteraction().choose_missing_extensions(
+                request
+            )
+
+        self.assertEqual("exit", choice)
+        prompt_mock.assert_called_once()
+
+
+class RuntimeUpdateInteractionTests(TestCase):
+    def test_confirm_aicage_update(self) -> None:
+        with mock.patch(
+            "aicage.runtime.menu.interaction.prompt_update_aicage",
+            return_value=True,
+        ) as prompt_mock:
+            confirmed = interaction.create_runtime_interaction(
+                "simple"
+            ).confirm_aicage_update("1.0.0", "1.1.0")
+
+        self.assertTrue(confirmed)
+        prompt_mock.assert_called_once_with("1.0.0", "1.1.0")
+
+    def test_confirm_image_update(self) -> None:
+        with mock.patch(
+            "aicage.runtime.menu.interaction.prompt_update_image",
+            return_value=True,
+        ) as prompt_mock:
+            confirmed = interaction.create_runtime_interaction(
+                "simple"
+            ).confirm_image_update("repo:tag")
+
+        self.assertTrue(confirmed)
+        prompt_mock.assert_called_once_with("repo:tag")

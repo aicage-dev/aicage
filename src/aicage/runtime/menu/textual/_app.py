@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TypeVar
 
@@ -12,6 +13,7 @@ from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.resources import find_packaged_path
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.docker.reporting import OperationReporter
 from aicage.registry.image_selection.models import ImageSelection
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
@@ -23,13 +25,16 @@ from .screens.docker_args_screen import DockerArgsScreen
 from .screens.execution_screen import ExecutionScreen
 from .screens.extensions_screen import ExtensionsScreen
 from .screens.host_access_confirm_screen import HostAccessConfirmScreen
+from .screens.image_update_confirm_screen import ImageUpdateConfirmScreen
 from .screens.share_editor_screen import ShareEditorScreen
 from .services.base_support import base_metadata_for_draft, ensure_base_default
 from .services.custom_share_flow import add_custom_share, update_custom_share
+from .services.execution_reporting import ExecutionReporter
 from .services.host_access_flow import confirm_and_apply_host_access
 from .services.summary import extras_values, shares_values
 
 _ScreenResultT = TypeVar("_ScreenResultT")
+_ImageSetupOperation = Callable[[OperationReporter], None]
 
 
 @dataclass(frozen=True)
@@ -38,7 +43,23 @@ class _OverviewResult:
     project_docker_args: str
 
 
-class OverviewApp(App[_OverviewResult | BaseException | None]):
+@dataclass(frozen=True)
+class _ConfigSession:
+    draft: RunConfigDraft
+    context: ConfigContext
+
+
+@dataclass(frozen=True)
+class _ImageUpdateSession:
+    image_ref: str
+
+
+@dataclass(frozen=True)
+class _ExecutionSession:
+    operation: _ImageSetupOperation
+
+
+class OverviewApp(App[_OverviewResult | bool | BaseException | None]):
     CSS_PATH = find_packaged_path("textual/overview/app.tcss")
     ENABLE_COMMAND_PALETTE = False
     INLINE_PADDING = 0
@@ -51,30 +72,44 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
 
     def __init__(
         self,
-        draft: RunConfigDraft,
-        context: ConfigContext,
+        session: _ConfigSession | _ImageUpdateSession | _ExecutionSession,
     ) -> None:
         super().__init__()
-        self._draft = draft
-        self._config_context = context
-        self._state = OverviewState(
-            last_section_id=None,
-            built_in_shares=shares_values(
-                self._draft, self._config_context
-            ).built_in_shares,
-            custom_shares=[
-                CustomShareValue(share) for share in self._draft.agent_cfg.shares
-            ],
-            docker_socket_enabled=bool(self._draft.agent_cfg.mounts.docker),
-        )
+        self._session = session
+        self._state = self._initial_state()
         self.title = "aicage"
-        self.sub_title = "container config"
+        self.sub_title = self._sub_title()
+
+    @classmethod
+    def for_config(
+        cls,
+        draft: RunConfigDraft,
+        context: ConfigContext,
+    ) -> "OverviewApp":
+        return cls(_ConfigSession(draft, context))
+
+    @classmethod
+    def for_image_update_confirmation(cls, image_ref: str) -> "OverviewApp":
+        return cls(_ImageUpdateSession(image_ref))
+
+    @classmethod
+    def for_execution(cls, operation: _ImageSetupOperation) -> "OverviewApp":
+        return cls(_ExecutionSession(operation))
 
     def compose(self) -> ComposeResult:
-        yield Overview(self._draft.agent, self._draft.project_cfg.path, self._state)
-        execution_screen = ExecutionScreen()
-        execution_screen.display = False
-        yield execution_screen
+        config_session = self._config_session()
+        if config_session is not None:
+            yield Overview(
+                config_session.draft.agent,
+                config_session.draft.project_cfg.path,
+                self._state,
+            )
+            execution_screen = ExecutionScreen()
+            execution_screen.display = False
+            yield execution_screen
+            return
+        if self._execution_session() is not None:
+            yield ExecutionScreen()
 
     def format_title(self, title: str, sub_title: str) -> Content:
         if not sub_title:
@@ -82,10 +117,17 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         return Content.from_markup(f"[b]{title}[/b] [dim]— {sub_title}[/dim]")
 
     def on_mount(self) -> None:
-        ensure_base_default(self._draft, self._config_context)
-        self._apply_shell_width()
-        self._refresh_sections()
-        self._overview().focus_default()
+        config_session = self._config_session()
+        if config_session is not None:
+            ensure_base_default(config_session.draft, config_session.context)
+            self._apply_shell_width()
+            self._refresh_sections()
+            self._overview().focus_default()
+            return
+        if self._image_update_session() is not None:
+            self._show_image_update_confirmation()
+            return
+        self._run_execution()
 
     def action_accept(self) -> None:
         self._accept()
@@ -98,12 +140,16 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         await self._accept_async()
 
     async def _accept_async(self) -> None:
+        config_session = self._require_config_session()
         accepted = await self._confirm_undecided_built_in_shares()
         if not accepted:
             return
         result = _OverviewResult(
-            selection=resolve_overview_selection(self._draft, self._config_context),
-            project_docker_args=self._draft.agent_cfg.docker_args,
+            selection=resolve_overview_selection(
+                config_session.draft,
+                config_session.context,
+            ),
+            project_docker_args=config_session.draft.agent_cfg.docker_args,
         )
         self._finish(result)
 
@@ -138,44 +184,51 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         self._edit_custom_share(message.current_value)
 
     async def _edit_base(self) -> None:
+        config_session = self._require_config_session()
         selected = await self._push_section_screen(
             BaseScreen(
-                base_metadata_for_draft(self._draft, self._config_context),
-                self._draft.agent_cfg.base or "",
+                base_metadata_for_draft(config_session.draft, config_session.context),
+                config_session.draft.agent_cfg.base or "",
             )
         )
-        if selected is not None and selected != self._draft.agent_cfg.base:
-            self._draft.agent_cfg.base = selected
-            self._draft.reset_extension_image()
+        if selected is not None and selected != config_session.draft.agent_cfg.base:
+            config_session.draft.agent_cfg.base = selected
+            config_session.draft.reset_extension_image()
 
     async def _edit_extensions(self) -> None:
+        config_session = self._require_config_session()
         selected = await self._push_section_screen(
             ExtensionsScreen(
-                _extension_options(self._config_context),
-                list(self._draft.agent_cfg.extensions),
+                _extension_options(config_session.context),
+                list(config_session.draft.agent_cfg.extensions),
             )
         )
-        if selected is not None and selected != self._draft.agent_cfg.extensions:
-            self._draft.agent_cfg.extensions = selected
-            self._draft.reset_extension_image()
+        if (
+            selected is not None
+            and selected != config_session.draft.agent_cfg.extensions
+        ):
+            config_session.draft.agent_cfg.extensions = selected
+            config_session.draft.reset_extension_image()
 
     async def _edit_extras(self) -> None:
+        config_session = self._require_config_session()
         selected = await self._push_section_screen(
-            DockerArgsScreen(extras_values(self._draft))
+            DockerArgsScreen(extras_values(config_session.draft))
         )
         if selected is None:
             return
-        self._draft.agent_cfg.docker_args = selected.docker_args
+        config_session.draft.agent_cfg.docker_args = selected.docker_args
 
     @work(exclusive=True)
     async def _add_share(self) -> None:
         await self._add_share_async()
 
     async def _add_share_async(self) -> None:
+        config_session = self._require_config_session()
         result = await self._push_section_screen(ShareEditorScreen())
         if result is None or result.share is None:
             return
-        if not add_custom_share(self._state, self._draft, result.share):
+        if not add_custom_share(self._state, config_session.draft, result.share):
             return
         self._apply_shell_width()
         self._refresh_sections()
@@ -185,12 +238,18 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         await self._edit_custom_share_async(current_value)
 
     async def _edit_custom_share_async(self, current_value: str) -> None:
+        config_session = self._require_config_session()
         result = await self._push_section_screen(
             ShareEditorScreen(current_value, allow_remove=True)
         )
         if result is None:
             return
-        if not update_custom_share(self._state, self._draft, current_value, result):
+        if not update_custom_share(
+            self._state,
+            config_session.draft,
+            current_value,
+            result,
+        ):
             return
         self._apply_shell_width()
         self._refresh_sections()
@@ -219,19 +278,19 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
         self._overview().apply_shell_width(self.size.width)
 
     def _refresh_sections(self) -> None:
-        self._overview().refresh_from(self._draft, self._config_context)
-
-    def _execution_screen(self) -> ExecutionScreen:
-        return self.query_one(ExecutionScreen)
+        config_session = self._require_config_session()
+        self._overview().refresh_from(config_session.draft, config_session.context)
 
     async def _confirm_undecided_built_in_shares(self) -> bool:
         overview = self._overview()
         self._state.custom_shares = overview.current_custom_shares()
         accepted, self._state.built_in_shares = await confirm_and_apply_host_access(
-            self._draft,
+            self._require_config_session().draft,
             overview.current_built_in_shares(),
             self._state.custom_shares,
-            overview.current_docker_socket_enabled(self._draft.agent_cfg.mounts.docker),
+            overview.current_docker_socket_enabled(
+                self._require_config_session().draft.agent_cfg.mounts.docker
+            ),
             self._confirm_host_access,
         )
         return accepted
@@ -250,6 +309,84 @@ class OverviewApp(App[_OverviewResult | BaseException | None]):
                 values.extension_shares,
             )
         )
+
+    @work(exclusive=True)
+    async def _show_image_update_confirmation(self) -> None:
+        image_update_session = self._require_image_update_session()
+        result = await self.push_screen_wait(
+            ImageUpdateConfirmScreen(image_update_session.image_ref)
+        )
+        self.exit(bool(result))
+
+    @work(thread=True, exclusive=True)
+    def _run_execution(self) -> None:
+        execution_session = self._require_execution_session()
+        reporter = ExecutionReporter(self.query_one(ExecutionScreen))
+        error: BaseException | None = None
+        try:
+            execution_session.operation(reporter)
+        except BaseException as exc:
+            error = exc
+        self.call_from_thread(self.exit, error)
+
+    def _sub_title(self) -> str:
+        if self._config_session() is not None:
+            return "container config"
+        return "container setup"
+
+    def _initial_state(self) -> OverviewState:
+        config_session = self._config_session()
+        if config_session is None:
+            return OverviewState(None, [], [], False)
+        draft = config_session.draft
+        context = config_session.context
+        return OverviewState(
+            last_section_id=None,
+            built_in_shares=shares_values(draft, context).built_in_shares,
+            custom_shares=[CustomShareValue(share) for share in draft.agent_cfg.shares],
+            docker_socket_enabled=bool(draft.agent_cfg.mounts.docker),
+        )
+
+    def _config_session(self) -> _ConfigSession | None:
+        if isinstance(self._session, _ConfigSession):
+            return self._session
+        return None
+
+    def _image_update_session(self) -> _ImageUpdateSession | None:
+        if isinstance(self._session, _ImageUpdateSession):
+            return self._session
+        return None
+
+    def _execution_session(self) -> _ExecutionSession | None:
+        if isinstance(self._session, _ExecutionSession):
+            return self._session
+        return None
+
+    def _require_config_session(self) -> _ConfigSession:
+        session = self._config_session()
+        if session is None:
+            raise RuntimeError("OverviewApp is not running in config mode.")
+        return session
+
+    def _require_image_update_session(self) -> _ImageUpdateSession:
+        session = self._image_update_session()
+        if session is None:
+            raise RuntimeError("OverviewApp is not running in image-update mode.")
+        return session
+
+    def _require_execution_session(self) -> _ExecutionSession:
+        session = self._execution_session()
+        if session is None:
+            raise RuntimeError("OverviewApp is not running in execution mode.")
+        return session
+
+    @property
+    def _draft(self) -> RunConfigDraft:
+        return self._require_config_session().draft
+
+    @property
+    def _config_context(self) -> ConfigContext:
+        return self._require_config_session().context
 
 
 def _extension_options(context: ConfigContext) -> list[ExtensionMetadata]:

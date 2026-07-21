@@ -99,34 +99,6 @@ class PromptTests(TestCase):
             )
         self.assertEqual("ubuntu", choice)
 
-    def test_prompt_for_base_uses_default_when_non_interactive_defaults_enabled(
-        self,
-    ) -> None:
-        with (
-            mock.patch(
-                "aicage.runtime.menu.prompts.base.non_interactive_defaults_enabled",
-                return_value=True,
-            ),
-            mock.patch(
-                "aicage.runtime.menu.prompts.base.resolve_default_base",
-                return_value="fedora",
-            ),
-            mock.patch(
-                "aicage.runtime.menu.prompts.base.ensure_tty_for_prompt"
-            ) as tty_mock,
-            mock.patch("builtins.input") as input_mock,
-        ):
-            choice = prompt_for_base(
-                BaseSelectionRequest(
-                    agent="codex",
-                    context=self._build_context(["alpine", "ubuntu"]),
-                    agent_metadata=self._agent_metadata(["alpine", "ubuntu"]),
-                )
-            )
-        self.assertEqual("fedora", choice)
-        tty_mock.assert_not_called()
-        input_mock.assert_not_called()
-
     def test_base_options_returns_descriptions(self) -> None:
         context = self._build_context(["ubuntu"])
         options = _base_options(context, self._agent_metadata(["ubuntu"]))

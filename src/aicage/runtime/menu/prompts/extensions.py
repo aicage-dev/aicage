@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 
-from aicage._logging import get_logger
 from aicage.runtime._errors import RuntimeExecutionError
 
 from ._tty import ensure_tty_for_prompt
-from .mode import non_interactive_defaults_enabled
 
 
 @dataclass(frozen=True)
@@ -15,9 +13,6 @@ class ExtensionOption:
 
 def prompt_for_extensions(options: list[ExtensionOption]) -> list[str]:
     if not options:
-        return []
-    if non_interactive_defaults_enabled():
-        get_logger().info("Selected extensions [] (non-interactive defaults)")
         return []
     ensure_tty_for_prompt()
     print(

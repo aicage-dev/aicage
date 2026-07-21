@@ -14,10 +14,7 @@ def edit_draft_with_textual_app(
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()
-    result = OverviewApp(
-        draft,
-        context,
-    ).run(inline=True)
+    result = OverviewApp.for_config(draft, context).run(inline=True)
     if result is None:
         draft.project_cfg.path = original_project_cfg.path
         draft.project_cfg.agents = original_project_cfg.agents

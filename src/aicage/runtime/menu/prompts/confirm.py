@@ -1,20 +1,11 @@
 import os
 
-from aicage._logging import get_logger
 from aicage.runtime._errors import RuntimeExecutionError
 
 from ._tty import ensure_tty_for_prompt
-from .mode import non_interactive_defaults_enabled
 
 
 def _prompt_yes_no(question: str, default: bool = False) -> bool:
-    if non_interactive_defaults_enabled():
-        get_logger().info(
-            "Prompt yes/no '%s' -> %s (non-interactive defaults)",
-            question,
-            default,
-        )
-        return default
     ensure_tty_for_prompt()
     suffix = "[Y/n]" if default else "[y/N]"
     response = input(f"{question} {suffix} ").strip().lower()
@@ -22,7 +13,6 @@ def _prompt_yes_no(question: str, default: bool = False) -> bool:
         choice = default
     else:
         choice = response in {"y", "yes"}
-    get_logger().info("Prompt yes/no '%s' -> %s", question, choice)
     return choice
 
 
@@ -42,15 +32,7 @@ def prompt_mount_git_support(
     extension_items: list[tuple[str, str]],
 ) -> list[str]:
     items = [*git_items, *extension_items]
-    if non_interactive_defaults_enabled():
-        selected_keys = [item[0] for item in items]
-        get_logger().info(
-            "Prompt git support mounts selected -> %s (non-interactive defaults)",
-            selected_keys,
-        )
-        return selected_keys
     ensure_tty_for_prompt()
-    logger = get_logger()
     if git_items:
         print("Enable Git support in the container by mounting:")
         for idx, (_, description) in enumerate(git_items, start=1):
@@ -68,9 +50,7 @@ def prompt_mount_git_support(
         selected = set(range(1, len(items) + 1))
     else:
         selected = _parse_number_selection(response, len(items))
-    selected_keys = [items[idx - 1][0] for idx in sorted(selected)]
-    logger.info("Prompt git support mounts selected -> %s", selected_keys)
-    return selected_keys
+    return [items[idx - 1][0] for idx in sorted(selected)]
 
 
 def _parse_number_selection(response: str, max_value: int) -> set[int]:

@@ -1,32 +1,38 @@
-from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.config.agent.models import AgentMetadata
-from aicage.config.base.models import BaseMetadata
-from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
-from aicage.config.run_config import RunConfig
-from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime.menu.textual import setup
+from aicage.runtime.menu.textual import _app, setup
 from aicage.runtime.menu.textual.screens.execution_screen import ExecutionScreen
 
 
-class PrepareImageWithTextualAppTests(TestCase):
-    def test_prepare_image_with_textual_app_raises_app_error(self) -> None:
-        run_config = _build_run_config()
+class ConfirmImageUpdateWithTextualAppTests(TestCase):
+    def test_confirm_image_update_with_textual_app_returns_false_for_none(self) -> None:
+        app_mock = mock.Mock()
+        app_mock.run.return_value = None
 
-        with mock.patch.object(
-            setup._SetupApp,
-            "run",
-            return_value=RuntimeError("boom"),
+        with mock.patch(
+            "aicage.runtime.menu.textual.setup.OverviewApp.for_image_update_confirmation",
+            return_value=app_mock,
+        ):
+            self.assertFalse(setup.confirm_image_update_with_textual_app("repo:tag"))
+
+
+class ExecuteImageSetupWithTextualAppTests(TestCase):
+    def test_execute_image_setup_with_textual_app_raises_app_error(self) -> None:
+        operation = mock.Mock()
+        app_mock = mock.Mock()
+        app_mock.run.return_value = RuntimeError("boom")
+
+        with mock.patch(
+            "aicage.runtime.menu.textual.setup.OverviewApp.for_execution",
+            return_value=app_mock,
         ):
             with self.assertRaises(RuntimeError):
-                setup.prepare_image_with_textual_app(run_config)
+                setup.execute_image_setup_with_textual_app(operation)
 
 
 class ComposeTests(TestCase):
     def test_compose_yields_execution_screen(self) -> None:
-        app = setup._SetupApp(_build_run_config())
+        app = _app.OverviewApp.for_execution(mock.Mock())
 
         widgets = list(app.compose())
 
@@ -35,53 +41,21 @@ class ComposeTests(TestCase):
 
 
 class OnMountTests(TestCase):
-    def test_on_mount_starts_prepare(self) -> None:
-        app = setup._SetupApp(_build_run_config())
+    def test_on_mount_starts_confirmation(self) -> None:
+        app = _app.OverviewApp.for_image_update_confirmation("repo:tag")
 
-        with mock.patch.object(app, "_prepare") as prepare_mock:
+        with mock.patch.object(
+            app,
+            "_show_image_update_confirmation",
+        ) as show_confirmation_mock:
             app.on_mount()
 
-        prepare_mock.assert_called_once_with()
+        show_confirmation_mock.assert_called_once_with()
 
+    def test_on_mount_starts_execution(self) -> None:
+        app = _app.OverviewApp.for_execution(mock.Mock())
 
-def _build_run_config() -> RunConfig:
-    project_path = Path("/test-tmp/project")
-    return RunConfig(
-        project_path=project_path,
-        agent="codex",
-        context=ConfigContext(
-            store=mock.Mock(),
-            project_cfg=ProjectConfig(path=str(project_path), agents={}),
-            agents={
-                "codex": AgentMetadata(
-                    agent_path_files=[],
-                    agent_path_directories=["~/.codex"],
-                    agent_full_name="Codex CLI",
-                    agent_homepage="https://example.com",
-                    build_local=False,
-                    valid_bases={"ubuntu": "ghcr.io/aicage/aicage:codex-ubuntu"},
-                    local_definition_dir=Path("/test-tmp/agent"),
-                )
-            },
-            bases={
-                "ubuntu": BaseMetadata(
-                    from_image="ubuntu:latest",
-                    base_image_distro="Ubuntu",
-                    base_image_description="Default",
-                    architectures=["amd64", "arm64"],
-                    build_local=False,
-                    local_definition_dir=Path("/test-tmp/base"),
-                )
-            },
-            extensions={},
-        ),
-        selection=ImageSelection(
-            image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-            base="ubuntu",
-            extensions=[],
-            base_image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
-        ),
-        project_docker_args="",
-        mounts=[],
-        env=[],
-    )
+        with mock.patch.object(app, "_run_execution") as execute_mock:
+            app.on_mount()
+
+        execute_mock.assert_called_once_with()

@@ -26,24 +26,6 @@ class PromptConfirmTests(TestCase):
         ):
             self.assertTrue(confirm._prompt_yes_no("Continue?", default=False))
 
-    def test__prompt_yes_no_uses_default_when_non_interactive_defaults_enabled(
-        self,
-    ) -> None:
-        with (
-            mock.patch(
-                "aicage.runtime.menu.prompts.confirm.non_interactive_defaults_enabled",
-                return_value=True,
-            ),
-            mock.patch(
-                "aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"
-            ) as tty_mock,
-            mock.patch("builtins.input") as input_mock,
-        ):
-            choice = confirm._prompt_yes_no("Continue?", default=True)
-        self.assertTrue(choice)
-        tty_mock.assert_not_called()
-        input_mock.assert_not_called()
-
     def test_prompt_persist_docker_socket_delegates(self) -> None:
         with mock.patch(
             "aicage.runtime.menu.prompts.confirm._prompt_yes_no", return_value=True
@@ -78,28 +60,6 @@ class PromptConfirmTests(TestCase):
         ):
             selected = confirm.prompt_mount_git_support(git_items, [])
         self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_SSH_KEY], selected)
-
-    def test_prompt_mount_git_support_uses_all_when_non_interactive_defaults_enabled(
-        self,
-    ) -> None:
-        git_items = [
-            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
-            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /test-tmp/gnupg"),
-        ]
-        with (
-            mock.patch(
-                "aicage.runtime.menu.prompts.confirm.non_interactive_defaults_enabled",
-                return_value=True,
-            ),
-            mock.patch(
-                "aicage.runtime.menu.prompts.confirm.ensure_tty_for_prompt"
-            ) as tty_mock,
-            mock.patch("builtins.input") as input_mock,
-        ):
-            selected = confirm.prompt_mount_git_support(git_items, [])
-        self.assertEqual([MOUNT_GITCONFIG_KEY, MOUNT_GNUPG_KEY], selected)
-        tty_mock.assert_not_called()
-        input_mock.assert_not_called()
 
     def test_prompt_mount_git_support_renders_extension_section(self) -> None:
         git_items = [
