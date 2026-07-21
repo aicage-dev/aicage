@@ -44,9 +44,6 @@ class ExecutionApp(App[BaseException | None]):
 
     @work(thread=True, exclusive=True)
     def _run_execution(self) -> None:
-        self._run_execution_impl()
-
-    def _run_execution_impl(self) -> None:
         reporter = ExecutionReporter(self.query_one(ExecutionScreen))
         error: BaseException | None = None
         try:

@@ -1,3 +1,4 @@
+from typing import Any, cast
 from unittest import TestCase, mock
 
 from aicage.runtime.menu.textual import _execution_app
@@ -51,7 +52,7 @@ class ExecutionAppTests(TestCase):
             mock.patch.object(app, "query_one", return_value=screen),
             mock.patch.object(app, "call_from_thread") as call_from_thread_mock,
         ):
-            app._run_execution_impl()
+            cast(Any, app._run_execution).__wrapped__(app)
 
         call_from_thread_mock.assert_called_once()
         self.assertIsInstance(call_from_thread_mock.call_args.args[1], RuntimeError)
