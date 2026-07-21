@@ -14,10 +14,6 @@ class PrepareImageTests(TestCase):
                 "aicage.runtime.image_setup.image_setup_plan",
                 return_value=ImageSetupPlan(needs_setup=False),
             ),
-            mock.patch(
-                "aicage.runtime.image_setup.image_setup_needed",
-                return_value=False,
-            ),
         ):
             image_setup.prepare_image(run_config, interaction)
 
@@ -32,10 +28,6 @@ class PrepareImageTests(TestCase):
                 "aicage.runtime.image_setup.image_setup_plan",
                 return_value=ImageSetupPlan(needs_setup=True),
             ),
-            mock.patch(
-                "aicage.runtime.image_setup.image_setup_needed",
-                return_value=True,
-            ),
         ):
             image_setup.prepare_image(run_config, interaction)
 
@@ -43,6 +35,7 @@ class PrepareImageTests(TestCase):
 
     def test_prepare_image_confirms_update_through_interaction(self) -> None:
         run_config = mock.Mock()
+        run_config.selection.base_image_ref = "repo:tag"
         interaction = mock.Mock(confirm_image_update=mock.Mock(return_value=True))
         reporter = mock.Mock()
 
@@ -51,12 +44,8 @@ class PrepareImageTests(TestCase):
                 "aicage.runtime.image_setup.image_setup_plan",
                 return_value=ImageSetupPlan(
                     needs_setup=True,
-                    confirm_update_image_ref="repo:tag",
+                    needs_update_confirmation=True,
                 ),
-            ),
-            mock.patch(
-                "aicage.runtime.image_setup.image_setup_needed",
-                return_value=True,
             ),
             mock.patch("aicage.runtime.image_setup.ensure_image") as ensure_image_mock,
         ):
@@ -66,4 +55,8 @@ class PrepareImageTests(TestCase):
             image_setup.prepare_image(run_config, interaction)
 
         interaction.confirm_image_update.assert_called_once_with("repo:tag")
-        ensure_image_mock.assert_called_once()
+        ensure_image_mock.assert_called_once_with(
+            run_config,
+            update_approved=True,
+            reporter=reporter,
+        )

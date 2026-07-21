@@ -18,14 +18,14 @@ class PullDecisionTests(TestCase):
             plan = _pull_decision.pull_decision_plan("image:tag")
 
         self.assertFalse(plan.should_pull)
-        self.assertEqual("image:tag", plan.confirm_update_image_ref)
+        self.assertTrue(plan.needs_confirmation)
 
     def test_decide_pull_returns_true_when_local_missing(self) -> None:
         with mock.patch(
             "aicage.registry._pull_decision.get_local_repo_digest",
             return_value=None,
         ):
-            self.assertTrue(_pull_decision.decide_pull("image:tag"))
+            self.assertTrue(_pull_decision.decide_pull("image:tag", False))
 
     def test_decide_pull_returns_false_when_remote_unknown(self) -> None:
         with (
@@ -38,10 +38,9 @@ class PullDecisionTests(TestCase):
                 return_value=None,
             ),
         ):
-            self.assertFalse(_pull_decision.decide_pull("image:tag"))
+            self.assertFalse(_pull_decision.decide_pull("image:tag", False))
 
     def test_decide_pull_returns_true_when_digests_differ(self) -> None:
-        confirm_update = mock.Mock(return_value=True)
         with (
             mock.patch(
                 "aicage.registry._pull_decision.get_local_repo_digest",
@@ -55,13 +54,11 @@ class PullDecisionTests(TestCase):
             self.assertTrue(
                 _pull_decision.decide_pull(
                     "ghcr.io/aicage/aicage:codex-fedora",
-                    confirm_update,
+                    True,
                 )
             )
-        confirm_update.assert_called_once_with("ghcr.io/aicage/aicage:codex-fedora")
 
     def test_decide_pull_returns_false_when_user_keeps_local_image(self) -> None:
-        confirm_update = mock.Mock(return_value=False)
         with (
             mock.patch(
                 "aicage.registry._pull_decision.get_local_repo_digest",
@@ -75,7 +72,6 @@ class PullDecisionTests(TestCase):
             self.assertFalse(
                 _pull_decision.decide_pull(
                     "ghcr.io/aicage/aicage:codex-fedora",
-                    confirm_update,
+                    False,
                 )
             )
-        confirm_update.assert_called_once_with("ghcr.io/aicage/aicage:codex-fedora")

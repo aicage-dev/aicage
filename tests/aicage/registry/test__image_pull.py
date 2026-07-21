@@ -69,7 +69,11 @@ class DockerInvocationTests(TestCase):
                 ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
-                image_pull.pull_image(image_ref, reporter=reporter)
+                image_pull.pull_image(
+                    image_ref,
+                    update_approved=False,
+                    reporter=reporter,
+                )
             remote_mock.assert_not_called()
             verify_mock.assert_called_once_with(image_ref, reporter=reporter)
             cleanup_mock.assert_called_once_with(
@@ -145,7 +149,7 @@ class DockerInvocationTests(TestCase):
                 mock.patch("sys.stdout", new_callable=io.StringIO),
             ):
                 with self.assertRaises(DockerException):
-                    image_pull.pull_image(image_ref)
+                    image_pull.pull_image(image_ref, update_approved=False)
             remote_mock.assert_not_called()
             verify_mock.assert_called_once_with(image_ref, reporter=None)
             cleanup_mock.assert_not_called()
@@ -178,7 +182,7 @@ class DockerInvocationTests(TestCase):
                 ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
-                image_pull.pull_image(image_ref)
+                image_pull.pull_image(image_ref, update_approved=False)
             client_mock.assert_not_called()
             verify_mock.assert_not_called()
             local_repo_mock.assert_called_once()
@@ -213,7 +217,7 @@ class DockerInvocationTests(TestCase):
                 ),
                 mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
             ):
-                image_pull.pull_image(image_ref)
+                image_pull.pull_image(image_ref, update_approved=False)
             client_mock.assert_not_called()
             verify_mock.assert_not_called()
             local_repo_mock.assert_called_once()

@@ -5,7 +5,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
-from aicage.registry.ensure_image import ensure_image, image_setup_needed, image_setup_plan
+from aicage.registry.ensure_image import ensure_image, image_setup_plan
 
 
 class EnsureImageTests(TestCase):
@@ -20,13 +20,14 @@ class EnsureImageTests(TestCase):
                 "aicage.registry.ensure_image.ensure_extended_image"
             ) as extended_mock,
         ):
-            ensure_image(run_config, reporter=reporter)
+            ensure_image(run_config, update_approved=False, reporter=reporter)
 
         pull_mock.assert_called_once()
-        kwargs = pull_mock.call_args.kwargs
+        assert pull_mock.call_args.kwargs == {
+            "update_approved": False,
+            "reporter": reporter,
+        }
         assert run_config.selection.base_image_ref == pull_mock.call_args.args[0]
-        assert reporter == kwargs["reporter"]
-        assert kwargs["confirm_update"]("image:tag") is True
         local_mock.assert_not_called()
         extended_mock.assert_not_called()
 
@@ -43,14 +44,15 @@ class EnsureImageTests(TestCase):
             mock.patch("aicage.registry.ensure_image.pull_image") as pull_mock,
             mock.patch("aicage.registry.ensure_image.ensure_agent_image") as local_mock,
         ):
-            ensure_image(run_config, reporter=reporter)
+            ensure_image(run_config, update_approved=False, reporter=reporter)
 
         pull_mock.assert_not_called()
         local_mock.assert_called_once()
-        kwargs = local_mock.call_args.kwargs
         assert run_config is local_mock.call_args.args[0]
-        assert reporter == kwargs["reporter"]
-        assert kwargs["confirm_update"]("image:tag") is True
+        assert local_mock.call_args.kwargs == {
+            "update_approved": False,
+            "reporter": reporter,
+        }
 
     @staticmethod
     def test_ensure_image_runs_extended_build() -> None:
@@ -62,48 +64,65 @@ class EnsureImageTests(TestCase):
                 "aicage.registry.ensure_image.ensure_extended_image"
             ) as extended_mock,
         ):
-            ensure_image(run_config, reporter=reporter)
+            ensure_image(run_config, update_approved=False, reporter=reporter)
 
         local_mock.assert_called_once()
-        kwargs = local_mock.call_args.kwargs
         assert run_config is local_mock.call_args.args[0]
-        assert reporter == kwargs["reporter"]
-        assert kwargs["confirm_update"]("image:tag") is True
+        assert local_mock.call_args.kwargs == {
+            "update_approved": False,
+            "reporter": reporter,
+        }
         extended_mock.assert_called_once_with(run_config, reporter=reporter)
 
     @staticmethod
-    def test_image_setup_needed_true_when_pull_needed() -> None:
+    def test_image_setup_plan_true_when_pull_needed() -> None:
         run_config = _run_config(build_local=False, extensions=[])
 
-        with mock.patch("aicage.registry.ensure_image.decide_pull", return_value=True):
-            assert image_setup_needed(run_config) is True
+        with mock.patch(
+            "aicage.registry.ensure_image.pull_decision_plan",
+            return_value=mock.Mock(should_pull=True, needs_confirmation=False),
+        ):
+            assert image_setup_plan(run_config).needs_setup is True
 
     @staticmethod
-    def test_image_setup_needed_false_when_pull_not_needed_and_no_extensions() -> None:
+    def test_image_setup_plan_false_when_pull_not_needed_and_no_extensions() -> None:
         run_config = _run_config(build_local=False, extensions=[])
 
-        with mock.patch("aicage.registry.ensure_image.decide_pull", return_value=False):
-            assert image_setup_needed(run_config) is False
+        with mock.patch(
+            "aicage.registry.ensure_image.pull_decision_plan",
+            return_value=mock.Mock(should_pull=False, needs_confirmation=False),
+        ):
+            assert image_setup_plan(run_config).needs_setup is False
 
     @staticmethod
-    def test_image_setup_needed_true_when_extensions_need_build() -> None:
+    def test_image_setup_plan_true_when_extensions_need_build() -> None:
         run_config = _run_config(build_local=False, extensions=["extra"])
 
         with (
-            mock.patch("aicage.registry.ensure_image.decide_pull", return_value=False),
+            mock.patch(
+                "aicage.registry.ensure_image.pull_decision_plan",
+                return_value=mock.Mock(should_pull=False, needs_confirmation=False),
+            ),
             mock.patch(
                 "aicage.registry.ensure_image.extension_build_needed", return_value=True
             ),
         ):
-            assert image_setup_needed(run_config) is True
+            assert image_setup_plan(run_config).needs_setup is True
 
     @staticmethod
-    def test_image_setup_needed_true_for_local_build_without_running_preflight() -> (
+    def test_image_setup_plan_true_for_local_build_without_running_preflight() -> (
         None
     ):
         run_config = _run_config(build_local=True, extensions=[])
 
-        assert image_setup_needed(run_config) is True
+        with mock.patch(
+            "aicage.registry.ensure_image.agent_build_setup_plan",
+            return_value=mock.Mock(
+                needs_setup=True,
+                needs_update_confirmation=False,
+            ),
+        ):
+            assert image_setup_plan(run_config).needs_setup is True
 
     @staticmethod
     def test_image_setup_plan_reports_confirmation_when_remote_pull_differs() -> None:
@@ -113,13 +132,13 @@ class EnsureImageTests(TestCase):
             "aicage.registry.ensure_image.pull_decision_plan",
             return_value=mock.Mock(
                 should_pull=False,
-                confirm_update_image_ref=run_config.selection.base_image_ref,
+                needs_confirmation=True,
             ),
         ):
             plan = image_setup_plan(run_config)
 
         assert plan.needs_setup is True
-        assert plan.confirm_update_image_ref == run_config.selection.base_image_ref
+        assert plan.needs_update_confirmation is True
 
 
 def _run_config(

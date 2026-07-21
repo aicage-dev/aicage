@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from dataclasses import dataclass
 
 from aicage._logging import get_logger
@@ -9,47 +8,33 @@ from aicage.registry.digest.remote_digest import get_remote_digest
 
 from ._digest import resolve_base_digest
 
-ConfirmImageUpdate = Callable[[str], bool]
-
 
 @dataclass(frozen=True)
-class BaseRefreshPlan:
-    resolved_base_image_ref: str | None
-    local_base_image_ref: str | None
-    confirm_update_image_ref: str | None = None
-
-
-def _confirm_update_pull(_: str) -> bool:
-    return True
+class _BaseRefreshPlan:
+    image_ref: str
+    needs_confirmation: bool
 
 
 def refresh_base_image(
     base_image_ref: str,
     base_repository: str,
+    update_approved: bool,
     reporter: OperationReporter | None = None,
-    confirm_update: ConfirmImageUpdate = _confirm_update_pull,
 ) -> str:
     logger = get_logger()
-    plan = refresh_base_image_plan(base_image_ref, base_repository, reporter=reporter)
-    if plan.confirm_update_image_ref is None:
-        resolved = _resolved_base_image_ref(plan)
-        if resolved is None:
-            raise RegistryError(f"Failed to resolve base image for {base_image_ref}.")
-        return resolved
-    if not confirm_update(plan.confirm_update_image_ref):
+    plan = refresh_base_image_plan(base_image_ref, base_repository)
+    if not plan.needs_confirmation:
+        return plan.image_ref
+    if not update_approved:
         logger.info("Base image pull not required for %s", base_image_ref)
-        local_ref = plan.local_base_image_ref
-        if local_ref is None:
-            raise RegistryError(f"Missing local base image for {base_image_ref}.")
-        return local_ref
+        return plan.image_ref
     return resolve_base_digest(base_image_ref, base_repository, reporter=reporter)
 
 
 def refresh_base_image_plan(
     base_image_ref: str,
     base_repository: str,
-    reporter: OperationReporter | None = None,
-) -> BaseRefreshPlan:
+) -> _BaseRefreshPlan:
     logger = get_logger()
     local_digest = get_local_repo_digest_for_repo(base_image_ref, base_repository)
     local_ref = _local_base_image_ref(base_repository, local_digest)
@@ -60,33 +45,26 @@ def refresh_base_image_plan(
                 f"Failed to resolve remote digest for {base_image_ref}."
             )
         logger.warning("Base image digest check failed; using local base image.")
-        return BaseRefreshPlan(
-            resolved_base_image_ref=local_ref,
-            local_base_image_ref=local_ref,
+        return _BaseRefreshPlan(
+            image_ref=local_ref,
+            needs_confirmation=False,
         )
 
     digest_ref = f"{base_repository}@{remote_digest}"
     if remote_digest == local_digest:
-        return BaseRefreshPlan(
-            resolved_base_image_ref=digest_ref,
-            local_base_image_ref=local_ref,
+        return _BaseRefreshPlan(
+            image_ref=digest_ref,
+            needs_confirmation=False,
         )
     if local_ref is None:
-        return BaseRefreshPlan(
-            resolved_base_image_ref=digest_ref,
-            local_base_image_ref=None,
+        return _BaseRefreshPlan(
+            image_ref=digest_ref,
+            needs_confirmation=False,
         )
-    return BaseRefreshPlan(
-        resolved_base_image_ref=None,
-        local_base_image_ref=local_ref,
-        confirm_update_image_ref=base_image_ref,
+    return _BaseRefreshPlan(
+        image_ref=local_ref,
+        needs_confirmation=True,
     )
-
-
-def _resolved_base_image_ref(plan: BaseRefreshPlan) -> str | None:
-    if plan.resolved_base_image_ref is not None:
-        return plan.resolved_base_image_ref
-    return plan.local_base_image_ref
 
 
 def _local_base_image_ref(base_repository: str, local_digest: str | None) -> str | None:

@@ -46,7 +46,7 @@ class EnsureLocalImageTests(TestCase):
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_module.ensure(run_config)
+                ensure_module.ensure(run_config, update_approved=False)
             refresh_mock.assert_called_once()
 
     def test_ensure_raises_on_version_failure(self) -> None:
@@ -64,7 +64,7 @@ class EnsureLocalImageTests(TestCase):
                 "version failed"
             )
             with self.assertRaises(RegistryError):
-                ensure_module.ensure(run_config)
+                ensure_module.ensure(run_config, update_approved=False)
 
     @staticmethod
     def test_ensure_uses_local_agent_image_when_base_refresh_fails() -> None:
@@ -83,7 +83,7 @@ class EnsureLocalImageTests(TestCase):
             ) as checker_cls,
             mock.patch("aicage.registry.agent_build.ensure.run_build") as build_mock,
         ):
-            ensure_module.ensure(run_config)
+            ensure_module.ensure(run_config, update_approved=False)
         checker_cls.assert_not_called()
         build_mock.assert_not_called()
 
@@ -102,7 +102,7 @@ class EnsureLocalImageTests(TestCase):
             ),
         ):
             with self.assertRaises(RegistryError) as raised:
-                ensure_module.ensure(run_config)
+                ensure_module.ensure(run_config, update_approved=False)
         self.assertIn("offline", str(raised.exception))
 
     @staticmethod
@@ -147,7 +147,7 @@ class EnsureLocalImageTests(TestCase):
             ) as checker_cls,
         ):
             checker_cls.return_value.get_version.return_value = "1.2.3"
-            ensure_module.ensure(run_config)
+            ensure_module.ensure(run_config, update_approved=False)
         base_mock.assert_called_once()
         refresh_mock.assert_not_called()
 
@@ -190,7 +190,11 @@ class EnsureLocalImageTests(TestCase):
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_module.ensure(run_config, reporter=reporter)
+                ensure_module.ensure(
+                    run_config,
+                    update_approved=False,
+                    reporter=reporter,
+                )
 
             build_mock.assert_called_once()
             refresh_mock.assert_called_once()
@@ -255,7 +259,7 @@ class EnsureLocalImageTests(TestCase):
                 ) as checker_cls,
             ):
                 checker_cls.return_value.get_version.return_value = "1.2.3"
-                ensure_module.ensure(run_config)
+                ensure_module.ensure(run_config, update_approved=False)
 
             build_mock.assert_not_called()
 
@@ -271,8 +275,11 @@ class EnsureLocalImageTests(TestCase):
                 return_value=store,
             ),
             mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_image",
-                return_value="ghcr.io/aicage/aicage-image-base@sha256:base",
+                "aicage.registry.agent_build.ensure.refresh_base_image_plan",
+                return_value=mock.Mock(
+                    image_ref="ghcr.io/aicage/aicage-image-base@sha256:base",
+                    needs_confirmation=False,
+                ),
             ),
             mock.patch(
                 "aicage.registry.agent_build.ensure.should_rebuild",
@@ -294,45 +301,55 @@ class EnsureLocalImageTests(TestCase):
         with mock.patch(
             "aicage.registry.agent_build.ensure.refresh_base_image_plan",
             return_value=mock.Mock(
-                confirm_update_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
-                resolved_base_image_ref=None,
-                local_base_image_ref="ghcr.io/aicage/aicage-image-base@sha256:local",
+                image_ref="ghcr.io/aicage/aicage-image-base@sha256:local",
+                needs_confirmation=True,
             ),
         ):
             plan = ensure_module.setup_plan(run_config)
 
         assert plan.needs_setup is True
-        assert (
-            plan.confirm_update_image_ref
-            == "ghcr.io/aicage/aicage-image-base:ubuntu"
-        )
+        assert plan.needs_update_confirmation is True
 
     @staticmethod
-    def test_build_needed_keeps_rebuild_requirement_when_user_declines_update() -> None:
+    def test__build_needed_returns_true_when_update_confirmation_needed() -> None:
         run_config = build_run_config()
 
         with mock.patch(
-            "aicage.registry.agent_build.ensure.setup_plan",
+            "aicage.registry.agent_build.ensure.refresh_base_image_plan",
             return_value=mock.Mock(
-                needs_setup=True,
-                confirm_update_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+                image_ref="ghcr.io/aicage/aicage-image-base@sha256:local",
+                needs_confirmation=True,
             ),
         ):
-            result = ensure_module.build_needed(run_config, lambda _image_ref: False)
+            result = ensure_module._build_needed(run_config)
 
         assert result is True
 
     @staticmethod
-    def test_build_needed_returns_true_when_user_accepts_update() -> None:
+    def test__build_needed_returns_true_when_setup_plan_needs_setup() -> None:
         run_config = build_run_config()
 
-        with mock.patch(
-            "aicage.registry.agent_build.ensure.setup_plan",
-            return_value=mock.Mock(
-                needs_setup=False,
-                confirm_update_image_ref="ghcr.io/aicage/aicage-image-base:ubuntu",
+        with (
+            mock.patch(
+                "aicage.registry.agent_build.ensure.refresh_base_image_plan",
+                return_value=mock.Mock(
+                    image_ref="ghcr.io/aicage/aicage-image-base@sha256:base",
+                    needs_confirmation=False,
+                ),
             ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.BuildStore",
+            ) as store_cls,
+            mock.patch(
+                "aicage.registry.agent_build.ensure.should_rebuild",
+                return_value=True,
+            ),
+            mock.patch(
+                "aicage.registry.agent_build.ensure.AgentVersionChecker"
+            ) as checker_cls,
         ):
-            result = ensure_module.build_needed(run_config, lambda _image_ref: True)
+            store_cls.return_value.load.return_value = None
+            checker_cls.return_value.get_version.return_value = "1.2.3"
+            result = ensure_module._build_needed(run_config)
 
         assert result is True
