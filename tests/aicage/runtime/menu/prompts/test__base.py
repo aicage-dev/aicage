@@ -6,7 +6,7 @@ from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import ProjectConfig
 from aicage.runtime._errors import RuntimeExecutionError
-from aicage.runtime.menu.prompts.base import (
+from aicage.runtime.menu.prompts._base import (
     BaseSelectionRequest,
     _available_bases,
     _base_options,
@@ -33,7 +33,7 @@ class PromptTests(TestCase):
         with (
             mock.patch("sys.stdin.isatty", return_value=True),
             mock.patch(
-                "aicage.runtime.menu.prompts.base.resolve_default_base",
+                "aicage.runtime.menu.prompts._base.resolve_default_base",
                 return_value="ubuntu",
             ),
             mock.patch("builtins.input", side_effect=["2", ""]),
@@ -71,7 +71,7 @@ class PromptTests(TestCase):
         with (
             mock.patch("sys.stdin.isatty", return_value=True),
             mock.patch(
-                "aicage.runtime.menu.prompts.base.resolve_default_base",
+                "aicage.runtime.menu.prompts._base.resolve_default_base",
                 return_value="fedora",
             ),
             mock.patch("builtins.input", return_value=""),

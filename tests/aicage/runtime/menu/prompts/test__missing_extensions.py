@@ -1,7 +1,9 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.prompts.missing_extensions import prompt_for_missing_extensions
+from aicage.runtime.menu.prompts._missing_extensions import (
+    prompt_for_missing_extensions,
+)
 
 
 class PromptMissingExtensionsTests(TestCase):
@@ -9,7 +11,7 @@ class PromptMissingExtensionsTests(TestCase):
         other_projects = [("/test-tmp/one", Path("/test-tmp/one.yml"))]
         with (
             mock.patch(
-                "aicage.runtime.menu.prompts.missing_extensions.ensure_tty_for_prompt"
+                "aicage.runtime.menu.prompts._missing_extensions.ensure_tty_for_prompt"
             ),
             mock.patch("builtins.input", return_value="fresh"),
             mock.patch("builtins.print") as print_mock,
@@ -27,7 +29,7 @@ class PromptMissingExtensionsTests(TestCase):
     def test_prompt_for_missing_extensions_no_projects(self) -> None:
         with (
             mock.patch(
-                "aicage.runtime.menu.prompts.missing_extensions.ensure_tty_for_prompt"
+                "aicage.runtime.menu.prompts._missing_extensions.ensure_tty_for_prompt"
             ),
             mock.patch("builtins.input", return_value="exit"),
             mock.patch("builtins.print") as print_mock,

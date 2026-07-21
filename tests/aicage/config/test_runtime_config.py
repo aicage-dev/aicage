@@ -122,7 +122,7 @@ class RuntimeConfigTests(TestCase):
                     return_value=self._get_agents(),
                 ),
                 mock.patch(
-                    "aicage.runtime.menu.interaction.select_agent_image",
+                    "aicage.runtime.menu._none_interaction.select_agent_image",
                     return_value=ImageSelection(
                         image_ref="ref",
                         base="ubuntu",
@@ -131,10 +131,8 @@ class RuntimeConfigTests(TestCase):
                     ),
                 ),
                 mock.patch(
-                    "aicage.runtime.menu.interaction.prompt_persist_docker_args",
-                    return_value=True,
+                    "aicage.runtime.menu._none_interaction.apply_mount_preferences"
                 ),
-                mock.patch("aicage.runtime.menu.interaction.apply_mount_preferences"),
             ):
                 run_config = load_run_config(
                     "codex",
@@ -233,7 +231,7 @@ class RuntimeConfigTests(TestCase):
                         return_value=self._get_agents(),
                     ),
                     mock.patch(
-                        "aicage.runtime.menu.interaction.select_agent_image",
+                        "aicage.runtime.menu._none_interaction.select_agent_image",
                         return_value=ImageSelection(
                             image_ref="ref",
                             base="ubuntu",
@@ -242,11 +240,7 @@ class RuntimeConfigTests(TestCase):
                         ),
                     ),
                     mock.patch(
-                        "aicage.runtime.menu.interaction.prompt_persist_shares",
-                        return_value=True,
-                    ),
-                    mock.patch(
-                        "aicage.runtime.menu.interaction.apply_mount_preferences"
+                        "aicage.runtime.menu._none_interaction.apply_mount_preferences"
                     ),
                 ):
                     load_run_config(
@@ -319,7 +313,7 @@ class RuntimeConfigTests(TestCase):
                         return_value=self._get_agents(),
                     ),
                     mock.patch(
-                        "aicage.runtime.menu.interaction.select_agent_image",
+                        "aicage.runtime.menu._none_interaction.select_agent_image",
                         return_value=ImageSelection(
                             image_ref="ref",
                             base="ubuntu",
@@ -328,7 +322,7 @@ class RuntimeConfigTests(TestCase):
                         ),
                     ),
                     mock.patch(
-                        "aicage.runtime.menu.interaction.apply_mount_preferences"
+                        "aicage.runtime.menu._none_interaction.apply_mount_preferences"
                     ),
                 ):
                     load_run_config(
