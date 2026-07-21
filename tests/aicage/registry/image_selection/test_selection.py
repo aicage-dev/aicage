@@ -115,8 +115,9 @@ class ImageSelectionTests(TestCase):
             select_agent_image("codex", context, mock.Mock())
         fresh_mock.assert_called_once()
 
-    @staticmethod
-    def test_select_agent_image_resets_on_missing_extensions() -> None:
+    def test_select_agent_image_keeps_available_extensions_on_missing_extensions(
+        self,
+    ) -> None:
         context = build_context(
             mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=["ubuntu"]
         )
@@ -124,23 +125,24 @@ class ImageSelectionTests(TestCase):
             base="ubuntu", image_ref="aicage:codex-ubuntu", extensions=["extra"]
         )
         context.project_cfg.agents["codex"] = agent_cfg
+
+        def _remove_missing(*_args: object, **_kwargs: object) -> bool:
+            agent_cfg.extensions = []
+            agent_cfg.image_ref = None
+            return True
+
         with (
             mock.patch(
                 "aicage.registry.image_selection.selection.ensure_extensions_exist",
-                return_value=True,
+                side_effect=_remove_missing,
             ),
-            mock.patch(
-                "aicage.registry.image_selection.selection.fresh_selection",
-                return_value=ImageSelection(
-                    image_ref="aicage:codex-ubuntu",
-                    base="ubuntu",
-                    extensions=[],
-                    base_image_ref=f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu",
-                ),
-            ) as fresh_mock,
         ):
-            select_agent_image("codex", context, mock.Mock())
-        fresh_mock.assert_called_once()
+            selection = select_agent_image("codex", context, mock.Mock())
+        self.assertEqual(
+            f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu",
+            selection.image_ref,
+        )
+        self.assertEqual([], selection.extensions)
 
     def test_select_agent_image_uses_stored_image_ref(self) -> None:
         context = build_context(
@@ -170,5 +172,4 @@ def _selection_interaction() -> mock.Mock:
     interaction.choose_base.return_value = "alpine"
     interaction.choose_extensions.return_value = []
     interaction.choose_image_ref.return_value = ""
-    interaction.choose_missing_extensions.return_value = "fresh"
     return interaction

@@ -9,6 +9,9 @@ from textual.screen import Screen
 from aicage.config.context import ConfigContext
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.registry.image_selection.extensions.missing_extensions import (
+    ensure_extensions_exist,
+)
 from aicage.registry.image_selection.models import ImageSelection
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
@@ -72,6 +75,8 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
         accepted = await self._confirm_undecided_built_in_shares()
         if not accepted:
             return
+        if ensure_extensions_exist(self._draft.agent, self._config_context):
+            self._refresh_sections()
         self._finish(
             _ConfigResult(
                 selection=resolve_overview_selection(

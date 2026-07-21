@@ -1,17 +1,12 @@
-from pathlib import Path
-
+from aicage._logging import get_logger
 from aicage.config.context import ConfigContext
-from aicage.config.errors import ConfigError
-from aicage.config.yaml_loader import load_yaml
-from aicage.registry._errors import RegistryError
-
-from ..interaction import MissingExtensionsRequest, SelectionInteraction
+from aicage.config.image_refs import default_extended_image_ref
+from aicage.config.project_config import AgentConfig
 
 
 def ensure_extensions_exist(
     agent: str,
     context: ConfigContext,
-    selection_interaction: SelectionInteraction,
 ) -> bool:
     agent_cfg = context.project_cfg.agents.get(agent)
     if not agent_cfg:
@@ -19,51 +14,36 @@ def ensure_extensions_exist(
     missing = [ext for ext in agent_cfg.extensions if ext not in context.extensions]
     if not missing:
         return False
-    other_projects = _find_projects_using_image(context, agent_cfg.image_ref or "")
-    choice = selection_interaction.choose_missing_extensions(
-        MissingExtensionsRequest(
-            agent=agent,
-            missing=missing,
-            stored_image_ref=agent_cfg.image_ref or "",
-            project_config_path=context.store.project_config_path(
-                Path(context.project_cfg.path)
-            ),
-            other_projects=other_projects,
-        )
+    get_logger().warning(
+        "Removing unavailable extensions for agent %s: %s",
+        agent,
+        ", ".join(sorted(missing)),
     )
-    if choice == "fresh":
-        context.project_cfg.agents.pop(agent, None)
-        return True
-    if choice == "exit":
-        raise RegistryError("Invalid extension configuration; run aborted.")
-    raise RegistryError("Invalid choice; run aborted.")
+    _remove_missing_extensions(agent, agent_cfg, context)
+    return True
 
 
-def _find_projects_using_image(
+def _remove_missing_extensions(
+    agent: str,
+    agent_cfg: AgentConfig,
     context: ConfigContext,
-    image_ref: str,
-) -> list[tuple[str, Path]]:
-    if not image_ref:
-        return []
-    store = context.store
-    matches: list[tuple[str, Path]] = []
-    for path in sorted(store.projects_dir.glob("*.yml")):
-        data = _load_yaml(path)
-        if not isinstance(data, dict):
-            continue
-        project_path = str(data.get("path", ""))
-        agents = data.get("agents", {}) or {}
-        if not isinstance(agents, dict):
-            continue
-        for cfg in agents.values():
-            if isinstance(cfg, dict) and cfg.get("image_ref") == image_ref:
-                matches.append((project_path, path))
-                break
-    return matches
-
-
-def _load_yaml(path: Path) -> dict[str, object]:
-    try:
-        return load_yaml(path)
-    except ConfigError:
-        return {}
+) -> None:
+    remaining_extensions = [
+        extension
+        for extension in agent_cfg.extensions
+        if extension in context.extensions
+    ]
+    agent_cfg.extensions = remaining_extensions
+    agent_cfg.extension_mounts = {
+        key: value
+        for key, value in agent_cfg.extension_mounts.items()
+        if key in remaining_extensions
+    }
+    if remaining_extensions and agent_cfg.base:
+        agent_cfg.image_ref = default_extended_image_ref(
+            agent,
+            agent_cfg.base,
+            remaining_extensions,
+        )
+    else:
+        agent_cfg.image_ref = None

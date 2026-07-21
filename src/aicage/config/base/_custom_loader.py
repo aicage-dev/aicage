@@ -1,10 +1,10 @@
 from pathlib import Path
 
 from aicage.config._yaml import expect_string, read_str_list
+from aicage.config._yaml_loader import load_yaml
 from aicage.config.base._validation import validate_base_mapping
 from aicage.config.base.models import ARCHITECTURES_KEY, BaseMetadata
 from aicage.config.errors import ConfigError
-from aicage.config.yaml_loader import load_yaml
 from aicage.paths import CUSTOM_BASE_DEFINITION_FILES, CUSTOM_BASES_DIR
 
 _FROM_IMAGE_KEY: str = "from_image"

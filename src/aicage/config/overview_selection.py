@@ -13,12 +13,6 @@ from aicage.registry.image_selection.extensions.missing_extensions import (
     ensure_extensions_exist,
 )
 from aicage.registry.image_selection.extensions.refs import base_image_ref
-from aicage.registry.image_selection.interaction import (
-    BaseChoiceRequest,
-    ExtensionChoiceOption,
-    MissingExtensionsRequest,
-    SelectionInteraction,
-)
 from aicage.registry.image_selection.models import ImageSelection
 
 
@@ -54,15 +48,7 @@ def resolve_overview_selection(
 
 
 def _resolve_extended_image_ref(draft: RunConfigDraft, context: ConfigContext) -> None:
-    reset = ensure_extensions_exist(
-        draft.agent,
-        context,
-        _OverviewSelectionInteraction(),
-    )
-    if reset:
-        raise RuntimeError(
-            "Interactive configuration was reset unexpectedly after extension validation."
-        )
+    ensure_extensions_exist(draft.agent, context)
     image_ref = draft.agent_cfg.image_ref or _default_extended_image_ref(
         draft.agent,
         draft.agent_cfg.base or "",
@@ -88,29 +74,6 @@ def _default_extended_image_ref(agent: str, base: str, extensions: list[str]) ->
 def _extended_image_name(image_ref: str) -> str:
     _, _, tag = image_ref.rpartition(":")
     return tag or image_ref
-
-
-class _OverviewSelectionInteraction(SelectionInteraction):
-    def choose_base(self, request: BaseChoiceRequest) -> str:
-        del request
-        raise RuntimeError("Overview selection does not choose a base here.")
-
-    def choose_extensions(
-        self,
-        options: list[ExtensionChoiceOption],
-    ) -> list[str]:
-        del options
-        raise RuntimeError("Overview selection does not choose extensions here.")
-
-    def choose_image_ref(self, default_ref: str) -> str:
-        del default_ref
-        raise RuntimeError("Overview selection does not choose image refs here.")
-
-    def choose_missing_extensions(self, request: MissingExtensionsRequest) -> str:
-        del request
-        raise RuntimeError(
-            "Stored extensions are missing during overview resolution."
-        )
 
 
 def _require_agent_metadata(agent: str, context: ConfigContext) -> AgentMetadata:

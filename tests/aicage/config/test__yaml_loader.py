@@ -2,8 +2,8 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
+from aicage.config._yaml_loader import load_yaml
 from aicage.config.errors import ConfigError
-from aicage.config.yaml_loader import load_yaml
 
 
 class YamlLoaderTests(TestCase):

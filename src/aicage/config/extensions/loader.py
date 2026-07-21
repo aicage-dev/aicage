@@ -5,9 +5,9 @@ from typing import Protocol
 
 from aicage._lists import read_str_list_or_empty
 from aicage.config._yaml import expect_string
+from aicage.config._yaml_loader import load_yaml
 from aicage.config.errors import ConfigError
 from aicage.config.extensions._validation import validate_extension_mapping
-from aicage.config.yaml_loader import load_yaml
 from aicage.paths import CUSTOM_EXTENSION_DEFINITION_FILES, CUSTOM_EXTENSIONS_DIR
 
 _EXTENSION_NAME_KEY: str = "name"
