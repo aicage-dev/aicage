@@ -2,6 +2,7 @@ from collections.abc import Callable
 
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.docker.reporting import OperationReporter
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
     ExtensionChoiceOption,
@@ -63,7 +64,10 @@ class SimpleInteraction:
     def confirm_image_update(self, image_ref: str) -> bool:
         return prompt_update_image(image_ref)
 
-    def execute_image_setup(self, operation) -> None:
+    def execute_image_setup(
+        self,
+        operation: Callable[[OperationReporter | None], None],
+    ) -> None:
         operation(None)
 
 

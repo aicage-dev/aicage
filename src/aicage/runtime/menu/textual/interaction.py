@@ -12,7 +12,7 @@ from ._config_app import ConfigApp
 from ._execution_app import ExecutionApp
 from ._image_update_app import ImageUpdateApp
 
-_ImageSetupOperation = Callable[[OperationReporter], None]
+_ImageSetupOperation = Callable[[OperationReporter | None], None]
 
 
 class TextualInteraction:
