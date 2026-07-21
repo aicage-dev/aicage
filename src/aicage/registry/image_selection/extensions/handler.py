@@ -4,22 +4,21 @@ from aicage.config.extended_images import (
     write_extended_image_config,
 )
 from aicage.config.image_refs import default_extended_image_ref
-from aicage.runtime.menu.prompts.extensions import (
-    ExtensionOption,
-    prompt_for_extensions,
-)
-from aicage.runtime.menu.prompts.image_ref import prompt_for_image_ref
 
+from ..interaction import ExtensionChoiceOption, SelectionInteraction
 from ..models import ImageSelection
 from .context import ExtensionSelectionContext
 from .refs import base_image_ref
 
 
-def handle_extension_selection(selection: ExtensionSelectionContext) -> ImageSelection:
+def handle_extension_selection(
+    selection: ExtensionSelectionContext,
+    selection_interaction: SelectionInteraction,
+) -> ImageSelection:
     agent_cfg = selection.agent_cfg
     agent_cfg.base = selection.base
     extension_options = [
-        ExtensionOption(
+        ExtensionChoiceOption(
             name=ext.extension_id,
             description=f"{ext.name}: {ext.description}",
         )
@@ -28,10 +27,12 @@ def handle_extension_selection(selection: ExtensionSelectionContext) -> ImageSel
         )
     ]
     selected_extensions = (
-        prompt_for_extensions(extension_options) if extension_options else []
+        selection_interaction.choose_extensions(extension_options)
+        if extension_options
+        else []
     )
     if selected_extensions:
-        image_ref = prompt_for_image_ref(
+        image_ref = selection_interaction.choose_image_ref(
             _default_extended_image_ref(
                 selection.agent, selection.base, selected_extensions
             )

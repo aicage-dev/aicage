@@ -5,7 +5,6 @@ from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.docker.query import get_local_repo_digest
 from aicage.docker.types import ImageRefRepository
 from aicage.registry.digest.remote_digest import get_remote_digest
-from aicage.runtime.menu.prompts.confirm import prompt_update_image
 
 ConfirmImageUpdate = Callable[[str], bool]
 
@@ -16,14 +15,18 @@ class _PullDecisionPlan:
     confirm_update_image_ref: str | None = None
 
 
+def _confirm_update_pull(_: str) -> bool:
+    return True
+
+
 def decide_pull(
     image_ref: str,
-    confirm_update: ConfirmImageUpdate | None = None,
+    confirm_update: ConfirmImageUpdate = _confirm_update_pull,
 ) -> bool:
     plan = pull_decision_plan(image_ref)
     if plan.confirm_update_image_ref is None:
         return plan.should_pull
-    return (confirm_update or prompt_update_image)(plan.confirm_update_image_ref)
+    return confirm_update(plan.confirm_update_image_ref)
 
 
 def pull_decision_plan(image_ref: str) -> _PullDecisionPlan:
