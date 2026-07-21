@@ -7,7 +7,9 @@ from aicage.docker.reporting import OperationReporter
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 
-from ._app import TextualApp
+from ._config_app import ConfigApp
+from ._execution_app import ExecutionApp
+from ._image_update_app import ImageUpdateApp
 
 _ImageSetupOperation = Callable[[OperationReporter], None]
 
@@ -47,7 +49,7 @@ def _edit_draft_with_textual_app(
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()
-    result = TextualApp.for_config(draft, context).run(inline=True)
+    result = ConfigApp(draft, context).run(inline=True)
     if result is None:
         draft.project_cfg.path = original_project_cfg.path
         draft.project_cfg.agents = original_project_cfg.agents
@@ -71,10 +73,10 @@ def _confirm_update_aicage(installed_version: str, latest_version: str) -> bool:
 
 
 def _confirm_image_update_with_textual_app(image_ref: str) -> bool:
-    return bool(TextualApp.for_image_update_confirmation(image_ref).run(inline=True))
+    return bool(ImageUpdateApp(image_ref).run(inline=True))
 
 
 def _execute_image_setup_with_textual_app(operation: _ImageSetupOperation) -> None:
-    result = TextualApp.for_execution(operation).run(inline=True)
+    result = ExecutionApp(operation).run(inline=True)
     if isinstance(result, BaseException):
         raise result
