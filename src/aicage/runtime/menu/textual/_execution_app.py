@@ -1,21 +1,18 @@
 import os
 import signal
-from collections.abc import Callable
 
 from textual import work
 from textual.app import ComposeResult
 
-from aicage.docker.reporting import OperationReporter
+from aicage.runtime.menu._interaction_types import ImageSetupOperation
 
 from ._textual_app import TextualApp
 from .services.execution_reporting import ExecutionReporter
 from .views.execution_screen import ExecutionScreen
 
-_ImageSetupOperation = Callable[[OperationReporter], None]
-
 
 class ExecutionApp(TextualApp[BaseException | None]):
-    def __init__(self, operation: _ImageSetupOperation) -> None:
+    def __init__(self, operation: ImageSetupOperation) -> None:
         super().__init__("container setup")
         self._operation = operation
 
