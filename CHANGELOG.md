@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.5] - 2026-07-22
+
+### Fixed
+
+- Missing extensions no longer abort the run in `--menu none` mode; unavailable extensions are automatically removed
+  with a log warning and the run continues.
+- Unknown agent names now list the available agents in the error message.
+
+### Changed
+
+- Separated Textual config and execution into independent apps, so image pull/build progress displays in a dedicated
+  screen rather than being inlined in the config overview.
+- Renamed `--menu textual` to `--menu ui`; `simple` and `none` are unchanged.
+- Image update confirmation is now resolved at the interaction layer instead of inside decision logic, allowing each
+  menu mode to handle confirmation consistently.
+- The Textual base selection screen now accepts on row click instead of requiring the OK button.
+- Tab/Shift+Tab navigation in the Textual extensions screen now cycles between checkboxes and the OK button.
+
+### Internal
+
+- Replaced the global mutable prompt-mode flag with a `RuntimeInteraction` protocol backed by `SimpleInteraction`,
+  `TextualInteraction`, and `_NoneInteraction`, giving each menu mode explicit control over default and confirmation
+  behavior.
+- Renamed prompt modules to private (`_base`, `_confirm`, `_extensions`, `_image_ref`) and removed per-prompt log
+  noise.
+- Moved Textual screens into `views/` and extracted execution and image-update apps from the monolithic config app.
+- Extracted `extended_image_name` into `config.image_refs` to remove inline duplication.
+- Injected mount-prompt callables into docker-args resolution to decouple from concrete prompt implementations.
+- Tightened module and function visibility across config, docker, and runtime packages.
+- Updated README with the Antigravity CLI agent (`agy`).
+
 ## [1.4.4] - 2026-07-16
 
 ### Fixed
