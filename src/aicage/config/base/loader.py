@@ -4,7 +4,7 @@ from aicage.config._yaml import expect_bool, expect_string, read_str_list
 from aicage.config._yaml_loader import load_yaml
 from aicage.config.base._custom_loader import load_custom_bases
 from aicage.config.base._validation import validate_base_mapping
-from aicage.config.base.models import ARCHITECTURES_KEY, BUILD_LOCAL_KEY, BaseMetadata
+from aicage.config.base.models import _ARCHITECTURES_KEY, _BUILD_LOCAL_KEY, BaseMetadata
 from aicage.config.errors import ConfigError
 from aicage.config.resources import find_packaged_path
 
@@ -45,9 +45,9 @@ def _load_builtin_bases() -> dict[str, BaseMetadata]:
                 _BASE_IMAGE_DESCRIPTION_KEY,
             ),
             architectures=read_str_list(
-                mapping.get(ARCHITECTURES_KEY), ARCHITECTURES_KEY
+                mapping.get(_ARCHITECTURES_KEY), _ARCHITECTURES_KEY
             ),
-            build_local=expect_bool(mapping.get(BUILD_LOCAL_KEY), BUILD_LOCAL_KEY),
+            build_local=expect_bool(mapping.get(_BUILD_LOCAL_KEY), _BUILD_LOCAL_KEY),
             local_definition_dir=entry,
         )
     return bases
