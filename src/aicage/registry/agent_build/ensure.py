@@ -140,49 +140,6 @@ def setup_plan(run_config: RunConfig) -> _AgentBuildSetupPlan:
     )
 
 
-def _build_needed_from_plan(
-    run_config: RunConfig,
-) -> bool:
-    return setup_plan(run_config).needs_setup
-
-
-def _build_needed(run_config: RunConfig) -> bool:
-    agent_metadata = run_config.context.agents[run_config.agent]
-    definition_dir = agent_metadata.local_definition_dir
-    base_metadata = run_config.context.bases[run_config.selection.base]
-    custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
-    base_image = get_base_image_ref(run_config)
-    image_ref = run_config.selection.base_image_ref
-    if custom_base:
-        if base_build_needed(
-            run_config.selection.base,
-            base_metadata,
-            base_image,
-        ):
-            return True
-    base_repo = base_repository(run_config)
-    if not custom_base:
-        try:
-            refresh_plan = refresh_base_image_plan(
-                base_image_ref=base_image,
-                base_repository=base_repo,
-            )
-            if refresh_plan.needs_confirmation:
-                return True
-            base_image = refresh_plan.image_ref
-        except RegistryError:
-            return not local_image_exists(image_ref)
-
-    store = BuildStore()
-    agent_version = _get_agent_version(run_config, agent_metadata, definition_dir)
-    return should_rebuild(
-        run_config=run_config,
-        record=store.load(run_config.agent, run_config.selection.base),
-        agent_version=agent_version,
-        base_image_ref=base_image,
-    )
-
-
 def _get_agent_version(
     run_config: RunConfig,
     agent_metadata: AgentMetadata,
