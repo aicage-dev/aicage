@@ -4,11 +4,11 @@ from unittest import TestCase, mock
 
 from aicage.config.agent._custom_loader import load_custom_agents
 from aicage.config.agent.models import (
-    AGENT_FULL_NAME_KEY,
-    AGENT_HOMEPAGE_KEY,
-    AGENT_PATH_KEY,
-    BASE_DISTRO_EXCLUDE_KEY,
-    BASE_EXCLUDE_KEY,
+    _AGENT_FULL_NAME_KEY,
+    _AGENT_HOMEPAGE_KEY,
+    _AGENT_PATH_KEY,
+    _BASE_DISTRO_EXCLUDE_KEY,
+    _BASE_EXCLUDE_KEY,
 )
 from aicage.config.base.models import BaseMetadata
 from aicage.config.errors import ConfigError
@@ -36,14 +36,14 @@ class CustomAgentLoaderTests(TestCase):
             (agent_dir / CUSTOM_AGENT_DEFINITION_FILES[0]).write_text(
                 "\n".join(
                     [
-                        f"{AGENT_PATH_KEY}:",
+                        f"{_AGENT_PATH_KEY}:",
                         "  directories:",
                         "    - ~/.custom",
-                        f"{AGENT_FULL_NAME_KEY}: Custom",
-                        f"{AGENT_HOMEPAGE_KEY}: https://example.com",
-                        f"{BASE_EXCLUDE_KEY}:",
+                        f"{_AGENT_FULL_NAME_KEY}: Custom",
+                        f"{_AGENT_HOMEPAGE_KEY}: https://example.com",
+                        f"{_BASE_EXCLUDE_KEY}:",
                         "  - alpine",
-                        f"{BASE_DISTRO_EXCLUDE_KEY}:",
+                        f"{_BASE_DISTRO_EXCLUDE_KEY}:",
                         "  - Fedora",
                     ]
                 ),
@@ -72,11 +72,11 @@ class CustomAgentLoaderTests(TestCase):
             (agent_dir / CUSTOM_AGENT_DEFINITION_FILES[0]).write_text(
                 "\n".join(
                     [
-                        f"{AGENT_PATH_KEY}:",
+                        f"{_AGENT_PATH_KEY}:",
                         "  directories:",
                         "    - ~/.custom",
-                        f"{AGENT_FULL_NAME_KEY}: Custom",
-                        f"{AGENT_HOMEPAGE_KEY}: https://example.com",
+                        f"{_AGENT_FULL_NAME_KEY}: Custom",
+                        f"{_AGENT_HOMEPAGE_KEY}: https://example.com",
                     ]
                 ),
                 encoding="utf-8",

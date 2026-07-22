@@ -3,10 +3,10 @@ from typing import Any
 
 from aicage.config._schema_validation import load_schema, validate_schema_mapping
 from aicage.config.agent.models import (
-    AGENT_PATH_DIRECTORIES_KEY,
-    AGENT_PATH_FILES_KEY,
-    AGENT_PATH_KEY,
-    BUILD_LOCAL_KEY,
+    _AGENT_PATH_DIRECTORIES_KEY,
+    _AGENT_PATH_FILES_KEY,
+    _AGENT_PATH_KEY,
+    _BUILD_LOCAL_KEY,
 )
 from aicage.config.errors import ConfigError
 
@@ -36,11 +36,11 @@ def ensure_required_files(agent_name: str, agent_dir: Path) -> None:
 
 def _apply_defaults(mapping: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(mapping)
-    normalized.setdefault(BUILD_LOCAL_KEY, True)
-    agent_path = normalized.get(AGENT_PATH_KEY)
+    normalized.setdefault(_BUILD_LOCAL_KEY, True)
+    agent_path = normalized.get(_AGENT_PATH_KEY)
     if isinstance(agent_path, dict):
         agent_path = dict(agent_path)
-        agent_path.setdefault(AGENT_PATH_FILES_KEY, [])
-        agent_path.setdefault(AGENT_PATH_DIRECTORIES_KEY, [])
-        normalized[AGENT_PATH_KEY] = agent_path
+        agent_path.setdefault(_AGENT_PATH_FILES_KEY, [])
+        agent_path.setdefault(_AGENT_PATH_DIRECTORIES_KEY, [])
+        normalized[_AGENT_PATH_KEY] = agent_path
     return normalized

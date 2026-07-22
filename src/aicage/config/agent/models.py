@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-AGENT_PATH_KEY: str = "agent_path"
-AGENT_PATH_FILES_KEY: str = "files"
-AGENT_PATH_DIRECTORIES_KEY: str = "directories"
-AGENT_FULL_NAME_KEY: str = "agent_full_name"
-AGENT_HOMEPAGE_KEY: str = "agent_homepage"
-BUILD_LOCAL_KEY: str = "build_local"
-BASE_EXCLUDE_KEY: str = "base_exclude"
-BASE_DISTRO_EXCLUDE_KEY: str = "base_distro_exclude"
+_AGENT_PATH_KEY: str = "agent_path"
+_AGENT_PATH_FILES_KEY: str = "files"
+_AGENT_PATH_DIRECTORIES_KEY: str = "directories"
+_AGENT_FULL_NAME_KEY: str = "agent_full_name"
+_AGENT_HOMEPAGE_KEY: str = "agent_homepage"
+_BUILD_LOCAL_KEY: str = "build_local"
+_BASE_EXCLUDE_KEY: str = "base_exclude"
+_BASE_DISTRO_EXCLUDE_KEY: str = "base_distro_exclude"
 
 
 @dataclass(frozen=True)
