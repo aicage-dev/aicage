@@ -9,9 +9,9 @@ from .._models import (
     HostAccessConfirmValues,
 )
 from .host_access import (
-    apply_confirmed_host_access,
-    build_confirmation_request,
-    merge_confirmed_host_access,
+    _apply_confirmed_host_access,
+    _build_confirmation_request,
+    _merge_confirmed_host_access,
 )
 
 
@@ -24,7 +24,7 @@ async def confirm_and_apply_host_access(
         [HostAccessConfirmValues], Awaitable[HostAccessConfirmValues | None]
     ],
 ) -> tuple[bool, list[BuiltInShareValue]]:
-    confirmation_request = build_confirmation_request(built_in_shares, docker_option)
+    confirmation_request = _build_confirmation_request(built_in_shares, docker_option)
     if (
         confirmation_request.docker_options
         or confirmation_request.git_support_shares
@@ -33,8 +33,8 @@ async def confirm_and_apply_host_access(
         confirmed = await confirm_host_access(confirmation_request)
         if confirmed is None:
             return False, built_in_shares
-        built_in_shares, docker_option = merge_confirmed_host_access(
+        built_in_shares, docker_option = _merge_confirmed_host_access(
             built_in_shares, docker_option, confirmed
         )
-    apply_confirmed_host_access(draft, built_in_shares, custom_shares, docker_option)
+    _apply_confirmed_host_access(draft, built_in_shares, custom_shares, docker_option)
     return True, built_in_shares

@@ -7,7 +7,7 @@ from aicage.runtime.menu.default_base import resolve_default_base
 from ._metadata import available_bases, require_agent_metadata
 from .extensions.context import ExtensionSelectionContext
 from .extensions.handler import handle_extension_selection
-from .interaction import BaseChoiceRequest, SelectionInteraction
+from .interaction import BaseChoiceRequest, _SelectionInteraction
 from .models import ImageSelection
 
 
@@ -15,7 +15,7 @@ def fresh_selection(
     agent: str,
     context: ConfigContext,
     extensions: dict[str, ExtensionMetadata],
-    selection_interaction: SelectionInteraction,
+    selection_interaction: _SelectionInteraction,
 ) -> ImageSelection:
     agent_metadata = require_agent_metadata(agent, context)
     bases = available_bases(agent, context)

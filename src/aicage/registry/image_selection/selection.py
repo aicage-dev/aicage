@@ -7,14 +7,14 @@ from .extensions.context import ExtensionSelectionContext
 from .extensions.handler import handle_extension_selection
 from .extensions.missing_extensions import ensure_extensions_exist
 from .extensions.refs import base_image_ref
-from .interaction import SelectionInteraction
+from .interaction import _SelectionInteraction
 from .models import ImageSelection
 
 
 def select_agent_image(
     agent: str,
     context: ConfigContext,
-    selection_interaction: SelectionInteraction,
+    selection_interaction: _SelectionInteraction,
 ) -> ImageSelection:
     extensions = context.extensions
     agent_cfg = context.project_cfg.agents.setdefault(agent, AgentConfig())

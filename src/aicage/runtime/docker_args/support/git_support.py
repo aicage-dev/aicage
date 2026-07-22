@@ -95,7 +95,7 @@ def uses_ssh_remotes(project_path: Path) -> bool:
     return False
 
 
-def git_support_prompt_items(
+def _git_support_prompt_items(
     project_path: Path,
     mounts_cfg: _MountPrefs,
 ) -> list[tuple[str, str]]:

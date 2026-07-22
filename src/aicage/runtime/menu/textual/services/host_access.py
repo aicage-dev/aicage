@@ -68,7 +68,7 @@ def current_docker_option(
     )
 
 
-def build_confirmation_request(
+def _build_confirmation_request(
     built_in_shares: list[BuiltInShareValue],
     docker_option: DockerOptionValue,
 ) -> HostAccessConfirmValues:
@@ -95,7 +95,7 @@ def build_confirmation_request(
     )
 
 
-def merge_confirmed_host_access(
+def _merge_confirmed_host_access(
     built_in_shares: list[BuiltInShareValue],
     docker_option: DockerOptionValue,
     confirmed: HostAccessConfirmValues,
@@ -138,7 +138,7 @@ def merge_confirmed_host_access(
     )
 
 
-def apply_confirmed_host_access(
+def _apply_confirmed_host_access(
     draft: RunConfigDraft,
     built_in_shares: list[BuiltInShareValue],
     custom_shares: list[CustomShareValue],
