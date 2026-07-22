@@ -9,7 +9,7 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
-from aicage.runtime.menu._interaction_types import _ConfigSelectionResult
+from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 
 from ._base import BaseSelectionRequest, prompt_for_base
 from ._confirm import (
@@ -33,7 +33,7 @@ class SimpleInteraction:
         draft: RunConfigDraft,
         context: ConfigContext,
         agent: str,
-    ) -> _ConfigSelectionResult:
+    ) -> ConfigSelectionResult:
         selection = select_agent_image(
             agent,
             context,
@@ -49,7 +49,7 @@ class SimpleInteraction:
             prompt_mount_git_support,
             prompt_persist_docker_socket,
         )
-        return _ConfigSelectionResult(
+        return ConfigSelectionResult(
             selection=selection,
             project_docker_args=draft.existing_project_docker_args,
         )

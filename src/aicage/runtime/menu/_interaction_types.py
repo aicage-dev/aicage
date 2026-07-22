@@ -8,6 +8,6 @@ ImageSetupOperation = Callable[[OperationReporter | None], None]
 
 
 @dataclass(frozen=True)
-class _ConfigSelectionResult:
+class ConfigSelectionResult:
     selection: ImageSelection
     project_docker_args: str

@@ -3,8 +3,8 @@ from typing import Protocol
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime.menu._interaction_types import (
+    ConfigSelectionResult,
     ImageSetupOperation,
-    _ConfigSelectionResult,
 )
 from aicage.runtime.menu._none_interaction import create_none_interaction
 from aicage.runtime.menu.prompts.interaction import SimpleInteraction
@@ -17,7 +17,7 @@ class RuntimeInteraction(Protocol):
         draft: RunConfigDraft,
         context: ConfigContext,
         agent: str,
-    ) -> _ConfigSelectionResult: ...
+    ) -> ConfigSelectionResult: ...
 
     def confirm_aicage_update(
         self,

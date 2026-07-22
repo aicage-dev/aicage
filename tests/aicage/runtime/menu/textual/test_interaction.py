@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.models import ImageSelection
-from aicage.runtime.menu._interaction_types import _ConfigSelectionResult
+from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.textual import interaction
 
 from .._test_support import _build_context, _build_draft
@@ -22,7 +22,7 @@ class ConfigureRunTests(TestCase):
 
         with mock.patch(
             "aicage.runtime.menu.textual.interaction._edit_draft_with_textual_app",
-            return_value=_ConfigSelectionResult(
+            return_value=ConfigSelectionResult(
                 selection=selection,
                 project_docker_args="--project",
             ),

@@ -3,8 +3,8 @@ from copy import deepcopy
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime.menu._interaction_types import (
+    ConfigSelectionResult,
     ImageSetupOperation,
-    _ConfigSelectionResult,
 )
 from aicage.runtime.menu.prompts.interaction import SimpleInteraction
 
@@ -19,7 +19,7 @@ class TextualInteraction:
         draft: RunConfigDraft,
         context: ConfigContext,
         agent: str,
-    ) -> _ConfigSelectionResult:
+    ) -> ConfigSelectionResult:
         del agent
         return _edit_draft_with_textual_app(draft, context)
 
@@ -40,7 +40,7 @@ class TextualInteraction:
 def _edit_draft_with_textual_app(
     draft: RunConfigDraft,
     context: ConfigContext,
-) -> _ConfigSelectionResult:
+) -> ConfigSelectionResult:
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()
