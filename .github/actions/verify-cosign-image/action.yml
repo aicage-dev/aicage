@@ -6,7 +6,7 @@ inputs:
   image_ref:
     description: Cosign image reference to resolve and verify.
     required: false
-    default: ghcr.io/sigstore/cosign/cosign:v3.0.2
+    default: ghcr.io/sigstore/cosign/cosign:latest
 
 outputs:
   digest:
