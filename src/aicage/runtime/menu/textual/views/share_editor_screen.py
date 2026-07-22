@@ -7,7 +7,7 @@ from textual.widgets import Button, Checkbox, DirectoryTree, Header, Input, Stat
 
 from .._models import ShareEditorResult
 from .._mount_value import compose_mount_value, split_mount_value
-from ._screen_support import CancelableScreen
+from ._cancelable_screen import CancelableScreen
 
 
 class ShareEditorScreen(CancelableScreen[ShareEditorResult | None]):

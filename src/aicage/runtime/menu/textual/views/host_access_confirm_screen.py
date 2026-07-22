@@ -9,7 +9,7 @@ from ..services.host_access import (
     built_in_group_selection_values,
     current_built_in_shares,
 )
-from ._screen_support import CancelableScreen
+from ._cancelable_screen import CancelableScreen
 
 
 class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):

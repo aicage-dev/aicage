@@ -6,7 +6,7 @@ from textual.widgets import Button, DataTable, Header, Static
 
 from aicage.config.base.models import BaseMetadata
 
-from ._screen_support import CancelableScreen
+from ._cancelable_screen import CancelableScreen
 
 _BASE_COLUMN_KEY = "base"
 _DISTRO_COLUMN_KEY = "distro"
