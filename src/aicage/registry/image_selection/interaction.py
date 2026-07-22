@@ -19,7 +19,7 @@ class ExtensionChoiceOption:
     description: str
 
 
-class SelectionInteraction(Protocol):
+class _SelectionInteraction(Protocol):
     def choose_base(self, request: BaseChoiceRequest) -> str: ...
 
     def choose_extensions(

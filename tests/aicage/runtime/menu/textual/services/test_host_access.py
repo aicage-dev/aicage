@@ -148,7 +148,7 @@ class HostAccessTests(TestCase):
         ]
         docker_option = DockerOptionValue("docker", "Docker socket", True, True)
 
-        values = host_access.build_confirmation_request(built_in_shares, docker_option)
+        values = host_access._build_confirmation_request(built_in_shares, docker_option)
 
         self.assertEqual([], values.docker_options)
         self.assertEqual([built_in_shares[0]], values.git_support_shares)
@@ -169,7 +169,7 @@ class HostAccessTests(TestCase):
             extension_shares=[],
         )
 
-        merged_shares, merged_docker = host_access.merge_confirmed_host_access(
+        merged_shares, merged_docker = host_access._merge_confirmed_host_access(
             built_in_shares,
             docker_option,
             confirmed,
@@ -193,7 +193,7 @@ class HostAccessTests(TestCase):
             ParsedArgs(False, "", "codex", [], False, [], None),
         )
 
-        host_access.apply_confirmed_host_access(
+        host_access._apply_confirmed_host_access(
             draft,
             [
                 BuiltInShareValue(

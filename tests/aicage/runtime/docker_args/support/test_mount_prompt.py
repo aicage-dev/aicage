@@ -26,7 +26,7 @@ class MountPromptTests(TestCase):
         ]
 
         with (
-            mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=git_items),
+            mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=git_items),
         ):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 project_path,
@@ -49,7 +49,7 @@ class MountPromptTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts())
 
         select_mounts = mock.Mock()
-        with mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]):
+        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {}, select_mounts
             )
@@ -79,7 +79,7 @@ class MountPromptTests(TestCase):
             ]
             with (
                 mock.patch(
-                    f"{_MODULE}.git_support_prompt_items", return_value=git_items
+                    f"{_MODULE}._git_support_prompt_items", return_value=git_items
                 ),
             ):
                 select_mounts = mock.Mock(return_value=[MOUNT_GITCONFIG_KEY, "gh"])
@@ -113,7 +113,7 @@ class MountPromptTests(TestCase):
             dockerfile_path=None,
         )
 
-        with mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]):
+        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"gh": extension}, lambda *_args: []
             )
@@ -141,7 +141,7 @@ class MountPromptTests(TestCase):
         )
 
         select_mounts = mock.Mock(return_value=["sample"])
-        with mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]):
+        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"sample": extension}, select_mounts
             )
@@ -173,7 +173,7 @@ class MountPromptTests(TestCase):
         )
 
         select_mounts = mock.Mock()
-        with mock.patch(f"{_MODULE}.git_support_prompt_items", return_value=[]):
+        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"empty": extension}, select_mounts
             )

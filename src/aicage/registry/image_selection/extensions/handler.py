@@ -5,7 +5,7 @@ from aicage.config.extended_images import (
 )
 from aicage.config.image_refs import default_extended_image_ref
 
-from ..interaction import ExtensionChoiceOption, SelectionInteraction
+from ..interaction import ExtensionChoiceOption, _SelectionInteraction
 from ..models import ImageSelection
 from .context import ExtensionSelectionContext
 from .refs import base_image_ref
@@ -13,7 +13,7 @@ from .refs import base_image_ref
 
 def handle_extension_selection(
     selection: ExtensionSelectionContext,
-    selection_interaction: SelectionInteraction,
+    selection_interaction: _SelectionInteraction,
 ) -> ImageSelection:
     agent_cfg = selection.agent_cfg
     agent_cfg.base = selection.base
