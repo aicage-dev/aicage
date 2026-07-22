@@ -40,6 +40,7 @@ def ensure_image(
             reporter=reporter,
         )
     if run_config.selection.extensions:
+        # Extensions rebuild unconditionally; no user confirmation needed.
         ensure_extended_image(run_config, reporter=reporter)
 
 
