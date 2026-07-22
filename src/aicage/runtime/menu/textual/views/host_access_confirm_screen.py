@@ -1,5 +1,4 @@
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.widgets import Button, Header, SelectionList, Static
@@ -14,11 +13,6 @@ from ._screen_support import CancelableScreen
 
 
 class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-        Binding("ctrl+c", "cancel", "Cancel"),
-    ]
-
     def __init__(
         self,
         docker_options: list[DockerOptionValue],
