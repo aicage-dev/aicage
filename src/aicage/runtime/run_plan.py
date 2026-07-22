@@ -2,11 +2,11 @@ from aicage._proxy import proxy_env_vars_from_host
 from aicage.cli_types import ParsedArgs
 from aicage.config.run_config import RunConfig
 from aicage.runtime._host_timezone import resolve_host_timezone
-from aicage.runtime.run_args import DockerRunArgs, EnvVar, merge_docker_args
+from aicage.runtime.run_args import DockerRunArgs, EnvVar, _merge_docker_args
 
 
 def build_run_args(config: RunConfig, parsed: ParsedArgs) -> DockerRunArgs:
-    merged_docker_args: str = merge_docker_args(
+    merged_docker_args: str = _merge_docker_args(
         config.project_docker_args,
         parsed.docker_args,
     )

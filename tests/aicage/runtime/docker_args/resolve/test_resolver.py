@@ -11,7 +11,7 @@ from aicage.paths import container_project_path
 from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.docker_args.resolve._mounts import map_mount_requests
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
-from aicage.runtime.env_vars import AICAGE_WORKSPACE
+from aicage.runtime.env_vars import _AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 _MODULE = "aicage.runtime.docker_args.resolve.resolver"
@@ -81,7 +81,7 @@ class ResolverTests(TestCase):
         self.assertEqual(
             [
                 ("DOCKER_HOST", "tcp://host:2375"),
-                (AICAGE_WORKSPACE, container_project_path(project_path).as_posix()),
+                (_AICAGE_WORKSPACE, container_project_path(project_path).as_posix()),
             ],
             [(item.name, item.value) for item in env],
         )
@@ -158,7 +158,7 @@ class ResolverTests(TestCase):
         )
         self.assertEqual(
             [
-                (AICAGE_WORKSPACE, container_project_path(project_path).as_posix()),
+                (_AICAGE_WORKSPACE, container_project_path(project_path).as_posix()),
             ],
             [(item.name, item.value) for item in env],
         )

@@ -24,5 +24,5 @@ class DockerRunArgs:
     mounts: list[MountSpec] = field(default_factory=list)
 
 
-def merge_docker_args(*args: str) -> str:
+def _merge_docker_args(*args: str) -> str:
     return " ".join(part for part in args if part).strip()

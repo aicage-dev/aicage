@@ -6,7 +6,7 @@ from aicage.config.project_config import AgentConfig
 from aicage.docker.runtime import get_active_docker_host
 from aicage.paths import HOST_DOCKER_SOCKET_PATH
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
-from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
+from aicage.runtime.env_vars import _WINDOWS_DOCKER_HOST, DOCKER_HOST
 from aicage.runtime.run_args import EnvVar
 
 
@@ -24,7 +24,7 @@ def resolve(
 
     if os.name == "nt":
         mounts: list[MountRequest] = []
-        env = [EnvVar(name=DOCKER_HOST, value=WINDOWS_DOCKER_HOST)]
+        env = [EnvVar(name=DOCKER_HOST, value=_WINDOWS_DOCKER_HOST)]
     else:
         docker_host = get_active_docker_host()
         mounts = (

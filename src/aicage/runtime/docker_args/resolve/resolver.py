@@ -7,7 +7,7 @@ from aicage.config.project_config import AgentConfig
 from aicage.errors import AicageError
 from aicage.paths import container_project_path
 from aicage.runtime.docker_args.support.resolver_types import ResolvedArgs, Resolver
-from aicage.runtime.env_vars import AICAGE_WORKSPACE
+from aicage.runtime.env_vars import _AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 from ..resolvers import (
@@ -40,7 +40,7 @@ def resolve_docker_args(
     mounts = map_mount_requests(mount_requests)
     _validate_home_mount_safety(mounts, host_home)
     workspace_path = container_project_path(project_path)
-    env.append(EnvVar(name=AICAGE_WORKSPACE, value=workspace_path.as_posix()))
+    env.append(EnvVar(name=_AICAGE_WORKSPACE, value=workspace_path.as_posix()))
     return mounts, env
 
 
