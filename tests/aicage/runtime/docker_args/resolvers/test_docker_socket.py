@@ -5,7 +5,7 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 from aicage.runtime.docker_args.resolvers.docker_socket import resolve
-from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
+from aicage.runtime.env_vars import _WINDOWS_DOCKER_HOST, DOCKER_HOST
 
 _MODULE = "aicage.runtime.docker_args.resolvers.docker_socket"
 
@@ -66,7 +66,7 @@ class DockerSocketMountTests(TestCase):
 
         self.assertEqual([], resolved.mounts)
         self.assertEqual(
-            [(DOCKER_HOST, WINDOWS_DOCKER_HOST)],
+            [(DOCKER_HOST, _WINDOWS_DOCKER_HOST)],
             [(item.name, item.value) for item in resolved.env],
         )
 
