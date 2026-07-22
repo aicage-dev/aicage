@@ -2,6 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
 from textual.widgets import Button, Header, SelectionList, Static
+from textual.widgets.selection_list import Selection
 
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
@@ -219,7 +220,7 @@ class Overview(Container):
         return [
             Static("Docker", id="docker_overview_title"),
             _OverviewSelectionList(
-                (
+                Selection(
                     "Docker socket",
                     docker_selection_key("socket"),
                     self._state.docker_socket_enabled,
@@ -235,7 +236,7 @@ class Overview(Container):
         selection_list.clear_options()
         selection_list.add_options(
             [
-                (
+                Selection(
                     "Docker socket",
                     docker_selection_key("socket"),
                     self._state.docker_socket_enabled,
