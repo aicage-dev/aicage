@@ -33,11 +33,16 @@ class ConfigureRunTests(TestCase):
                 "aicage.runtime.menu._none_interaction.select_agent_image",
                 return_value=selection,
             ),
-            mock.patch("aicage.runtime.menu._none_interaction.apply_mount_preferences"),
+            mock.patch.object(draft, "apply_selection") as apply_mock,
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.apply_mount_preferences"
+            ) as mount_mock,
         ):
             result = resolved.configure_run(draft, _build_context(), "codex")
 
         self.assertIs(selection, result.selection)
+        apply_mock.assert_called_once_with(selection)
+        mount_mock.assert_called_once()
 
 
 class ExecuteImageSetupTests(TestCase):
