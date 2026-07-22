@@ -4,7 +4,7 @@ from textual.containers import Container, Horizontal
 from textual.widgets import Button, Header, Label, Static, TextArea
 
 from .._models import ExtrasValues
-from ._screen_support import CancelableScreen
+from ._cancelable_screen import CancelableScreen
 
 
 class DockerArgsScreen(CancelableScreen[ExtrasValues | None]):

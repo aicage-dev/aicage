@@ -1,12 +1,12 @@
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.textual.views import _screen_support as screen_support
+from aicage.runtime.menu.textual.views import _cancelable_screen
 
 
-class ScreenSupportTests(TestCase):
+class CancelableScreenTests(TestCase):
     def test_action_cancel_dismisses_none(self) -> None:
-        screen: screen_support.CancelableScreen[None] = (
-            screen_support.CancelableScreen()
+        screen: _cancelable_screen.CancelableScreen[None] = (
+            _cancelable_screen.CancelableScreen()
         )
 
         with mock.patch.object(screen, "dismiss") as dismiss_mock:

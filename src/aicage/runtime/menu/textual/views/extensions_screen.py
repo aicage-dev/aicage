@@ -8,7 +8,7 @@ from textual.widgets import Button, Checkbox, Header, Static, TextArea
 from aicage.config.extensions.loader import ExtensionMetadata
 
 from .. import _clipboard
-from ._screen_support import CancelableScreen
+from ._cancelable_screen import CancelableScreen
 
 
 class ExtensionsScreen(CancelableScreen[list[str] | None]):
