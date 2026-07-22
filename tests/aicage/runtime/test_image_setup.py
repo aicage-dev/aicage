@@ -1,6 +1,6 @@
 from unittest import TestCase, mock
 
-from aicage.registry.ensure_image import ImageSetupPlan
+from aicage.registry.ensure_image import ImageSetupAction, ImageSetupPlan
 from aicage.runtime import image_setup
 
 
@@ -12,7 +12,7 @@ class PrepareImageTests(TestCase):
         with (
             mock.patch(
                 "aicage.runtime.image_setup.image_setup_plan",
-                return_value=ImageSetupPlan(needs_setup=False),
+                return_value=ImageSetupPlan(action=ImageSetupAction.SKIP),
             ),
         ):
             image_setup.prepare_image(run_config, interaction)
@@ -26,7 +26,7 @@ class PrepareImageTests(TestCase):
         with (
             mock.patch(
                 "aicage.runtime.image_setup.image_setup_plan",
-                return_value=ImageSetupPlan(needs_setup=True),
+                return_value=ImageSetupPlan(action=ImageSetupAction.SETUP),
             ),
         ):
             image_setup.prepare_image(run_config, interaction)
@@ -43,8 +43,7 @@ class PrepareImageTests(TestCase):
             mock.patch(
                 "aicage.runtime.image_setup.image_setup_plan",
                 return_value=ImageSetupPlan(
-                    needs_setup=True,
-                    needs_update_confirmation=True,
+                    action=ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
                 ),
             ),
             mock.patch("aicage.runtime.image_setup.ensure_image") as ensure_image_mock,
@@ -71,8 +70,7 @@ class PrepareImageTests(TestCase):
             mock.patch(
                 "aicage.runtime.image_setup.image_setup_plan",
                 return_value=ImageSetupPlan(
-                    needs_setup=True,
-                    needs_update_confirmation=True,
+                    action=ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
                 ),
             ),
             mock.patch("aicage.runtime.image_setup.ensure_image") as ensure_image_mock,
@@ -99,10 +97,7 @@ class PrepareImageTests(TestCase):
         with (
             mock.patch(
                 "aicage.runtime.image_setup.image_setup_plan",
-                return_value=ImageSetupPlan(
-                    needs_setup=False,
-                    needs_update_confirmation=True,
-                ),
+                return_value=ImageSetupPlan(action=ImageSetupAction.CONFIRM_UPDATE),
             ),
             mock.patch("aicage.runtime.image_setup.ensure_image") as ensure_image_mock,
         ):

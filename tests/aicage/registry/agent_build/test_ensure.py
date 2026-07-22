@@ -9,6 +9,7 @@ from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._errors import RegistryError
 from aicage.registry.agent_build import ensure as ensure_module
+from aicage.registry.agent_build._refresh import _BaseRefreshAction
 from aicage.registry.agent_build._store import (
     _AGENT_KEY,
     _AGENT_VERSION_KEY,
@@ -17,6 +18,7 @@ from aicage.registry.agent_build._store import (
     _BUILT_AT_KEY,
     _IMAGE_REF_KEY,
 )
+from aicage.registry.agent_build.ensure import _AgentBuildSetupAction
 from aicage.registry.image_selection.models import ImageSelection
 
 from ..._run_config_fixtures import build_custom_run_config, build_run_config
@@ -271,10 +273,9 @@ class EnsureLocalImageTests(TestCase):
             "aicage.registry.agent_build.ensure.refresh_base_image_plan",
             return_value=mock.Mock(
                 image_ref="ghcr.io/aicage/aicage-image-base@sha256:local",
-                needs_confirmation=True,
+                action=_BaseRefreshAction.CONFIRM_PULL,
             ),
         ):
             plan = ensure_module.setup_plan(run_config)
 
-        assert plan.needs_setup is True
-        assert plan.needs_update_confirmation is True
+        assert plan.action is _AgentBuildSetupAction.CONFIRM_UPDATE

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 
 from aicage._logging import get_logger
 from aicage.docker.query import get_local_repo_digest_for_repo
@@ -9,10 +10,16 @@ from aicage.registry.digest.remote_digest import get_remote_digest
 from ._digest import resolve_base_digest
 
 
+class _BaseRefreshAction(Enum):
+    USE_LOCAL = "use_local"
+    PULL_NOW = "pull_now"
+    CONFIRM_PULL = "confirm_pull"
+
+
 @dataclass(frozen=True)
 class _BaseRefreshPlan:
     image_ref: str
-    needs_confirmation: bool
+    action: _BaseRefreshAction
 
 
 def refresh_base_image(
@@ -23,12 +30,20 @@ def refresh_base_image(
 ) -> str:
     logger = get_logger()
     plan = refresh_base_image_plan(base_image_ref, base_repository)
-    if not plan.needs_confirmation:
-        return plan.image_ref
-    if not update_approved:
-        logger.info("Base image pull not required for %s", base_image_ref)
-        return plan.image_ref
-    return resolve_base_digest(base_image_ref, base_repository, reporter=reporter)
+    match plan.action:
+        case _BaseRefreshAction.PULL_NOW:
+            return resolve_base_digest(
+                base_image_ref, base_repository, reporter=reporter
+            )
+        case _BaseRefreshAction.USE_LOCAL:
+            return plan.image_ref
+        case _BaseRefreshAction.CONFIRM_PULL:
+            if not update_approved:
+                logger.info("Base image pull not required for %s", base_image_ref)
+                return plan.image_ref
+            return resolve_base_digest(
+                base_image_ref, base_repository, reporter=reporter
+            )
 
 
 def refresh_base_image_plan(
@@ -47,23 +62,24 @@ def refresh_base_image_plan(
         logger.warning("Base image digest check failed; using local base image.")
         return _BaseRefreshPlan(
             image_ref=local_ref,
-            needs_confirmation=False,
+            action=_BaseRefreshAction.USE_LOCAL,
         )
 
     digest_ref = f"{base_repository}@{remote_digest}"
     if remote_digest == local_digest:
         return _BaseRefreshPlan(
             image_ref=digest_ref,
-            needs_confirmation=False,
+            action=_BaseRefreshAction.USE_LOCAL,
         )
     if local_ref is None:
         return _BaseRefreshPlan(
             image_ref=digest_ref,
-            needs_confirmation=False,
+            action=_BaseRefreshAction.PULL_NOW,
         )
+    # A local tag exists but points to an older digest; ask before pulling the update.
     return _BaseRefreshPlan(
         image_ref=local_ref,
-        needs_confirmation=True,
+        action=_BaseRefreshAction.CONFIRM_PULL,
     )
 
 
