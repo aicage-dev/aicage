@@ -5,5 +5,5 @@ class DockerError(AicageError):
     pass
 
 
-class RegistryDiscoveryError(DockerError):
+class _RegistryDiscoveryError(DockerError):
     """Raised when registry discovery fails."""

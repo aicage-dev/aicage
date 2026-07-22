@@ -1,7 +1,7 @@
 import subprocess
 from unittest import TestCase, mock
 
-from aicage.docker.cli import run_docker_command, run_docker_command_capture
+from aicage.docker.cli import _run_docker_command, run_docker_command_capture
 from aicage.docker.errors import DockerError
 
 
@@ -14,7 +14,7 @@ class DockerCliTests(TestCase):
         with mock.patch(
             "aicage.docker.cli.subprocess.run", return_value=process
         ) as run_mock:
-            result = run_docker_command(["docker", "run"], check=True)
+            result = _run_docker_command(["docker", "run"], check=True)
 
         run_mock.assert_called_once_with(
             ["docker", "run"], check=True, stdout=None, stderr=None
@@ -27,7 +27,7 @@ class DockerCliTests(TestCase):
             "aicage.docker.cli.subprocess.run", side_effect=FileNotFoundError
         ):
             try:
-                run_docker_command(["docker", "run"], check=True)
+                _run_docker_command(["docker", "run"], check=True)
             except DockerError as exc:
                 assert "Docker CLI not found" in str(exc)
             else:

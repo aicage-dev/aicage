@@ -7,9 +7,9 @@ from aicage._proxy import proxy_build_args_from_host
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.resources import find_packaged_path
 from aicage.config.run_config import RunConfig
-from aicage.docker.cli import run_docker_command
+from aicage.docker.cli import _run_docker_command
 from aicage.docker.errors import DockerError
-from aicage.docker.reporting import OperationReporter, default_operation_reporter
+from aicage.docker.reporting import OperationReporter, _default_operation_reporter
 
 
 def run_build(
@@ -20,7 +20,7 @@ def run_build(
     reporter: OperationReporter | None = None,
 ) -> None:
     logger = get_logger()
-    operation_reporter = reporter or default_operation_reporter()
+    operation_reporter = reporter or _default_operation_reporter()
     log_path.parent.mkdir(parents=True, exist_ok=True)
     operation_reporter.on_phase_started(
         "build", f"Building local image {image_ref}", log_path
@@ -75,7 +75,7 @@ def run_extended_build(
     reporter: OperationReporter | None = None,
 ) -> None:
     logger = get_logger()
-    operation_reporter = reporter or default_operation_reporter()
+    operation_reporter = reporter or _default_operation_reporter()
     log_path.parent.mkdir(parents=True, exist_ok=True)
     operation_reporter.on_phase_started(
         "build",
@@ -155,7 +155,7 @@ def run_custom_base_build(
     reporter: OperationReporter | None = None,
 ) -> None:
     logger = get_logger()
-    operation_reporter = reporter or default_operation_reporter()
+    operation_reporter = reporter or _default_operation_reporter()
     dockerfile_path = build_root / "Dockerfile"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     operation_reporter.on_phase_started(
@@ -228,7 +228,7 @@ def _parse_image_ref(image_ref: str) -> tuple[str, str]:
 def _cleanup_intermediate_images(intermediate_refs: list[str]) -> None:
     logger = get_logger()
     for image_ref in intermediate_refs:
-        result = run_docker_command(
+        result = _run_docker_command(
             ["docker", "image", "rm", "-f", image_ref],
             check=False,
             stdout=subprocess.DEVNULL,
