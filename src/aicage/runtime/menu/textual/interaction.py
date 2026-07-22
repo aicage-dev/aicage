@@ -61,7 +61,10 @@ def _confirm_update_aicage(installed_version: str, latest_version: str) -> bool:
 
 
 def _confirm_image_update_with_textual_app(image_ref: str) -> bool:
-    return bool(ImageUpdateApp(image_ref).run(inline=True))
+    result = ImageUpdateApp(image_ref).run(inline=True)
+    if result is None:
+        raise KeyboardInterrupt
+    return result
 
 
 def _execute_image_setup_with_textual_app(operation: ImageSetupOperation) -> None:
