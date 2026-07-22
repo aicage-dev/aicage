@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from aicage.docker.runtime import is_rootless_docker
+from aicage.docker.runtime import _is_rootless_docker
 from aicage.paths import container_project_path
 from aicage.runtime.env_vars import (
     AICAGE_GID,
@@ -37,7 +37,7 @@ def resolve_user_ids() -> list[str]:
     getgid = getattr(os, "getgid", None)
     uid = getuid() if callable(getuid) else None
     gid = getgid() if callable(getgid) else None
-    is_rootless = is_rootless_docker()
+    is_rootless = _is_rootless_docker()
 
     user = _resolve_host_user()
     if uid is not None and not is_rootless:

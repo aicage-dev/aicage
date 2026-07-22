@@ -16,7 +16,7 @@ class EnvTests(TestCase):
                 "aicage.docker._env.Path.home", return_value=Path("/home/tester")
             ),
             mock.patch("aicage.docker._env.os.name", "posix"),
-            mock.patch("aicage.docker._env.is_rootless_docker", return_value=False),
+            mock.patch("aicage.docker._env._is_rootless_docker", return_value=False),
         ):
             env_flags = resolve_user_ids()
         self.assertEqual(
@@ -40,7 +40,7 @@ class EnvTests(TestCase):
                 "aicage.docker._env.Path.home", return_value=Path("/home/tester")
             ),
             mock.patch("aicage.docker._env.os.name", "posix"),
-            mock.patch("aicage.docker._env.is_rootless_docker", return_value=False),
+            mock.patch("aicage.docker._env._is_rootless_docker", return_value=False),
         ):
             env_flags = resolve_user_ids()
         self.assertEqual(
@@ -68,7 +68,7 @@ class EnvTests(TestCase):
                 "aicage.docker._env.Path.home", return_value=Path("/home/tester")
             ),
             mock.patch("aicage.docker._env.os.name", "posix"),
-            mock.patch("aicage.docker._env.is_rootless_docker", return_value=True),
+            mock.patch("aicage.docker._env._is_rootless_docker", return_value=True),
         ):
             env_flags = resolve_user_ids()
         self.assertEqual(

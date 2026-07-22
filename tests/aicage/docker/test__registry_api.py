@@ -2,7 +2,7 @@ import urllib.error
 from unittest import TestCase, mock
 
 from aicage.docker import _registry_api
-from aicage.docker.types import RegistryApiConfig
+from aicage.docker.types import _RegistryApiConfig
 
 
 class RemoteApiTests(TestCase):
@@ -12,7 +12,7 @@ class RemoteApiTests(TestCase):
 
         with mock.patch("aicage.docker._registry_api._fetch_json", fake_fetch_json):
             token = _registry_api._fetch_pull_token_for_repository(
-                RegistryApiConfig(
+                _RegistryApiConfig(
                     registry_api_url="https://example.test/api",
                     registry_api_token_url="https://example.test/token",
                 ),
@@ -25,9 +25,9 @@ class RemoteApiTests(TestCase):
             return {}, {}
 
         with mock.patch("aicage.docker._registry_api._fetch_json", fake_fetch_json):
-            with self.assertRaises(_registry_api.RegistryDiscoveryError):
+            with self.assertRaises(_registry_api._RegistryDiscoveryError):
                 _registry_api._fetch_pull_token_for_repository(
-                    RegistryApiConfig(
+                    _RegistryApiConfig(
                         registry_api_url="https://example.test/api",
                         registry_api_token_url="https://example.test/token",
                     ),
@@ -39,7 +39,7 @@ class RemoteApiTests(TestCase):
             "aicage.docker._registry_api.urllib.request.urlopen",
             side_effect=urllib.error.URLError("boom"),
         ):
-            with self.assertRaises(_registry_api.RegistryDiscoveryError):
+            with self.assertRaises(_registry_api._RegistryDiscoveryError):
                 _registry_api._fetch_json("https://example.test/api", None)
 
     def test_fetch_json_raises_on_invalid_json(self) -> None:
@@ -52,7 +52,7 @@ class RemoteApiTests(TestCase):
             "aicage.docker._registry_api.urllib.request.urlopen",
             return_value=response,
         ):
-            with self.assertRaises(_registry_api.RegistryDiscoveryError):
+            with self.assertRaises(_registry_api._RegistryDiscoveryError):
                 _registry_api._fetch_json("https://example.test/api", None)
 
     def test_fetch_json_returns_payload_and_headers(self) -> None:
@@ -70,5 +70,5 @@ class RemoteApiTests(TestCase):
         self.assertEqual({"x-test": "1"}, headers)
 
     def test_fetch_json_raises_on_non_http_scheme(self) -> None:
-        with self.assertRaises(_registry_api.RegistryDiscoveryError):
+        with self.assertRaises(_registry_api._RegistryDiscoveryError):
             _registry_api._fetch_json("file:///tmp/example.json", None)

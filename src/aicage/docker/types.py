@@ -8,6 +8,6 @@ class ImageRefRepository:
 
 
 @dataclass(frozen=True)
-class RegistryApiConfig:
+class _RegistryApiConfig:
     registry_api_url: str
     registry_api_token_url: str

@@ -7,11 +7,11 @@ from aicage.docker import runtime
 class DockerRuntimeTests(TestCase):
     def setUp(self) -> None:
         runtime.get_active_docker_host.cache_clear()
-        runtime.is_rootless_docker.cache_clear()
+        runtime._is_rootless_docker.cache_clear()
 
     def tearDown(self) -> None:
         runtime.get_active_docker_host.cache_clear()
-        runtime.is_rootless_docker.cache_clear()
+        runtime._is_rootless_docker.cache_clear()
 
     def test_get_active_docker_host_prefers_env(self) -> None:
         with mock.patch.dict(
@@ -58,7 +58,7 @@ class DockerRuntimeTests(TestCase):
                 "aicage.docker.runtime.run_docker_command_capture", return_value=process
             ),
         ):
-            self.assertTrue(runtime.is_rootless_docker())
+            self.assertTrue(runtime._is_rootless_docker())
 
     def test_is_rootless_docker_returns_false_when_not_rootless(self) -> None:
         process = mock.Mock(stdout='["name=seccomp"]\n')
@@ -68,4 +68,4 @@ class DockerRuntimeTests(TestCase):
                 "aicage.docker.runtime.run_docker_command_capture", return_value=process
             ),
         ):
-            self.assertFalse(runtime.is_rootless_docker())
+            self.assertFalse(runtime._is_rootless_docker())

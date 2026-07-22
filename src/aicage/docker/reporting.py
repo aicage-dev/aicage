@@ -44,5 +44,5 @@ class _ConsoleOperationReporter:
         del self, phase, message, log_path
 
 
-def default_operation_reporter() -> OperationReporter:
+def _default_operation_reporter() -> OperationReporter:
     return _ConsoleOperationReporter()

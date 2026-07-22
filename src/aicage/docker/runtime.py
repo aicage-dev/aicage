@@ -38,7 +38,7 @@ def get_active_docker_host() -> _DockerHostSpec:
 
 
 @lru_cache(maxsize=1)
-def is_rootless_docker() -> bool:
+def _is_rootless_docker() -> bool:
     if os.name != "posix":
         return False
 

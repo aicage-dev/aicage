@@ -42,7 +42,7 @@ class LocalQueryTests(TestCase):
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=mock.Mock()),
             mock.patch(
-                "aicage.docker.query.run_docker_command",
+                "aicage.docker.query._run_docker_command",
                 return_value=mock.Mock(returncode=0),
             ) as run_mock,
         ):
@@ -60,7 +60,7 @@ class LocalQueryTests(TestCase):
         with (
             mock.patch("aicage.docker.query.get_logger", return_value=logger),
             mock.patch(
-                "aicage.docker.query.run_docker_command",
+                "aicage.docker.query._run_docker_command",
                 return_value=mock.Mock(returncode=1),
             ),
         ):

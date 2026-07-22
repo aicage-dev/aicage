@@ -4,7 +4,7 @@ from typing import Literal, TextIO, overload
 from aicage.docker.errors import DockerError
 
 
-def run_docker_command(
+def _run_docker_command(
     command: list[str],
     *,
     check: bool,
