@@ -9,7 +9,7 @@ from aicage.runtime.menu.textual._models import (
 )
 from aicage.runtime.menu.textual.services import summary
 
-from .._test_support import _build_context, _build_draft
+from ..._test_support import _build_context, _build_draft
 
 
 class OverviewSummaryTests(TestCase):

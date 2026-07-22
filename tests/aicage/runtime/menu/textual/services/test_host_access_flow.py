@@ -9,7 +9,7 @@ from aicage.runtime.menu.textual._models import (
 )
 from aicage.runtime.menu.textual.services import host_access_flow
 
-from .._test_support import _build_draft
+from ..._test_support import _build_draft
 
 
 class HostAccessFlowTests(IsolatedAsyncioTestCase):

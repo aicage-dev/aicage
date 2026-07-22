@@ -4,7 +4,7 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.menu.textual.services import base_support
 
-from .._test_support import _build_context, _build_draft
+from ..._test_support import _build_context, _build_draft
 
 
 class BaseSupportTests(TestCase):

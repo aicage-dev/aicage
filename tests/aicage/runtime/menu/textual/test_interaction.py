@@ -7,7 +7,7 @@ from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.textual import interaction
 
-from ._test_support import _build_context, _build_draft
+from .._test_support import _build_context, _build_draft
 
 
 class ConfigureRunTests(TestCase):

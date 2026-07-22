@@ -6,7 +6,7 @@ from aicage.config.project_config import AgentConfig
 from aicage.runtime.menu.textual._models import BuiltInShareValue
 from aicage.runtime.menu.textual.services import _share_support
 
-from .._test_support import _build_context, _build_draft
+from ..._test_support import _build_context, _build_draft
 
 
 class ShareSupportTests(TestCase):
