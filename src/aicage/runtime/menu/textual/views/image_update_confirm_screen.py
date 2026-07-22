@@ -9,7 +9,6 @@ from ._screen_support import CancelableScreen
 class ImageUpdateConfirmScreen(CancelableScreen[bool | None]):
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
-        Binding("ctrl+c", "cancel", "Cancel"),
     ]
 
     def __init__(self, image_ref: str) -> None:

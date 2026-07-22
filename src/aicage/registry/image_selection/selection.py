@@ -40,7 +40,7 @@ def select_agent_image(
                     ),
                 )
         return ImageSelection(
-            image_ref=agent_cfg.image_ref or "",
+            image_ref=agent_cfg.image_ref,
             base=base,
             extensions=list(agent_cfg.extensions),
             base_image_ref=base_image_ref(agent_metadata, agent, base, context),
