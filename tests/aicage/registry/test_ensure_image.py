@@ -5,7 +5,13 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.runtime_config import RunConfig
 from aicage.paths import CUSTOM_BASES_DIR
-from aicage.registry.ensure_image import ensure_image, image_setup_plan
+from aicage.registry._pull_decision import _PullDecisionAction
+from aicage.registry.agent_build.ensure import _AgentBuildSetupAction
+from aicage.registry.ensure_image import (
+    ImageSetupAction,
+    ensure_image,
+    image_setup_plan,
+)
 
 
 class EnsureImageTests(TestCase):
@@ -80,9 +86,9 @@ class EnsureImageTests(TestCase):
 
         with mock.patch(
             "aicage.registry.ensure_image.pull_decision_plan",
-            return_value=mock.Mock(should_pull=True, needs_confirmation=False),
+            return_value=mock.Mock(action=_PullDecisionAction.PULL),
         ):
-            assert image_setup_plan(run_config).needs_setup is True
+            assert image_setup_plan(run_config).action is ImageSetupAction.SETUP
 
     @staticmethod
     def test_image_setup_plan_false_when_pull_not_needed_and_no_extensions() -> None:
@@ -90,9 +96,9 @@ class EnsureImageTests(TestCase):
 
         with mock.patch(
             "aicage.registry.ensure_image.pull_decision_plan",
-            return_value=mock.Mock(should_pull=False, needs_confirmation=False),
+            return_value=mock.Mock(action=_PullDecisionAction.SKIP),
         ):
-            assert image_setup_plan(run_config).needs_setup is False
+            assert image_setup_plan(run_config).action is ImageSetupAction.SKIP
 
     @staticmethod
     def test_image_setup_plan_true_when_extensions_need_build() -> None:
@@ -101,13 +107,13 @@ class EnsureImageTests(TestCase):
         with (
             mock.patch(
                 "aicage.registry.ensure_image.pull_decision_plan",
-                return_value=mock.Mock(should_pull=False, needs_confirmation=False),
+                return_value=mock.Mock(action=_PullDecisionAction.SKIP),
             ),
             mock.patch(
                 "aicage.registry.ensure_image.extension_build_needed", return_value=True
             ),
         ):
-            assert image_setup_plan(run_config).needs_setup is True
+            assert image_setup_plan(run_config).action is ImageSetupAction.SETUP
 
     @staticmethod
     def test_image_setup_plan_true_for_local_build_without_running_preflight() -> None:
@@ -115,12 +121,9 @@ class EnsureImageTests(TestCase):
 
         with mock.patch(
             "aicage.registry.ensure_image.agent_build_setup_plan",
-            return_value=mock.Mock(
-                needs_setup=True,
-                needs_update_confirmation=False,
-            ),
+            return_value=mock.Mock(action=_AgentBuildSetupAction.BUILD),
         ):
-            assert image_setup_plan(run_config).needs_setup is True
+            assert image_setup_plan(run_config).action is ImageSetupAction.SETUP
 
     @staticmethod
     def test_image_setup_plan_reports_confirmation_when_remote_pull_differs() -> None:
@@ -128,15 +131,11 @@ class EnsureImageTests(TestCase):
 
         with mock.patch(
             "aicage.registry.ensure_image.pull_decision_plan",
-            return_value=mock.Mock(
-                should_pull=False,
-                needs_confirmation=True,
-            ),
+            return_value=mock.Mock(action=_PullDecisionAction.CONFIRM_PULL),
         ):
             plan = image_setup_plan(run_config)
 
-        assert plan.needs_setup is False
-        assert plan.needs_update_confirmation is True
+        assert plan.action is ImageSetupAction.CONFIRM_UPDATE
 
 
 def _run_config(

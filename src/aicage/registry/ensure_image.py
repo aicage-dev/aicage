@@ -1,10 +1,12 @@
 from dataclasses import dataclass
+from enum import Enum
 
 from aicage.config.run_config import RunConfig
 from aicage.docker.reporting import OperationReporter
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry._image_pull import pull_image
-from aicage.registry._pull_decision import pull_decision_plan
+from aicage.registry._pull_decision import _PullDecisionAction, pull_decision_plan
+from aicage.registry.agent_build.ensure import _AgentBuildSetupAction
 from aicage.registry.agent_build.ensure import ensure as ensure_agent_image
 from aicage.registry.agent_build.ensure import setup_plan as agent_build_setup_plan
 from aicage.registry.extension_build.ensure import (
@@ -13,10 +15,16 @@ from aicage.registry.extension_build.ensure import (
 from aicage.registry.extension_build.ensure import ensure as ensure_extended_image
 
 
+class ImageSetupAction(Enum):
+    SKIP = "skip"
+    SETUP = "setup"
+    CONFIRM_UPDATE = "confirm_update"
+    CONFIRM_UPDATE_AND_DO_SETUP = "confirm_update_and_do_setup"
+
+
 @dataclass(frozen=True)
 class ImageSetupPlan:
-    needs_setup: bool
-    needs_update_confirmation: bool = False
+    action: ImageSetupAction
 
 
 def ensure_image(
@@ -48,19 +56,24 @@ def image_setup_plan(run_config: RunConfig) -> ImageSetupPlan:
     agent_metadata = run_config.context.agents[run_config.agent]
     base_metadata = run_config.context.bases[run_config.selection.base]
     custom_base = base_metadata.local_definition_dir.is_relative_to(CUSTOM_BASES_DIR)
-    needs_update_confirmation = False
-    needs_setup = False
     if not agent_metadata.build_local and not custom_base:
         pull_plan = pull_decision_plan(run_config.selection.base_image_ref)
-        needs_setup = pull_plan.should_pull
-        needs_update_confirmation = pull_plan.needs_confirmation
+        match pull_plan.action:
+            case _PullDecisionAction.SKIP:
+                action = ImageSetupAction.SKIP
+            case _PullDecisionAction.PULL:
+                action = ImageSetupAction.SETUP
+            case _PullDecisionAction.CONFIRM_PULL:
+                action = ImageSetupAction.CONFIRM_UPDATE
     else:
         agent_plan = agent_build_setup_plan(run_config)
-        needs_setup = agent_plan.needs_setup
-        needs_update_confirmation = agent_plan.needs_update_confirmation
+        match agent_plan.action:
+            case _AgentBuildSetupAction.USE_LOCAL:
+                action = ImageSetupAction.SKIP
+            case _AgentBuildSetupAction.BUILD:
+                action = ImageSetupAction.SETUP
+            case _AgentBuildSetupAction.CONFIRM_UPDATE:
+                action = ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
     if run_config.selection.extensions and extension_build_needed(run_config):
-        needs_setup = True
-    return ImageSetupPlan(
-        needs_setup=needs_setup,
-        needs_update_confirmation=needs_update_confirmation,
-    )
+        action = ImageSetupAction.SETUP
+    return ImageSetupPlan(action=action)

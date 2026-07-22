@@ -1,6 +1,7 @@
 from unittest import TestCase, mock
 
 from aicage.registry import _pull_decision
+from aicage.registry._pull_decision import _PullDecisionAction
 
 
 class PullDecisionTests(TestCase):
@@ -17,8 +18,7 @@ class PullDecisionTests(TestCase):
         ):
             plan = _pull_decision.pull_decision_plan("image:tag")
 
-        self.assertFalse(plan.should_pull)
-        self.assertTrue(plan.needs_confirmation)
+        self.assertIs(plan.action, _PullDecisionAction.CONFIRM_PULL)
 
     def test_decide_pull_returns_true_when_local_missing(self) -> None:
         with mock.patch(
