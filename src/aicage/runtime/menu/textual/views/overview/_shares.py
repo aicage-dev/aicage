@@ -7,6 +7,7 @@ from ..._ids import built_in_identity
 from ..._models import BuiltInShareValue, CustomShareValue
 from ..._mount_display import mount_selection_rows, overview_mount_list_items
 from ..._state import OverviewState
+from ._selection_list import _OverviewSelectionList
 
 
 def share_widgets(state: OverviewState) -> list[Horizontal | SelectionList]:
@@ -16,7 +17,7 @@ def share_widgets(state: OverviewState) -> list[Horizontal | SelectionList]:
             Button("+", id="add_share", variant="default"),
             id="shares_overview_header",
         ),
-        SelectionList(
+        _OverviewSelectionList(
             *_share_selection_items(state.built_in_shares, state.custom_shares),
             id="shares_overview_list",
             compact=True,

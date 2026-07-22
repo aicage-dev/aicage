@@ -1,5 +1,6 @@
 from unittest import IsolatedAsyncioTestCase, TestCase, mock
 
+from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Button, SelectionList
@@ -8,6 +9,9 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.menu.textual._models import BuiltInShareValue, CustomShareValue
 from aicage.runtime.menu.textual._state import OverviewState
+from aicage.runtime.menu.textual.views.overview._selection_list import (
+    _OverviewSelectionList,
+)
 from aicage.runtime.menu.textual.views.overview.view import Overview
 
 from ...._test_support import _build_context, _build_draft
@@ -141,6 +145,18 @@ class OverviewTests(TestCase):
             "builtin:extension:gcloud:/test-tmp/boto"
         )
 
+    def test_overview_selection_list_focus_sets_initial_highlight(self) -> None:
+        selection_list = _OverviewSelectionList(
+            ("Docker socket", "docker:socket", True)
+        )
+        focus_event = events.Focus()
+
+        with mock.patch.object(SelectionList, "_on_focus") as parent_on_focus_mock:
+            selection_list._on_focus(focus_event)
+
+        parent_on_focus_mock.assert_called_once_with(focus_event)
+        self.assertEqual(0, selection_list.highlighted)
+
     def test_refresh_from_updates_overview_widgets(self) -> None:
         overview = Overview(
             "codex", "/test-tmp/project", OverviewState(None, [], [], False)
@@ -151,10 +167,13 @@ class OverviewTests(TestCase):
         extensions_button = mock.Mock()
         extras_button = mock.Mock()
         shares_overview = mock.Mock()
+        shares_overview.display = True
         shares_title = mock.Mock()
         shares_list = mock.Mock()
+        shares_list.highlighted = None
         docker_title = mock.Mock()
         docker_list = mock.Mock()
+        docker_list.highlighted = None
 
         def query_one_side_effect(selector: str, _expected_type: object) -> mock.Mock:
             return {
@@ -186,12 +205,20 @@ class OverviewTests(TestCase):
                 "aicage.runtime.menu.textual.views.overview.view.shares_values"
             ) as shares_values,
         ):
-            shares_values.return_value = mock.Mock(built_in_shares=[])
+            shares_values.return_value = mock.Mock(
+                built_in_shares=[
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    )
+                ]
+            )
             overview.refresh_from(draft, _build_context())
 
         self.assertEqual("Base\nubuntu", base_button.label)
         self.assertEqual("Extensions\nnone", extensions_button.label)
         self.assertEqual("Docker Args\nnone", extras_button.label)
+        self.assertEqual(None, shares_list.highlighted)
+        self.assertEqual(None, docker_list.highlighted)
 
     def test_apply_shell_width_sets_fixed_width(self) -> None:
         overview = Overview(
