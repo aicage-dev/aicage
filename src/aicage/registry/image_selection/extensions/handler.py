@@ -3,7 +3,7 @@ from aicage.config.extended_images import (
     extended_image_config_path,
     write_extended_image_config,
 )
-from aicage.config.image_refs import default_extended_image_ref
+from aicage.config.image_refs import default_extended_image_ref, extended_image_name
 
 from ..interaction import ExtensionChoiceOption, _SelectionInteraction
 from ..models import ImageSelection
@@ -33,7 +33,7 @@ def handle_extension_selection(
     )
     if selected_extensions:
         image_ref = selection_interaction.choose_image_ref(
-            _default_extended_image_ref(
+            default_extended_image_ref(
                 selection.agent, selection.base, selected_extensions
             )
         )
@@ -41,12 +41,12 @@ def handle_extension_selection(
         agent_cfg.image_ref = image_ref
         write_extended_image_config(
             ExtendedImageConfig(
-                name=_extended_image_name(image_ref),
+                name=extended_image_name(image_ref),
                 agent=selection.agent,
                 base=selection.base,
                 extensions=list(selected_extensions),
                 image_ref=image_ref,
-                path=extended_image_config_path(_extended_image_name(image_ref)),
+                path=extended_image_config_path(extended_image_name(image_ref)),
             )
         )
     else:
@@ -68,12 +68,3 @@ def handle_extension_selection(
             selection.context,
         ),
     )
-
-
-def _default_extended_image_ref(agent: str, base: str, extensions: list[str]) -> str:
-    return default_extended_image_ref(agent, base, extensions)
-
-
-def _extended_image_name(image_ref: str) -> str:
-    _, _, tag = image_ref.rpartition(":")
-    return tag or image_ref

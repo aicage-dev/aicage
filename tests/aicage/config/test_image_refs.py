@@ -1,6 +1,10 @@
 from unittest import TestCase
 
-from aicage.config.image_refs import default_extended_image_ref, local_image_ref
+from aicage.config.image_refs import (
+    default_extended_image_ref,
+    extended_image_name,
+    local_image_ref,
+)
 
 
 class ImageRefsTests(TestCase):
@@ -17,3 +21,10 @@ class ImageRefsTests(TestCase):
             "aicage-extended:codex-ubuntu-alpha-zeta",
             default_extended_image_ref("codex", "ubuntu", ["zeta", "alpha"]),
         )
+
+    def test_extended_image_name_extracts_tag(self) -> None:
+        self.assertEqual("tag", extended_image_name("repo:tag"))
+        self.assertEqual("latest", extended_image_name("registry.io/repo:latest"))
+
+    def test_extended_image_name_returns_ref_without_tag(self) -> None:
+        self.assertEqual("repo", extended_image_name("repo"))
