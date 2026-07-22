@@ -15,12 +15,12 @@ def pull_image(
 ) -> None:
     logger = get_logger()
     repository = f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}"
-    local_digest = get_local_repo_digest_for_repo(image_ref, repository)
     should_pull = decide_pull(image_ref, update_approved)
     if not should_pull:
         logger.info("Image pull not required for %s", image_ref)
         return
 
+    local_digest = get_local_repo_digest_for_repo(image_ref, repository)
     log_path = pull_log_path(image_ref)
     if reporter is not None:
         reporter.on_phase_started("pull", f"Preparing image {image_ref}", log_path)

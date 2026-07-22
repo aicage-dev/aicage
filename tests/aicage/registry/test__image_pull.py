@@ -185,7 +185,7 @@ class DockerInvocationTests(TestCase):
                 image_pull.pull_image(image_ref, update_approved=False)
             client_mock.assert_not_called()
             verify_mock.assert_not_called()
-            local_repo_mock.assert_called_once()
+            local_repo_mock.assert_not_called()
             cleanup_mock.assert_not_called()
             self.assertEqual("", stdout.getvalue())
 
@@ -220,6 +220,6 @@ class DockerInvocationTests(TestCase):
                 image_pull.pull_image(image_ref, update_approved=False)
             client_mock.assert_not_called()
             verify_mock.assert_not_called()
-            local_repo_mock.assert_called_once()
+            local_repo_mock.assert_not_called()
             cleanup_mock.assert_not_called()
             self.assertEqual("", stdout.getvalue())
