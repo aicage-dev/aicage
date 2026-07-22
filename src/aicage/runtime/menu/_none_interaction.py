@@ -9,7 +9,7 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
-from aicage.runtime.menu._interaction_types import ConfigSelectionResult
+from aicage.runtime.menu._interaction_types import _ConfigSelectionResult
 
 
 class _NoneInteraction:
@@ -18,7 +18,7 @@ class _NoneInteraction:
         draft: RunConfigDraft,
         context: ConfigContext,
         agent: str,
-    ) -> ConfigSelectionResult:
+    ) -> _ConfigSelectionResult:
         selection = select_agent_image(
             agent,
             context,
@@ -34,7 +34,7 @@ class _NoneInteraction:
             _select_all_mounts,
             _always_confirm,
         )
-        return ConfigSelectionResult(
+        return _ConfigSelectionResult(
             selection=selection,
             project_docker_args=draft.existing_project_docker_args,
         )
