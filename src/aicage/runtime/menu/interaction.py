@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from aicage.cli_types import _MenuMode
+from aicage.cli_types import MenuMode
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime.menu._interaction_types import (
@@ -31,7 +31,7 @@ class RuntimeInteraction(Protocol):
     def execute_image_setup(self, operation: ImageSetupOperation) -> None: ...
 
 
-def create_runtime_interaction(menu: _MenuMode) -> RuntimeInteraction:
+def create_runtime_interaction(menu: MenuMode) -> RuntimeInteraction:
     if menu == "textual":
         return TextualInteraction()
     if menu == "none":
