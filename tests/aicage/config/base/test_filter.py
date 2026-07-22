@@ -5,7 +5,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.filter import filter_bases
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 
 
 class BaseFilterTests(TestCase):
@@ -65,7 +65,7 @@ class BaseFilterTests(TestCase):
         }
         return ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases=bases,
             extensions={},

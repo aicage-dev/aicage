@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.runtime._agent_config import AgentConfig as RuntimeAgentConfig
 from aicage.runtime.docker_args.resolvers import agent_config
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
@@ -32,7 +32,7 @@ class AgentConfigResolverTests(TestCase):
         )
         context = ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents={"codex": agent_metadata},
             bases={},
             extensions={},

@@ -9,18 +9,18 @@ from aicage.config.project_config import (
     _PROJECT_AGENTS_KEY,
     _PROJECT_PATH_KEY,
     AgentConfig,
-    ProjectConfig,
+    _ProjectConfig,
 )
 
 
-class ProjectConfigTests(TestCase):
+class _ProjectConfigTests(TestCase):
     def test_from_mapping_applies_legacy_docker_args(self) -> None:
         data = {_PROJECT_AGENTS_KEY: {"codex": {}}, _DOCKER_ARGS_KEY: "--net=host"}
-        cfg = ProjectConfig.from_mapping(Path("/repo"), data)
+        cfg = _ProjectConfig.from_mapping(Path("/repo"), data)
         self.assertEqual("--net=host", cfg.agents["codex"].docker_args)
 
     def test_to_mapping_round_trip(self) -> None:
-        cfg = ProjectConfig(path="/repo", agents={"codex": AgentConfig(base="ubuntu")})
+        cfg = _ProjectConfig(path="/repo", agents={"codex": AgentConfig(base="ubuntu")})
         self.assertEqual(
             {
                 _PROJECT_PATH_KEY: "/repo",
@@ -30,7 +30,7 @@ class ProjectConfigTests(TestCase):
         )
 
     def test_to_mapping_includes_shares(self) -> None:
-        cfg = ProjectConfig(
+        cfg = _ProjectConfig(
             path="/repo",
             agents={
                 "codex": AgentConfig(
@@ -52,7 +52,7 @@ class ProjectConfigTests(TestCase):
         )
 
     def test_to_mapping_includes_extension_mounts(self) -> None:
-        cfg = ProjectConfig(
+        cfg = _ProjectConfig(
             path="/repo",
             agents={
                 "codex": AgentConfig(

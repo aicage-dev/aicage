@@ -6,7 +6,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.constants import (
     DEFAULT_EXTENDED_IMAGE_NAME,
     IMAGE_REGISTRY,
@@ -113,7 +113,7 @@ class ExtensionHandlerTests(TestCase):
         store.save_project = save_project_mock
         return ConfigContext(
             store=store,
-            project_cfg=ProjectConfig(path=str(Path(tmp_dir) / "project"), agents={}),
+            project_cfg=_ProjectConfig(path=str(Path(tmp_dir) / "project"), agents={}),
             agents={},
             bases=bases,
             extensions={},

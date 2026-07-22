@@ -5,7 +5,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.config.runtime_config import RunConfig
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry._errors import RegistryError
@@ -181,7 +181,7 @@ class EnsureExtendedImageTests(TestCase):
             agent="codex",
             context=ConfigContext(
                 store=mock.Mock(),
-                project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+                project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
                 agents=agents,
                 bases=bases,
                 extensions=available_extensions or {},

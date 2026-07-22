@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aicage.cli_types import ParsedArgs
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.mounts.shares import merge_share_values
 
@@ -11,7 +11,7 @@ from aicage.runtime.mounts.shares import merge_share_values
 class RunConfigDraft:
     project_path: Path
     agent: str
-    project_cfg: ProjectConfig
+    project_cfg: _ProjectConfig
     parsed: ParsedArgs | None
     existing_project_docker_args: str
     initial_base: str | None
@@ -84,10 +84,10 @@ class RunConfigDraft:
         }
 
 
-def create_run_config_draft(
+def _create_run_config_draft(
     project_path: Path,
     agent: str,
-    project_cfg: ProjectConfig,
+    project_cfg: _ProjectConfig,
     parsed: ParsedArgs | None,
 ) -> RunConfigDraft:
     initial_agent_cfg = project_cfg.agents.get(agent, AgentConfig())

@@ -6,18 +6,18 @@ from aicage.config import overview_selection
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import AgentConfig, ProjectConfig
-from aicage.config.run_config_draft import create_run_config_draft
+from aicage.config.project_config import AgentConfig, _ProjectConfig
+from aicage.config.run_config_draft import _create_run_config_draft
 
 
 class OverviewSelectionTests(TestCase):
     def test_resolve_overview_selection_returns_base_image_ref_without_extensions(
         self,
     ) -> None:
-        draft = create_run_config_draft(
+        draft = _create_run_config_draft(
             Path("/repo"),
             "codex",
-            ProjectConfig(path="/repo", agents={"codex": AgentConfig(base="ubuntu")}),
+            _ProjectConfig(path="/repo", agents={"codex": AgentConfig(base="ubuntu")}),
             ParsedArgs(False, "", "codex", [], False, [], None),
         )
         context = ConfigContext(
@@ -59,10 +59,10 @@ class OverviewSelectionTests(TestCase):
     def test_resolve_overview_selection_uses_sorted_extensions_for_default_image_ref(
         self,
     ) -> None:
-        draft = create_run_config_draft(
+        draft = _create_run_config_draft(
             Path("/repo"),
             "codex",
-            ProjectConfig(
+            _ProjectConfig(
                 path="/repo",
                 agents={
                     "codex": AgentConfig(base="ubuntu", extensions=["zeta", "alpha"])
@@ -115,10 +115,10 @@ class OverviewSelectionTests(TestCase):
     def test_resolve_overview_selection_uses_base_image_when_extensions_are_removed(
         self,
     ) -> None:
-        draft = create_run_config_draft(
+        draft = _create_run_config_draft(
             Path("/repo"),
             "codex",
-            ProjectConfig(
+            _ProjectConfig(
                 path="/repo",
                 agents={"codex": AgentConfig(base="ubuntu", extensions=["extra"])},
             ),

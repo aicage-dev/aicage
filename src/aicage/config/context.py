@@ -6,13 +6,13 @@ from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 
 from .config_store import SettingsStore
-from .project_config import ProjectConfig
+from .project_config import _ProjectConfig
 
 
 @dataclass
 class ConfigContext:
     store: SettingsStore
-    project_cfg: ProjectConfig
+    project_cfg: _ProjectConfig
     agents: dict[str, AgentMetadata]
     bases: dict[str, BaseMetadata]
     extensions: dict[str, ExtensionMetadata]

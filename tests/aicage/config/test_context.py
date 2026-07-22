@@ -8,7 +8,7 @@ from aicage.config.base import loader as base_loader_module
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.extensions import loader as extensions_module
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 
 
@@ -16,7 +16,7 @@ class ContextTests(TestCase):
     def test_image_repository_ref(self) -> None:
         context = ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/work/project", agents={}),
+            project_cfg=_ProjectConfig(path="/work/project", agents={}),
             agents=self._get_agents(),
             bases=self._get_bases(),
             extensions={},
@@ -26,7 +26,7 @@ class ContextTests(TestCase):
         )
 
     def test_build_config_context_uses_store(self) -> None:
-        project_cfg = ProjectConfig(path="/work/project", agents={})
+        project_cfg = _ProjectConfig(path="/work/project", agents={})
         with (
             mock.patch("aicage.config.config_store.SettingsStore") as store_cls,
             mock.patch("pathlib.Path.cwd", return_value=Path("/work/project")),

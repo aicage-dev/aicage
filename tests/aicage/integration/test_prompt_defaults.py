@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from aicage.config.config_store import SettingsStore
-from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
+from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 
 from ._helpers import require_integration, run_cli_pty, setup_workspace
 
@@ -101,7 +101,7 @@ def _save_project_config(project_dir: Path, mounts: _AgentMounts) -> None:
     agent_cfg.mounts = mounts
     SettingsStore().save_project(
         project_dir,
-        ProjectConfig(
+        _ProjectConfig(
             path=str(project_dir),
             agents={"codex": agent_cfg},
         ),

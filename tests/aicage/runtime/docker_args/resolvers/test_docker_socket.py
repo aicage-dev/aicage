@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
+from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 from aicage.runtime.docker_args.resolvers.docker_socket import resolve
 from aicage.runtime.env_vars import DOCKER_HOST, WINDOWS_DOCKER_HOST
 
@@ -72,7 +72,7 @@ class DockerSocketMountTests(TestCase):
 
 
 def _build_context(agent_cfg: AgentConfig) -> ConfigContext:
-    project_cfg = ProjectConfig(path="/test-tmp/project", agents={"codex": agent_cfg})
+    project_cfg = _ProjectConfig(path="/test-tmp/project", agents={"codex": agent_cfg})
     return ConfigContext(
         store=mock.Mock(),
         project_cfg=project_cfg,

@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.runtime.docker_args.resolvers import project
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
@@ -13,7 +13,7 @@ class ProjectResolverTests(TestCase):
         project_path = Path("/test-tmp/project")
         context = ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path=str(project_path), agents={}),
+            project_cfg=_ProjectConfig(path=str(project_path), agents={}),
             agents={},
             bases={},
             extensions={},

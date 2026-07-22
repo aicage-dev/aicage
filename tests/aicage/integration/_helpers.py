@@ -16,7 +16,7 @@ import pytest
 from aicage import paths as paths_module
 from aicage.config import config_store as config_store_module
 from aicage.config.config_store import SettingsStore
-from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
+from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.docker.query import (
     get_local_repo_digest_for_repo,
@@ -172,7 +172,7 @@ def setup_workspace(
     )
     if docker_args:
         agent_cfg.docker_args = docker_args
-    project_cfg = ProjectConfig(
+    project_cfg = _ProjectConfig(
         path=str(workspace),
         agents={agent_name: agent_cfg},
     )

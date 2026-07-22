@@ -7,7 +7,7 @@ import yaml
 from aicage.paths import PROJECTS_DIR
 
 from ._yaml_loader import load_yaml
-from .project_config import ProjectConfig
+from .project_config import _ProjectConfig
 
 
 class SettingsStore:
@@ -29,15 +29,15 @@ class SettingsStore:
         digest = hashlib.sha256(str(project_realpath).encode("utf-8")).hexdigest()
         return self.projects_dir / f"{digest}.yml"
 
-    def load_project(self, project_realpath: Path) -> ProjectConfig:
+    def load_project(self, project_realpath: Path) -> _ProjectConfig:
         path = self._project_path(project_realpath)
         if not path.exists():
             data = {}
         else:
             data = load_yaml(path)
-        return ProjectConfig.from_mapping(project_realpath, data)
+        return _ProjectConfig.from_mapping(project_realpath, data)
 
-    def save_project(self, project_realpath: Path, config: ProjectConfig) -> None:
+    def save_project(self, project_realpath: Path, config: _ProjectConfig) -> None:
         self._save_yaml(self._project_path(project_realpath), config.to_mapping())
 
     def project_config_path(self, project_realpath: Path) -> Path:

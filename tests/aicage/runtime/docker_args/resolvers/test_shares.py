@@ -5,7 +5,7 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.runtime.docker_args.resolvers import shares
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
 
@@ -14,7 +14,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_returns_empty_when_no_shares_exist(self) -> None:
         context = ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases={},
             extensions={},
@@ -25,7 +25,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_uses_persisted_agent_shares_when_parsed_is_none(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            project_cfg = ProjectConfig(
+            project_cfg = _ProjectConfig(
                 path=str(cwd / "project"),
                 agents={"codex": AgentConfig(shares=["data:ro"])},
             )
@@ -55,7 +55,7 @@ class ShareResolverTests(TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            project_cfg = ProjectConfig(
+            project_cfg = _ProjectConfig(
                 path=str(cwd / "project"),
                 agents={"codex": AgentConfig(shares=["data"])},
             )
@@ -87,7 +87,7 @@ class ShareResolverTests(TestCase):
             parsed = ParsedArgs(False, "", "codex", [], False, ["data:ro"], None)
             context = ConfigContext(
                 store=mock.Mock(),
-                project_cfg=ProjectConfig(path=str(cwd / "project"), agents={}),
+                project_cfg=_ProjectConfig(path=str(cwd / "project"), agents={}),
                 agents={},
                 bases={},
                 extensions={},
@@ -109,7 +109,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_includes_approved_extension_shares(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            project_cfg = ProjectConfig(
+            project_cfg = _ProjectConfig(
                 path=str(cwd / "project"),
                 agents={
                     "codex": AgentConfig(
@@ -158,7 +158,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_skips_unapproved_extension_shares(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            project_cfg = ProjectConfig(
+            project_cfg = _ProjectConfig(
                 path=str(cwd / "project"),
                 agents={
                     "codex": AgentConfig(
@@ -195,7 +195,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_skips_missing_extension_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            project_cfg = ProjectConfig(
+            project_cfg = _ProjectConfig(
                 path=str(cwd / "project"),
                 agents={
                     "codex": AgentConfig(

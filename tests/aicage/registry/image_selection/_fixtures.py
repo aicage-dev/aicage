@@ -4,7 +4,7 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 
 
 def build_context(
@@ -16,7 +16,7 @@ def build_context(
     base_entries, agent_entries = build_agents_and_bases(bases)
     return ConfigContext(
         store=store,
-        project_cfg=ProjectConfig(path=str(project_path), agents=agents or {}),
+        project_cfg=_ProjectConfig(path=str(project_path), agents=agents or {}),
         agents=agent_entries,
         bases=base_entries,
         extensions={},
