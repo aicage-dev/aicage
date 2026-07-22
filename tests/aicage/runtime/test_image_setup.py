@@ -88,3 +88,28 @@ class PrepareImageTests(TestCase):
             update_approved=False,
             reporter=reporter,
         )
+
+    def test_prepare_image_skips_execution_when_only_confirmation_declined(
+        self,
+    ) -> None:
+        run_config = mock.Mock()
+        run_config.selection.base_image_ref = "repo:tag"
+        interaction = mock.Mock(confirm_image_update=mock.Mock(return_value=False))
+
+        with (
+            mock.patch(
+                "aicage.runtime.image_setup.image_setup_plan",
+                return_value=ImageSetupPlan(
+                    needs_setup=False,
+                    needs_update_confirmation=True,
+                ),
+            ),
+            mock.patch("aicage.runtime.image_setup.ensure_image") as ensure_image_mock,
+        ):
+            interaction.execute_image_setup.side_effect = lambda operation: operation(
+                mock.Mock()
+            )
+            image_setup.prepare_image(run_config, interaction)
+
+        interaction.confirm_image_update.assert_called_once_with("repo:tag")
+        ensure_image_mock.assert_not_called()

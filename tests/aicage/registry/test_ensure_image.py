@@ -135,7 +135,7 @@ class EnsureImageTests(TestCase):
         ):
             plan = image_setup_plan(run_config)
 
-        assert plan.needs_setup is True
+        assert plan.needs_setup is False
         assert plan.needs_update_confirmation is True
 
 

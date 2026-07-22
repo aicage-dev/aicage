@@ -61,6 +61,6 @@ def image_setup_plan(run_config: RunConfig) -> ImageSetupPlan:
     if run_config.selection.extensions and extension_build_needed(run_config):
         needs_setup = True
     return ImageSetupPlan(
-        needs_setup=needs_setup or needs_update_confirmation,
+        needs_setup=needs_setup,
         needs_update_confirmation=needs_update_confirmation,
     )

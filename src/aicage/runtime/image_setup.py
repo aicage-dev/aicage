@@ -9,9 +9,11 @@ from aicage.runtime.menu.interaction import RuntimeInteraction
 
 def prepare_image(run_config: RunConfig, interaction: RuntimeInteraction) -> None:
     setup_plan = image_setup_plan(run_config)
-    if not setup_plan.needs_setup:
+    if not setup_plan.needs_setup and not setup_plan.needs_update_confirmation:
         return
     update_approved = _resolve_update_approval(run_config, setup_plan, interaction)
+    if not setup_plan.needs_setup and not update_approved:
+        return
     interaction.execute_image_setup(
         lambda reporter: ensure_image(
             run_config,
