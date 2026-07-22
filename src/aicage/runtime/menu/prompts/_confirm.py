@@ -108,7 +108,5 @@ def prompt_update_aicage(installed_version: str, latest_version: str) -> bool:
 
 
 def prompt_update_image(image_ref: str) -> bool:
-    question = (
-        f"A newer version of Docker image '{image_ref}' is available. " "Pull now?"
-    )
+    question = f"A newer version of Docker image '{image_ref}' is available. Pull now?"
     return _prompt_yes_no(question, default=True)

@@ -53,7 +53,7 @@ def image_setup_plan(run_config: RunConfig) -> ImageSetupPlan:
         pull_plan = pull_decision_plan(run_config.selection.base_image_ref)
         needs_setup = pull_plan.should_pull
         needs_update_confirmation = pull_plan.needs_confirmation
-    elif agent_metadata.build_local or custom_base:
+    else:
         agent_plan = agent_build_setup_plan(run_config)
         needs_setup = agent_plan.needs_setup
         needs_update_confirmation = agent_plan.needs_update_confirmation

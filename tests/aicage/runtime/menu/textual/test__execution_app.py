@@ -1,3 +1,5 @@
+import os
+import signal
 from unittest import TestCase, mock
 
 from aicage.runtime.menu.textual import _execution_app
@@ -42,7 +44,7 @@ class ExecutionAppTests(TestCase):
         ) as killpg_mock:
             app.action_cancel()
 
-        killpg_mock.assert_called_once()
+        killpg_mock.assert_called_once_with(os.getpgrp(), signal.SIGINT)
 
     def test_run_execution_exits_with_error(self) -> None:
         operation = mock.Mock(side_effect=RuntimeError("boom"))
