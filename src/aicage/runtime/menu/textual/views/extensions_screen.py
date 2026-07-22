@@ -15,6 +15,8 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
     _SAMPLES_CLONE_COMMAND = "git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom"
 
     BINDINGS = [
+        Binding("tab", "focus_next_field", show=False, priority=True),
+        Binding("shift+tab", "focus_previous_field", show=False, priority=True),
         Binding("up", "focus_previous_option", "Previous", show=False),
         Binding("down", "focus_next_option", "Next", show=False),
         Binding("enter", "accept", "OK"),
@@ -72,6 +74,21 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
 
     def action_focus_next_option(self) -> None:
         self._move_checkbox_focus(1)
+
+    def action_focus_next_field(self) -> None:
+        if self._options and isinstance(self.focused, Checkbox):
+            self.query_one("#cancel", Button).focus()
+            return
+        self.focus_next()
+
+    def action_focus_previous_field(self) -> None:
+        if self._options and isinstance(self.focused, Checkbox):
+            self.query_one("#ok", Button).focus()
+            return
+        if self._options and isinstance(self.focused, Button):
+            self._focus_checkbox(len(self._options) - 1)
+            return
+        self.focus_previous()
 
     def _checkboxes(self) -> list[Checkbox]:
         return [

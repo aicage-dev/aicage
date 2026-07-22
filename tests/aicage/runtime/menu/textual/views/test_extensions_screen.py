@@ -1,7 +1,7 @@
 import subprocess
 from unittest import TestCase, mock
 
-from textual.widgets import Checkbox, Static, TextArea
+from textual.widgets import Button, Checkbox, Static, TextArea
 
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.runtime.menu.textual.views import extensions_screen as screen_module
@@ -274,6 +274,96 @@ class ExtensionsScreenTests(TestCase):
             screen.action_focus_previous_option()
 
         move_focus_mock.assert_called_once_with(-1)
+
+    def test_action_focus_next_field_moves_from_checkbox_to_buttons(self) -> None:
+        option = ExtensionMetadata(
+            extension_id="gh",
+            name="GitHub CLI",
+            description="Desc",
+            shares=[],
+            directory=mock.Mock(),
+            scripts_dir=mock.Mock(),
+            dockerfile_path=None,
+        )
+        screen = screen_module.ExtensionsScreen([option], [])
+        screen.focused = mock.Mock(spec=Checkbox)
+        cancel_button = mock.Mock(spec=Button)
+
+        with mock.patch.object(screen, "query_one", return_value=cancel_button):
+            screen.action_focus_next_field()
+
+        cancel_button.focus.assert_called_once_with()
+
+    def test_action_focus_next_field_uses_default_navigation_outside_checkbox(
+        self,
+    ) -> None:
+        option = ExtensionMetadata(
+            extension_id="gh",
+            name="GitHub CLI",
+            description="Desc",
+            shares=[],
+            directory=mock.Mock(),
+            scripts_dir=mock.Mock(),
+            dockerfile_path=None,
+        )
+        screen = screen_module.ExtensionsScreen([option], [])
+
+        with mock.patch.object(screen, "focus_next") as focus_next_mock:
+            screen.action_focus_next_field()
+
+        focus_next_mock.assert_called_once_with()
+
+    def test_action_focus_previous_field_moves_from_buttons_to_checkbox(
+        self,
+    ) -> None:
+        options = [
+            ExtensionMetadata(
+                extension_id="gh",
+                name="GitHub CLI",
+                description="Desc",
+                shares=[],
+                directory=mock.Mock(),
+                scripts_dir=mock.Mock(),
+                dockerfile_path=None,
+            ),
+            ExtensionMetadata(
+                extension_id="act",
+                name="act",
+                description="Desc",
+                shares=[],
+                directory=mock.Mock(),
+                scripts_dir=mock.Mock(),
+                dockerfile_path=None,
+            ),
+        ]
+        screen = screen_module.ExtensionsScreen(options, [])
+        screen.focused = mock.Mock(spec=Button)
+
+        with mock.patch.object(screen, "_focus_checkbox") as focus_checkbox_mock:
+            screen.action_focus_previous_field()
+
+        focus_checkbox_mock.assert_called_once_with(1)
+
+    def test_action_focus_previous_field_moves_from_checkbox_to_buttons(
+        self,
+    ) -> None:
+        option = ExtensionMetadata(
+            extension_id="gh",
+            name="GitHub CLI",
+            description="Desc",
+            shares=[],
+            directory=mock.Mock(),
+            scripts_dir=mock.Mock(),
+            dockerfile_path=None,
+        )
+        screen = screen_module.ExtensionsScreen([option], [])
+        screen.focused = mock.Mock(spec=Checkbox)
+        ok_button = mock.Mock(spec=Button)
+
+        with mock.patch.object(screen, "query_one", return_value=ok_button):
+            screen.action_focus_previous_field()
+
+        ok_button.focus.assert_called_once_with()
 
     def test_on_button_pressed_clear_unchecks_visible_checkboxes(self) -> None:
         options = [
