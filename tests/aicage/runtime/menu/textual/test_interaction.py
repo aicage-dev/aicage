@@ -4,6 +4,7 @@ from unittest import TestCase, mock
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.models import ImageSelection
+from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.textual import interaction
 
 from ._test_support import _build_context, _build_draft
@@ -21,7 +22,10 @@ class ConfigureRunTests(TestCase):
 
         with mock.patch(
             "aicage.runtime.menu.textual.interaction._edit_draft_with_textual_app",
-            return_value=(selection, "--project"),
+            return_value=ConfigSelectionResult(
+                selection=selection,
+                project_docker_args="--project",
+            ),
         ) as edit_mock:
             result = resolved.configure_run(draft, _build_context(), "codex")
 
@@ -103,7 +107,7 @@ class EditDraftWithTextualAppTests(TestCase):
             "aicage.runtime.menu.textual.interaction.ConfigApp.run",
             return_value=app_mock.run.return_value,
         ):
-            selection, project_docker_args = interaction._edit_draft_with_textual_app(
+            result = interaction._edit_draft_with_textual_app(
                 draft,
                 context,
             )
@@ -111,8 +115,8 @@ class EditDraftWithTextualAppTests(TestCase):
         parsed = draft.parsed
         if parsed is None:
             self.fail("Expected parsed args to be available.")
-        self.assertEqual("repo:ubuntu", selection.image_ref)
-        self.assertEqual("--new", project_docker_args)
+        self.assertEqual("repo:ubuntu", result.selection.image_ref)
+        self.assertEqual("--new", result.project_docker_args)
         self.assertEqual("--new", draft.agent_cfg.docker_args)
         self.assertEqual(["/repo/logs"], draft.agent_cfg.shares)
         self.assertTrue(draft.agent_cfg.mounts.docker)

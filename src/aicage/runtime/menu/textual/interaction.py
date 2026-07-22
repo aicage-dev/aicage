@@ -2,7 +2,6 @@ from copy import deepcopy
 
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
-from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu._interaction_types import (
     ConfigSelectionResult,
     ImageSetupOperation,
@@ -22,11 +21,7 @@ class TextualInteraction:
         agent: str,
     ) -> ConfigSelectionResult:
         del agent
-        selection, project_docker_args = _edit_draft_with_textual_app(draft, context)
-        return ConfigSelectionResult(
-            selection=selection,
-            project_docker_args=project_docker_args,
-        )
+        return _edit_draft_with_textual_app(draft, context)
 
     def confirm_aicage_update(
         self,
@@ -45,7 +40,7 @@ class TextualInteraction:
 def _edit_draft_with_textual_app(
     draft: RunConfigDraft,
     context: ConfigContext,
-) -> tuple[ImageSelection, str]:
+) -> ConfigSelectionResult:
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()
@@ -57,14 +52,8 @@ def _edit_draft_with_textual_app(
         raise KeyboardInterrupt
     if isinstance(result, BaseException):
         raise result
-    selection = getattr(result, "selection", None)
-    project_docker_args = getattr(result, "project_docker_args", None)
-    if not isinstance(selection, ImageSelection) or not isinstance(
-        project_docker_args, str
-    ):
-        raise RuntimeError("Unexpected Textual overview result.")
     draft.consume_overview_prefill()
-    return selection, project_docker_args
+    return result
 
 
 def _confirm_update_aicage(installed_version: str, latest_version: str) -> bool:

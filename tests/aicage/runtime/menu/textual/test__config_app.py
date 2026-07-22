@@ -5,6 +5,7 @@ from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
+from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.textual import _config_app
 from aicage.runtime.menu.textual._models import (
     BuiltInShareValue,
@@ -438,7 +439,7 @@ class ConfigAppTests(TestCase):
 
     def test_finish_exits_with_result(self) -> None:
         app = _build_app()
-        result = _config_app._ConfigResult(
+        result = ConfigSelectionResult(
             selection=mock.Mock(),
             project_docker_args="--project",
         )

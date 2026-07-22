@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import TypeVar
 
 from textual import work
@@ -12,7 +11,7 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.extensions.missing_extensions import (
     ensure_extensions_exist,
 )
-from aicage.registry.image_selection.models import ImageSelection
+from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
 from ._models import CustomShareValue, HostAccessConfirmValues
@@ -32,13 +31,7 @@ from .views.share_editor_screen import ShareEditorScreen
 _ScreenResultT = TypeVar("_ScreenResultT")
 
 
-@dataclass(frozen=True)
-class _ConfigResult:
-    selection: ImageSelection
-    project_docker_args: str
-
-
-class ConfigApp(TextualApp[_ConfigResult | None]):
+class ConfigApp(TextualApp[ConfigSelectionResult | None]):
     BINDINGS = [
         Binding("enter", "accept", "OK"),
         Binding("escape", "cancel", "Cancel"),
@@ -78,7 +71,7 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
         if ensure_extensions_exist(self._draft.agent, self._config_context):
             self._refresh_sections()
         self._finish(
-            _ConfigResult(
+            ConfigSelectionResult(
                 selection=resolve_overview_selection(
                     self._draft,
                     self._config_context,
@@ -184,7 +177,7 @@ class ConfigApp(TextualApp[_ConfigResult | None]):
             overview.show_shell()
             self._focus_last_section()
 
-    def _finish(self, result: _ConfigResult | None) -> None:
+    def _finish(self, result: ConfigSelectionResult | None) -> None:
         self.exit(result)
 
     def _focus_last_section(self) -> None:
