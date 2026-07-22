@@ -72,9 +72,9 @@ class Overview(Container):
                     self._context_line("Project:", self._project_path), id="context"
                 ),
                 Horizontal(
-                    Button(id=ROW_BASE, classes="section"),
                     Button(id=ROW_EXTENSIONS, classes="section"),
                     Button(id=ROW_EXTRAS, classes="section"),
+                    Button(id=ROW_BASE, classes="section"),
                     id="sections",
                 ),
                 Vertical(
