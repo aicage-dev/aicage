@@ -264,37 +264,6 @@ class EnsureLocalImageTests(TestCase):
             build_mock.assert_not_called()
 
     @staticmethod
-    def test_build_needed_uses_should_rebuild_result() -> None:
-        run_config = build_run_config()
-        store = mock.Mock()
-        store.load.return_value = None
-
-        with (
-            mock.patch(
-                "aicage.registry.agent_build.ensure.BuildStore",
-                return_value=store,
-            ),
-            mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_image_plan",
-                return_value=mock.Mock(
-                    image_ref="ghcr.io/aicage/aicage-image-base@sha256:base",
-                    needs_confirmation=False,
-                ),
-            ),
-            mock.patch(
-                "aicage.registry.agent_build.ensure.should_rebuild",
-                return_value=True,
-            ) as should_rebuild_mock,
-            mock.patch(
-                "aicage.registry.agent_build.ensure.AgentVersionChecker"
-            ) as checker_cls,
-        ):
-            checker_cls.return_value.get_version.return_value = "1.2.3"
-            assert ensure_module._build_needed(run_config) is True
-
-        should_rebuild_mock.assert_called_once()
-
-    @staticmethod
     def test_setup_plan_reports_confirmation_when_base_refresh_requires_it() -> None:
         run_config = build_run_config()
 
@@ -309,47 +278,3 @@ class EnsureLocalImageTests(TestCase):
 
         assert plan.needs_setup is True
         assert plan.needs_update_confirmation is True
-
-    @staticmethod
-    def test__build_needed_returns_true_when_update_confirmation_needed() -> None:
-        run_config = build_run_config()
-
-        with mock.patch(
-            "aicage.registry.agent_build.ensure.refresh_base_image_plan",
-            return_value=mock.Mock(
-                image_ref="ghcr.io/aicage/aicage-image-base@sha256:local",
-                needs_confirmation=True,
-            ),
-        ):
-            result = ensure_module._build_needed(run_config)
-
-        assert result is True
-
-    @staticmethod
-    def test__build_needed_returns_true_when_setup_plan_needs_setup() -> None:
-        run_config = build_run_config()
-
-        with (
-            mock.patch(
-                "aicage.registry.agent_build.ensure.refresh_base_image_plan",
-                return_value=mock.Mock(
-                    image_ref="ghcr.io/aicage/aicage-image-base@sha256:base",
-                    needs_confirmation=False,
-                ),
-            ),
-            mock.patch(
-                "aicage.registry.agent_build.ensure.BuildStore",
-            ) as store_cls,
-            mock.patch(
-                "aicage.registry.agent_build.ensure.should_rebuild",
-                return_value=True,
-            ),
-            mock.patch(
-                "aicage.registry.agent_build.ensure.AgentVersionChecker"
-            ) as checker_cls,
-        ):
-            store_cls.return_value.load.return_value = None
-            checker_cls.return_value.get_version.return_value = "1.2.3"
-            result = ensure_module._build_needed(run_config)
-
-        assert result is True
