@@ -1,4 +1,5 @@
 import ast
+import unittest
 from dataclasses import dataclass
 from pathlib import Path
 from unittest import TestCase
@@ -125,6 +126,31 @@ class VisibilityRulesTests(TestCase):
             f"Found public symbols without external usage: {violations}",
         )
 
+    @unittest.expectedFailure
+    def test_public_symbols_are_used_outside_package(self) -> None:
+        repo_root = _repo_root()
+        src_dir = repo_root / "src"
+        modules = _collect_module_info(src_dir)
+        from_imports = _collect_from_imports_all(modules, src_dir)
+        violations: list[str] = []
+        for module_name, info in modules.items():
+            if info.path.name.startswith("_"):
+                continue
+            symbol_package = _current_package(module_name, info.path)
+            if len(symbol_package) <= 1:
+                continue
+            for symbol in sorted(info.public_symbols):
+                importers = from_imports.get(f"{module_name}.{symbol}", set())
+                if _has_outside_package_usage(importers, modules, symbol_package):
+                    continue
+                violations.append(f"{info.path.relative_to(repo_root)}:{symbol}")
+
+        self.assertEqual(
+            [],
+            violations,
+            f"Found public symbols without external package usage: {violations}",
+        )
+
     def test_public_modules_are_used_outside_package(self) -> None:
         repo_root = _repo_root()
         src_dir = repo_root / "src"
@@ -222,6 +248,12 @@ def _iter_private_symbol_imports(tree: ast.AST, path: Path, src_dir: Path) -> li
             continue
         resolved_module_name = _resolve_import_from_module_name(node, current_package)
         if resolved_module_name is None:
+            continue
+        imported_package = _current_package(resolved_module_name, path)
+        same_package = _package_starts_with(
+            current_package, imported_package
+        ) or _package_starts_with(imported_package, current_package)
+        if same_package:
             continue
         for alias in node.names:
             if (
@@ -445,6 +477,23 @@ def _collect_symbol_usage(modules: dict[str, _ModuleInfo]) -> dict[str, set[str]
                 target_module = alias_map.get(module_alias)
                 if target_module and target_module in usage:
                     usage[target_module].add(node.attr)
+    return usage
+
+
+def _collect_from_imports_all(
+    modules: dict[str, _ModuleInfo], src_dir: Path
+) -> dict[str, set[str]]:
+    usage: dict[str, set[str]] = {}
+    for info in modules.values():
+        current_package = _current_package(info.name, info.path)
+        tree = _parse_tree(info.path)
+        for imported_module, imported_symbol in _collect_from_imports(
+            tree, current_package
+        ):
+            if imported_symbol == "*":
+                continue
+            key = f"{imported_module}.{imported_symbol}"
+            usage.setdefault(key, set()).add(info.name)
     return usage
 
 
