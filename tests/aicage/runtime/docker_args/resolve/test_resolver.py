@@ -6,7 +6,7 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.paths import container_project_path
 from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.docker_args.resolve._mounts import map_mount_requests
@@ -89,7 +89,7 @@ class ResolverTests(TestCase):
         docker_mock.assert_called_once_with(context, "codex", parsed)
 
     def test_resolve_docker_args_inserts_agent_config(self) -> None:
-        project_cfg = ProjectConfig(path="/test-tmp/project", agents={})
+        project_cfg = _ProjectConfig(path="/test-tmp/project", agents={})
         context = ConfigContext(
             store=mock.Mock(),
             project_cfg=project_cfg,
@@ -216,8 +216,10 @@ class ResolverTests(TestCase):
             )
         }
 
-    def _build_context(self, project_path: Path) -> tuple[ProjectConfig, ConfigContext]:
-        project_cfg = ProjectConfig(
+    def _build_context(
+        self, project_path: Path
+    ) -> tuple[_ProjectConfig, ConfigContext]:
+        project_cfg = _ProjectConfig(
             path=str(project_path), agents={"codex": AgentConfig()}
         )
         context = ConfigContext(

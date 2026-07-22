@@ -5,7 +5,7 @@ from unittest import TestCase, mock
 from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
 from aicage.registry._errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
@@ -83,7 +83,7 @@ class ImageSelectionTests(TestCase):
             )
             context = ConfigContext(
                 store=store,
-                project_cfg=ProjectConfig(path=str(project_path), agents={}),
+                project_cfg=_ProjectConfig(path=str(project_path), agents={}),
                 agents=agents,
                 bases=bases,
                 extensions=self._extensions,
@@ -158,7 +158,7 @@ class ImageSelectionTests(TestCase):
     def test_select_agent_image_raises_when_agent_missing(self) -> None:
         context = ConfigContext(
             store=mock.Mock(spec=SettingsStore),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases={},
             extensions=self._extensions,

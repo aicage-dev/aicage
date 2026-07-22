@@ -111,12 +111,12 @@ def _read_bool_dict_or_empty(value: Any) -> dict[str, bool]:
 
 
 @dataclass
-class ProjectConfig:
+class _ProjectConfig:
     path: str
     agents: dict[str, AgentConfig] = field(default_factory=dict)
 
     @classmethod
-    def from_mapping(cls, project_path: Path, data: dict[str, Any]) -> "ProjectConfig":
+    def from_mapping(cls, project_path: Path, data: dict[str, Any]) -> "_ProjectConfig":
         raw_agents = data.get(_PROJECT_AGENTS_KEY, {}) or {}
         agents = {
             name: AgentConfig.from_mapping(cfg) for name, cfg in raw_agents.items()

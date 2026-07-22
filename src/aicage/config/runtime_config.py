@@ -8,7 +8,7 @@ from aicage.config.config_store import SettingsStore
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import load_extensions
 from aicage.config.run_config import RunConfig
-from aicage.config.run_config_draft import create_run_config_draft
+from aicage.config.run_config_draft import _create_run_config_draft
 from aicage.registry.errors import RegistryError
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
 from aicage.runtime.menu.interaction import RuntimeInteraction
@@ -24,7 +24,7 @@ def load_run_config(
     bases = load_bases()
     agents = load_agents(bases)
     _require_known_agent(agent, agents)
-    draft = create_run_config_draft(
+    draft = _create_run_config_draft(
         project_path, agent, store.load_project(project_path), parsed
     )
     context = ConfigContext(

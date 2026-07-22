@@ -6,7 +6,7 @@ from unittest import TestCase, mock
 import yaml
 
 from aicage.config.config_store import SettingsStore
-from aicage.config.project_config import AgentConfig, ProjectConfig, _AgentMounts
+from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 
 
 class ConfigStoreTests(TestCase):
@@ -41,7 +41,7 @@ class ConfigStoreTests(TestCase):
                 project_cfg = store.load_project(project_path)
 
             self.assertEqual(
-                ProjectConfig(path=str(project_path), agents={}), project_cfg
+                _ProjectConfig(path=str(project_path), agents={}), project_cfg
             )
 
     def test_save_project_writes_mapping(self) -> None:
@@ -56,7 +56,7 @@ class ConfigStoreTests(TestCase):
                 project_path = projects_dir / "project"
                 project_path.mkdir(parents=True, exist_ok=True)
 
-                project_cfg = ProjectConfig(path=str(project_path), agents={})
+                project_cfg = _ProjectConfig(path=str(project_path), agents={})
                 project_cfg.agents["codex"] = AgentConfig(
                     base="fedora",
                     docker_args="--add-host=host.docker.internal:host-gateway",

@@ -6,8 +6,8 @@ from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import AgentConfig, ProjectConfig
-from aicage.config.run_config_draft import create_run_config_draft
+from aicage.config.project_config import AgentConfig, _ProjectConfig
+from aicage.config.run_config_draft import _create_run_config_draft
 
 
 def _build_draft(
@@ -15,10 +15,10 @@ def _build_draft(
     parsed: ParsedArgs,
     project_path: Path = Path("/test-tmp/project"),
 ):
-    return create_run_config_draft(
+    return _create_run_config_draft(
         project_path,
         "codex",
-        ProjectConfig(path=str(project_path), agents={"codex": agent_cfg}),
+        _ProjectConfig(path=str(project_path), agents={"codex": agent_cfg}),
         parsed,
     )
 
@@ -26,7 +26,7 @@ def _build_draft(
 def _build_context() -> ConfigContext:
     return ConfigContext(
         store=mock.Mock(),
-        project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+        project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
         agents={
             "codex": AgentMetadata(
                 agent_path_files=[],

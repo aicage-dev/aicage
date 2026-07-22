@@ -8,7 +8,7 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.config.runtime_config import RunConfig
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.run_args import DockerRunArgs
@@ -31,7 +31,7 @@ def _build_run_config(project_path: Path, image_ref: str) -> RunConfig:
         agent="codex",
         context=ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path=str(project_path), agents={}),
+            project_cfg=_ProjectConfig(path=str(project_path), agents={}),
             agents=agents,
             bases=bases,
             extensions={},

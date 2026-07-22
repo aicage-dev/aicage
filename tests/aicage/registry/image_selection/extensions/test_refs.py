@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY, LOCAL_IMAGE_REPOSITORY
 from aicage.paths import CUSTOM_BASES_DIR
 from aicage.registry.image_selection.extensions.refs import base_image_ref
@@ -80,7 +80,7 @@ class ExtensionRefsTests(TestCase):
         }
         return ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases=bases,
             extensions={},

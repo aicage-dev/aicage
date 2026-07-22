@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli import _remove_config as remove_config
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 
 
 class RemoveConfigTests(TestCase):
@@ -65,7 +65,7 @@ class RemoveConfigTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "project.yml"
             config_path.write_text("agents: {}", encoding="utf-8")
-            project_cfg = ProjectConfig(path=tmp_dir, agents={})
+            project_cfg = _ProjectConfig(path=tmp_dir, agents={})
             store = mock.Mock()
             store.project_config_path.return_value = config_path
             store.load_project.return_value = project_cfg
@@ -86,7 +86,7 @@ class RemoveConfigTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "project.yml"
             config_path.write_text("agents: {codex: {}}", encoding="utf-8")
-            project_cfg = ProjectConfig(
+            project_cfg = _ProjectConfig(
                 path=tmp_dir, agents={"codex": AgentConfig(base="ubuntu")}
             )
             store = mock.Mock()

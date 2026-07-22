@@ -2,19 +2,19 @@ from pathlib import Path
 from unittest import TestCase
 
 from aicage.cli_types import ParsedArgs
-from aicage.config.project_config import AgentConfig, ProjectConfig
-from aicage.config.run_config_draft import RunConfigDraft, create_run_config_draft
+from aicage.config.project_config import AgentConfig, _ProjectConfig
+from aicage.config.run_config_draft import RunConfigDraft, _create_run_config_draft
 from aicage.registry.image_selection.models import ImageSelection
 
 
 class RunConfigDraftTests(TestCase):
     def test_create_run_config_draft_reads_existing_docker_args(self) -> None:
-        project_cfg = ProjectConfig(
+        project_cfg = _ProjectConfig(
             path="/test-tmp/project",
             agents={"codex": AgentConfig(docker_args="--existing")},
         )
 
-        draft = create_run_config_draft(
+        draft = _create_run_config_draft(
             Path("/test-tmp/project"),
             "codex",
             project_cfg,
@@ -145,10 +145,10 @@ def _build_draft(
     shares: list[str] | None = None,
     project_path: Path = Path("/test-tmp/project"),
 ) -> RunConfigDraft:
-    return create_run_config_draft(
+    return _create_run_config_draft(
         project_path,
         "codex",
-        ProjectConfig(path=str(project_path), agents={"codex": agent_cfg}),
+        _ProjectConfig(path=str(project_path), agents={"codex": agent_cfg}),
         _build_parsed(docker_args=docker_args, shares=shares or []),
     )
 

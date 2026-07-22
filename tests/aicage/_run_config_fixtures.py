@@ -4,7 +4,7 @@ from unittest import mock
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
-from aicage.config.project_config import ProjectConfig
+from aicage.config.project_config import _ProjectConfig
 from aicage.config.runtime_config import RunConfig
 from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 from aicage.registry.image_selection.models import ImageSelection
@@ -32,7 +32,7 @@ def build_extended_run_config() -> RunConfig:
         agent="codex",
         context=ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents={},
             bases={},
             extensions={},
@@ -87,7 +87,7 @@ def _build_run_config(build_local: bool, local_definition_dir: Path) -> RunConfi
         agent="claude",
         context=ConfigContext(
             store=mock.Mock(),
-            project_cfg=ProjectConfig(path="/test-tmp/project", agents={}),
+            project_cfg=_ProjectConfig(path="/test-tmp/project", agents={}),
             agents=agents,
             bases=bases,
             extensions={},

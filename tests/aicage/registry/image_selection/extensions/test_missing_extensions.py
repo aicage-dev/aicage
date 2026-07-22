@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 
 from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
-from aicage.config.project_config import AgentConfig, ProjectConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.registry.image_selection.extensions.missing_extensions import (
     ensure_extensions_exist,
 )
@@ -113,7 +113,7 @@ class MissingExtensionsTests(TestCase):
         store.projects_dir = Path(tmp_dir)
         if save_project_mock is not None:
             store.save_project = save_project_mock
-        project_cfg = ProjectConfig(
+        project_cfg = _ProjectConfig(
             path=str(Path(tmp_dir) / "project"), agents={"codex": agent_cfg}
         )
         return ConfigContext(
