@@ -8,7 +8,7 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.runtime.menu.prompts import interaction
 
-from ..textual._test_support import _build_context, _build_draft
+from .._test_support import _build_context, _build_draft
 
 
 class ConfigureRunTests(TestCase):

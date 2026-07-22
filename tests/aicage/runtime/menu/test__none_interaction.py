@@ -8,7 +8,7 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.runtime.menu import _none_interaction
 
-from .textual._test_support import _build_context, _build_draft
+from ._test_support import _build_context, _build_draft
 
 
 class CreateNoneInteractionTests(TestCase):
