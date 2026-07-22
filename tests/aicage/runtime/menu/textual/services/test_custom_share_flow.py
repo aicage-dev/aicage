@@ -6,7 +6,7 @@ from aicage.runtime.menu.textual._models import CustomShareValue, ShareEditorRes
 from aicage.runtime.menu.textual._state import OverviewState
 from aicage.runtime.menu.textual.services import custom_share_flow
 
-from .._test_support import _build_draft
+from ..._test_support import _build_draft
 
 
 class CustomShareFlowTests(TestCase):

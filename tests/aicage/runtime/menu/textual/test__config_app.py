@@ -1,6 +1,5 @@
 import asyncio
 from pathlib import Path
-from typing import Any, cast
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
@@ -16,7 +15,8 @@ from aicage.runtime.menu.textual._models import (
 )
 from aicage.runtime.menu.textual.views.overview.view import Overview
 
-from ._test_support import _build_context, _build_draft
+from .._test_support import _build_context, _build_draft
+from ._test_support import _call_work_async
 
 
 class ConfigAppTests(TestCase):
@@ -108,7 +108,7 @@ class ConfigAppTests(TestCase):
             ),
             mock.patch.object(app, "_finish") as finish_mock,
         ):
-            asyncio.run(cast(Any, app._accept).__wrapped__(app))
+            _call_work_async(app, "_accept")
 
         finish_mock.assert_called_once()
 
@@ -126,7 +126,7 @@ class ConfigAppTests(TestCase):
             ) as ensure_mock,
             mock.patch.object(app, "_finish") as finish_mock,
         ):
-            asyncio.run(cast(Any, app._accept).__wrapped__(app))
+            _call_work_async(app, "_accept")
 
         ensure_mock.assert_not_called()
         finish_mock.assert_not_called()
@@ -149,7 +149,7 @@ class ConfigAppTests(TestCase):
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
             mock.patch.object(app, "_finish") as finish_mock,
         ):
-            asyncio.run(cast(Any, app._accept).__wrapped__(app))
+            _call_work_async(app, "_accept")
 
         refresh_mock.assert_called_once_with()
         finish_mock.assert_called_once()
@@ -214,7 +214,7 @@ class ConfigAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(cast(Any, app._add_share).__wrapped__(app))
+            _call_work_async(app, "_add_share")
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/logs")], app._state.custom_shares
@@ -379,12 +379,7 @@ class ConfigAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(
-                cast(Any, app._edit_custom_share).__wrapped__(
-                    app,
-                    "/test-tmp/project/logs",
-                )
-            )
+            _call_work_async(app, "_edit_custom_share", "/test-tmp/project/logs")
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
@@ -406,12 +401,7 @@ class ConfigAppTests(TestCase):
             mock.patch.object(app, "_apply_shell_width") as apply_shell_width_mock,
             mock.patch.object(app, "_refresh_sections") as refresh_mock,
         ):
-            asyncio.run(
-                cast(Any, app._edit_custom_share).__wrapped__(
-                    app,
-                    "/test-tmp/project/logs",
-                )
-            )
+            _call_work_async(app, "_edit_custom_share", "/test-tmp/project/logs")
 
         self.assertEqual(
             [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
