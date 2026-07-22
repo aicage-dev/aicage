@@ -7,9 +7,9 @@ from aicage.config.agent._validation import (
     validate_agent_mapping,
 )
 from aicage.config.agent.models import (
-    AGENT_FULL_NAME_KEY,
-    AGENT_HOMEPAGE_KEY,
-    BUILD_LOCAL_KEY,
+    _AGENT_FULL_NAME_KEY,
+    _AGENT_HOMEPAGE_KEY,
+    _BUILD_LOCAL_KEY,
 )
 from aicage.config.errors import ConfigError
 
@@ -18,11 +18,11 @@ class AgentValidationTests(TestCase):
     def test_validate_agent_mapping_defaults_build_local(self) -> None:
         payload = validate_agent_mapping(
             {
-                AGENT_FULL_NAME_KEY: "Custom",
-                AGENT_HOMEPAGE_KEY: "https://example.com",
+                _AGENT_FULL_NAME_KEY: "Custom",
+                _AGENT_HOMEPAGE_KEY: "https://example.com",
             }
         )
-        self.assertTrue(payload[BUILD_LOCAL_KEY])
+        self.assertTrue(payload[_BUILD_LOCAL_KEY])
 
     def test_ensure_required_files_requires_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

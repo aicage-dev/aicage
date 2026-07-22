@@ -3,12 +3,12 @@ from unittest import TestCase, mock
 
 from aicage.config.agent._metadata import build_agent_metadata
 from aicage.config.agent.models import (
-    AGENT_FULL_NAME_KEY,
-    AGENT_HOMEPAGE_KEY,
-    AGENT_PATH_DIRECTORIES_KEY,
-    AGENT_PATH_KEY,
-    BASE_EXCLUDE_KEY,
-    BUILD_LOCAL_KEY,
+    _AGENT_FULL_NAME_KEY,
+    _AGENT_HOMEPAGE_KEY,
+    _AGENT_PATH_DIRECTORIES_KEY,
+    _AGENT_PATH_KEY,
+    _BASE_EXCLUDE_KEY,
+    _BUILD_LOCAL_KEY,
 )
 from aicage.config.base.models import BaseMetadata
 from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY
@@ -35,11 +35,11 @@ class AgentMetadataBuilderTests(TestCase):
             ),
         }
         mapping = {
-            AGENT_PATH_KEY: {AGENT_PATH_DIRECTORIES_KEY: ["~/.codex"]},
-            AGENT_FULL_NAME_KEY: "Codex",
-            AGENT_HOMEPAGE_KEY: "https://example.com",
-            BUILD_LOCAL_KEY: False,
-            BASE_EXCLUDE_KEY: ["alpine"],
+            _AGENT_PATH_KEY: {_AGENT_PATH_DIRECTORIES_KEY: ["~/.codex"]},
+            _AGENT_FULL_NAME_KEY: "Codex",
+            _AGENT_HOMEPAGE_KEY: "https://example.com",
+            _BUILD_LOCAL_KEY: False,
+            _BASE_EXCLUDE_KEY: ["alpine"],
         }
 
         metadata = build_agent_metadata(
@@ -76,9 +76,9 @@ class AgentMetadataBuilderTests(TestCase):
             ),
         }
         mapping = {
-            AGENT_FULL_NAME_KEY: "Codex",
-            AGENT_HOMEPAGE_KEY: "https://example.com",
-            BUILD_LOCAL_KEY: False,
+            _AGENT_FULL_NAME_KEY: "Codex",
+            _AGENT_HOMEPAGE_KEY: "https://example.com",
+            _BUILD_LOCAL_KEY: False,
         }
 
         with mock.patch(
