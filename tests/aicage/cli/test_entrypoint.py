@@ -181,10 +181,14 @@ class EntrypointTests(TestCase):
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch(
+                "aicage.cli.entrypoint.create_runtime_interaction"
+            ) as create_interaction_mock,
         ):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
+        create_interaction_mock.assert_called_once_with("textual")
         remove_mock.assert_called_once_with(None)
         load_mock.assert_not_called()
 
@@ -199,10 +203,14 @@ class EntrypointTests(TestCase):
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch(
+                "aicage.cli.entrypoint.create_runtime_interaction"
+            ) as create_interaction_mock,
         ):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
+        create_interaction_mock.assert_called_once_with("textual")
         remove_mock.assert_called_once_with("codex")
         load_mock.assert_not_called()
 
