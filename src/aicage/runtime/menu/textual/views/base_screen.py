@@ -77,6 +77,9 @@ class BaseScreen(CancelableScreen[str | None]):
         elif event.button.id == "cancel":
             self.action_cancel()
 
+    def on_data_table_row_selected(self, _: DataTable.RowSelected) -> None:
+        self.action_accept()
+
 
 def _selected_base(table: DataTable) -> str:
     cell_key = table.coordinate_to_cell_key(Coordinate(max(table.cursor_row, 0), 0))

@@ -69,6 +69,14 @@ class BaseScreenTests(TestCase):
         event.stop.assert_called_once_with()
         accept_mock.assert_called_once()
 
+    def test_on_data_table_row_selected_dispatches_ok(self) -> None:
+        screen = base_screen.BaseScreen({"ubuntu": _base_metadata()}, "ubuntu")
+
+        with mock.patch.object(screen, "action_accept") as accept_mock:
+            screen.on_data_table_row_selected(mock.Mock())
+
+        accept_mock.assert_called_once_with()
+
 
 def _base_metadata() -> BaseMetadata:
     return BaseMetadata(
