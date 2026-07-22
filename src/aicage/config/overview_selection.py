@@ -31,7 +31,9 @@ def resolve_overview_selection(
             f"Base '{agent_cfg.base}' is not valid for agent '{draft.agent}'."
         )
     if agent_cfg.extensions:
-        _resolve_extended_image_ref(draft, context)
+        ensure_extensions_exist(draft.agent, context)
+    if agent_cfg.extensions:
+        _write_extended_image_ref(draft)
     else:
         agent_cfg.image_ref = base_image_ref(
             agent_metadata, draft.agent, agent_cfg.base, context
@@ -47,8 +49,7 @@ def resolve_overview_selection(
     )
 
 
-def _resolve_extended_image_ref(draft: RunConfigDraft, context: ConfigContext) -> None:
-    ensure_extensions_exist(draft.agent, context)
+def _write_extended_image_ref(draft: RunConfigDraft) -> None:
     image_ref = draft.agent_cfg.image_ref or _default_extended_image_ref(
         draft.agent,
         draft.agent_cfg.base or "",
