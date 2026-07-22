@@ -20,7 +20,7 @@ class TextualInteraction:
         context: ConfigContext,
         agent: str,
     ) -> ConfigSelectionResult:
-        del agent
+        del agent  # Textual reads agent from draft.agent.
         return _edit_draft_with_textual_app(draft, context)
 
     def confirm_aicage_update(
