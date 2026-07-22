@@ -1,5 +1,7 @@
 from unittest import IsolatedAsyncioTestCase, TestCase, mock
 
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal
 from textual.widgets import Button, SelectionList
 
 from aicage.cli_types import ParsedArgs
@@ -305,6 +307,25 @@ class OverviewTests(TestCase):
 
 
 class OverviewAsyncTests(IsolatedAsyncioTestCase):
+    async def test_on_mount_orders_sections_extensions_extras_base(self) -> None:
+        class _TestApp(App[None]):
+            def compose(self) -> ComposeResult:
+                yield Overview(
+                    "codex",
+                    "/test-tmp/project",
+                    OverviewState(None, [], [], False),
+                )
+
+        app = _TestApp()
+
+        async with app.run_test():
+            sections = app.query_one("#sections", Horizontal)
+
+            self.assertEqual(
+                ["extensions", "extras", "base"],
+                [child.id for child in sections.children],
+            )
+
     async def test_on_button_pressed_posts_section_message(self) -> None:
         overview = Overview(
             "codex", "/test-tmp/project", OverviewState(None, [], [], False)
