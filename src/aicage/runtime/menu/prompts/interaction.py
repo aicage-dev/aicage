@@ -2,14 +2,16 @@ from collections.abc import Callable
 
 from aicage.config.context import ConfigContext
 from aicage.config.run_config_draft import RunConfigDraft
-from aicage.docker.reporting import OperationReporter
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
     ExtensionChoiceOption,
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
-from aicage.runtime.menu._interaction_types import ConfigSelectionResult
+from aicage.runtime.menu._interaction_types import (
+    ConfigSelectionResult,
+    ImageSetupOperation,
+)
 
 from ._base import BaseSelectionRequest, prompt_for_base
 from ._confirm import (
@@ -66,7 +68,7 @@ class SimpleInteraction:
 
     def execute_image_setup(
         self,
-        operation: Callable[[OperationReporter | None], None],
+        operation: ImageSetupOperation,
     ) -> None:
         operation(None)
 
