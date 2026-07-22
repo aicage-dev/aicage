@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-ARCHITECTURES_KEY: str = "architectures"
-BUILD_LOCAL_KEY: str = "build_local"
+_ARCHITECTURES_KEY: str = "architectures"
+_BUILD_LOCAL_KEY: str = "build_local"
 
 
 @dataclass(frozen=True)
