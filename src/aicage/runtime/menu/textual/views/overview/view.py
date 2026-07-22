@@ -27,6 +27,7 @@ from ...services.summary import (
     shares_values,
 )
 from ._layout import shell_width
+from ._selection_list import _OverviewSelectionList
 from ._shares import (
     current_custom_shares,
     merge_built_in_shares,
@@ -217,7 +218,7 @@ class Overview(Container):
     def _docker_widgets(self) -> list[Static | SelectionList]:
         return [
             Static("Docker", id="docker_overview_title"),
-            SelectionList(
+            _OverviewSelectionList(
                 (
                     "Docker socket",
                     docker_selection_key("socket"),
