@@ -57,3 +57,16 @@ class ExecutionAppTests(TestCase):
 
         call_from_thread_mock.assert_called_once()
         self.assertIsInstance(call_from_thread_mock.call_args.args[1], RuntimeError)
+
+    def test_run_execution_exits_with_none_on_success(self) -> None:
+        operation = mock.Mock()
+        app = _execution_app.ExecutionApp(operation)
+        screen = mock.Mock()
+
+        with (
+            mock.patch.object(app, "query_one", return_value=screen),
+            mock.patch.object(app, "call_from_thread") as call_from_thread_mock,
+        ):
+            _call_work(app, "_run_execution")
+
+        call_from_thread_mock.assert_called_once_with(app.exit, None)
