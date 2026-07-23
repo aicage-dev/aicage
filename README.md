@@ -24,7 +24,7 @@ In your project directory, run:
 aicage <agent>
 ```
 
-For a first useful run, you can simply press Enter for `OK` in the setup overview.
+For a first useful run, you can usually just press Enter or select `OK` when prompted.
 
 - Built-in agent examples:
 
@@ -110,8 +110,10 @@ The complete user documentation lives in the wiki:
   - See [CLI options](https://github.com/aicage/aicage/wiki/CLI-Options).
 - Use host networking or custom networks:
   - See [Host networking](https://github.com/aicage/aicage/wiki/Host-Networking).
-- On Windows with a Linux container/WSL workspace:
+- On Windows:
   - set `git config --global core.autocrlf true` on the Windows host to avoid line-ending diffs.
+- On macOS with native Docker:
+  - See [Known hiccups](https://github.com/aicage/aicage/wiki/Known-Hiccups) for the current support caveat.
 - Run into first-use setup issues:
   - See [Known hiccups](https://github.com/aicage/aicage/wiki/Known-Hiccups).
 - Add custom tools/agents/base images:
@@ -188,5 +190,5 @@ Where built-in safety is limited:
 
 How aicage mitigates this:
 
-- Containers create a hard boundary: the agent can access only what you explicitly mount. Day-to-day
-  use stays familiar—just with the host kept out of reach.
+- Containers create a practical boundary: the agent can access only what you explicitly mount or share. Day-to-day
+  use stays familiar while files you do not mount stay out of reach.
