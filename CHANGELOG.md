@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.7] - 2026-07-23
+
+### Changed
+
+- Added a built-in clipboard host integration toggle that mounts the required Linux Wayland or X11 host resources for
+  containerized agents when enabled.
+- Extended the Textual host access flow so clipboard integration is offered only on Linux hosts and the confirmation
+  dialog shows the concrete clipboard socket and environment exposure that will be persisted.
+
 ## [1.4.6] - 2026-07-23
 
 ### Changed
