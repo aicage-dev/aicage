@@ -139,7 +139,7 @@ class EntrypointTests(TestCase):
         info_mock.assert_called_once()
         load_mock.assert_not_called()
 
-    def test_main_skips_ensure_for_textual_menu(self) -> None:
+    def test_main_skips_ensure_for_ui_menu(self) -> None:
         run_config = _build_run_config(Path("/test-tmp/project"), "repo:tag")
         interaction = mock.Mock()
 
@@ -147,7 +147,7 @@ class EntrypointTests(TestCase):
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
                 return_value=ParsedArgs(
-                    False, "", "codex", [], False, [], None, None, "textual"
+                    False, "", "codex", [], False, [], None, None, "ui"
                 ),
             ),
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
@@ -168,7 +168,7 @@ class EntrypointTests(TestCase):
             exit_code = main(["codex"])
 
         self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_called_once_with("textual")
+        create_interaction_mock.assert_called_once_with("ui")
         prepare_image_mock.assert_called_once_with(run_config, interaction)
         run_container_mock.assert_called_once()
 
@@ -188,7 +188,7 @@ class EntrypointTests(TestCase):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_called_once_with("textual")
+        create_interaction_mock.assert_called_once_with("ui")
         remove_mock.assert_called_once_with(None)
         load_mock.assert_not_called()
 
@@ -210,7 +210,7 @@ class EntrypointTests(TestCase):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_called_once_with("textual")
+        create_interaction_mock.assert_called_once_with("ui")
         remove_mock.assert_called_once_with("codex")
         load_mock.assert_not_called()
 

@@ -31,9 +31,9 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     )
     parser.add_argument(
         "--menu",
-        choices=["textual", "simple", "none"],
-        default="textual",
-        help="Select menu mode: textual, simple, or none.",
+        choices=["ui", "simple", "none"],
+        default="ui",
+        help="Select menu mode: ui, simple, or none.",
     )
     parser.add_argument(
         "--docker",
@@ -78,14 +78,14 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  aicage --version\n\n"
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
-            "  --menu <mode>    Choose menu mode: textual (default), simple, or none.\n"
+            "  --menu <mode>    Choose menu mode: ui (default), simple, or none.\n"
             "  --docker         Mount /run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
-            "  - '--menu textual' uses the Textual config overview.\n"
+            "  - '--menu ui' uses the default config overview.\n"
             "  - '--menu simple' uses the line-based setup prompts.\n"
             "  - '--menu none' skips menus and uses defaults.\n"
             "  - <docker-args> are forwarded verbatim to docker run.\n"
@@ -169,7 +169,7 @@ def _validate_config_action(
         or opts.docker
         or opts.dry_run
         or opts.share
-        or opts.menu != "textual"
+        or opts.menu != "ui"
     ):
         raise CliError("No additional arguments are allowed with --config.")
     return config_action, config_agent
