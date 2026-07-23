@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.6] - 2026-07-23
+
+### Changed
+
+- Refined the README wording around first-run prompts, Windows usage, macOS support caveats, and container visibility
+  boundaries.
+
+### Internal
+
+- Bumped the pip development dependency group.
+
 ## [1.4.5] - 2026-07-22
 
 ### Fixed
