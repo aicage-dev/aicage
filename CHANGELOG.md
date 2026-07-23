@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Separated Textual config and execution into independent apps, so image pull/build progress displays in a dedicated
   screen rather than being inlined in the config overview.
+- Renamed `--menu textual` to `--menu ui`; `simple` and `none` are unchanged.
 - Image update confirmation is now resolved at the interaction layer instead of inside decision logic, allowing each
   menu mode to handle confirmation consistently.
 - The Textual base selection screen now accepts on row click instead of requiring the OK button.
