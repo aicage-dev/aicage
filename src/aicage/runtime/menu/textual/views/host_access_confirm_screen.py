@@ -66,6 +66,7 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
                     DockerOptionValue(
                         key=option.key,
                         label=option.label,
+                        description=option.description,
                         persisted=option.persisted,
                         enabled=option.key in selected,
                     )
@@ -124,13 +125,15 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         if not self._docker_options:
             return None
         return [
-            Static("Docker support", classes="screen_subtitle"),
+            Static("Host integration", classes="screen_subtitle"),
             Static(
-                "Allows the container to talk to the host Docker daemon.",
+                "Persists container access to host services such as Docker and the clipboard.",
                 classes="screen_hint confirm_hint",
             ),
             Vertical(
-                self._docker_selection_list(), classes="checkbox_group confirm_section"
+                self._docker_selection_list(),
+                *self._docker_option_details(),
+                classes="checkbox_group confirm_section",
             ),
         ]
 
@@ -167,12 +170,29 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
     def _docker_selection_list(self) -> SelectionList:
         return SelectionList(
             *[
-                (option.label, option.key, option.enabled)
+                (
+                    option.label,
+                    option.key,
+                    option.enabled,
+                )
                 for option in self._docker_options
             ],
             id="docker_confirm_list",
             compact=True,
         )
+
+    def _docker_option_details(self) -> list[Static]:
+        details: list[Static] = []
+        for option in self._docker_options:
+            if option.description is None:
+                continue
+            details.append(
+                Static(
+                    f"{option.label}: {option.description}",
+                    classes="screen_hint confirm_hint",
+                )
+            )
+        return details
 
     def _git_support_selection_list(self) -> SelectionList:
         return SelectionList(

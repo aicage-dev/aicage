@@ -235,9 +235,9 @@ class ConfigAppTests(TestCase):
             CustomShareValue("/test-tmp/project/logs"),
             CustomShareValue("/test-tmp/project/data"),
         ]
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
-            "docker", "Docker socket", None, True
-        )
+        overview.current_host_options.return_value = [
+            DockerOptionValue("docker", "Docker socket", None, None, True)
+        ]
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
@@ -247,7 +247,9 @@ class ConfigAppTests(TestCase):
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[
-                            DockerOptionValue("docker", "Docker socket", None, True)
+                            DockerOptionValue(
+                                "docker", "Docker socket", None, None, True
+                            )
                         ],
                         git_support_shares=[built_in_share],
                         extension_shares=[],
@@ -272,9 +274,9 @@ class ConfigAppTests(TestCase):
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = []
         overview.current_custom_shares.return_value = []
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
-            "docker", "Docker socket", None, True
-        )
+        overview.current_host_options.return_value = [
+            DockerOptionValue("docker", "Docker socket", None, None, True)
+        ]
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
@@ -284,7 +286,9 @@ class ConfigAppTests(TestCase):
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[
-                            DockerOptionValue("docker", "Docker socket", None, False)
+                            DockerOptionValue(
+                                "docker", "Docker socket", None, None, False
+                            )
                         ],
                         git_support_shares=[],
                         extension_shares=[],
@@ -307,9 +311,9 @@ class ConfigAppTests(TestCase):
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = [built_in_share]
         overview.current_custom_shares.return_value = []
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
-            "docker", "Docker socket", None, False
-        )
+        overview.current_host_options.return_value = [
+            DockerOptionValue("docker", "Docker socket", None, None, False)
+        ]
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
@@ -337,9 +341,9 @@ class ConfigAppTests(TestCase):
         overview = mock.Mock()
         overview.current_built_in_shares.return_value = [extension_share]
         overview.current_custom_shares.return_value = []
-        overview.current_docker_socket_enabled.return_value = DockerOptionValue(
-            "docker", "Docker socket", None, False
-        )
+        overview.current_host_options.return_value = [
+            DockerOptionValue("docker", "Docker socket", None, None, False)
+        ]
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),

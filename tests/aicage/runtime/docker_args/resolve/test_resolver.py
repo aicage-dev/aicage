@@ -56,6 +56,7 @@ class ResolverTests(TestCase):
                         env=[EnvVar(name="DOCKER_HOST", value="tcp://host:2375")],
                     ),
                 ) as docker_mock,
+                mock.patch(f"{_MODULE}.clipboard.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.shares.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.Path.home", return_value=home_path),
             ):
@@ -106,6 +107,7 @@ class ResolverTests(TestCase):
             mock.patch(f"{_MODULE}.ssh_keys.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.gpg.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()),
+            mock.patch(f"{_MODULE}.clipboard.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.shares.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.Path.home", return_value=Path("/test-tmp/home")),
         ):
@@ -142,6 +144,7 @@ class ResolverTests(TestCase):
                 mock.patch(
                     f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()
                 ),
+                mock.patch(f"{_MODULE}.clipboard.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.shares.resolve", return_value=ResolvedArgs()),
                 mock.patch(f"{_MODULE}.Path.home", return_value=home_path),
             ):

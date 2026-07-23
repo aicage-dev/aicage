@@ -63,20 +63,33 @@ def current_docker_option(
     return DockerOptionValue(
         key="docker",
         label="Docker socket",
+        description=None,
         persisted=persisted,
         enabled=docker_selection_key("socket") in selected,
     )
 
 
+def current_clipboard_option(
+    selected: set[str], persisted: bool | None, description: str | None
+) -> DockerOptionValue:
+    return DockerOptionValue(
+        key="clipboard",
+        label="Clipboard integration",
+        description=description,
+        persisted=persisted,
+        enabled=docker_selection_key("clipboard") in selected,
+    )
+
+
 def _build_confirmation_request(
     built_in_shares: list[BuiltInShareValue],
-    docker_option: DockerOptionValue,
+    docker_options: list[DockerOptionValue],
 ) -> HostAccessConfirmValues:
     return HostAccessConfirmValues(
         docker_options=[
-            docker_option
-            for _ in [0]
-            if docker_option.enabled and docker_option.persisted is not True
+            option
+            for option in docker_options
+            if option.enabled and option.persisted is not True
         ],
         git_support_shares=[
             item
@@ -97,9 +110,9 @@ def _build_confirmation_request(
 
 def _merge_confirmed_host_access(
     built_in_shares: list[BuiltInShareValue],
-    docker_option: DockerOptionValue,
+    docker_options: list[DockerOptionValue],
     confirmed: HostAccessConfirmValues,
-) -> tuple[list[BuiltInShareValue], DockerOptionValue]:
+) -> tuple[list[BuiltInShareValue], list[DockerOptionValue]]:
     confirmed_by_key = {
         built_in_identity(item.source, item.key): item.enabled
         for item in [*confirmed.git_support_shares, *confirmed.extension_shares]
@@ -125,16 +138,18 @@ def _merge_confirmed_host_access(
     confirmed_docker_by_key = {
         item.key: item.enabled for item in confirmed.docker_options
     }
-    if "docker" not in confirmed_docker_by_key:
-        return merged_shares, docker_option
     return (
         merged_shares,
-        DockerOptionValue(
-            key=docker_option.key,
-            label=docker_option.label,
-            persisted=docker_option.persisted,
-            enabled=confirmed_docker_by_key["docker"],
-        ),
+        [
+            DockerOptionValue(
+                key=option.key,
+                label=option.label,
+                description=option.description,
+                persisted=option.persisted,
+                enabled=confirmed_docker_by_key.get(option.key, option.enabled),
+            )
+            for option in docker_options
+        ],
     )
 
 
@@ -142,7 +157,7 @@ def _apply_confirmed_host_access(
     draft: RunConfigDraft,
     built_in_shares: list[BuiltInShareValue],
     custom_shares: list[CustomShareValue],
-    docker_option: DockerOptionValue,
+    docker_options: list[DockerOptionValue],
 ) -> None:
     draft.agent_cfg.shares = [item.value for item in custom_shares]
     for item in built_in_shares:
@@ -150,4 +165,8 @@ def _apply_confirmed_host_access(
             setattr(draft.agent_cfg.mounts, item.key, item.enabled)
         elif item.source == "extension":
             draft.agent_cfg.extension_mounts[item.key] = item.enabled
-    draft.agent_cfg.mounts.docker = docker_option.enabled
+    for option in docker_options:
+        if option.key == "docker":
+            draft.agent_cfg.mounts.docker = option.enabled
+        elif option.key == "clipboard":
+            draft.agent_cfg.mounts.clipboard = option.enabled

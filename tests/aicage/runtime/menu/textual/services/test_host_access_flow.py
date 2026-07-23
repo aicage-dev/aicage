@@ -24,7 +24,9 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
                 "git_support", "ssh", "SSH", "/test-tmp/.ssh", True, True
             ),
         ]
-        docker_option = DockerOptionValue("docker", "Docker socket", True, True)
+        docker_options = [
+            DockerOptionValue("docker", "Docker socket", None, True, True)
+        ]
 
         async def confirm_host_access(_values: object) -> None:
             raise AssertionError("confirmation should not be requested")
@@ -33,7 +35,7 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
             draft,
             built_in_shares,
             [CustomShareValue("/test-tmp/logs")],
-            docker_option,
+            docker_options,
             confirm_host_access,
         )
 

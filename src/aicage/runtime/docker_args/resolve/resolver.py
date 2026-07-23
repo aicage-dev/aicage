@@ -12,6 +12,7 @@ from aicage.runtime.run_args import EnvVar, MountSpec
 
 from ..resolvers import (
     agent_config,
+    clipboard,
     docker_socket,
     git_config,
     git_root,
@@ -62,6 +63,7 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
         ssh_keys.resolve,
         git_root.resolve,
         docker_socket.resolve,
+        clipboard.resolve,
         shares.resolve,
     )
 

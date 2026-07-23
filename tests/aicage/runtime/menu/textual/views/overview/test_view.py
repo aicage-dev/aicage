@@ -157,6 +157,19 @@ class OverviewTests(TestCase):
         parent_on_focus_mock.assert_called_once_with(focus_event)
         self.assertEqual(0, selection_list.highlighted)
 
+    def test_on_selection_list_selected_changed_updates_clipboard_state(self) -> None:
+        state = OverviewState(None, [], [], False, True)
+        overview = Overview("codex", "/test-tmp/project", state)
+        event = mock.Mock()
+        event.selection_list.id = "docker_overview_list"
+        event.selection_list.selected = ["docker:clipboard"]
+
+        with mock.patch.object(overview, "apply_shell_width"):
+            overview.on_selection_list_selected_changed(event)
+
+        self.assertFalse(state.docker_socket_enabled)
+        self.assertTrue(state.clipboard_enabled)
+
     def test_refresh_from_updates_overview_widgets(self) -> None:
         overview = Overview(
             "codex", "/test-tmp/project", OverviewState(None, [], [], False)
@@ -320,17 +333,18 @@ class OverviewTests(TestCase):
         self.assertEqual(state.custom_shares, values)
         self.assertIsNot(state.custom_shares, values)
 
-    def test_current_docker_socket_enabled_returns_selected_state(self) -> None:
+    def test_current_host_options_returns_selected_state(self) -> None:
         overview = Overview(
-            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False, True)
         )
         selection_list = mock.Mock(spec=SelectionList)
-        selection_list.selected = ["docker:socket"]
+        selection_list.selected = ["docker:socket", "docker:clipboard"]
 
         with mock.patch.object(overview, "query_one", return_value=selection_list):
-            value = overview.current_docker_socket_enabled(False)
+            values = overview.current_host_options(False, None)
 
-        self.assertTrue(value.enabled)
+        self.assertEqual(["docker", "clipboard"], [item.key for item in values])
+        self.assertEqual([True, True], [item.enabled for item in values])
 
 
 class OverviewAsyncTests(IsolatedAsyncioTestCase):

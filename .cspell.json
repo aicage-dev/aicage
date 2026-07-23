@@ -27,6 +27,8 @@
     "Subviews",
     "TERMIOS",
     "Textualize",
+    "XAUTHORITY",
+    "Xauthority",
     "ZIZMOR",
     "abstractproperty",
     "affordances",
@@ -168,6 +170,7 @@
     "verview",
     "virtualenv",
     "winpty",
+    "xauthority",
     "xclip",
     "xsel",
     "zizmor"

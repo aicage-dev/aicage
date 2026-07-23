@@ -19,6 +19,7 @@ from ..._state import OverviewState
 from ...services.host_access import (
     built_in_group_selection_values,
     current_built_in_shares,
+    current_clipboard_option,
     current_docker_option,
 )
 from ...services.summary import (
@@ -117,6 +118,9 @@ class Overview(Container):
             self._state.docker_socket_enabled = (
                 docker_selection_key("socket") in event.selection_list.selected
             )
+            self._state.clipboard_enabled = (
+                docker_selection_key("clipboard") in event.selection_list.selected
+            )
             self.apply_shell_width(self.size.width)
 
     def on_selection_list_selection_toggled(
@@ -189,13 +193,22 @@ class Overview(Container):
     def current_custom_shares(self) -> list[CustomShareValue]:
         return current_custom_shares(self._state)
 
-    def current_docker_socket_enabled(
-        self, current_mount_value: bool | None
-    ) -> DockerOptionValue:
-        return current_docker_option(
-            set(self.query_one("#docker_overview_list", SelectionList).selected),
-            current_mount_value,
-        )
+    def current_host_options(
+        self,
+        docker_socket_value: bool | None,
+        clipboard_value: bool | None,
+    ) -> list[DockerOptionValue]:
+        selected = set(self.query_one("#docker_overview_list", SelectionList).selected)
+        options = [current_docker_option(selected, docker_socket_value)]
+        if self._state.show_clipboard:
+            options.append(
+                current_clipboard_option(
+                    selected,
+                    clipboard_value,
+                    self._state.clipboard_description,
+                )
+            )
+        return options
 
     def _section_button(self, section_id: str) -> Button:
         return self.query_one(f"#{section_id}", Button)
@@ -217,32 +230,50 @@ class Overview(Container):
             selection_list.deselect(related_value)
 
     def _docker_widgets(self) -> list[Static | SelectionList]:
-        return [
-            Static("Docker", id="docker_overview_title"),
-            _OverviewSelectionList(
+        selections = [
+            Selection(
+                "Docker socket",
+                docker_selection_key("socket"),
+                self._state.docker_socket_enabled,
+            )
+        ]
+        if self._state.show_clipboard:
+            selections.append(
                 Selection(
-                    "Docker socket",
-                    docker_selection_key("socket"),
-                    self._state.docker_socket_enabled,
-                ),
+                    "Clipboard integration",
+                    docker_selection_key("clipboard"),
+                    self._state.clipboard_enabled,
+                )
+            )
+        return [
+            Static("Host Integration", id="docker_overview_title"),
+            _OverviewSelectionList(
+                *selections,
                 id="docker_overview_list",
                 compact=True,
             ),
         ]
 
     def _refresh_docker(self) -> None:
-        self.query_one("#docker_overview_title", Static).update("Docker")
+        self.query_one("#docker_overview_title", Static).update("Host Integration")
         selection_list = self.query_one("#docker_overview_list", SelectionList)
         selection_list.clear_options()
-        selection_list.add_options(
-            [
+        options = [
+            Selection(
+                "Docker socket",
+                docker_selection_key("socket"),
+                self._state.docker_socket_enabled,
+            )
+        ]
+        if self._state.show_clipboard:
+            options.append(
                 Selection(
-                    "Docker socket",
-                    docker_selection_key("socket"),
-                    self._state.docker_socket_enabled,
+                    "Clipboard integration",
+                    docker_selection_key("clipboard"),
+                    self._state.clipboard_enabled,
                 )
-            ]
-        )
+            )
+        selection_list.add_options(options)
 
     def _section_label(self, title: str, summary: str) -> str:
         return f"{title}\n{self._truncate_summary(summary)}"

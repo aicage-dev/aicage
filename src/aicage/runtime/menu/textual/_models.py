@@ -33,6 +33,7 @@ class ShareEditorResult:
 class DockerOptionValue:
     key: str
     label: str
+    description: str | None
     persisted: bool | None
     enabled: bool
 
