@@ -113,18 +113,18 @@ If you want the agent to run Docker commands, enable `Docker socket` in the setu
 
 ## Built-in agents
 
-| CLI      | Agent              | Homepage                                                                           |
-|----------|--------------------|------------------------------------------------------------------------------------|
+| CLI      | Agent              | Homepage                                                                                     |
+|----------|--------------------|----------------------------------------------------------------------------------------------|
 | agy      | Antigravity CLI    | [https://antigravity.google/docs/cli-overview](https://antigravity.google/docs/cli-overview) |
-| claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)   |
-| codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
-| copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
-| crush    | Crush              | [https://github.com/charmbracelet/crush](https://github.com/charmbracelet/crush)   |
-| droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
-| gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                     |
-| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
-| opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
-| qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
+| claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)             |
+| codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli)           |
+| copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli)           |
+| crush    | Crush              | [https://github.com/charmbracelet/crush](https://github.com/charmbracelet/crush)             |
+| droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                             |
+| gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                               |
+| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                               |
+| opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                                   |
+| qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs)           |
 
 ## More reading
 

@@ -14,16 +14,16 @@ them for you. This page is mainly useful when you:
 
 The entrypoint reacts to these environment variables:
 
-| Variable | Meaning |
-| --- | --- |
-| `AICAGE_UID` | Runtime user id inside the container. |
-| `AICAGE_GID` | Runtime group id inside the container. |
-| `AICAGE_HOST_USER` | Runtime user name inside the container. |
-| `AICAGE_HOME` | Runtime home directory inside the container. |
-| `AICAGE_MOUNT_HOME` | Host-home mount anchor when mounted home content lives somewhere other than the active `HOME`. Mainly relevant for Windows and root-compatible setups. |
-| `AICAGE_WORKSPACE` | Working directory the container starts in. |
-| `AICAGE_ENTRYPOINT_CMD` | Final command the entrypoint executes. |
-| `TZ` | Optional timezone to apply inside the container. |
+| Variable                | Meaning                                                                                                                                                |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AICAGE_UID`            | Runtime user id inside the container.                                                                                                                  |
+| `AICAGE_GID`            | Runtime group id inside the container.                                                                                                                 |
+| `AICAGE_HOST_USER`      | Runtime user name inside the container.                                                                                                                |
+| `AICAGE_HOME`           | Runtime home directory inside the container.                                                                                                           |
+| `AICAGE_MOUNT_HOME`     | Host-home mount anchor when mounted home content lives somewhere other than the active `HOME`. Mainly relevant for Windows and root-compatible setups. |
+| `AICAGE_WORKSPACE`      | Working directory the container starts in.                                                                                                             |
+| `AICAGE_ENTRYPOINT_CMD` | Final command the entrypoint executes.                                                                                                                 |
+| `TZ`                    | Optional timezone to apply inside the container.                                                                                                       |
 
 ## Normal behavior
 

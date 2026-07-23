@@ -46,7 +46,7 @@ Runtime note: local runtime enforces signature checks. It does not run full SLSA
 
 ### Docker rootless mode
 
-- `aicage` supports hosts that use a [rootless Docker](https://docs.docker.com/engine/security/rootless/) daemon. 
+- `aicage` supports hosts that use a [rootless Docker](https://docs.docker.com/engine/security/rootless/) daemon.
 - This can reduce the risk of full host-root compromise compared with a rootful Docker daemon, including when using
   `aicage --docker`.
 - It does not meaningfully protect files or other data already accessible to your host user.
