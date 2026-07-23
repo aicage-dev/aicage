@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-MenuMode = Literal["textual", "simple", "none"]
+MenuMode = Literal["ui", "simple", "none"]
 
 
 @dataclass
@@ -14,4 +14,4 @@ class ParsedArgs:
     shares: list[str]
     config_action: str | None
     config_agent: str | None = None
-    menu: MenuMode = "textual"
+    menu: MenuMode = "ui"

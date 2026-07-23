@@ -500,7 +500,7 @@ class RuntimeConfigTests(TestCase):
                 docker_socket=False,
                 shares=[],
                 config_action=None,
-                menu="textual",
+                menu="ui",
             )
             interaction = self._interaction()
             with (

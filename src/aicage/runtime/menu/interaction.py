@@ -32,7 +32,7 @@ class RuntimeInteraction(Protocol):
 
 
 def create_runtime_interaction(menu: MenuMode) -> RuntimeInteraction:
-    if menu == "textual":
+    if menu == "ui":
         return TextualInteraction()
     if menu == "none":
         return create_none_interaction()

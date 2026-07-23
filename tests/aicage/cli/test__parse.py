@@ -18,7 +18,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_with_separator(self) -> None:
         parsed = parse_cli(["--dry-run", "--", "codex", "--bar"])
         self.assertTrue(parsed.dry_run)
-        self.assertEqual("textual", parsed.menu)
+        self.assertEqual("ui", parsed.menu)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--bar"], parsed.agent_args)
@@ -36,7 +36,7 @@ class ParseCliTests(TestCase):
             ]
         )
         self.assertTrue(parsed.dry_run)
-        self.assertEqual("textual", parsed.menu)
+        self.assertEqual("ui", parsed.menu)
         self.assertEqual("-v /run/docker.sock:/run/docker.sock", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--bar"], parsed.agent_args)
@@ -47,7 +47,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_without_docker_args(self) -> None:
         parsed = parse_cli(["codex", "--flag"])
         self.assertFalse(parsed.dry_run)
-        self.assertEqual("textual", parsed.menu)
+        self.assertEqual("ui", parsed.menu)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--flag"], parsed.agent_args)

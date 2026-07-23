@@ -15,7 +15,7 @@ class ConfigureRunTests(TestCase):
         resolved = interaction.TextualInteraction()
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None, menu="textual"),
+            ParsedArgs(False, "", "codex", [], False, [], None, menu="ui"),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"

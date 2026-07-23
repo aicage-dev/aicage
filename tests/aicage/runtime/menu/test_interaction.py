@@ -4,10 +4,10 @@ from aicage.runtime.menu import interaction
 
 
 class CreateRuntimeInteractionTests(TestCase):
-    def test_create_runtime_interaction_returns_textual_interaction_for_textual_mode(
+    def test_create_runtime_interaction_returns_textual_interaction_for_ui_mode(
         self,
     ) -> None:
-        resolved = interaction.create_runtime_interaction("textual")
+        resolved = interaction.create_runtime_interaction("ui")
 
         self.assertEqual("TextualInteraction", resolved.__class__.__name__)
 
