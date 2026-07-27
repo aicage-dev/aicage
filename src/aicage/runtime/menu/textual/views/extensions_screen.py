@@ -23,7 +23,9 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
         *CancelableScreen.BINDINGS,
     ]
 
-    def __init__(self, options: list[ExtensionChoiceOption], selected: list[str]) -> None:
+    def __init__(
+        self, options: list[ExtensionChoiceOption], selected: list[str]
+    ) -> None:
         super().__init__()
         self._options = options
         self._selected = set(selected)
