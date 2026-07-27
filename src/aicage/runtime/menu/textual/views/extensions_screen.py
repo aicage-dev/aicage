@@ -115,7 +115,21 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
                     classes="command_box",
                 ),
             ]
-        return self._checkboxes()
+        return self._extension_widgets()
+
+    def _extension_widgets(self) -> list[Checkbox | Static]:
+        first_dockerfile_index = self._first_dockerfile_option_index()
+        widgets: list[Checkbox | Static] = []
+        for index, checkbox in enumerate(self._checkboxes()):
+            if first_dockerfile_index is not None and index == first_dockerfile_index:
+                widgets.append(
+                    Static(
+                        "Extensions with custom Dockerfiles:",
+                        classes="screen_subtitle",
+                    )
+                )
+            widgets.append(checkbox)
+        return widgets
 
     def _action_buttons(self) -> list[Button]:
         if not self._options:
@@ -153,6 +167,12 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
         current_index = self._focused_checkbox_index()
         next_index = min(max(current_index + delta, 0), len(self._options) - 1)
         self._focus_checkbox(next_index)
+
+    def _first_dockerfile_option_index(self) -> int | None:
+        for index, option in enumerate(self._options):
+            if option.dockerfile_path is not None:
+                return index
+        return None
 
     def _clear_checkboxes(self) -> None:
         for option in self._options:

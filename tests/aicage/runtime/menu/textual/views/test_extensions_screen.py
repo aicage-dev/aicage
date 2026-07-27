@@ -83,6 +83,40 @@ class ExtensionsScreenTests(TestCase):
             command_box.text,
         )
 
+    def test_content_widgets_adds_heading_before_dockerfile_extensions(self) -> None:
+        widgets = screen_module.ExtensionsScreen(
+            [
+                ExtensionMetadata(
+                    extension_id="gh",
+                    name="GitHub CLI",
+                    description="Desc",
+                    shares=[],
+                    directory=mock.Mock(),
+                    scripts_dir=mock.Mock(),
+                    dockerfile_path=None,
+                ),
+                ExtensionMetadata(
+                    extension_id="marker-dockerfile",
+                    name="Marker Dockerfile",
+                    description="Desc",
+                    shares=[],
+                    directory=mock.Mock(),
+                    scripts_dir=mock.Mock(),
+                    dockerfile_path=mock.Mock(),
+                ),
+            ],
+            [],
+        )._content_widgets()
+
+        self.assertEqual(3, len(widgets))
+        self.assertIsInstance(widgets[0], Checkbox)
+        self.assertIsInstance(widgets[1], Static)
+        self.assertIsInstance(widgets[2], Checkbox)
+        self.assertEqual(
+            "Extensions with custom Dockerfiles:",
+            widgets[1].render(),
+        )
+
     def test_action_buttons_without_options_uses_copy_command_instead_of_clear(
         self,
     ) -> None:

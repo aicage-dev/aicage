@@ -6,6 +6,7 @@ from textual.binding import Binding
 from textual.screen import Screen
 
 from aicage.config.context import ConfigContext
+from aicage.config.extensions.order import canonical_extensions
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.extensions.missing_extensions import (
@@ -128,10 +129,7 @@ class ConfigApp(TextualApp[ConfigSelectionResult | None]):
     async def _edit_extensions(self) -> None:
         selected = await self._push_view(
             ExtensionsScreen(
-                sorted(
-                    self._config_context.extensions.values(),
-                    key=lambda item: item.extension_id,
-                ),
+                canonical_extensions(list(self._config_context.extensions.values())),
                 list(self._draft.agent_cfg.extensions),
             )
         )
