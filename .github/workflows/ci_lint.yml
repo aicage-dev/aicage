@@ -21,14 +21,14 @@ name: "CI: lint"
           - ubuntu-latest
           - self-hosted
 
-concurrency:
-  group: >-
-    ${{ github.workflow }}-${{ github.ref }}${{
-      github.event_name == 'workflow_dispatch' && '-manual-' || ''
-    }}${{
-      github.event_name == 'workflow_dispatch' && github.run_id || ''
-    }}
-  cancel-in-progress: true
+# concurrency:
+#   group: >-
+#     ${{ github.workflow }}-${{ github.ref }}${{
+#       github.event_name == 'workflow_dispatch' && '-manual-' || ''
+#     }}${{
+#       github.event_name == 'workflow_dispatch' && github.run_id || ''
+#     }}
+#   cancel-in-progress: true
 
 permissions:
   contents: read
@@ -111,9 +111,9 @@ jobs:
           APPLY_FIXES_MODE: pull_request
           REPORT_OUTPUT_FOLDER: ${{ runner.temp }}/megalinter-reports
           # new non-root user test
-          MEGALINTER_UID: ${{ env.MEGALINTER_UID }}
-          MEGALINTER_GID: ${{ env.MEGALINTER_GID }}
-          MEGALINTER_USER: ${{ env.MEGALINTER_USER }}
+          # MEGALINTER_UID: ${{ env.MEGALINTER_UID }}
+          # MEGALINTER_GID: ${{ env.MEGALINTER_GID }}
+          # MEGALINTER_USER: ${{ env.MEGALINTER_USER }}
 
       - name: Upload MegaLinter artifacts
         if: success() || failure()
