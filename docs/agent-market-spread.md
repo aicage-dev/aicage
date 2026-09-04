@@ -43,7 +43,7 @@ Placement means what a new aicage user is most likely to expect to find ready to
 | Agent | Spread assessment | Recommendation | Rationale |
 | --- | --- | --- | --- |
 | Cline | Very broad | **Move to built-in** | Large open-source and editor-community visibility. |
-| Aider | Broad, established | **Move to built-in** | Widely recognised provider-neutral baseline. |
+| Aider | Broad, established | Keep custom | Widely recognised, but below the built-in priority cut-off. |
 | Kimi Code CLI | Broad, fast-growing | Keep custom; review next cycle | Global CLI use is less proven. |
 | Hermes Agent | High launch attention | Keep custom; review next cycle | Default coding-CLI status not yet proven. |
 | Kiro CLI | Significant, recent | Keep custom | Not yet durable across communities. |
@@ -52,18 +52,22 @@ Placement means what a new aicage user is most likely to expect to find ready to
 | Mistral Vibe | Meaningful, recent | Keep custom | Early as a cross-provider terminal default. |
 | Forge Code | Niche | Keep custom | Limited evidence of broad market spread. |
 
-## Recommended placement changes
+## Capacity-constrained placement changes
 
-Move these definitions from `aicage-custom-samples/agents` to `aicage-image/agents`:
+With the current number of built-in agents held constant, make one swap:
 
-- `cline`
-- `aider`
+- Move `cline` to `aicage-image/agents`.
+- Move `crush` to `aicage-custom-samples/agents`.
 
-No built-in definition should move to custom based on this review. Each current built-in clears the
-broad-visibility bar, though Antigravity CLI warrants another review after it has more adoption history.
+Cline has broader current mindshare and is more likely to be expected by a new user. Crush remains a good sample, but
+its audience is more concentrated in the terminal and Charmbracelet community.
 
-Keep `kimi` and `hermes` as samples for now. They are the most plausible next promotions, but the current evidence is
-more about fresh attention than durable, broadly distributed CLI use.
+Keep `aider`, `kimi`, and `hermes` as samples. Aider is established, but should not receive a scarce built-in slot ahead
+of the current set. Kimi and Hermes are the most plausible subsequent promotions, although the current evidence is more
+about fresh attention than durable, broadly distributed CLI use.
+
+If the built-in set must shrink further, move `agy` (Antigravity CLI) to custom next. Its launch visibility is high, but
+it has the least proven durable adoption among the current built-ins.
 
 ## Review cadence
 
