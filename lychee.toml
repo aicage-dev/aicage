@@ -2,4 +2,5 @@
 exclude = [
     '^http://host.docker.internal:.*$',
     '^http://localhost:.*$',
+    '^https://ampcode.com/.*$',
 ]
