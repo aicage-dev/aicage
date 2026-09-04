@@ -30,11 +30,11 @@ Placement means what a new aicage user is most likely to expect to find ready to
 | Claude Code | Very broad | Keep built-in | Leading general-purpose terminal agent. |
 | Codex CLI | Very broad | Keep built-in | Leading general-purpose terminal agent. |
 | GitHub Copilot CLI | Very broad | Keep built-in | GitHub distribution makes it an expected default. |
-| Gemini CLI | Very broad | Keep built-in | Broad Google-backed open-source community. |
+| Gemini CLI | Legacy, broad | Move to custom | Succeeded by Antigravity; retain for legacy/API use. |
 | OpenCode | Very broad | Keep built-in | Leading independent open-source community. |
 | Qwen Code | Broad | Keep built-in | Strong global and Chinese ecosystem visibility. |
 | Factory CLI (`droid` directory) | Broad | Keep built-in | High developer-agent visibility. |
-| Antigravity CLI | Broad, recent | Keep built-in | High launch visibility; reassess after more adoption history. |
+| Antigravity CLI | Broad, current | Keep built-in | Google's current CLI and Gemini successor. |
 | Goose | Established | Keep built-in | Active provider-neutral open-source agent. |
 | Crush | Established | Keep built-in | Strong terminal-developer community. |
 
@@ -54,20 +54,21 @@ Placement means what a new aicage user is most likely to expect to find ready to
 
 ## Capacity-constrained placement changes
 
-With the current number of built-in agents held constant, make one swap:
+With the current number of built-in agents held constant, replace the legacy Google CLI with the stronger custom sample:
 
 - Move `cline` to `aicage-image/agents`.
-- Move `crush` to `aicage-custom-samples/agents`.
+- Move `gemini` to `aicage-custom-samples/agents` as a legacy sample.
 
-Cline has broader current mindshare and is more likely to be expected by a new user. Crush remains a good sample, but
-its audience is more concentrated in the terminal and Charmbracelet community.
+Cline has broader current mindshare and is more likely to be expected by a new user. Google positions Antigravity CLI
+(`agy`) as the successor to Gemini CLI and provides a migration path; Gemini CLI should remain available only for legacy
+or API-specific workflows.
 
 Keep `aider`, `kimi`, and `hermes` as samples. Aider is established, but should not receive a scarce built-in slot ahead
 of the current set. Kimi and Hermes are the most plausible subsequent promotions, although the current evidence is more
 about fresh attention than durable, broadly distributed CLI use.
 
-If the built-in set must shrink further, move `agy` (Antigravity CLI) to custom next. Its launch visibility is high, but
-it has the least proven durable adoption among the current built-ins.
+If the built-in set must shrink further, move `crush` to custom next. It has a strong but more concentrated
+terminal-developer audience than the other built-ins.
 
 ## Review cadence
 
