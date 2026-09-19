@@ -25,32 +25,32 @@ Placement means what a new aicage user is most likely to expect to find ready to
 
 ## Current built-ins
 
-| Agent | Spread assessment | Recommendation | Rationale |
-| --- | --- | --- | --- |
-| Claude Code | Very broad | Keep built-in | Leading general-purpose terminal agent. |
-| Codex CLI | Very broad | Keep built-in | Leading general-purpose terminal agent. |
-| GitHub Copilot CLI | Very broad | Keep built-in | GitHub distribution makes it an expected default. |
-| Gemini CLI | Legacy, broad | Move to custom | Succeeded by Antigravity; retain for legacy/API use. |
-| OpenCode | Very broad | Keep built-in | Leading independent open-source community. |
-| Qwen Code | Broad | Keep built-in | Strong global and Chinese ecosystem visibility. |
-| Factory CLI (`droid` directory) | Broad | Keep built-in | High developer-agent visibility. |
-| Antigravity CLI | Broad, current | Keep built-in | Google's current CLI and Gemini successor. |
-| Goose | Established | Keep built-in | Active provider-neutral open-source agent. |
-| Crush | Established | Keep built-in | Strong terminal-developer community. |
+| Agent                           | Spread assessment | Recommendation | Rationale                                            |
+|---------------------------------|-------------------|----------------|------------------------------------------------------|
+| Claude Code                     | Very broad        | Keep built-in  | Leading general-purpose terminal agent.              |
+| Codex CLI                       | Very broad        | Keep built-in  | Leading general-purpose terminal agent.              |
+| GitHub Copilot CLI              | Very broad        | Keep built-in  | GitHub distribution makes it an expected default.    |
+| Gemini CLI                      | Legacy, broad     | Move to custom | Succeeded by Antigravity; retain for legacy/API use. |
+| OpenCode                        | Very broad        | Keep built-in  | Leading independent open-source community.           |
+| Qwen Code                       | Broad             | Keep built-in  | Strong global and Chinese ecosystem visibility.      |
+| Factory CLI (`droid` directory) | Broad             | Keep built-in  | High developer-agent visibility.                     |
+| Antigravity CLI                 | Broad, current    | Keep built-in  | Google's current CLI and Gemini successor.           |
+| Goose                           | Established       | Keep built-in  | Active provider-neutral open-source agent.           |
+| Crush                           | Established       | Keep built-in  | Strong terminal-developer community.                 |
 
 ## Current custom samples
 
-| Agent | Spread assessment | Recommendation | Rationale |
-| --- | --- | --- | --- |
-| Cline | Very broad | **Move to built-in** | Large open-source and editor-community visibility. |
-| Aider | Broad, established | Keep custom | Widely recognised, but below the built-in priority cut-off. |
-| Kimi Code CLI | Broad, fast-growing | Keep custom; review next cycle | Global CLI use is less proven. |
-| Hermes Agent | High launch attention | Keep custom; review next cycle | Default coding-CLI status not yet proven. |
-| Kiro CLI | Significant, recent | Keep custom | Not yet durable across communities. |
-| Amp CLI | Meaningful niche | Keep custom | Narrower than the broad-default group. |
-| Auggie CLI | Meaningful niche | Keep custom | Concentrated among Augment users. |
-| Mistral Vibe | Meaningful, recent | Keep custom | Early as a cross-provider terminal default. |
-| Forge Code | Niche | Keep custom | Limited evidence of broad market spread. |
+| Agent         | Spread assessment     | Recommendation                 | Rationale                                                   |
+|---------------|-----------------------|--------------------------------|-------------------------------------------------------------|
+| Cline         | Very broad            | **Move to built-in**           | Large open-source and editor-community visibility.          |
+| Aider         | Broad, established    | Keep custom                    | Widely recognised, but below the built-in priority cut-off. |
+| Kimi Code CLI | Broad, fast-growing   | Keep custom; review next cycle | Global CLI use is less proven.                              |
+| Hermes Agent  | High launch attention | Keep custom; review next cycle | Default coding-CLI status not yet proven.                   |
+| Kiro CLI      | Significant, recent   | Keep custom                    | Not yet durable across communities.                         |
+| Amp CLI       | Meaningful niche      | Keep custom                    | Narrower than the broad-default group.                      |
+| Auggie CLI    | Meaningful niche      | Keep custom                    | Concentrated among Augment users.                           |
+| Mistral Vibe  | Meaningful, recent    | Keep custom                    | Early as a cross-provider terminal default.                 |
+| Forge Code    | Niche                 | Keep custom                    | Limited evidence of broad market spread.                    |
 
 ## Capacity-constrained placement changes
 
