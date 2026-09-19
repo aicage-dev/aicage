@@ -4,13 +4,13 @@ check-jsonschema>=0.38.0,<1
 bandit>=1.9.4,<2
 flake8>=7.3.0,<8
 mypy>=2.3.1,<3
-pyright>=1.1.413,<2
+pyright>=1.1.414,<2
 pylint>=4.0.8,<5
-pymarkdownlnt>=0.9.39,<1
+pymarkdownlnt>=0.9.40,<1
 pytest>=9.1.1,<10
 pytest-cov>=7.1.0,<8
 pywinpty>=3.0.0,<4; platform_system == "Windows"
-ruff>=0.16.6,<1
+ruff>=0.16.8,<1
 yamllint>=1.38.0,<2
 yq>=4.1.2,<5
 # types
