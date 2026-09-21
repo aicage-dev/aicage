@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.20] - 2026-09-21
+
+### Changed
+
+- Refreshed metadata on generated agent images.
+- Updated dependencies
+
 ## [1.4.19] - 2026-09-04
 
 ### Changed
