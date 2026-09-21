@@ -9,7 +9,7 @@ ARG AGENT
 ARG IMAGE_SOURCE_URL
 
 LABEL org.opencontainers.image.title="aicage" \
-      org.opencontainers.image.description="Multi-base build for agentic developer CLIs" \
+      org.opencontainers.image.description="Agent image for aicage (${AGENT})" \
       org.opencontainers.image.source="${IMAGE_SOURCE_URL}" \
       org.opencontainers.image.licenses="Apache-2.0"
 
