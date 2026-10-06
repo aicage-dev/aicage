@@ -11,8 +11,7 @@ agent=claude
 claude_binary=$1
 shift
 
-script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-log_dir="$script_dir/log"
+log_dir="$HOME/.aicage/log/ide-plugins/vscode/$agent"
 mkdir -p "$log_dir"
 log_file="$log_dir/claude-$(date +%Y%m%d-%H%M%S).log"
 
