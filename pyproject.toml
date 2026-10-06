@@ -28,6 +28,7 @@ packages = ["src/aicage"]
 "config/agent-build" = "config/agent-build"
 "config/base-build" = "config/base-build"
 "config/extension-build" = "config/extension-build"
+"config/ide-plugins" = "config/ide-plugins"
 "config/textual" = "config/textual"
 "config/validation/agent.schema.json" = "config/validation/agent.schema.json"
 "config/validation/base.schema.json" = "config/validation/base.schema.json"
@@ -38,6 +39,7 @@ include = [
   "config/agent-build/**",
   "config/base-build/**",
   "config/extension-build/**",
+  "config/ide-plugins/**",
   "config/textual/**",
   "config/validation/agent.schema.json",
   "config/validation/base.schema.json",
@@ -50,6 +52,7 @@ include = [
   "config/agent-build/**",
   "config/base-build/**",
   "config/extension-build/**",
+  "config/ide-plugins/**",
   "config/textual/**",
   "config/validation/agent.schema.json",
   "config/validation/base.schema.json",
