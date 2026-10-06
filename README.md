@@ -18,6 +18,16 @@ Install:
 pipx install aicage
 ```
 
+### Use aicage in your IDE
+
+Use aicage from your IDE when your agent and IDE have a compatible integration. Keep the chat and editor integration
+you know, while aicage runs the agent in its Docker container.
+
+See [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/IDE-Plugins) to connect an ACP-capable agent or an
+agent-specific IDE plugin.
+
+### Set up a project
+
 In your project directory, run:
 
 ```bash
@@ -104,8 +114,7 @@ If you want the agent to run Docker commands, enable `Docker socket` in the setu
 The complete user documentation lives in the wiki:
 [aicage.wiki](https://github.com/aicage/aicage/wiki)
 
-To use aicage from a JetBrains agent plugin, see
-[Use aicage from IDE plugins](https://github.com/aicage/aicage/wiki/IDE-Plugins).
+For IDE setup, see [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/IDE-Plugins).
 
 ## Common scenarios
 
