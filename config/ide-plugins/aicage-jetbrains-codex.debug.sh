@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# IDE: JetBrains IDEs
+# Plugin: CC GUI (Claude or Codex)
+# Plugin ID: com.github.idea-claude-code-gui
+
 agent=codex
 
 # setup log dir and file
