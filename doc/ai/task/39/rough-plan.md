@@ -16,3 +16,19 @@ The first two belong to the wiki repository; the last may need one wiki commit p
 they are separate repositories.
 
 I’d keep each commit independently accurate, with no dangling navigation or instructions.
+
+---
+
+## doc flow overhaul
+
+I’d do it in two steps.
+
+1. Wiki flow overhaul:
+   - Add the brief configuration loop to IDE-Plugins.md.
+   - Reframe Home.md’s terminal/menu material as later project-container configuration.
+   - Remove the duplicate IDE link.
+   These changes describe one user journey and should be reviewed together.
+2. Root README alignment:
+   - Mirror only the concise first-use flow and links from the wiki.
+   - Keep the README short; don’t duplicate the configuration reference.
+   They are separate repositories, so separate commits also keep the documentation sources independently coherent.
