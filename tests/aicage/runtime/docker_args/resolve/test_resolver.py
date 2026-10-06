@@ -11,7 +11,7 @@ from aicage.paths import container_project_path
 from aicage.runtime.docker_args.resolve import resolver
 from aicage.runtime.docker_args.resolve._mounts import map_mount_requests
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
-from aicage.runtime.env_vars import _AICAGE_WORKSPACE
+from aicage.runtime.env_vars import _AICAGE_ALLOW_HOME_MOUNT, _AICAGE_WORKSPACE
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 _MODULE = "aicage.runtime.docker_args.resolve.resolver"
@@ -159,6 +159,41 @@ class ResolverTests(TestCase):
         self.assertEqual(
             [
                 (_AICAGE_WORKSPACE, container_project_path(project_path).as_posix()),
+            ],
+            [(item.name, item.value) for item in env],
+        )
+
+    def test_resolve_docker_args_allows_home_mount_with_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home_path = Path(temp_dir) / "home"
+            home_path.mkdir()
+            _, context = self._build_context(home_path)
+            parsed = ParsedArgs(
+                False, "", "codex", [], False, [], None, allow_home_mount=True
+            )
+            provider = mock.Mock(
+                return_value=ResolvedArgs(mounts=[MountRequest(host_path=home_path)])
+            )
+
+            with (
+                mock.patch(f"{_MODULE}._resolver_sequence", return_value=(provider,)),
+                mock.patch(f"{_MODULE}.Path.home", return_value=home_path),
+            ):
+                mounts, env = resolver.resolve_docker_args(context, "codex", parsed)
+
+        self.assertEqual(
+            [
+                MountSpec(
+                    host_path=home_path,
+                    container_path=container_project_path(home_path),
+                )
+            ],
+            mounts,
+        )
+        self.assertEqual(
+            [
+                (_AICAGE_ALLOW_HOME_MOUNT, "true"),
+                (_AICAGE_WORKSPACE, container_project_path(home_path).as_posix()),
             ],
             [(item.name, item.value) for item in env],
         )
