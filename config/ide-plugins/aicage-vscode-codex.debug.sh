@@ -7,8 +7,7 @@
 agent=codex
 
 # setup log dir and file
-script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-log_dir="$script_dir/log"
+log_dir="$HOME/.aicage/logs/ide-plugins/vscode/$agent"
 mkdir -p "$log_dir"
 log_file="$log_dir/$agent-$(date +%Y%m%d-%H%M%S).log"
 
