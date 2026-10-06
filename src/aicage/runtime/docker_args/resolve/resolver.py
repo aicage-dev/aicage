@@ -38,7 +38,11 @@ def resolve_docker_args(
     env = list(chain.from_iterable(item.env for item in resolved))
     host_home = Path.home().resolve()
     mounts = map_mount_requests(mount_requests)
-    _validate_home_mount_safety(mounts, host_home)
+    _validate_home_mount_safety(
+        mounts,
+        host_home,
+        allow_home_mount=parsed is not None and parsed.allow_home_mount,
+    )
     workspace_path = container_project_path(project_path)
     env.append(EnvVar(name=_AICAGE_WORKSPACE, value=workspace_path.as_posix()))
     return mounts, env
@@ -66,9 +70,13 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
     )
 
 
-def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> None:
+def _validate_home_mount_safety(
+    mounts: list[MountSpec], host_home: Path, allow_home_mount: bool = False
+) -> None:
     for mount in mounts:
         host_path = mount.host_path.resolve()
+        if allow_home_mount and host_path == host_home:
+            continue
         if host_path == host_home or host_path in host_home.parents:
             raise AicageError(
                 "Refusing to start: this would expose your home directory to the container via "

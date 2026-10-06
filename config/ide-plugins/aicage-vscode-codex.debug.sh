@@ -23,4 +23,4 @@ log_file="$log_dir/$agent-$(date +%Y%m%d-%H%M%S).log"
 } >>"$log_file"
 
 # run agent in aicage container while passing arguments and logging stderr output
-exec aicage "$agent" "$@" 2>>"$log_file"
+exec aicage --allow-home-mount "$agent" "$@" 2>>"$log_file"

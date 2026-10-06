@@ -235,6 +235,11 @@ class ParseCliTests(TestCase):
         )
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
+    def test_parse_cli_with_allow_home_mount(self) -> None:
+        parsed = parse_cli(["--allow-home-mount", "codex"])
+
+        self.assertTrue(parsed.allow_home_mount)
+
     def test_parse_cli_with_menu_none(self) -> None:
         parsed = parse_cli(["--menu", "none", "codex"])
         self.assertEqual("none", parsed.menu)
@@ -248,6 +253,10 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_rejects_share(self) -> None:
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "--share", "data"])
+
+    def test_parse_cli_config_rejects_allow_home_mount(self) -> None:
+        with self.assertRaises(CliError):
+            parse_cli(["--config", "info", "--allow-home-mount"])
 
     def test_parse_cli_config_rejects_non_default_menu(self) -> None:
         with self.assertRaises(CliError):

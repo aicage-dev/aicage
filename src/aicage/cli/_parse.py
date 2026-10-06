@@ -49,6 +49,11 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         help="Mount a host directory into the container (repeatable).",
     )
     parser.add_argument(
+        "--allow-home-mount",
+        action="store_true",
+        help="Allow mounting the host home directory into the container.",
+    )
+    parser.add_argument(
         _CONFIG_OPTION,
         nargs="*",
         help="Perform config actions such as the default info or 'remove [agent]'.",
@@ -79,9 +84,10 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         usage: str = (
             "Usage:\n"
             "  aicage <agent>\n"
-            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
-            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent>"
-            " [<agent-args>]\n"
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...]"
+            " [--allow-home-mount] <agent> [<agent-args>]\n"
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...]"
+            " [--allow-home-mount] <docker-args> -- <agent> [<agent-args>]\n"
             "  aicage --config\n"
             "  aicage --config info\n"
             "  aicage --config remove [<agent>]\n"
@@ -91,6 +97,8 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  --menu <mode>    Choose menu mode: ui, simple, or none.\n"
             "  --docker         Mount /run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
+            "  --allow-home-mount\n"
+            "                   Allow mounting the host home directory into the container.\n"
             "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
@@ -124,6 +132,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             config_action,
             config_agent,
             opts.menu,
+            opts.allow_home_mount,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -141,6 +150,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         None,
         None,
         opts.menu,
+        opts.allow_home_mount,
     )
 
 
@@ -206,6 +216,7 @@ def _validate_config_action(
         or opts.docker
         or opts.dry_run
         or opts.share
+        or opts.allow_home_mount
         or opts.menu != "ui"
     ):
         raise CliError("No additional arguments are allowed with --config.")

@@ -55,6 +55,34 @@ class HomeGuardTests(TestCase):
         )
 
     @staticmethod
+    def test_validate_home_mount_safety_allows_home_mount_with_opt_in() -> None:
+        home_path = Path("/test-tmp/home").resolve()
+        mounts = [
+            MountSpec(
+                host_path=home_path,
+                container_path=container_project_path(home_path),
+            ),
+        ]
+
+        resolver._validate_home_mount_safety(
+            mounts, home_path, allow_home_mount=True
+        )
+
+    def test_validate_home_mount_safety_rejects_parent_with_opt_in(self) -> None:
+        home_path = Path("/test-tmp/home/user").resolve()
+        mounts = [
+            MountSpec(
+                host_path=home_path.parent,
+                container_path=container_project_path(home_path.parent),
+            ),
+        ]
+
+        with self.assertRaises(AicageError):
+            resolver._validate_home_mount_safety(
+                mounts, home_path, allow_home_mount=True
+            )
+
+    @staticmethod
     def test_validate_home_mount_safety_allows_non_home_mount() -> None:
         home_path = Path("/test-tmp/home").resolve()
         mounts = [

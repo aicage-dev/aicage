@@ -5,4 +5,4 @@
 # Plugin ID: openai.chatgpt
 
 # run agent in aicage container while passing arguments
-exec aicage codex "$@"
+exec aicage --allow-home-mount codex "$@"

@@ -15,3 +15,4 @@ class ParsedArgs:
     config_action: str | None
     config_agent: str | None = None
     menu: MenuMode = "ui"
+    allow_home_mount: bool = False
