@@ -33,7 +33,6 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
   aicage claude
   aicage codex
   aicage copilot
-  aicage crush
   aicage droid
   aicage gemini
   aicage goose
@@ -138,7 +137,6 @@ To use aicage from a JetBrains agent plugin, see
 | claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)             |
 | codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli)           |
 | copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli)           |
-| crush    | Crush              | [https://github.com/charmbracelet/crush](https://github.com/charmbracelet/crush)             |
 | droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                             |
 | gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                               |
 | goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                               |
