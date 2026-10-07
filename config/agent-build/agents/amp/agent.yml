@@ -1,0 +1,10 @@
+agent_path:
+  directories:
+    - ~/.config/amp
+    - ~/.local/share/amp
+agent_full_name: Amp CLI
+agent_homepage: https://ampcode.com/
+base_distro_exclude:
+  - Alpine
+# Build locally because the license does not allow redistributing prebuilt images.
+build_local: true

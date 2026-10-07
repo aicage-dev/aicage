@@ -1,0 +1,2 @@
+# ampcode.com is reachable, but lychee reports an HTTP/2 protocol error for it in CI.
+^https://ampcode\.com/$
