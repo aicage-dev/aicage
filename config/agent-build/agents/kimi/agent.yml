@@ -1,0 +1,6 @@
+agent_path:
+  directories:
+    - ~/.kimi-code
+agent_full_name: Kimi Code CLI
+agent_homepage: https://www.kimi.com/code
+build_local: false

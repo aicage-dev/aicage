@@ -37,6 +37,7 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
   aicage droid
   aicage gemini
   aicage goose
+  aicage kimi
   aicage opencode
   aicage qwen
   ```
@@ -142,6 +143,7 @@ To use aicage from a JetBrains agent plugin, see
 | droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
 | gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                     |
 | goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
+| kimi     | Kimi Code CLI      | [https://moonshotai.github.io/kimi-code](https://moonshotai.github.io/kimi-code)   |
 | opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
 | qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
 <!-- pyml enable line-length -->
