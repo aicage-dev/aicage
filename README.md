@@ -29,7 +29,6 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
 - Built-in agent examples:
 
   ```bash
-  aicage agy
   aicage claude
   aicage codex
   aicage copilot
@@ -131,17 +130,16 @@ To use aicage from a JetBrains agent plugin, see
 ## Built-in agents
 
 <!-- pyml disable line-length -->
-| CLI      | Agent              | Homepage                                                                                     |
-|----------|--------------------|----------------------------------------------------------------------------------------------|
-| agy      | Antigravity CLI    | [https://antigravity.google/docs/cli-overview](https://antigravity.google/docs/cli-overview) |
-| claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)             |
-| codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli)           |
-| copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli)           |
-| droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                             |
-| gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                               |
-| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                               |
-| opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                                   |
-| qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs)           |
+| CLI      | Agent              | Homepage                                                                           |
+|----------|--------------------|------------------------------------------------------------------------------------|
+| claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)   |
+| codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
+| copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
+| droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
+| gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                     |
+| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
+| opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
+| qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
 <!-- pyml enable line-length -->
 
 ## Customization
