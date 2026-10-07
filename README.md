@@ -41,6 +41,7 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
   aicage kiro-cli
   aicage opencode
   aicage qwen
+  aicage vibe
   ```
 
 Your existing CLI config for each agent is mounted inside the container so you can keep using your preferences and
@@ -148,6 +149,7 @@ To use aicage from a JetBrains agent plugin, see
 | kiro-cli | Kiro CLI           | [https://kiro.dev/cli/](https://kiro.dev/cli/)                                     |
 | opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
 | qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
+| vibe     | Mistral Vibe CLI   | [https://docs.mistral.ai/vibe/code/](https://docs.mistral.ai/vibe/code/)           |
 <!-- pyml enable line-length -->
 
 ## Customization

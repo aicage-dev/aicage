@@ -8,7 +8,6 @@
 | Cline CLI                            | Custom samples | Native                     | `cline --acp`                                                                 |
 | Crush                                | Custom samples | No native ACP              | No recommended active adapter                                                 |
 | [Forge Code](https://forgecode.dev/) | Custom samples | No verified ACP agent mode | N/A                                                                           |
-| Mistral Vibe                         | Custom samples | Native adapter             | [`vibe-acp`](https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides)        |
 | Amp CLI                              | Image          | Third-party adapter        | [`amp-acp`](https://github.com/tao12345666333/amp-acp)                        |
 | Auggie CLI                           | Image          | Native                     | `auggie --acp`                                                                |
 | Claude Code                          | Image          | Wrapper                    | [`claude-agent-acp`](https://github.com/agentclientprotocol/claude-agent-acp) |
@@ -21,6 +20,7 @@
 | Kiro CLI                             | Image          | Native                     | `kiro acp`                                                                    |
 | OpenCode                             | Image          | Native                     | `opencode acp`                                                                |
 | Qwen Code                            | Image          | Native                     | `qwen --acp`                                                                  |
+| Mistral Vibe                         | Image          | Native adapter             | [`vibe-acp`](https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides)        |
 <!-- pyml enable line-length -->
 
 Forge Code is a standalone, multi-provider coding CLI with its own local agents (`forge`, `muse`, and `sage`). It is
