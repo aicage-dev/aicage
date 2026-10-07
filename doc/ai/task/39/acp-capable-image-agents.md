@@ -5,7 +5,6 @@
 |--------------------------------------|----------------|----------------------------|-------------------------------------------------------------------------------|
 | Aider                                | Custom samples | No native ACP              | No recommended active adapter                                                 |
 | Antigravity CLI                      | Custom samples | No native ACP              | No recommended active adapter                                                 |
-| Auggie CLI                           | Custom samples | Native                     | `auggie --acp`                                                                |
 | Cline CLI                            | Custom samples | Native                     | `cline --acp`                                                                 |
 | Crush                                | Custom samples | No native ACP              | No recommended active adapter                                                 |
 | [Forge Code](https://forgecode.dev/) | Custom samples | No verified ACP agent mode | N/A                                                                           |
@@ -13,6 +12,7 @@
 | Kiro CLI                             | Custom samples | Native                     | `kiro acp`                                                                    |
 | Mistral Vibe                         | Custom samples | Native adapter             | [`vibe-acp`](https://docs.mistral.ai/vibe/code/use-vibe-in-other-ides)        |
 | Amp CLI                              | Image          | Third-party adapter        | [`amp-acp`](https://github.com/tao12345666333/amp-acp)                        |
+| Auggie CLI                           | Image          | Native                     | `auggie --acp`                                                                |
 | Claude Code                          | Image          | Wrapper                    | [`claude-agent-acp`](https://github.com/agentclientprotocol/claude-agent-acp) |
 | Codex CLI                            | Image          | Wrapper                    | [`codex-acp`](https://github.com/agentclientprotocol/codex-acp)               |
 | GitHub Copilot CLI                   | Image          | Native                     | `copilot --acp --stdio`                                                       |

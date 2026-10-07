@@ -30,6 +30,7 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
 
   ```bash
   aicage amp
+  aicage auggie
   aicage claude
   aicage codex
   aicage copilot
@@ -134,6 +135,7 @@ To use aicage from a JetBrains agent plugin, see
 | CLI      | Agent              | Homepage                                                                           |
 |----------|--------------------|------------------------------------------------------------------------------------|
 | amp      | Amp CLI            | [https://ampcode.com/docs/cli](https://ampcode.com/docs/cli)                       |
+| auggie   | Auggie CLI         | [https://docs.augmentcode.com/cli](https://docs.augmentcode.com/cli)               |
 | claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)   |
 | codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
 | copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
