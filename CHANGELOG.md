@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-08
+
+### Added
+
+- Added ACP (Agent Client Protocol) capable agents:
+  - Agents: Amp CLI, Auggie CLI, Kimi Code CLI, Kiro CLI, and Mistral Vibe CLI.
+- Bundled shim scripts for using agents Amp CLI, Claude Code, and Codex CLI in IDEs through external ACP bridges.
+
+### Changed
+
+- Moved agents without ACP support agents out of the built-in agent set. They do not support ACP. Use custom agent
+  definitions for them.
+  - Agents: Antigravity CLI and Crush
+
 ## [1.4.20] - 2026-09-21
 
 ### Changed
