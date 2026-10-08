@@ -8,15 +8,14 @@
 | Cline CLI                            | Custom samples | Native                     | `cline --acp`                                                                 |
 | Crush                                | Custom samples | No native ACP              | No recommended active adapter                                                 |
 | [Forge Code](https://forgecode.dev/) | Custom samples | No verified ACP agent mode | N/A                                                                           |
+| Kimi Code CLI                        | Custom samples | Native                     | `kimi acp`                                                                    |
 | Amp CLI                              | Image          | Third-party adapter        | [`amp-acp`](https://github.com/tao12345666333/amp-acp)                        |
 | Auggie CLI                           | Image          | Native                     | `auggie --acp`                                                                |
 | Claude Code                          | Image          | Wrapper                    | [`claude-agent-acp`](https://github.com/agentclientprotocol/claude-agent-acp) |
 | Codex CLI                            | Image          | Wrapper                    | [`codex-acp`](https://github.com/agentclientprotocol/codex-acp)               |
 | GitHub Copilot CLI                   | Image          | Native                     | `copilot --acp --stdio`                                                       |
 | Factory CLI                          | Image          | Native                     | `droid exec --output-format acp`                                              |
-| Gemini CLI                           | Image          | Experimental native        | `gemini --experimental-acp`                                                   |
 | Goose CLI                            | Image          | Native                     | `goose acp`                                                                   |
-| Kimi Code CLI                        | Image          | Native                     | `kimi acp`                                                                    |
 | Kiro CLI                             | Image          | Native                     | `kiro acp`                                                                    |
 | OpenCode                             | Image          | Native                     | `opencode acp`                                                                |
 | Qwen Code                            | Image          | Native                     | `qwen --acp`                                                                  |
