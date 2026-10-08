@@ -97,8 +97,8 @@ git clone https://github.com/aicage/aicage-custom-samples.git ~/.aicage-custom
 Then, in the project folder, run this:
 
 ```shell
-aicage --config remove gemini
-aicage gemini
+aicage --config remove agy
+aicage agy
 ```
 
 When asked:
@@ -107,12 +107,12 @@ When asked:
 2. For extensions, pick `php`.
 3. Accept the default answers for the remaining questions.
 
-> If you accidentally skip the extension, run `aicage --config remove gemini` and start Test 4 again.
+> If you accidentally skip the extension, run `aicage --config remove agy` and start Test 4 again.
 
 #### Expectation
 
-1. `aicage` should locally build the image `aicage:gemini-ubuntu-php`.
-2. You should see the start screen of `gemini`.
+1. `aicage` should locally build the image `aicage:agy-ubuntu-php`.
+2. You should see the start screen of `agy`.
 
 Press Ctrl-C repeatedly to exit.
 

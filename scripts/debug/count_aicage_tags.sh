@@ -12,7 +12,7 @@ registry_token_url="https://ghcr.io/token?service=ghcr.io&scope=repository"
 repo="aicage/aicage"
 
 bases=(act ubuntu fedora node alpine debian)
-agents=(claude copilot codex qwen droid opencode goose gemini)
+agents=(claude copilot codex qwen droid opencode goose)
 
 ghcr_pull_token() {
   local repo="$1"
