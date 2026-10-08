@@ -4,3 +4,5 @@
 ^https://ampcode\.com/$
 # Is not directly reachable, sub-paths are valid
 ^https://code\.kimi\.com/kimi-code/$
+# Ignore API URL
+^https://openrouter.ai/api/v1$
