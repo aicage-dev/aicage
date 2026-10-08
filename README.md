@@ -44,7 +44,6 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
   aicage copilot
   aicage droid
   aicage goose
-  aicage kimi
   aicage kiro-cli
   aicage opencode
   aicage qwen
@@ -150,7 +149,6 @@ For IDE setup, see [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/ID
 | copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
 | droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
 | goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
-| kimi     | Kimi Code CLI      | [https://moonshotai.github.io/kimi-code](https://moonshotai.github.io/kimi-code)   |
 | kiro-cli | Kiro CLI           | [https://kiro.dev/cli/](https://kiro.dev/cli/)                                     |
 | opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
 | qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
