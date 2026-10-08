@@ -1,0 +1,4 @@
+-e GOOSE_PROVIDER=openrouter
+-e GOOSE_MODEL=openrouter/free
+-e OPENROUTER_API_KEY=$OPENROUTER_API_KEY
+
