@@ -6,3 +6,5 @@
 ^https://code\.kimi\.com/kimi-code/$
 # openai.com/brand rejects with 403 Forbidden
 ^https://openai.com/brand/$
+# Ignore API URL
+^https://openrouter.ai/api/v1$
