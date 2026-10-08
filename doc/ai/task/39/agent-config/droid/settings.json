@@ -1,0 +1,12 @@
+{
+  "logoAnimation": "off",
+  "customModels": [
+    {
+      "model": "openrouter/free",
+      "displayName": "openrouter/free via OpenRouter",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKey": "${OPENROUTER_API_KEY}",
+      "provider": "generic-chat-completion-api"
+    }
+  ]
+}
