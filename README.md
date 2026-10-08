@@ -43,7 +43,6 @@ For a first useful run, you can usually just press Enter or select `OK` when pro
   aicage codex
   aicage copilot
   aicage droid
-  aicage gemini
   aicage goose
   aicage kimi
   aicage kiro-cli
@@ -150,7 +149,6 @@ For IDE setup, see [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/ID
 | codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
 | copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
 | droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
-| gemini   | Gemini CLI         | [https://geminicli.com](https://geminicli.com)                                     |
 | goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
 | kimi     | Kimi Code CLI      | [https://moonshotai.github.io/kimi-code](https://moonshotai.github.io/kimi-code)   |
 | kiro-cli | Kiro CLI           | [https://kiro.dev/cli/](https://kiro.dev/cli/)                                     |
