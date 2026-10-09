@@ -20,9 +20,24 @@ pipx install aicage
 
 ### Use aicage in your IDE
 
-Use your agent in your IDE, while aicage runs the agent in its Docker container.
+Use your agent in your IDE while aicage runs it in a Docker container.
 
-See [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/IDE-Plugins) to connect IDE plugins to agents in aicage.
+1. Install an ACP-capable IDE plugin:
+   - Visual Studio Code: [ACP Client](https://marketplace.visualstudio.com/items?itemName=formulahendry.acp-client)
+   - JetBrains: [AI Assistant](https://www.jetbrains.com/help/ai-assistant/activate-agents.html)
+2. Copy the [Visual Studio Code configuration](doc/ai/task/39/VScode/settings.json) into user `settings.json`, or add the
+   [JetBrains configuration](doc/ai/task/39/JetBrains/acp.json) as a custom ACP agent.
+3. Install adapters for the three agents that need them:
+
+   ```bash
+   npm install -g amp-acp @agentclientprotocol/claude-agent-acp @agentclientprotocol/codex-acp
+   ```
+
+The configurations include all built-in agents. The JetBrains configuration needs absolute paths for `aicage` and the
+three adapter executables. Get them with `command -v aicage`, `command -v amp-acp`, `command -v claude-agent-acp`,
+and `command -v codex-acp`.
+
+For the JetBrains UI, see [Add ACP agents](https://www.jetbrains.com/help/ai-assistant/activate-agents.html#add-acp-agents).
 
 ### Set up a project
 
