@@ -20,6 +20,9 @@ dynamic = ["version"]
 
 [project.scripts]
 aicage = "aicage.cli.entrypoint:main"
+aicage-amp = "aicage.cli.agent_entrypoints:amp"
+aicage-claude = "aicage.cli.agent_entrypoints:claude"
+aicage-codex = "aicage.cli.agent_entrypoints:codex"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aicage"]
