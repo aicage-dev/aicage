@@ -18,7 +18,9 @@ class AgentEntrypointsTests(TestCase):
     def _assert_runs_agent(self, entrypoint: Callable[[], int], agent: str) -> None:
         with (
             mock.patch.object(sys, "argv", ["aicage-agent", "--acp"]),
-            mock.patch("aicage.cli.agent_entrypoints.main", return_value=7) as main_mock,
+            mock.patch(
+                "aicage.cli.agent_entrypoints.main", return_value=7
+            ) as main_mock,
         ):
             exit_code = entrypoint()
 
