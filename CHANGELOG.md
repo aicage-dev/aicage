@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-10-10
+
+### Added
+
+- GitHub releases now include the built wheel and source distribution with a signed checksum manifest.
+
 ## [1.5.1] - 2026-10-10
 
 ### Added
