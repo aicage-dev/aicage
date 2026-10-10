@@ -111,11 +111,16 @@ class VisibilityRulesTests(TestCase):
         src_dir = repo_root / "src"
         modules = _collect_module_info(src_dir)
         usage = _collect_symbol_usage(modules)
+        script_targets = _project_script_targets(repo_root)
         violations: list[str] = []
         for module_name, info in modules.items():
             used_symbols = usage.get(module_name, set())
             for symbol in sorted(info.public_symbols):
-                if "*" in used_symbols or symbol in used_symbols:
+                if (
+                    "*" in used_symbols
+                    or symbol in used_symbols
+                    or f"{module_name}:{symbol}" in script_targets
+                ):
                     continue
                 violations.append(f"{info.path.relative_to(repo_root)}:{symbol}")
 
@@ -131,6 +136,7 @@ class VisibilityRulesTests(TestCase):
         modules = _collect_module_info(src_dir)
         from_imports = _collect_from_imports_all(modules, src_dir)
         attribute_usages = _collect_attribute_usages(modules, src_dir)
+        script_targets = _project_script_targets(repo_root)
         violations: list[str] = []
         for module_name, info in modules.items():
             if info.path.name.startswith("_"):
@@ -139,6 +145,8 @@ class VisibilityRulesTests(TestCase):
             if len(symbol_package) <= 1:
                 continue
             for symbol in sorted(info.public_symbols):
+                if f"{module_name}:{symbol}" in script_targets:
+                    continue
                 importers = from_imports.get(f"{module_name}.{symbol}", set())
                 if _has_outside_package_usage(importers, modules, symbol_package):
                     continue
@@ -158,6 +166,7 @@ class VisibilityRulesTests(TestCase):
         src_dir = repo_root / "src"
         modules = _collect_module_info(src_dir)
         usage = _collect_module_usage(modules)
+        script_targets = _project_script_targets(repo_root)
         violations: list[str] = []
         for module_name, info in modules.items():
             if info.path.name in {"__init__.py", "__main__.py"}:
@@ -168,7 +177,12 @@ class VisibilityRulesTests(TestCase):
             if len(module_package) <= 1:
                 continue
             importers = usage.get(module_name, set())
-            if not _has_outside_package_usage(importers, modules, module_package):
+            is_script_target = any(
+                target.startswith(f"{module_name}:") for target in script_targets
+            )
+            if not is_script_target and not _has_outside_package_usage(
+                importers, modules, module_package
+            ):
                 violations.append(f"{info.path.relative_to(repo_root)}:{module_name}")
 
         self.assertEqual(
@@ -180,6 +194,23 @@ class VisibilityRulesTests(TestCase):
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
+
+
+def _project_script_targets(repo_root: Path) -> set[str]:
+    pyproject = repo_root / "pyproject.toml"
+    in_scripts = False
+    targets: set[str] = set()
+    for line in pyproject.read_text(encoding="utf-8").splitlines():
+        if line.startswith("["):
+            in_scripts = line == "[project.scripts]"
+            continue
+        if not in_scripts or "=" not in line:
+            continue
+        _, value = line.split("=", maxsplit=1)
+        target = ast.literal_eval(value.strip())
+        if isinstance(target, str):
+            targets.add(target)
+    return targets
 
 
 def _module_name_from_path(path: Path, src_dir: Path) -> str:
