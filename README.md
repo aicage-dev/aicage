@@ -1,14 +1,58 @@
 # aicage
 
-Run your favorite AI coding agents comfortably in Docker.
+Give coding agents your project files, not your whole computer.
+
+`aicage` runs AI coding agents in containers while you work on the same local project files.
 
 ## Why use `aicage`?
 
-Agents need deep access (read code, run shells, install deps).
+Agents need deep access (read code, run commands, install dependencies).
 Their built-in safety checks are naturally limited.
 
-Running agents in containers gives a hard boundary - while the experience stays the same.
+Running agents in containers gives a hard boundary – with `aicage` the experience stays the same.
+
+- Work with the same project files as the agent
+- Configure shared folders, agent images, and runtime options
+- Same paths and user inside the container[^windows-paths]
+- Pre-built and tested images
+- Automatic updates for agents and images
+
+[^windows-paths]: On Windows, run `aicage` from WSL for matching paths and user. Native Windows paths are mounted under
+`/mnt/<drive>` and the container runs as `root`.
+
 See [Why cage agents?](#why-cage-agents) for the full rationale.
+
+## Built-in agents
+
+Use one of these builtin CLI agents or
+[add your own](https://github.com/aicage/aicage/wiki/Customization#customization).
+
+<!-- pyml disable line-length,no-inline-html -->
+<!-- markdownlint-disable line-length -->
+<table>
+  <tr>
+    <td><img src="assets/agent-logos/amp.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://ampcode.com/docs/cli">Amp CLI</a> · <code>amp</code></td>
+    <td><a href="https://docs.augmentcode.com/cli">Auggie CLI</a> · <code>auggie</code></td>
+    <td><img src="assets/agent-logos/claude.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://claude.com/product/claude-code">Claude Code</a> · <code>claude</code></td>
+  </tr>
+  <tr>
+    <td><img src="assets/agent-logos/codex.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://developers.openai.com/codex/cli">Codex CLI</a> · <code>codex</code></td>
+    <td><a href="https://github.com/features/copilot/cli">GitHub Copilot CLI</a> · <code>copilot</code></td>
+    <td><a href="https://factory.ai/product/cli">Factory CLI</a> · <code>droid</code></td>
+  </tr>
+  <tr>
+    <td><img src="assets/agent-logos/goose.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://goose-docs.ai">Goose CLI</a> · <code>goose</code></td>
+    <td><a href="https://kiro.dev/cli/">Kiro CLI</a> · <code>kiro-cli</code></td>
+    <td><img src="assets/agent-logos/opencode.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://opencode.ai">OpenCode</a> · <code>opencode</code></td>
+  </tr>
+  <tr>
+    <td><img src="assets/agent-logos/qwen.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://qwenlm.github.io/qwen-code-docs">Qwen Code</a> · <code>qwen</code></td>
+    <td><img src="assets/agent-logos/mistral.svg" alt="" height="20" style="vertical-align: middle;"> <a href="https://docs.mistral.ai/vibe/code/">Mistral Vibe CLI</a> · <code>vibe</code></td>
+    <td></td>
+  </tr>
+</table>
+<!-- markdownlint-enable line-length -->
+<!-- pyml enable line-length,no-inline-html -->
 
 ## Quick start
 
@@ -18,61 +62,60 @@ Install:
 pipx install aicage
 ```
 
-### Use aicage in your IDE
+### First run
 
-Use your agent in your IDE while aicage runs it in a Docker container.
-
-1. Install an ACP-capable IDE plugin:
-   - Visual Studio Code: [ACP Client](https://marketplace.visualstudio.com/items?itemName=formulahendry.acp-client)
-   - JetBrains: [AI Assistant](https://www.jetbrains.com/help/ai-assistant/activate-agents.html)
-2. Copy the [Visual Studio Code configuration](doc/ai/task/39/VScode/settings.json) into user `settings.json`, or add the
-   [JetBrains configuration](doc/ai/task/39/JetBrains/acp.json) as a custom ACP agent.
-3. Install adapters for the three agents that need them:
-
-   ```bash
-   npm install -g amp-acp @agentclientprotocol/claude-agent-acp @agentclientprotocol/codex-acp
-   ```
-
-The configurations include all built-in agents. The JetBrains configuration needs absolute paths for `aicage` and the
-three adapter executables. Get them with `command -v aicage`, `command -v amp-acp`, `command -v claude-agent-acp`,
-and `command -v codex-acp`.
-
-For the JetBrains UI, see [Add ACP agents](https://www.jetbrains.com/help/ai-assistant/activate-agents.html#add-acp-agents).
-
-### Set up a project
-
-In your project directory, run:
+In your project directory, start the agent you want to use:
 
 ```bash
 aicage <agent>
 ```
 
-For a first useful run, you can usually just press Enter or select `OK` when prompted.
+Accept the setup choices, then sign in or confirm that the agent is already signed in.
 
-- Built-in agent examples:
+> - Prefer file-based credential storage or API keys; keyring-based auth does not work.
+> - If sign-in fails, sign in with the agent on the host, then try again.
 
-  ```bash
-  aicage amp
-  aicage auggie
-  aicage claude
-  aicage codex
-  aicage copilot
-  aicage droid
-  aicage goose
-  aicage kiro-cli
-  aicage opencode
-  aicage qwen
-  aicage vibe
-  ```
+### Use aicage in your IDE
 
-Your existing CLI config for each agent is mounted inside the container so you can keep using your preferences and
-credentials.
+Use your agent in your IDE while aicage runs it in a Docker container.
 
-## What you see first
+#### Visual Studio Code
+
+1. Install [ACP Client](https://marketplace.visualstudio.com/items?itemName=formulahendry.acp-client).
+2. In the plugin settings, add your agent’s config from the
+   [Visual Studio Code configuration](config/ide-plugins/VScode/settings.json) into the `settings.json`.
+
+#### JetBrains
+
+1. Install [AI Assistant](https://www.jetbrains.com/help/ai-assistant/activate-agents.html).
+2. In the plugin’s settings, add your agent’s config from the
+   [JetBrains configuration](config/ide-plugins/JetBrains/acp.json) as a
+   [custom ACP agent](https://www.jetbrains.com/help/ai-assistant/activate-agents.html#add-acp-agents).  
+   Replace `/path/to/aicage` with the full path to `aicage`.
+
+#### ACP Bridge for Amp, Claude, and Codex
+
+These agents need one additional ACP bridge. Install the bridge for the agent you use:
+
+```bash
+# Run only the command for your agent.
+npm install -g amp-acp
+npm install -g @agentclientprotocol/claude-agent-acp
+npm install -g @agentclientprotocol/codex-acp
+```
+
+In JetBrains, replace the bridge's `/path/to/...` in the config above with its full path.
+
+## Change a project's setup
+
+Run `aicage <agent>` from the project directory to change the agent's container setup. Your IDE uses the saved
+project configuration.
+
+### Configuration menu
 
 After `aicage <agent>` starts, you will see this setup overview:
 
-![Overview screen](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/textual/Screenshot_overview.png)
+![Overview screen](assets/screenshots/textual/Screenshot_overview.png)
 
 The overview brings the most common choices together in one place:
 
@@ -84,7 +127,7 @@ The overview brings the most common choices together in one place:
 - `Docker socket`: lets the agent use Docker on the host when you explicitly enable it.
 - `OK`: saves the current project config for that agent and starts the container.
 
-## Common next steps
+## Common project changes
 
 ### Bind mounts
 
@@ -92,9 +135,9 @@ Use `Bind Mounts` when the agent needs access to files or directories outside th
 
 ### Docker args
 
-If you want to adjust how the container starts, open `Docker Args` in the setup screen.
+To adjust how the container starts, open `Docker Args` in the setup screen.
 
-![Docker args](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/textual/Screenshot_docker_args.png)
+![Docker args](assets/screenshots/textual/Screenshot_docker_args.png)
 
 Use it for normal `docker run` arguments such as:
 
@@ -110,7 +153,7 @@ See [Docker run pass-through args](https://github.com/aicage/aicage/wiki/Docker-
 
 Extensions let you add tools on top of an existing agent image. Quick start:
 
-![Extensions](https://raw.githubusercontent.com/wiki/aicage/aicage/screenshots/textual/Screenshot_extensions.png)
+![Extensions](assets/screenshots/textual/Screenshot_extensions.png)
 
 ```bash
 git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom
@@ -125,13 +168,14 @@ If you want the agent to run Docker commands, enable `Docker socket` in the setu
 
 ## Full documentation
 
-The complete user documentation lives in the wiki:
-[aicage.wiki](https://github.com/aicage/aicage/wiki)
-
-For IDE setup, see [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/IDE-Plugins).
+The complete user documentation lives in the [aicage.wiki](https://github.com/aicage/aicage/wiki).
 
 ## Common scenarios
 
+- First-use setup issues:
+  - See [Known hiccups](https://github.com/aicage/aicage/wiki/Known-Hiccups).
+- On Windows:
+  - Set `git config --global core.autocrlf true` on the Windows host to avoid line-ending diffs.
 - Pass arguments to the agent:
   - `aicage <agent> resume <session-id>`
 - Share additional host folders:
@@ -141,39 +185,22 @@ For IDE setup, see [Use aicage in IDEs](https://github.com/aicage/aicage/wiki/ID
   - See [CLI options](https://github.com/aicage/aicage/wiki/CLI-Options).
 - Use host networking or custom networks:
   - See [Host networking](https://github.com/aicage/aicage/wiki/Host-Networking).
-- On Windows:
-  - set `git config --global core.autocrlf true` on the Windows host to avoid line-ending diffs.
 - On macOS with native Docker:
   - See [Known hiccups](https://github.com/aicage/aicage/wiki/Known-Hiccups) for the current support caveat.
-- Run into first-use setup issues:
-  - See [Known hiccups](https://github.com/aicage/aicage/wiki/Known-Hiccups).
-- Add custom tools/agents/base images:
+- Add custom tools, agents, or base images:
   - [Extensions](https://github.com/aicage/aicage/wiki/Customization-Extensions)
   - [Custom agents](https://github.com/aicage/aicage/wiki/Customization-Agents)
   - [Custom base images](https://github.com/aicage/aicage/wiki/Customization-Base-Images)
 
-## Built-in agents
-
-<!-- pyml disable line-length -->
-| CLI      | Agent              | Homepage                                                                           |
-|----------|--------------------|------------------------------------------------------------------------------------|
-| amp      | Amp CLI            | [https://ampcode.com/docs/cli](https://ampcode.com/docs/cli)                       |
-| auggie   | Auggie CLI         | [https://docs.augmentcode.com/cli](https://docs.augmentcode.com/cli)               |
-| claude   | Claude Code        | [https://claude.com/product/claude-code](https://claude.com/product/claude-code)   |
-| codex    | Codex CLI          | [https://developers.openai.com/codex/cli](https://developers.openai.com/codex/cli) |
-| copilot  | GitHub Copilot CLI | [https://github.com/features/copilot/cli](https://github.com/features/copilot/cli) |
-| droid    | Factory CLI        | [https://factory.ai/product/cli](https://factory.ai/product/cli)                   |
-| goose    | Goose CLI          | [https://goose-docs.ai](https://goose-docs.ai)                                     |
-| kiro-cli | Kiro CLI           | [https://kiro.dev/cli/](https://kiro.dev/cli/)                                     |
-| opencode | OpenCode           | [https://opencode.ai](https://opencode.ai)                                         |
-| qwen     | Qwen Code          | [https://qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-code-docs) |
-| vibe     | Mistral Vibe CLI   | [https://docs.mistral.ai/vibe/code/](https://docs.mistral.ai/vibe/code/)           |
-<!-- pyml enable line-length -->
-
 ## Customization
 
-`aicage` lets you customize images at three levels: extensions, agents, and base images. The sample repo is a fast
-way to see working examples and copy a template.
+`aicage` lets you customize images at three levels:
+
+- `extensions`: Add software and shared files/folders
+- `agents`: Add other agents
+- `base images`: Custom agent environments
+
+The sample repo is a fast way to see working examples and copy a template.
 
 Quick start:
 
@@ -189,6 +216,7 @@ aicage <agent>
 
 These are only samples. Use them to learn the structure, then replace or edit them with your own definitions.
 `aicage` detects whatever you place under `~/.aicage-custom` and offers it during selection.
+
 Extensions can install tools and request additional host mounts.
 
 After adding or changing custom definitions, restart `aicage`.
@@ -201,17 +229,10 @@ Image updates are handled automatically; see [Updates](https://github.com/aicage
 
 ## Why cage agents?
 
-AI coding agents read your code, run shells, install packages, and edit files. That power is useful,
-but granting it directly on the host expands your risk surface.
+You should not have to choose between approving every small step and giving an agent access to your whole computer.
 
-Where built-in safety is limited:
+Agent restrictions and approval prompts get in the way of real work. But turning them off gives the agent access to
+everything your user account can read or change, far beyond the project.
 
-- Allow/deny lists only cover known patterns; unexpected commands or attack paths can slip through.
-- Some agents work fully only after relaxing their own safety modes, broadening what they can touch.
-- “Read-only project” features are software rules. Other projects and files still sit alongside them
-  on the same host.
-
-How aicage mitigates this:
-
-- Containers create a practical boundary: the agent can access only what you explicitly mount or share. Day-to-day
-  use stays familiar while files you do not mount stay out of reach.
+`aicage` gives the agent a container with your project files and only the extra access you choose. The rest of your
+computer stays out of reach.

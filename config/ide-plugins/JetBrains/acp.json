@@ -1,0 +1,55 @@
+{
+  "default_mcp_settings": {},
+  "agent_servers": {
+    "Auggie (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["auggie", "--acp"]
+    },
+    "Copilot (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["copilot", "--acp", "--stdio"]
+    },
+    "Factory Droid (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["droid", "exec", "--output-format", "acp"]
+    },
+    "Goose (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["goose", "acp"]
+    },
+    "Kiro (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["kiro-cli", "acp"]
+    },
+    "OpenCode (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["opencode", "acp"]
+    },
+    "Qwen (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["qwen", "--acp"]
+    },
+    "Vibe (Aicage)": {
+      "command": "/path/to/aicage",
+      "args": ["-e", "AICAGE_ENTRYPOINT_CMD=vibe-acp", "--", "vibe"]
+    },
+    "Amp (Aicage)": {
+      "command": "/path/to/amp-acp",
+      "env": {
+        "CODEX_PATH": "aicage-amp"
+      }
+    },
+    "Claude (Aicage)": {
+      "command": "/path/to/claude-agent-acp",
+      "env": {
+        "CLAUDE_CODE_EXECUTABLE": "aicage-claude"
+      }
+    },
+    "Codex (Aicage)": {
+      "command": "/path/to/codex-acp",
+      "env": {
+        "CODEX_PATH": "aicage-codex"
+      }
+    }
+  }
+}
