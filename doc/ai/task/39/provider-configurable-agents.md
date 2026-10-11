@@ -16,7 +16,7 @@ This complements [ACP support for configured agents](acp-capable-image-agents.md
 | Amp CLI            | Image          | No                        | No                             | Uses Amp's managed service.                                                                    |
 | Auggie CLI         | Image          | No                        | No                             | Uses Augment's managed service.                                                                |
 | Claude Code        | Image          | Limited                   | Yes (verified)                 | Add URL, model and API-key by ENV variables, see [claude env-vars].                            |
-| Codex CLI          | Image          | Limited                   | Yes (verified)                 | Add [~/.codex/openrouter.config.toml][codex config.toml] and use `codex --profile openrouter`. |
+| Codex CLI          | Image          | Limited                   | Yes (verified)                 | Add [~/.codex/config.toml][codex config.toml]. Alternative: [~/.codex/openrouter.config.toml][codex openrouter.config.toml] and use `codex --profile openrouter`.                                                   |
 | GitHub Copilot CLI | Image          | No                        | No                             | Model choice is limited to Copilot's offered models.                                           |
 | Factory Droid      | Image          | BYOK exists               | Yes (verified)                 | Add provider and model in [~/.factory/settings.json][droid settings.json].                     |
 | Goose              | Image          | Yes                       | Direct                         | Add provider, model and API-key by ENV variables, see [goose env-vars].                        |
@@ -50,8 +50,35 @@ marketing BYOK claim as confirmed OpenRouter compatibility.
 - opencode: YES
 - vibe: YES
 
+## ACP OpenRouter smoke test
+
+`scripts/test-openrouter-acp.py` starts Codex, OpenCode, and Vibe through the `aicage`
+found on `PATH`, configures each one under a temporary home directory, sends
+`say hello` through ACP, prints the response, and requires `hello` in it. It
+uses the [`codex-acp`](https://github.com/agentclientprotocol/codex-acp) bridge for Codex.
+The bridge is installed into Codex's temporary fake home for each test run.
+
+```bash
+# Run Codex, OpenCode, and Vibe.
+OPENROUTER_API_KEY=... scripts/test-openrouter-acp.py
+
+# Run only OpenCode.
+OPENROUTER_API_KEY=... scripts/test-openrouter-acp.py opencode
+```
+
+The test passes the API key to the container as Docker's inherited
+`-e OPENROUTER_API_KEY`, rather than putting the key in a command argument or a
+config file. It needs Docker, the applicable aicage images, and an installed
+`aicage` on `PATH`; it does not run aicage from this source checkout.
+When agent names are supplied, each must be configured by the script.
+
+Each run installs the sample `marker` extension under its temporary home and
+selects it in the temporary project configuration. This makes aicage build the
+extended image before starting the ACP agent.
+
 [claude env-vars]: agent-config/claude/env-vars
-[codex config.toml]: agent-config/codex/openrouter.config.toml
+[codex config.toml]: agent-config/codex/config.toml
+[codex openrouter.config.toml]: agent-config/codex/openrouter.config.toml
 [droid settings.json]: agent-config/droid/settings.json
 [goose env-vars]: agent-config/goose/env-vars
 [opencode.json]: agent-config/opencode/opencode.json
