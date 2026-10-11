@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the OpenRouter ACP smoke test for the agents configured by aicage."""
 
+import hashlib
 import json
 import os
 import queue
@@ -11,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic, sleep
@@ -24,6 +26,7 @@ _CLEANUP_RETRY_SECONDS: float = 0.25
 _PROTOCOL_VERSION: int = 1
 _JSON_RPC_VERSION: str = "2.0"
 _CONFIG_ROOT: Path = Path(__file__).resolve().parents[1] / "doc/ai/task/39/agent-config"
+_MARKER_EXTENSION_SOURCE: Path = Path(__file__).resolve().parents[1] / "doc/sample/custom/extensions/marker"
 
 
 @dataclass(frozen=True)
@@ -186,7 +189,10 @@ class _AcpClient:
             pass
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
+    selected_agents = _select_agents(sys.argv[1:] if argv is None else argv)
+    if selected_agents is None:
+        return 2
     api_key = os.environ.get(_API_KEY_ENV)
     if not api_key:
         print(f"Set {_API_KEY_ENV} before running this test.", file=sys.stderr)
@@ -196,8 +202,22 @@ def main() -> int:
         print("aicage must be available on PATH.", file=sys.stderr)
         return 2
 
-    results = [_run_agent(agent, Path(aicage_path), api_key) for agent in _AGENTS]
+    results = [_run_agent(agent, Path(aicage_path), api_key) for agent in selected_agents]
     return 0 if all(results) else 1
+
+
+def _select_agents(agent_names: Sequence[str]) -> tuple[_Agent, ...] | None:
+    if not agent_names:
+        return _AGENTS
+    agents_by_name = {agent.name: agent for agent in _AGENTS}
+    unknown_names = [name for name in agent_names if name not in agents_by_name]
+    if unknown_names:
+        print(
+            f"Unknown agent: {', '.join(unknown_names)}. Configured agents: {', '.join(agents_by_name)}.",
+            file=sys.stderr,
+        )
+        return None
+    return tuple(agents_by_name[name] for name in agent_names)
 
 
 def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
@@ -210,6 +230,7 @@ def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
         workspace = temporary_root / "workspace"
         workspace.mkdir()
         _write_agent_config(agent, home_dir)
+        _write_marker_extension_config(agent, home_dir, workspace)
         environment = _test_environment(home_dir, api_key)
         command = [str(aicage_path), "--menu", "none", *agent.aicage_args]
         client = _AcpClient(command, environment, workspace)
@@ -243,6 +264,26 @@ def _write_agent_config(agent: _Agent, home_dir: Path) -> None:
     destination = home_dir / agent.config_destination
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(agent.config_source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def _write_marker_extension_config(agent: _Agent, home_dir: Path, workspace: Path) -> None:
+    extension_dir = home_dir / ".aicage-custom/extensions/marker"
+    extension_dir.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(_MARKER_EXTENSION_SOURCE, extension_dir)
+    (home_dir / ".aicage-test-share").mkdir(parents=True)
+    config_dir = home_dir / ".aicage/projects"
+    project_hash = hashlib.sha256(str(workspace.resolve()).encode("utf-8")).hexdigest()
+    project_config = config_dir / f"{project_hash}.yml"
+    project_config.parent.mkdir(parents=True, exist_ok=True)
+    project_config.write_text(
+        "agents:\n"
+        f"  {agent.name}:\n"
+        "    base: ubuntu\n"
+        f"    image_ref: aicage-extended:{agent.name}-ubuntu-marker\n"
+        "    extensions:\n"
+        "      - marker\n",
+        encoding="utf-8",
+    )
 
 
 def _remove_temporary_root(temporary_root: Path) -> OSError | None:

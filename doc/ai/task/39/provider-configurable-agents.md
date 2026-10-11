@@ -58,13 +58,22 @@ found on `PATH`, configures each one under a temporary home directory, sends
 deliberately does not run Codex.
 
 ```bash
+# Run OpenCode and Vibe.
 OPENROUTER_API_KEY=... scripts/test-openrouter-acp.py
+
+# Run only OpenCode.
+OPENROUTER_API_KEY=... scripts/test-openrouter-acp.py opencode
 ```
 
 The test passes the API key to the container as Docker's inherited
 `-e OPENROUTER_API_KEY`, rather than putting the key in a command argument or a
 config file. It needs Docker, the applicable aicage images, and an installed
 `aicage` on `PATH`; it does not run aicage from this source checkout.
+When agent names are supplied, each must be configured by the script.
+
+Each run installs the sample `marker` extension under its temporary home and
+selects it in the temporary project configuration. This makes aicage build the
+extended image before starting the ACP agent.
 
 [claude env-vars]: agent-config/claude/env-vars
 [codex config.toml]: agent-config/codex/openrouter.config.toml
