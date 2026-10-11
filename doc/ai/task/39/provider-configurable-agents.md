@@ -50,6 +50,22 @@ marketing BYOK claim as confirmed OpenRouter compatibility.
 - opencode: YES
 - vibe: YES
 
+## ACP OpenRouter smoke test
+
+`scripts/test-openrouter-acp.py` starts OpenCode and Vibe through the `aicage`
+found on `PATH`, configures each one under a temporary home directory, sends
+`say hello` through ACP, prints the response, and requires `hello` in it. It
+deliberately does not run Codex.
+
+```bash
+OPENROUTER_API_KEY=... scripts/test-openrouter-acp.py
+```
+
+The test passes the API key to the container as Docker's inherited
+`-e OPENROUTER_API_KEY`, rather than putting the key in a command argument or a
+config file. It needs Docker, the applicable aicage images, and an installed
+`aicage` on `PATH`; it does not run aicage from this source checkout.
+
 [claude env-vars]: agent-config/claude/env-vars
 [codex config.toml]: agent-config/codex/openrouter.config.toml
 [droid settings.json]: agent-config/droid/settings.json
