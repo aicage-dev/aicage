@@ -55,4 +55,4 @@ flake8 .
 PYTHONPATH=src pylint --ignore=.venv .
 
 # bandit
-bandit --quiet -c .bandit.yml -r src 2>/dev/null
+bandit --quiet -c .bandit.yml -r src scripts 2>/dev/null
