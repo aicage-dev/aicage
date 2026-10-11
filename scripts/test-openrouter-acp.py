@@ -25,6 +25,8 @@ _CLEANUP_ATTEMPTS: int = 20
 _CLEANUP_RETRY_SECONDS: float = 0.25
 _PROTOCOL_VERSION: int = 1
 _JSON_RPC_VERSION: str = "2.0"
+_CREATE_NEW_PROCESS_GROUP: int = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+_CTRL_BREAK_EVENT: int = getattr(signal, "CTRL_BREAK_EVENT", signal.SIGTERM)
 _CONFIG_ROOT: Path = Path(__file__).resolve().parents[1] / "doc/ai/task/39/agent-config"
 _MARKER_EXTENSION_SOURCE: Path = Path(__file__).resolve().parents[1] / "doc/sample/custom/extensions/marker"
 
@@ -64,6 +66,11 @@ _AGENTS: tuple[_Agent, ...] = (
 
 class _AcpClient:
     def __init__(self, command: list[str], environment: dict[str, str], cwd: Path) -> None:
+        popen_arguments: dict[str, Any] = {}
+        if os.name == "nt":
+            popen_arguments["creationflags"] = _CREATE_NEW_PROCESS_GROUP
+        else:
+            popen_arguments["start_new_session"] = True
         self._process = subprocess.Popen(
             command,
             cwd=cwd,
@@ -71,7 +78,7 @@ class _AcpClient:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            start_new_session=True,
+            **popen_arguments,
         )
         self._messages: queue.Queue[dict[str, Any] | BaseException | None] = queue.Queue()
         self._stderr: list[bytes] = []
@@ -181,7 +188,7 @@ class _AcpClient:
     def _terminate_process_group(self, termination_signal: signal.Signals) -> None:
         if os.name == "nt":
             if self._process.poll() is None:
-                self._process.send_signal(termination_signal)
+                self._process.send_signal(_CTRL_BREAK_EVENT)
             return
         try:
             os.killpg(self._process.pid, termination_signal)
@@ -324,6 +331,9 @@ def _test_environment(home_dir: Path, api_key: str) -> dict[str, str]:
             "XDG_CONFIG_HOME": str(home_dir / ".config"),
             "XDG_DATA_HOME": str(home_dir / ".local/share"),
             "XDG_STATE_HOME": str(home_dir / ".local/state"),
+            "USERPROFILE": str(home_dir),
+            "APPDATA": str(home_dir / "AppData/Roaming"),
+            "LOCALAPPDATA": str(home_dir / "AppData/Local"),
             _API_KEY_ENV: api_key,
         }
     )
