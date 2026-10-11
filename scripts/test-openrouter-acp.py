@@ -5,18 +5,22 @@ import json
 import os
 import queue
 import shutil
+import signal
+import stat
 import subprocess
 import sys
 import tempfile
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from time import monotonic
+from time import monotonic, sleep
 from typing import Any
 
 _API_KEY_ENV: str = "OPENROUTER_API_KEY"
 _PROMPT: str = "say hello"
 _REQUEST_TIMEOUT_SECONDS: float = 600.0
+_CLEANUP_ATTEMPTS: int = 20
+_CLEANUP_RETRY_SECONDS: float = 0.25
 _PROTOCOL_VERSION: int = 1
 _JSON_RPC_VERSION: str = "2.0"
 _CONFIG_ROOT: Path = Path(__file__).resolve().parents[1] / "doc/ai/task/39/agent-config"
@@ -64,6 +68,7 @@ class _AcpClient:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            start_new_session=True,
         )
         self._messages: queue.Queue[dict[str, Any] | BaseException | None] = queue.Queue()
         self._stderr: list[bytes] = []
@@ -73,13 +78,12 @@ class _AcpClient:
         self._start_reader(self._read_stderr)
 
     def close(self) -> None:
-        if self._process.poll() is None:
-            self._process.terminate()
-            try:
-                self._process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self._process.kill()
-                self._process.wait()
+        self._terminate_process_group(signal.SIGTERM)
+        try:
+            self._process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self._terminate_process_group(signal.SIGKILL)
+            self._process.wait()
 
     def stderr(self) -> str:
         return b"".join(self._stderr).decode("utf-8", errors="replace")
@@ -171,6 +175,16 @@ class _AcpClient:
         self._process.stdin.write(json.dumps(message).encode("utf-8") + b"\n")
         self._process.stdin.flush()
 
+    def _terminate_process_group(self, termination_signal: signal.Signals) -> None:
+        if os.name == "nt":
+            if self._process.poll() is None:
+                self._process.send_signal(termination_signal)
+            return
+        try:
+            os.killpg(self._process.pid, termination_signal)
+        except ProcessLookupError:
+            pass
+
 
 def main() -> int:
     api_key = os.environ.get(_API_KEY_ENV)
@@ -187,8 +201,11 @@ def main() -> int:
 
 
 def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
-    with tempfile.TemporaryDirectory(prefix=f"aicage-openrouter-{agent.name}-") as temp_dir:
-        temporary_root = Path(temp_dir)
+    temporary_root = Path(tempfile.mkdtemp(prefix=f"aicage-openrouter-{agent.name}-"))
+    client: _AcpClient | None = None
+    response = ""
+    failure: Exception | None = None
+    try:
         home_dir = temporary_root / "home"
         workspace = temporary_root / "workspace"
         workspace.mkdir()
@@ -196,15 +213,23 @@ def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
         environment = _test_environment(home_dir, api_key)
         command = [str(aicage_path), "--menu", "none", *agent.aicage_args]
         client = _AcpClient(command, environment, workspace)
-        try:
-            _prompt_agent(client, workspace)
-            response = client.response_text()
-        except (OSError, RuntimeError, TimeoutError) as exc:
-            print(f"{agent.name}: FAIL: {exc}", file=sys.stderr)
-            _print_stderr(client.stderr())
-            return False
-        finally:
+        _prompt_agent(client, workspace)
+        response = client.response_text()
+    except (OSError, RuntimeError, TimeoutError) as exc:
+        failure = exc
+    finally:
+        if client is not None:
             client.close()
+
+    cleanup_error = _remove_temporary_root(temporary_root)
+    if failure is not None:
+        print(f"{agent.name}: FAIL: {failure}", file=sys.stderr)
+        if client is not None:
+            _print_stderr(client.stderr())
+        return False
+    if cleanup_error is not None:
+        print(f"{agent.name}: FAIL: could not remove {temporary_root}: {cleanup_error}", file=sys.stderr)
+        return False
 
     print(f"{agent.name}: {response}")
     if "hello" not in response.casefold():
@@ -218,6 +243,35 @@ def _write_agent_config(agent: _Agent, home_dir: Path) -> None:
     destination = home_dir / agent.config_destination
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(agent.config_source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def _remove_temporary_root(temporary_root: Path) -> OSError | None:
+    cleanup_error: OSError | None = None
+    for _ in range(_CLEANUP_ATTEMPTS):
+        try:
+            _make_temporary_tree_writable(temporary_root)
+            shutil.rmtree(temporary_root)
+            return None
+        except OSError as exc:
+            cleanup_error = exc
+            sleep(_CLEANUP_RETRY_SECONDS)
+    return cleanup_error
+
+
+def _make_temporary_tree_writable(temporary_root: Path) -> None:
+    for directory, directory_names, file_names in os.walk(temporary_root):
+        directory_path = Path(directory)
+        _add_owner_permissions(directory_path, stat.S_IWUSR | stat.S_IXUSR)
+        for name in directory_names:
+            _add_owner_permissions(directory_path / name, stat.S_IWUSR | stat.S_IXUSR)
+        for name in file_names:
+            _add_owner_permissions(directory_path / name, stat.S_IWUSR)
+
+
+def _add_owner_permissions(path: Path, permissions: int) -> None:
+    if path.is_symlink():
+        return
+    path.chmod(path.stat().st_mode | permissions)
 
 
 def _test_environment(home_dir: Path, api_key: str) -> dict[str, str]:
