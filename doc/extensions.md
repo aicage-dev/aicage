@@ -21,6 +21,17 @@ Only scripts in the `scripts/` directory are executed. Scripts run in alphabetic
 The extension id is the directory name and is used when selecting extensions.
 Define at least one of `scripts/` or `shares`.
 
+## CLI selection
+
+Select an extension without opening the setup UI:
+
+```bash
+aicage --menu none --extension <EXTENSION> <agent>
+```
+
+Repeat `--extension` to select multiple extensions. The supplied list replaces the agent's saved extension
+selection for the project.
+
 ## extension.yml
 
 `extension.yml` (or `extension.yaml`) must contain the following keys:

@@ -235,6 +235,13 @@ class ParseCliTests(TestCase):
         )
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
+    def test_parse_cli_with_extensions(self) -> None:
+        parsed = parse_cli(
+            ["--extension", "one", "--extension", "two", "--", "codex"]
+        )
+
+        self.assertEqual(["one", "two"], parsed.extensions)
+
     def test_parse_cli_with_menu_none(self) -> None:
         parsed = parse_cli(["--menu", "none", "codex"])
         self.assertEqual("none", parsed.menu)
@@ -248,6 +255,10 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_rejects_share(self) -> None:
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "--share", "data"])
+
+    def test_parse_cli_config_rejects_extension(self) -> None:
+        with self.assertRaises(CliError):
+            parse_cli(["--config", "info", "--extension", "one"])
 
     def test_parse_cli_config_rejects_non_default_menu(self) -> None:
         with self.assertRaises(CliError):

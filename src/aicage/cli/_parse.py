@@ -15,6 +15,7 @@ _DRY_RUN_OPTION = "--dry-run"
 _MENU_OPTION = "--menu"
 _DOCKER_OPTION = "--docker"
 _SHARE_OPTION = "--share"
+_EXTENSION_OPTION = "--extension"
 _CONFIG_OPTION = "--config"
 _HELP_SHORT_OPTION = "-h"
 _HELP_OPTION = "--help"
@@ -23,6 +24,7 @@ _VERSION_OPTION = "--version"
 _OPTIONS_WITH_VALUES: set[str] = {
     _MENU_OPTION,
     _SHARE_OPTION,
+    _EXTENSION_OPTION,
 }
 _CONFIG_ACTION_ALIASES: dict[str, str] = {
     "print": "info",
@@ -57,6 +59,12 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         action="append",
         default=[],
         help="Mount a host directory into the container (repeatable).",
+    )
+    parser.add_argument(
+        _EXTENSION_OPTION,
+        action="append",
+        default=[],
+        help="Select an extension (repeatable).",
     )
     parser.add_argument(
         _CONFIG_OPTION,
@@ -96,8 +104,10 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         usage: str = (
             "Usage:\n"
             "  aicage <agent>\n"
-            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] <agent> [<agent-args>]\n"
-            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] <docker-args> -- <agent>"
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] "
+            "[--extension <id>...] <agent> [<agent-args>]\n"
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--share <path>...] "
+            "[--extension <id>...] <docker-args> -- <agent>"
             " [<agent-args>]\n"
             "  aicage --config\n"
             "  aicage --config info\n"
@@ -108,6 +118,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  --menu <mode>    Choose menu mode: ui, simple, or none.\n"
             "  --docker         Mount /run/docker.sock into the container.\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
+            "  --extension <id> Select an extension. Repeatable.\n"
             "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
@@ -141,6 +152,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             config_action,
             config_agent,
             opts.menu,
+            extensions=opts.extension,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -158,6 +170,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         None,
         None,
         opts.menu,
+        extensions=opts.extension,
     )
 
 
@@ -223,6 +236,7 @@ def _validate_config_action(
         or opts.docker
         or opts.dry_run
         or opts.share
+        or opts.extension
         or opts.menu != "ui"
     ):
         raise CliError("No additional arguments are allowed with --config.")

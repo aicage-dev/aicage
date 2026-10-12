@@ -23,7 +23,17 @@ class ConfigureRunTests(TestCase):
         resolved = _none_interaction._NoneInteraction(mock.Mock())
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "--cli", "codex", [], False, ["logs"], None, menu="none"),
+            ParsedArgs(
+                False,
+                "--cli",
+                "codex",
+                [],
+                False,
+                ["logs"],
+                None,
+                menu="none",
+                extensions=["extra"],
+            ),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"
@@ -32,7 +42,7 @@ class ConfigureRunTests(TestCase):
             mock.patch(
                 "aicage.runtime.menu._none_interaction.select_agent_image",
                 return_value=selection,
-            ),
+            ) as select_mock,
             mock.patch.object(draft, "apply_selection") as apply_mock,
             mock.patch(
                 "aicage.runtime.menu._none_interaction.apply_mount_preferences"
@@ -46,6 +56,11 @@ class ConfigureRunTests(TestCase):
             result = resolved.configure_run(draft, _build_context(), "codex")
 
         self.assertIs(selection, result.selection)
+        selection_interaction = select_mock.call_args.args[2]
+        self.assertEqual(
+            ["extra"],
+            selection_interaction.choose_extensions([]),
+        )
         apply_mock.assert_called_once_with(selection)
         mount_mock.assert_called_once()
         persist_docker_args_mock.assert_not_called()
@@ -97,13 +112,13 @@ class NonInteractiveSelectionInteractionTests(TestCase):
         self.assertEqual("ubuntu", choice)
 
     def test_choose_extensions(self) -> None:
-        resolved = _none_interaction._NonInteractiveSelectionInteraction()
+        resolved = _none_interaction._NonInteractiveSelectionInteraction(["gh"])
 
         choice = resolved.choose_extensions(
             [ExtensionChoiceOption(name="gh", description="GitHub CLI")]
         )
 
-        self.assertEqual([], choice)
+        self.assertEqual(["gh"], choice)
 
     def test_choose_image_ref(self) -> None:
         resolved = _none_interaction._NonInteractiveSelectionInteraction()

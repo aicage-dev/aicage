@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 MenuMode = Literal["ui", "simple", "none"]
@@ -15,3 +15,4 @@ class ParsedArgs:
     config_action: str | None
     config_agent: str | None = None
     menu: MenuMode = "ui"
+    extensions: list[str] = field(default_factory=list)
