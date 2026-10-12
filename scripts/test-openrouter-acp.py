@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import queue
+import shlex
 import shutil
 import signal
 import stat
@@ -354,21 +355,35 @@ def _without_entrypoint_override(arguments: tuple[str, ...]) -> list[str]:
 
 def _container_preflight_script(agent: _Agent) -> str:
     config_path = agent.config_destination.as_posix()
-    checks = [
-        'test "$(id -u)" = "$AICAGE_UID"',
-        'test "$(id -g)" = "$AICAGE_GID"',
-        'test "$HOME" = "$AICAGE_HOME"',
-        'test -n "${OPENROUTER_API_KEY:-}"',
-        f'test -r "$HOME/{config_path}"',
+    checks: list[tuple[str, str]] = [
+        ("uid", 'test "$(id -u)" = "$AICAGE_UID"'),
+        ("gid", 'test "$(id -g)" = "$AICAGE_GID"'),
+        ("home", 'test "$HOME" = "$AICAGE_HOME"'),
+        ("OpenRouter API key present", 'test -n "${OPENROUTER_API_KEY:-}"'),
+        (f"readable {config_path}", f'test -r "$HOME/{config_path}"'),
     ]
     if agent.name == "vibe":
-        checks.append('test "$VIBE_ACTIVE_MODEL" = "openrouter-free"')
-    return "set -eu\n" + "\n".join(
-        [
-            'printf "uid=%s gid=%s home=%s\\n" "$(id -u)" "$(id -g)" "$HOME"',
-            *checks,
-        ]
-    )
+        checks.append(("active Vibe model", 'test "$VIBE_ACTIVE_MODEL" = "openrouter-free"'))
+    lines = [
+        "set -eu",
+        'printf "uid=%s expected_uid=%s gid=%s expected_gid=%s\\n" "$(id -u)" "$AICAGE_UID" "$(id -g)" "$AICAGE_GID"',
+        'printf "home=%s expected_home=%s\\n" "$HOME" "$AICAGE_HOME"',
+        f'printf "%s\\n" "--- $HOME/{config_path} ---"',
+        (
+            f'if test -r "$HOME/{config_path}"; then cat "$HOME/{config_path}"; '
+            'else printf "%s\\n" "config is not readable"; fi'
+        ),
+        "check() {",
+        '  label="$1"',
+        "  shift",
+        '  if "$@"; then return 0; fi',
+        '  printf "container preflight failed: %s\\n" "$label" >&2',
+        "  exit 1",
+        "}",
+    ]
+    for label, check in checks:
+        lines.append(f"check {shlex.quote(label)} /bin/bash -c {shlex.quote(check)}")
+    return "\n".join(lines)
 
 
 def _copy_docker_cli_plugins(home_dir: Path) -> None:
