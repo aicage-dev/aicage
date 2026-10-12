@@ -1,4 +1,5 @@
 from aicage.config.context import ConfigContext
+from aicage.config.project_config import AgentConfig
 from aicage.config.run_config_draft import RunConfigDraft
 
 from .._models import ExtrasValues, SharesValues
@@ -7,7 +8,7 @@ from ._share_support import built_in_share_values
 
 def shares_values(draft: RunConfigDraft, context: ConfigContext) -> SharesValues:
     return SharesValues(
-        shares=list(draft.agent_cfg.shares),
+        shares=list(draft.effective_agent_cfg.shares),
         built_in_shares=built_in_share_values(draft, context.extensions),
     )
 
@@ -15,6 +16,9 @@ def shares_values(draft: RunConfigDraft, context: ConfigContext) -> SharesValues
 def extras_values(draft: RunConfigDraft) -> ExtrasValues:
     return ExtrasValues(
         docker_args=draft.agent_cfg.docker_args,
+        inherited_docker_args=(
+            draft.inherited_project_cfg.agents.get(draft.agent, AgentConfig()).docker_args
+        ),
     )
 
 
@@ -47,4 +51,4 @@ def _shares_summary(values: SharesValues) -> str:
 
 
 def extras_summary(values: ExtrasValues) -> str:
-    return "yes" if values.docker_args else "none"
+    return "yes" if values.docker_args or values.inherited_docker_args else "none"

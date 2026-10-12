@@ -74,8 +74,8 @@ def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> Non
                 "Refusing to start: this would expose your home directory to the container via "
                 f"{host_path}.\n"
                 "Use one of these safer options instead:\n"
-                "- Start aicage from the project repository directory. If needed, add folders "
+                "- Start aicage from the project repository directory. If needed, add folders and files "
                 "outside it with `--share <path>`.\n"
-                "- For multi-project setups, keep repositories under a folder such as "
+                "- For multi-project setups, keep repositories under a directory such as "
                 "~/workspace and start aicage from there.",
             )
