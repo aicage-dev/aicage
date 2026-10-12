@@ -24,11 +24,15 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
     ]
 
     def __init__(
-        self, options: list[ExtensionChoiceOption], selected: list[str]
+        self,
+        options: list[ExtensionChoiceOption],
+        selected: list[str],
+        inherited: list[str] | None = None,
     ) -> None:
         super().__init__()
         self._options = options
         self._selected = set(selected)
+        self._inherited = set(inherited or [])
 
     def on_mount(self) -> None:
         if not self._options:
@@ -57,6 +61,7 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
             option.name
             for option in self._options
             if self.query_one(f"#ext-{option.name}", Checkbox).value
+            and option.name not in self._inherited
         ]
         self.dismiss(selected)
 
@@ -96,8 +101,9 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
         return [
             Checkbox(
                 f"{option.name}: {option.description}",
-                value=option.name in self._selected,
+                value=option.name in self._selected or option.name in self._inherited,
                 id=f"ext-{option.name}",
+                disabled=option.name in self._inherited,
             )
             for option in self._options
         ]
@@ -149,6 +155,8 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
     def _hint_text(self) -> str:
         if not self._options:
             return "Optional extensions are loaded from $HOME/.aicage-custom."
+        if self._inherited:
+            return "Inherited extensions are read-only. Toggle local extensions to include."
         return "Toggle the optional extensions to include."
 
     def _copy_samples_command(self) -> None:
@@ -173,6 +181,8 @@ class ExtensionsScreen(CancelableScreen[list[str] | None]):
 
     def _clear_checkboxes(self) -> None:
         for option in self._options:
+            if option.name in self._inherited:
+                continue
             self.query_one(f"#ext-{option.name}", Checkbox).value = False
 
     def _focused_checkbox_index(self) -> int:

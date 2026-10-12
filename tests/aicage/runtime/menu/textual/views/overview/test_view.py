@@ -3,7 +3,7 @@ from unittest import IsolatedAsyncioTestCase, TestCase, mock
 from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import Button, SelectionList
+from textual.widgets import Button, SelectionList, Static
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
@@ -58,6 +58,45 @@ class OverviewTests(TestCase):
             overview._context_line("Project:", "/test-tmp/project"),
         )
 
+    def test__scope_banner_returns_global_configuration_message(self) -> None:
+        overview = Overview(
+            "codex",
+            "/test-tmp/project",
+            OverviewState(None, [], [], False),
+            "global configuration",
+        )
+
+        banner = overview._scope_banner()
+
+        self.assertIsInstance(banner, Static)
+        assert banner is not None
+        self.assertIn("GLOBAL CONFIGURATION", str(banner.render()))
+        self.assertIn("every project", str(banner.render()))
+
+    def test__scope_banner_returns_tree_configuration_message(self) -> None:
+        overview = Overview(
+            "codex",
+            "/test-tmp/project",
+            OverviewState(None, [], [], False),
+            "directory tree configuration",
+        )
+
+        banner = overview._scope_banner()
+
+        self.assertIsInstance(banner, Static)
+        assert banner is not None
+        self.assertIn("DIRECTORY TREE CONFIGURATION", str(banner.render()))
+        self.assertIn("descendant directories/projects", str(banner.render()))
+
+    def test__scope_banner_skips_project_configuration(self) -> None:
+        overview = Overview(
+            "codex",
+            "/test-tmp/project",
+            OverviewState(None, [], [], False),
+        )
+
+        self.assertIsNone(overview._scope_banner())
+
     def test_on_button_pressed_posts_accept_message(self) -> None:
         overview = Overview(
             "codex", "/test-tmp/project", OverviewState(None, [], [], False)
@@ -70,6 +109,21 @@ class OverviewTests(TestCase):
 
         self.assertIsInstance(
             post_message_mock.call_args.args[0], Overview.AcceptRequested
+        )
+
+    def test_on_button_pressed_cycles_git_support_value(self) -> None:
+        state = OverviewState(None, [], [], False, git_support_values={"ssh": None})
+        overview = Overview("codex", "/test-tmp/project", state, scope="global")
+        event = mock.Mock()
+        event.button.id = "git_mount_ssh"
+
+        with mock.patch.object(overview, "post_message") as post_message_mock:
+            overview.on_button_pressed(event)
+
+        self.assertTrue(state.git_support_values["ssh"])
+        self.assertEqual("On\u00a0\u00a0", event.button.label)
+        self.assertIsInstance(
+            post_message_mock.call_args.args[0], Overview.GitSupportChanged
         )
 
     def test_on_selection_list_selected_changed_updates_built_in_shares(self) -> None:
@@ -180,6 +234,50 @@ class OverviewTests(TestCase):
 
         self.assertTrue(state.docker_socket_enabled)
 
+    def test_on_selection_list_selection_toggled_requests_global_scope(self) -> None:
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
+        event = mock.Mock()
+        event.selection_list.id = "scope_overview_list"
+        event.selection.value = "global"
+        event.selection_list.selected = ["global"]
+
+        with mock.patch.object(overview, "post_message") as post_message_mock:
+            overview.on_selection_list_selection_toggled(event)
+
+        self.assertIsInstance(
+            post_message_mock.call_args.args[0], Overview.ScopeChangeRequested
+        )
+        self.assertEqual("global", post_message_mock.call_args.args[0].scope)
+
+    def test_on_selection_list_selection_toggled_requests_project_scope(self) -> None:
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
+        event = mock.Mock()
+        event.selection_list.id = "scope_overview_list"
+        event.selection.value = "global"
+        event.selection_list.selected = []
+
+        with mock.patch.object(overview, "post_message") as post_message_mock:
+            overview.on_selection_list_selection_toggled(event)
+
+        self.assertEqual("project", post_message_mock.call_args.args[0].scope)
+
+    def test_refresh_scope_updates_scope_selection(self) -> None:
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
+        selection_list = mock.Mock()
+
+        with mock.patch.object(overview, "query_one", return_value=selection_list):
+            overview.refresh_scope("global")
+
+        self.assertEqual("global", overview._scope)
+        selection_list.clear_options.assert_called_once_with()
+        selection_list.add_options.assert_called_once()
+
     def test_refresh_from_updates_overview_widgets(self) -> None:
         overview = Overview(
             "codex", "/test-tmp/project", OverviewState(None, [], [], False)
@@ -242,6 +340,75 @@ class OverviewTests(TestCase):
         self.assertEqual("Docker Args\nnone", str(extras_button.label))
         self.assertEqual(None, shares_list.highlighted)
         self.assertEqual(None, docker_list.highlighted)
+
+    def test_refresh_from_hides_git_support_mounts_for_global_configuration(self) -> None:
+        overview = Overview(
+            "codex",
+            "/test-tmp/project",
+            OverviewState(None, [], [], False),
+            scope="global",
+        )
+        shell = mock.Mock()
+        shell.styles = mock.Mock()
+        base_button = mock.Mock()
+        extensions_button = mock.Mock()
+        extras_button = mock.Mock()
+        git_support_buttons = {
+            f"#git_mount_{key}": mock.Mock()
+            for key in ("gitconfig", "gitroot", "gnupg", "ssh")
+        }
+        shares_overview = mock.Mock()
+        shares_overview.display = True
+        shares_title = mock.Mock()
+        shares_list = mock.Mock()
+        shares_list.highlighted = None
+        docker_title = mock.Mock()
+        docker_list = mock.Mock()
+        docker_list.highlighted = None
+
+        def query_one_side_effect(selector: str, _expected_type: object) -> mock.Mock:
+            values = {
+                "#shell": shell,
+                "#base": base_button,
+                "#extensions": extensions_button,
+                "#extras": extras_button,
+                "#shares_overview": shares_overview,
+                "#shares_overview_title": shares_title,
+                "#shares_overview_list": shares_list,
+                "#docker_overview_title": docker_title,
+                "#docker_overview_list": docker_list,
+            }
+            if selector in values:
+                return values[selector]
+            return git_support_buttons[selector]
+
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], None),
+        )
+
+        with (
+            mock.patch.object(
+                type(overview),
+                "size",
+                new_callable=mock.PropertyMock,
+                return_value=mock.Mock(width=120),
+            ),
+            mock.patch.object(overview, "query_one", side_effect=query_one_side_effect),
+            mock.patch(
+                "aicage.runtime.menu.textual.views.overview.view.shares_values"
+            ) as shares_values,
+        ):
+            shares_values.return_value = mock.Mock(
+                built_in_shares=[
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    )
+                ]
+            )
+            overview.refresh_from(draft, _build_context())
+
+        self.assertEqual([], overview._state.built_in_shares)
 
     def test_apply_shell_width_sets_fixed_width(self) -> None:
         overview = Overview(

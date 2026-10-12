@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from textual.widgets.selection_list import Selection
+
 from aicage.config.project_config import MOUNT_GITCONFIG_KEY
 from aicage.runtime.menu.textual import _mount_display
 from aicage.runtime.menu.textual._models import BuiltInShareValue, CustomShareValue
@@ -10,6 +12,11 @@ class MountDisplayTests(TestCase):
         value = _mount_display.git_support_label(MOUNT_GITCONFIG_KEY)
 
         self.assertEqual("Git config", value)
+
+    def test_git_support_config_label_returns_descriptive_label(self) -> None:
+        value = _mount_display.git_support_config_label(MOUNT_GITCONFIG_KEY)
+
+        self.assertEqual("Git configuration (identity, aliases, and settings)", value)
 
     def test_extension_label_returns_prefixed_label(self) -> None:
         value = _mount_display.extension_label("gh")
@@ -59,6 +66,19 @@ class MountDisplayTests(TestCase):
         )
         self.assertFalse(values[0].enabled)
 
+    def test_mount_selection_rows_displays_pathless_git_support_label(self) -> None:
+        rows = _mount_display.mount_selection_rows(
+            _mount_display.confirm_mount_list_items(
+                [
+                    BuiltInShareValue(
+                        "git_support", "ssh", "SSH", None, None, True
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual([("SSH", "builtin:git_support:ssh", True)], rows)
+
     def test_mount_selection_rows_aligns_prefixes(self) -> None:
         rows = _mount_display.mount_selection_rows(
             _mount_display.overview_mount_list_items(
@@ -78,3 +98,25 @@ class MountDisplayTests(TestCase):
             ],
             rows,
         )
+
+    def test_mount_selection_rows_disables_inherited_mounts(self) -> None:
+        rows = _mount_display.mount_selection_rows(
+            _mount_display.overview_mount_list_items(
+                [
+                    BuiltInShareValue(
+                        "git_support",
+                        "ssh",
+                        "SSH",
+                        "/test-tmp/.ssh",
+                        True,
+                        True,
+                        inherited=True,
+                    )
+                ],
+                [],
+            )
+        )
+
+        self.assertIsInstance(rows[0], Selection)
+        assert isinstance(rows[0], Selection)
+        self.assertTrue(rows[0].disabled)

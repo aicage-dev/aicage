@@ -139,6 +139,32 @@ class EntrypointTests(TestCase):
         info_mock.assert_called_once()
         load_mock.assert_not_called()
 
+    def test_main_config_info_global(self) -> None:
+        with (
+            mock.patch(
+                "aicage.cli.entrypoint.parse_cli",
+                return_value=ParsedArgs(
+                    False,
+                    "",
+                    "",
+                    [],
+                    False,
+                    [],
+                    "info",
+                    None,
+                    "none",
+                    config_scope="global",
+                ),
+            ),
+            mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch("aicage.cli.entrypoint.create_runtime_interaction"),
+        ):
+            exit_code = main([])
+
+        self.assertEqual(0, exit_code)
+        info_mock.assert_called_once_with("global")
+
     def test_main_skips_ensure_for_ui_menu(self) -> None:
         run_config = _build_run_config(Path("/test-tmp/project"), "repo:tag")
         interaction = mock.Mock()
@@ -213,6 +239,39 @@ class EntrypointTests(TestCase):
         create_interaction_mock.assert_called_once_with("ui")
         remove_mock.assert_called_once_with("codex")
         load_mock.assert_not_called()
+
+    def test_main_config_global_passes_parsed_values_without_running_image_setup(
+        self,
+    ) -> None:
+        parsed = ParsedArgs(
+            False,
+            "-e GLOBAL_VAR=0",
+            "codex",
+            [],
+            False,
+            [],
+            "global",
+            "codex",
+            "none",
+        )
+        interaction = mock.Mock()
+        with (
+            mock.patch("aicage.cli.entrypoint.parse_cli", return_value=parsed),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch(
+                "aicage.cli.entrypoint.create_runtime_interaction",
+                return_value=interaction,
+            ),
+            mock.patch(
+                "aicage.cli.entrypoint.configure_inherited_config"
+            ) as configure_mock,
+            mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
+        ):
+            exit_code = main([])
+
+        self.assertEqual(0, exit_code)
+        configure_mock.assert_called_once_with("global", "codex", interaction, parsed)
+        prepare_image_mock.assert_not_called()
 
     def test_main_uses_project_base(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
