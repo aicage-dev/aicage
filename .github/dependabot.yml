@@ -5,26 +5,24 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
     labels:
       - "dependencies"
     groups:
       github-actions:
         patterns:
           - "*"
-    cooldown:
-      default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
     labels:
       - "dependencies"
     groups:
       pip:
         patterns:
           - "*"
-    cooldown:
-      default-days: 7

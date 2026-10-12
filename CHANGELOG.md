@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-10-10
+
+### Added
+
+- GitHub releases now include the built wheel and source distribution with a signed checksum manifest.
+
+## [1.5.1] - 2026-10-10
+
+### Added
+
+- Added `aicage-amp`, `aicage-claude`, and `aicage-codex` launcher commands for ACP bridges used by Amp CLI,
+  Claude Code, and Codex CLI in IDEs.
+
+### Changed
+
+- Moved Kimi Code CLI from the built-in agent set to custom samples because its ACP integration currently fails in
+  JetBrains.
+- Removed Gemini CLI from the built-in agent set because its host credentials cannot be shared reliably with a
+  container.
+
+### Documentation
+
+- Reworked the README around IDE setup, first-run authentication, supported agents, project configuration, and
+  customization.
+
+## [1.5.0] - 2026-10-08
+
+### Added
+
+- Added ACP (Agent Client Protocol) capable agents:
+  - Agents: Amp CLI, Auggie CLI, Kimi Code CLI, Kiro CLI, and Mistral Vibe CLI.
+- Bundled shim scripts for using agents Amp CLI, Claude Code, and Codex CLI in IDEs through external ACP bridges.
+
+### Changed
+
+- Moved agents without ACP support agents out of the built-in agent set. They do not support ACP. Use custom agent
+  definitions for them.
+  - Agents: Antigravity CLI and Crush
+
+## [1.4.20] - 2026-09-21
+
+### Changed
+
+- Refreshed metadata on generated agent images.
+- Updated dependencies
+
 ## [1.4.19] - 2026-09-04
 
 ### Changed

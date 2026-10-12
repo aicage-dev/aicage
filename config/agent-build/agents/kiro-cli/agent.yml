@@ -1,0 +1,8 @@
+agent_path:
+  directories:
+    - ~/.local/share/kiro-cli
+    - ~/.kiro
+agent_full_name: Kiro CLI
+agent_homepage: https://kiro.dev/cli/
+# Build locally because the license does not allow redistributing prebuilt images.
+build_local: true

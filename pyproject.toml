@@ -20,6 +20,9 @@ dynamic = ["version"]
 
 [project.scripts]
 aicage = "aicage.cli.entrypoint:main"
+aicage-amp = "aicage.cli.agent_entrypoints:amp"
+aicage-claude = "aicage.cli.agent_entrypoints:claude"
+aicage-codex = "aicage.cli.agent_entrypoints:codex"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aicage"]
@@ -28,6 +31,7 @@ packages = ["src/aicage"]
 "config/agent-build" = "config/agent-build"
 "config/base-build" = "config/base-build"
 "config/extension-build" = "config/extension-build"
+"config/ide-plugins" = "config/ide-plugins"
 "config/textual" = "config/textual"
 "config/validation/agent.schema.json" = "config/validation/agent.schema.json"
 "config/validation/base.schema.json" = "config/validation/base.schema.json"
@@ -38,6 +42,7 @@ include = [
   "config/agent-build/**",
   "config/base-build/**",
   "config/extension-build/**",
+  "config/ide-plugins/**",
   "config/textual/**",
   "config/validation/agent.schema.json",
   "config/validation/base.schema.json",
@@ -50,6 +55,7 @@ include = [
   "config/agent-build/**",
   "config/base-build/**",
   "config/extension-build/**",
+  "config/ide-plugins/**",
   "config/textual/**",
   "config/validation/agent.schema.json",
   "config/validation/base.schema.json",

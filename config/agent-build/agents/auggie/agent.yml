@@ -1,0 +1,6 @@
+agent_path:
+  directories:
+    - ~/.augment
+agent_full_name: Auggie CLI
+agent_homepage: https://docs.augmentcode.com/cli
+build_local: true

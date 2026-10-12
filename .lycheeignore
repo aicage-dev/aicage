@@ -1,0 +1,8 @@
+^http://host\.docker\.internal:.*$
+^http://localhost:.*$
+# ampcode.com is reachable, but lychee reports an HTTP/2 protocol error for it in CI.
+^https://ampcode\.com/$
+# Is not directly reachable, sub-paths are valid
+^https://code\.kimi\.com/kimi-code/$
+# Ignore API URL
+^https://openrouter.ai/api/v1$

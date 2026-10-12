@@ -1,0 +1,8 @@
+agent_path:
+  directories:
+    - ~/.vibe
+agent_full_name: Mistral Vibe
+agent_homepage: https://mistral.ai/products/vibe
+build_local: false
+base_distro_exclude:
+  - Alpine

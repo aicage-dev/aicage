@@ -5,6 +5,15 @@ DISABLE_LINTERS:
   - PYTHON_PYLINT
   - REPOSITORY_DEVSKIM
 
+PRE_COMMANDS:
+  - command: >-
+      python -m venv .venv &&
+      .venv/bin/python -m pip install --upgrade pip &&
+      .venv/bin/python -m pip install -r requirements-dev.txt
+    cwd: workspace
+    run_before_linters: true
+    continue_if_failed: false
+
 # flake8
 PYTHON_FLAKE8_ARGUMENTS: "--max-line-length 120"
 
