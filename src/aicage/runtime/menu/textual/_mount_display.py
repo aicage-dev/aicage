@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from textual.widgets.selection_list import Selection
+
 from aicage.config.project_config import (
     MOUNT_GITCONFIG_KEY,
     MOUNT_GITROOT_KEY,
@@ -19,18 +21,29 @@ _GIT_SUPPORT_LABELS: dict[str, str] = {
     MOUNT_SSH_KEY: "SSH",
     MOUNT_GNUPG_KEY: "GnuPG",
 }
+_GIT_SUPPORT_CONFIG_LABELS: dict[str, str] = {
+    MOUNT_GITCONFIG_KEY: "Git configuration (identity, aliases, and settings)",
+    MOUNT_GITROOT_KEY: "Git repository root (when launched from a subdirectory)",
+    MOUNT_GNUPG_KEY: "GnuPG home (for Git commit signing)",
+    MOUNT_SSH_KEY: "SSH directory (for Git remote access and signing)",
+}
 
 
 @dataclass(frozen=True)
 class _MountListItem:
     prefix: str | None
-    path: str
+    path: str | None
     selection_key: str
     enabled: bool
+    inherited: bool
 
 
 def git_support_label(key: str) -> str:
     return _GIT_SUPPORT_LABELS.get(key, key)
+
+
+def git_support_config_label(key: str) -> str:
+    return _GIT_SUPPORT_CONFIG_LABELS.get(key, key)
 
 
 def extension_label(extension_id: str) -> str:
@@ -44,9 +57,10 @@ def overview_mount_list_items(
     items = [
         _MountListItem(
             prefix=item.label,
-            path=display_mount_value(item.path),
+            path=display_mount_value(item.path) if item.path is not None else None,
             selection_key=built_in_selection_value(item),
             enabled=item.enabled,
+            inherited=item.inherited,
         )
         for item in built_in_shares
     ]
@@ -58,18 +72,34 @@ def confirm_mount_list_items(shares: list[BuiltInShareValue]) -> list[_MountList
     return [
         _MountListItem(
             prefix=item.label,
-            path=display_mount_value(item.path),
+            path=display_mount_value(item.path) if item.path is not None else None,
             selection_key=built_in_selection_value(item),
             enabled=item.enabled,
+            inherited=item.inherited,
         )
         for item in shares
     ]
 
 
-def mount_selection_rows(items: list[_MountListItem]) -> list[tuple[str, str, bool]]:
+def mount_selection_rows(
+    items: list[_MountListItem],
+) -> list[Selection[str] | tuple[str, str, bool]]:
     prefix_width = max((len(item.prefix or "") for item in items), default=0)
     return [
-        (_format_mount_label(item, prefix_width), item.selection_key, item.enabled)
+        (
+            Selection(
+                _format_mount_label(item, prefix_width),
+                item.selection_key,
+                item.enabled,
+                disabled=True,
+            )
+            if item.inherited
+            else (
+                _format_mount_label(item, prefix_width),
+                item.selection_key,
+                item.enabled,
+            )
+        )
         for item in items
     ]
 
@@ -81,10 +111,13 @@ def _custom_mount_list_item(item: CustomShareValue) -> _MountListItem:
         path=path,
         selection_key=custom_share_selection_key(item.value),
         enabled=True,
+        inherited=item.inherited,
     )
 
 
 def _format_mount_label(item: _MountListItem, prefix_width: int) -> str:
+    if item.path is None:
+        return item.prefix or ""
     if prefix_width == 0:
         return item.path
     return f"{(item.prefix or ''):<{prefix_width}}: {item.path}"

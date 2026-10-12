@@ -2,7 +2,8 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
-from aicage.config.project_config import AgentConfig
+from aicage.config.project_config import AgentConfig, _ProjectConfig
+from aicage.config.run_config_draft import _create_run_config_draft
 from aicage.runtime.menu.textual._models import BuiltInShareValue
 from aicage.runtime.menu.textual.services import _share_support
 
@@ -10,6 +11,37 @@ from ..._test_support import _build_context, _build_draft
 
 
 class ShareSupportTests(TestCase):
+    def test_is_inherited_mount_locks_only_enabled_mounts(self) -> None:
+        self.assertTrue(_share_support._is_inherited_mount(None, True))
+        self.assertFalse(_share_support._is_inherited_mount(None, False))
+
+    def test_built_in_share_values_allows_enabling_inherited_disabled_extension(
+        self,
+    ) -> None:
+        project_path = Path("/project")
+        draft = _create_run_config_draft(
+            project_path,
+            "codex",
+            _ProjectConfig(path=str(project_path), agents={}),
+            ParsedArgs(False, "", "codex", [], False, [], None),
+            _ProjectConfig(
+                path=str(project_path),
+                agents={
+                    "codex": AgentConfig(
+                        extensions=["gh"], extension_mounts={"gh": False}
+                    )
+                },
+            ),
+        )
+
+        values = _share_support.built_in_share_values(
+            draft, _build_context().extensions
+        )
+
+        extension_value = next(value for value in values if value.key == "gh")
+        self.assertFalse(extension_value.enabled)
+        self.assertFalse(extension_value.inherited)
+
     def test_normalize_shares_from_editor_returns_normalized_values(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),

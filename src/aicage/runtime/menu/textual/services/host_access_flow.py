@@ -9,9 +9,9 @@ from .._models import (
     HostAccessConfirmValues,
 )
 from .host_access import (
-    _apply_confirmed_host_access,
     _build_confirmation_request,
     _merge_confirmed_host_access,
+    apply_host_access,
 )
 
 
@@ -36,7 +36,7 @@ async def confirm_and_apply_host_access(
         built_in_shares, docker_options = _merge_confirmed_host_access(
             built_in_shares, docker_options, confirmed
         )
-    _apply_confirmed_host_access(
+    apply_host_access(
         draft,
         built_in_shares,
         custom_shares,
