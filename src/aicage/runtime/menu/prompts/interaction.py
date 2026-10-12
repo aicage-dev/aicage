@@ -39,10 +39,15 @@ class SimpleInteraction:
         context: ConfigContext,
         agent: str,
     ) -> ConfigSelectionResult:
+        draft.apply_cli_extensions()
         selection = select_agent_image(
             agent,
             context,
-            _SimpleSelectionInteraction(),
+            _SimpleSelectionInteraction(
+                draft.parsed.extensions
+                if draft.parsed is not None and draft.parsed.extensions
+                else None
+            ),
         )
         draft.apply_selection(selection)
         _persist_docker_args(draft, prompt_persist_docker_args)
@@ -82,6 +87,9 @@ class SimpleInteraction:
 
 
 class _SimpleSelectionInteraction:
+    def __init__(self, extensions: list[str] | None = None) -> None:
+        self._extensions = extensions
+
     def choose_base(self, request: BaseChoiceRequest) -> str:
         return prompt_for_base(
             BaseSelectionRequest(
@@ -96,6 +104,8 @@ class _SimpleSelectionInteraction:
         self,
         options: list[ExtensionChoiceOption],
     ) -> list[str]:
+        if self._extensions is not None:
+            return list(self._extensions)
         return prompt_for_extensions(
             [
                 ExtensionOption(

@@ -159,7 +159,8 @@ Extensions let you add tools on top of an existing agent image. Quick start:
 git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom
 ```
 
-Then rerun `aicage <agent>` and select the extension in the setup screen.
+Then rerun `aicage <agent>` and select the extension in the setup screen, or use
+`aicage --extension <extension> <agent>` for automation.
 See [Extensions](https://github.com/aicage/aicage/wiki/Customization-Extensions).
 
 ### Docker socket access
