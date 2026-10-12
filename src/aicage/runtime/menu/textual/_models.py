@@ -6,10 +6,11 @@ class BuiltInShareValue:
     source: str
     key: str
     label: str
-    path: str
+    path: str | None
     persisted: bool | None
     enabled: bool
     row_key: str | None = None
+    inherited: bool = False
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class SharesValues:
 @dataclass(frozen=True)
 class CustomShareValue:
     value: str
+    inherited: bool = False
 
 
 @dataclass(frozen=True)
@@ -37,6 +39,7 @@ class DockerOptionValue:
     persisted: bool | None
     enabled: bool
     requires_confirmation: bool = True
+    inherited: bool = False
 
 
 @dataclass(frozen=True)
@@ -49,3 +52,4 @@ class HostAccessConfirmValues:
 @dataclass(frozen=True)
 class ExtrasValues:
     docker_args: str
+    inherited_docker_args: str = ""

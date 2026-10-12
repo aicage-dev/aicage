@@ -203,7 +203,68 @@ class ParseCliTests(TestCase):
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "info", "codex"])
         self.assertEqual(
-            "No agent value is allowed with '--config info'.", str(ctx.exception)
+            "Use '--config info [global|tree]'.", str(ctx.exception)
+        )
+
+    def test_parse_cli_config_info_global(self) -> None:
+        parsed = parse_cli(["--config", "info", "global"])
+
+        self.assertEqual("info", parsed.config_action)
+        self.assertEqual("global", parsed.config_scope)
+
+    def test_parse_cli_config_remove_tree_agent(self) -> None:
+        parsed = parse_cli(["--config", "remove", "tree", "codex"])
+
+        self.assertEqual("remove", parsed.config_action)
+        self.assertEqual("tree", parsed.config_scope)
+        self.assertEqual("codex", parsed.config_agent)
+
+    def test_parse_cli_config_global_update_with_docker_args(self) -> None:
+        parsed = parse_cli(
+            [
+                "--menu",
+                "none",
+                "-e",
+                "GLOBAL_VAR=0",
+                "--docker",
+                "--share",
+                "data",
+                "--extension",
+                "gh",
+                "--git",
+                "--config",
+                "global",
+                "--",
+                "codex",
+            ]
+        )
+
+        self.assertEqual("global", parsed.config_action)
+        self.assertEqual("codex", parsed.config_agent)
+        self.assertEqual("codex", parsed.agent)
+        self.assertEqual("-e GLOBAL_VAR=0", parsed.docker_args)
+        self.assertEqual("none", parsed.menu)
+        self.assertTrue(parsed.docker_socket)
+        self.assertEqual(["data"], parsed.shares)
+        self.assertEqual(["gh"], parsed.extensions)
+        self.assertTrue(parsed.git)
+
+    def test_parse_cli_config_update_rejects_agent_args(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--config", "tree", "--", "codex", "exec"])
+
+        self.assertEqual(
+            "Configuration updates require exactly one agent after '--'.",
+            str(ctx.exception),
+        )
+
+    def test_parse_cli_config_update_rejects_dry_run(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--dry-run", "--config", "global", "--", "codex"])
+
+        self.assertEqual(
+            "--dry-run cannot be used when updating configuration.",
+            str(ctx.exception),
         )
 
     def test_parse_cli_accepts_git_for_agent(self) -> None:
@@ -239,7 +300,7 @@ class ParseCliTests(TestCase):
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "remove", "codex", "extra"])
         self.assertEqual(
-            "Too many values for --config. Use '--config remove [agent]'.",
+            "Use '--config remove [global|tree] [agent]'.",
             str(ctx.exception),
         )
 
@@ -301,7 +362,8 @@ class ParseCliTests(TestCase):
         output = stdout.getvalue()
         self.assertIn("aicage --config\n", output)
         self.assertIn(
-            "--config [<cmd>] Run config command: default info, or remove [agent].",
+            "--config [<cmd>] Run config command: info [global|tree], remove [global|tree] [agent],\n"
+            "                   global <agent>, tree <agent>, or global|tree -- <agent>.",
             output,
         )
         self.assertIn("--menu <mode>", output)

@@ -51,3 +51,17 @@ class InfoConfigTests(TestCase):
                 info_config.info_project_config()
 
         self.assertIn(f"{_PROJECT_AGENTS_KEY}: {{}}", stdout.getvalue())
+
+    def test_info_project_config_global(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "global.yml"
+            store = mock.Mock()
+            store.global_config_path.return_value = config_path
+            with (
+                mock.patch("aicage.cli._info_config.SettingsStore", return_value=store),
+                mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            ):
+                info_config.info_project_config("global")
+
+        self.assertIn("Global config path:", stdout.getvalue())
+        self.assertIn(str(config_path), stdout.getvalue())

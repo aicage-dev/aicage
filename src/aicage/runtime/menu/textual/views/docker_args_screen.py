@@ -25,6 +25,7 @@ class DockerArgsScreen(CancelableScreen[ExtrasValues | None]):
                     "Line breaks outside quotes are treated as whitespace when the command is built.",
                     classes="screen_hint",
                 ),
+                *self._inherited_args(),
                 Label("Docker arguments"),
                 TextArea(
                     self._values.docker_args,
@@ -61,3 +62,11 @@ class DockerArgsScreen(CancelableScreen[ExtrasValues | None]):
 
     def _clear_docker_args(self) -> None:
         self.query_one("#docker_args", TextArea).load_text("")
+
+    def _inherited_args(self) -> list[Static]:
+        if not self._values.inherited_docker_args:
+            return []
+        return [
+            Static("Inherited Docker arguments", classes="field_label"),
+            Static(self._values.inherited_docker_args, classes="field"),
+        ]

@@ -6,6 +6,18 @@ from aicage.runtime.menu.textual.views.overview import _shares
 
 
 class SharesOverviewTests(TestCase):
+    def test_is_git_support_button_identifies_git_support_button(self) -> None:
+        self.assertTrue(_shares.is_git_support_button("git_mount_ssh"))
+        self.assertFalse(_shares.is_git_support_button("add_share"))
+
+    def test_git_support_key_returns_mount_key(self) -> None:
+        self.assertEqual("ssh", _shares.git_support_key("git_mount_ssh"))
+
+    def test_next_git_support_value_cycles_auto_on_off(self) -> None:
+        self.assertTrue(_shares.next_git_support_value(None))
+        self.assertFalse(_shares.next_git_support_value(True))
+        self.assertIsNone(_shares.next_git_support_value(False))
+
     def test_share_widgets_builds_widgets(self) -> None:
         widgets = _shares.share_widgets(OverviewState(None, [], [], False))
 
@@ -120,6 +132,22 @@ class SharesOverviewTests(TestCase):
             ],
             values,
         )
+
+    def test_merge_built_in_shares_preserves_pending_confirmation(self) -> None:
+        values = _shares.merge_built_in_shares(
+            [
+                BuiltInShareValue(
+                    "git_support", "gnupg", "GnuPG", "/test-tmp/gnupg", True, True
+                )
+            ],
+            [
+                BuiltInShareValue(
+                    "git_support", "gnupg", "GnuPG", "/test-tmp/gnupg", None, True
+                )
+            ],
+        )
+
+        self.assertIsNone(values[0].persisted)
 
     def test_current_custom_shares_returns_copy(self) -> None:
         state = OverviewState(None, [], [CustomShareValue("/test-tmp/logs")], False)

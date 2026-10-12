@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ._models import BuiltInShareValue, CustomShareValue
 
@@ -9,3 +9,5 @@ class OverviewState:
     built_in_shares: list[BuiltInShareValue]
     custom_shares: list[CustomShareValue]
     docker_socket_enabled: bool
+    docker_socket_inherited: bool = False
+    git_support_values: dict[str, bool | None] = field(default_factory=dict)
