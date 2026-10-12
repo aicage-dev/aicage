@@ -45,6 +45,25 @@ class RunConfigDraftTests(TestCase):
         self.assertIsInstance(draft.agent_cfg, AgentConfig)
         self.assertEqual({}, draft.agent_cfg.to_mapping())
 
+    def test_effective_agent_cfg_merges_inherited_config(self) -> None:
+        project_path = Path("/test-tmp/project")
+        draft = _create_run_config_draft(
+            project_path,
+            "codex",
+            _ProjectConfig(
+                path=str(project_path), agents={"codex": AgentConfig(shares=["local"])}
+            ),
+            _build_parsed(),
+            _ProjectConfig(
+                path=str(project_path), agents={"codex": AgentConfig(base="ubuntu")}
+            ),
+        )
+
+        config = draft.effective_agent_cfg
+
+        self.assertEqual("ubuntu", config.base)
+        self.assertEqual(["local"], config.shares)
+
     def test_persist_docker_args_updates_config(self) -> None:
         draft = _build_draft(AgentConfig(docker_args="--existing"), docker_args="--new")
 

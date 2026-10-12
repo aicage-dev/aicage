@@ -1,10 +1,13 @@
 import asyncio
 from pathlib import Path
-from unittest import TestCase, mock
+from unittest import IsolatedAsyncioTestCase, TestCase, mock
+
+from textual.widgets import SelectionList
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
+from aicage.runtime.menu.scope_change import ConfigScopeChange
 from aicage.runtime.menu.textual import _config_app
 from aicage.runtime.menu.textual._models import (
     BuiltInShareValue,
@@ -73,6 +76,91 @@ class ConfigAppTests(TestCase):
         self.assertTrue(app._state.built_in_shares[0].enabled)
         self.assertFalse(draft.agent_cfg.mounts.gitconfig)
 
+    def test_init_prefills_detected_git_mounts_for_global_configuration(self) -> None:
+        with mock.patch(
+            "aicage.runtime.menu.textual._config_app.detected_git_mounts",
+            return_value={"gitconfig"},
+        ):
+            app = _build_app(scope="global", git=True)
+
+        self.assertTrue(app._draft.agent_cfg.mounts.gitconfig)
+        self.assertEqual({"gitconfig"}, app._draft.pending_git_mounts)
+        self.assertEqual([], app._state.built_in_shares)
+
+    def test_init_marks_auto_git_mounts_pending_for_new_global_configuration(
+        self,
+    ) -> None:
+        app = _build_app(scope="global", scope_config_exists=False)
+
+        self.assertEqual(
+            {"gitconfig", "gitroot", "gnupg", "ssh"},
+            app._draft.pending_git_mounts,
+        )
+
+    def test_on_overview_git_support_changed_saves_value_and_marks_new_access_pending(
+        self,
+    ) -> None:
+        app = _build_app(scope="global")
+
+        app.on_overview_git_support_changed(
+            Overview.GitSupportChanged("gitconfig", True)
+        )
+
+        self.assertTrue(app._draft.agent_cfg.mounts.gitconfig)
+        self.assertEqual({"gitconfig"}, app._draft.pending_git_mounts)
+
+    def test_on_overview_git_support_changed_marks_auto_value_pending(self) -> None:
+        app = _build_app(scope="global")
+        app._draft.agent_cfg.mounts.gitconfig = False
+
+        app.on_overview_git_support_changed(
+            Overview.GitSupportChanged("gitconfig", None)
+        )
+
+        self.assertIsNone(app._draft.agent_cfg.mounts.gitconfig)
+        self.assertEqual({"gitconfig"}, app._draft.pending_git_mounts)
+
+    def test__pending_git_support_shares_uses_pathless_values(self) -> None:
+        app = _build_app(scope="global")
+        app._draft.agent_cfg.mounts.ssh = True
+        app._draft.pending_git_mounts.add("ssh")
+
+        shares = app._pending_git_support_shares()
+
+        self.assertEqual(
+            [
+                BuiltInShareValue(
+                    "git_support",
+                    "ssh",
+                    "SSH directory (for Git remote access and signing)",
+                    None,
+                    None,
+                    True,
+                )
+            ],
+            shares,
+        )
+
+    def test__pending_git_support_shares_labels_auto_values(self) -> None:
+        app = _build_app(scope="global")
+        app._draft.pending_git_mounts.add("ssh")
+
+        shares = app._pending_git_support_shares()
+
+        self.assertEqual(
+            [
+                BuiltInShareValue(
+                    "git_support",
+                    "ssh",
+                    "(Auto) SSH directory (for Git remote access and signing)",
+                    None,
+                    None,
+                    True,
+                )
+            ],
+            shares,
+        )
+
     def test_format_title_bolds_app_name_and_dims_subtitle(self) -> None:
         app = _build_app()
 
@@ -93,6 +181,7 @@ class ConfigAppTests(TestCase):
 
         apply_shell_width_mock.assert_called_once_with()
         refresh_sections_mock.assert_called_once_with()
+        overview.refresh_scope.assert_called_once_with("project")
         overview.focus_default.assert_called_once_with()
 
     def test_on_mount_uses_default_base_resolution_when_base_missing(self) -> None:
@@ -205,6 +294,67 @@ class ConfigAppTests(TestCase):
 
         edit_mock.assert_called_once_with("/test-tmp/project/logs")
 
+    def test_on_overview_scope_change_requested_changes_scope(self) -> None:
+        app = _build_app()
+
+        with mock.patch.object(app, "_change_scope") as change_scope_mock:
+            app.on_overview_scope_change_requested(
+                Overview.ScopeChangeRequested("global")
+            )
+
+        change_scope_mock.assert_called_once_with("global")
+
+    def test_change_scope_finishes_with_requested_scope(self) -> None:
+        app = _build_app()
+        overview = mock.Mock()
+        app._draft.scope_config_exists = {"global": False}
+
+        with (
+            mock.patch.object(app, "_overview", return_value=overview),
+            mock.patch.object(app, "_apply_current_host_access") as apply_mock,
+            mock.patch.object(app, "_finish") as finish_mock,
+        ):
+            _call_work_async(app, "_change_scope", "global")
+
+        apply_mock.assert_called_once_with()
+        finish_mock.assert_called_once_with(ConfigScopeChange("global"))
+
+    def test_change_scope_restores_current_scope_when_replacement_cancels(self) -> None:
+        app = _build_app()
+        overview = mock.Mock()
+        app._draft.scope_config_exists = {"global": True}
+
+        with (
+            mock.patch.object(app, "_overview", return_value=overview),
+            mock.patch.object(
+                app, "_push_view", new=mock.AsyncMock(return_value=None)
+            ),
+            mock.patch.object(app, "_apply_current_host_access") as apply_mock,
+            mock.patch.object(app, "_finish") as finish_mock,
+        ):
+            _call_work_async(app, "_change_scope", "global")
+
+        overview.refresh_scope.assert_called_once_with("project")
+        apply_mock.assert_not_called()
+        finish_mock.assert_not_called()
+
+    def test_apply_current_host_access_preserves_pending_docker_socket(self) -> None:
+        app = _build_app()
+        app._draft.agent_cfg.mounts.docker = True
+        app._draft.pending_docker_socket = True
+        overview = mock.Mock()
+        overview.current_built_in_shares.return_value = []
+        overview.current_custom_shares.return_value = []
+        overview.current_host_options.return_value = [
+            DockerOptionValue("docker", "Docker socket", None, None, True)
+        ]
+
+        with mock.patch.object(app, "_overview", return_value=overview):
+            app._apply_current_host_access()
+
+        self.assertTrue(app._draft.pending_docker_socket)
+        self.assertIsNone(overview.current_host_options.call_args.args[0])
+
     def test_add_share_updates_custom_shares(self) -> None:
         app = _build_app()
 
@@ -269,6 +419,43 @@ class ConfigAppTests(TestCase):
             ["/test-tmp/project/logs", "/test-tmp/project/data"],
             app._draft.agent_cfg.shares,
         )
+
+    def test_confirm_undecided_built_in_shares_preserves_confirmed_auto_git_mount(
+        self,
+    ) -> None:
+        app = _build_app(scope="global")
+        app._draft.pending_git_mounts.add("gitconfig")
+        auto_git_mount = BuiltInShareValue(
+            "git_support",
+            "gitconfig",
+            "(Auto) Git configuration (identity, aliases, and settings)",
+            None,
+            None,
+            True,
+        )
+        overview = mock.Mock()
+        overview.current_built_in_shares.return_value = []
+        overview.current_custom_shares.return_value = []
+        overview.current_host_options.return_value = []
+
+        with (
+            mock.patch.object(app, "_overview", return_value=overview),
+            mock.patch.object(
+                app,
+                "_push_view",
+                new=mock.AsyncMock(
+                    return_value=HostAccessConfirmValues(
+                        docker_options=[],
+                        git_support_shares=[auto_git_mount],
+                        extension_shares=[],
+                    )
+                ),
+            ),
+        ):
+            accepted = asyncio.run(app._confirm_undecided_built_in_shares())
+
+        self.assertTrue(accepted)
+        self.assertIsNone(app._draft.agent_cfg.mounts.gitconfig)
 
     def test_confirm_undecided_built_in_shares_persists_deselected_docker_socket_from_popup(
         self,
@@ -432,6 +619,7 @@ class ConfigAppTests(TestCase):
 
         overview.hide_shell.assert_called_once_with()
         overview.show_shell.assert_called_once_with()
+        overview.refresh_scope.assert_called_once_with("project")
         focus_last_section_mock.assert_called_once_with()
 
     def test_finish_exits_with_result(self) -> None:
@@ -469,20 +657,32 @@ class ConfigAppTests(TestCase):
         overview.focus_section.assert_called_once_with("extensions")
 
 
+class ConfigAppAsyncTests(IsolatedAsyncioTestCase):
+    async def test_on_mount_clears_scope_highlight(self) -> None:
+        app = _build_app()
+
+        async with app.run_test():
+            selection_list = app.query_one("#scope_overview_list", SelectionList)
+
+            self.assertIsNone(selection_list.highlighted)
+
+
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
     git: bool | None = None,
+    scope: str = "project",
+    scope_config_exists: bool = True,
 ) -> _config_app.ConfigApp:
     with mock.patch(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
         return_value=built_in_shares or [],
     ):
-        return _config_app.ConfigApp(
-            _build_draft(
-                agent_cfg or AgentConfig(base="ubuntu"),
-                ParsedArgs(False, "", "codex", [], False, [], None, git=git),
-                project_path=Path("/test-tmp/project"),
-            ),
-            _build_context(),
+        draft = _build_draft(
+            agent_cfg or AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], None, git=git),
+            project_path=Path("/test-tmp/project"),
         )
+        draft.scope = scope
+        draft.scope_config_exists = {scope: scope_config_exists}
+        return _config_app.ConfigApp(draft, _build_context())

@@ -23,6 +23,14 @@ class ExtensionsScreenTests(TestCase):
 
         self.assertEqual(1, len(checkboxes))
 
+    def test_checkboxes_disables_inherited_extensions(self) -> None:
+        option = _option("gh", "GitHub CLI", "Desc")
+
+        checkbox = screen_module.ExtensionsScreen([option], [], ["gh"])._checkboxes()[0]
+
+        self.assertTrue(checkbox.value)
+        self.assertTrue(checkbox.disabled)
+
     def test_on_mount_focuses_first_checkbox(self) -> None:
         option = _option("gh", "GitHub CLI", "Desc")
         screen = screen_module.ExtensionsScreen([option], ["gh"])
@@ -113,6 +121,20 @@ class ExtensionsScreenTests(TestCase):
             screen.action_accept()
 
         dismiss_mock.assert_called_once_with(["gh"])
+
+    def test_action_accept_excludes_inherited_extensions(self) -> None:
+        option = _option("gh", "GitHub CLI", "Desc")
+        screen = screen_module.ExtensionsScreen([option], [], ["gh"])
+        checkbox = mock.Mock()
+        checkbox.value = True
+
+        with (
+            mock.patch.object(screen, "query_one", return_value=checkbox),
+            mock.patch.object(screen, "dismiss") as dismiss_mock,
+        ):
+            screen.action_accept()
+
+        dismiss_mock.assert_called_once_with([])
 
     def test_on_button_pressed_dispatches_ok(self) -> None:
         option = _option("gh", "GitHub CLI", "Desc")

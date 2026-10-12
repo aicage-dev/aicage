@@ -11,6 +11,7 @@ from aicage.config.project_config import (
     _ProjectConfig,
 )
 from aicage.runtime.docker_args.mount_preferences import (
+    apply_extension_mount_defaults,
     apply_git_mount_defaults,
     apply_mount_preferences,
     disable_git_mounts,
@@ -80,6 +81,15 @@ class MountPreferencesTests(TestCase):
             )
 
         confirm_persist.assert_not_called()
+
+    def test_apply_extension_mount_defaults_persists_extension_defaults(self) -> None:
+        agent_cfg = AgentConfig(extensions=["gh"])
+        context = _build_context(agent_cfg)
+
+        with mock.patch(f"{_MODULE}.extension_mount_defaults", return_value={"gh": True}):
+            apply_extension_mount_defaults(context, agent_cfg)
+
+        self.assertEqual({"gh": True}, agent_cfg.extension_mounts)
 
     def test_apply_git_mount_defaults_persists_detected_mounts(self) -> None:
         agent_cfg = AgentConfig()

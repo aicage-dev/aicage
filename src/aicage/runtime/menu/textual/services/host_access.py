@@ -31,6 +31,7 @@ def current_built_in_shares(
             persisted=item.persisted,
             enabled=built_in_identity(item.source, item.key) in enabled_groups,
             row_key=item.row_key,
+            inherited=item.inherited,
         )
         for item in built_in_shares
     ]
@@ -58,7 +59,7 @@ def built_in_group_selection_values(
 
 
 def current_docker_option(
-    selected: set[str], persisted: bool | None
+    selected: set[str], persisted: bool | None, inherited: bool = False
 ) -> DockerOptionValue:
     return DockerOptionValue(
         key="docker",
@@ -67,6 +68,7 @@ def current_docker_option(
         persisted=persisted,
         enabled=docker_selection_key("socket") in selected,
         requires_confirmation=True,
+        inherited=inherited,
     )
 
 
@@ -122,6 +124,7 @@ def _merge_confirmed_host_access(
                     built_in_identity(item.source, item.key), item.enabled
                 ),
                 row_key=item.row_key,
+                inherited=item.inherited,
             )
             if built_in_identity(item.source, item.key) in confirmed_by_key
             else item
@@ -140,10 +143,32 @@ def _merge_confirmed_host_access(
                 description=option.description,
                 persisted=option.persisted,
                 enabled=confirmed_docker_by_key.get(option.key, option.enabled),
+                inherited=option.inherited,
             )
             for option in docker_options
         ],
     )
+
+
+def apply_host_access(
+    draft: RunConfigDraft,
+    built_in_shares: list[BuiltInShareValue],
+    custom_shares: list[CustomShareValue],
+    docker_options: list[DockerOptionValue],
+) -> None:
+    draft.agent_cfg.shares = [item.value for item in custom_shares if not item.inherited]
+    for item in built_in_shares:
+        if item.inherited:
+            continue
+        if item.source == "git_support":
+            setattr(draft.agent_cfg.mounts, item.key, item.enabled)
+        elif item.source == "extension":
+            draft.agent_cfg.extension_mounts[item.key] = item.enabled
+    for option in docker_options:
+        if option.inherited:
+            continue
+        if option.key == "docker":
+            draft.agent_cfg.mounts.docker = option.enabled
 
 
 def _apply_confirmed_host_access(
@@ -152,12 +177,4 @@ def _apply_confirmed_host_access(
     custom_shares: list[CustomShareValue],
     docker_options: list[DockerOptionValue],
 ) -> None:
-    draft.agent_cfg.shares = [item.value for item in custom_shares]
-    for item in built_in_shares:
-        if item.source == "git_support":
-            setattr(draft.agent_cfg.mounts, item.key, item.enabled)
-        elif item.source == "extension":
-            draft.agent_cfg.extension_mounts[item.key] = item.enabled
-    for option in docker_options:
-        if option.key == "docker":
-            draft.agent_cfg.mounts.docker = option.enabled
+    apply_host_access(draft, built_in_shares, custom_shares, docker_options)
