@@ -177,6 +177,26 @@ class BuiltInShareConfirmScreenTests(TestCase):
             "Extension gh: Read-only: /home/user/.config/gh", extension_rows[0].prompt
         )
 
+    def test_compose_formats_pathless_git_support_setting(self) -> None:
+        screen = host_access_confirm_screen.HostAccessConfirmScreen(
+            [],
+            [BuiltInShareValue("git_support", "ssh", "SSH", None, None, True)],
+            [],
+        )
+
+        git_rows = list(screen._git_support_selection_list()._options)
+
+        self.assertEqual("SSH", git_rows[0].prompt)
+
+    def test__git_support_hint_describes_global_scope(self) -> None:
+        screen = host_access_confirm_screen.HostAccessConfirmScreen(
+            [], [], [], "global"
+        )
+
+        hint = screen._git_support_hint()
+
+        self.assertEqual("Persists Git support settings for every project.", hint)
+
     def test_docker_selection_list_includes_docker_option(self) -> None:
         screen = host_access_confirm_screen.HostAccessConfirmScreen(
             [_docker_option()],

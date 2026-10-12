@@ -31,6 +31,24 @@ class ConfigStoreTests(TestCase):
 
             self.assertEqual(store.projects_dir / f"{expected}.yml", path)
 
+    def test_global_config_path_returns_global_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            global_path = Path(tmp_dir) / "global.yml"
+            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+                path = SettingsStore().global_config_path()
+
+        self.assertEqual(global_path, path)
+
+    def test_tree_config_path_returns_hashed_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            trees_dir = Path(tmp_dir) / "trees"
+            with mock.patch("aicage.config.config_store.TREES_DIR", trees_dir):
+                store = SettingsStore()
+                path = store.tree_config_path(Path("/project"))
+
+        expected = hashlib.sha256(b"/project").hexdigest()
+        self.assertEqual(trees_dir / f"{expected}.yml", path)
+
     def test_load_project_returns_empty_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             projects_dir = Path(tmp_dir)
@@ -98,3 +116,69 @@ class ConfigStoreTests(TestCase):
                 project_cfg = store.load_project(project_path)
 
             self.assertEqual(["java17"], project_cfg.agents["codex"].extensions)
+
+    def test_load_global_returns_empty_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            global_path = Path(tmp_dir) / "global.yml"
+            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+                config = SettingsStore().load_global()
+
+        self.assertEqual({}, config.agents)
+
+    def test_save_global_writes_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            global_path = Path(tmp_dir) / "global.yml"
+            config = _ProjectConfig(path="/", agents={"codex": AgentConfig(base="ubuntu")})
+            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+                SettingsStore().save_global(config)
+
+            self.assertEqual(config.to_mapping(), yaml.safe_load(global_path.read_text()))
+
+    def test_save_global_writes_false_values(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            global_path = Path(tmp_dir) / "global.yml"
+            config = _ProjectConfig(
+                path="/",
+                agents={
+                    "codex": AgentConfig(
+                        mounts=_AgentMounts(gitconfig=False, docker=True),
+                        extension_mounts={"gh": False, "gcloud": True},
+                    )
+                },
+            )
+            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+                SettingsStore().save_global(config)
+
+            saved = yaml.safe_load(global_path.read_text())
+
+        self.assertEqual(
+            {
+                "path": "/",
+                "agents": {
+                    "codex": {
+                        "mounts": {"gitconfig": False, "docker": True},
+                        "extension_mounts": {"gh": False, "gcloud": True},
+                    }
+                }
+            },
+            saved,
+        )
+
+    def test_load_tree_returns_empty_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            trees_dir = Path(tmp_dir) / "trees"
+            with mock.patch("aicage.config.config_store.TREES_DIR", trees_dir):
+                config = SettingsStore().load_tree(Path("/project"))
+
+        self.assertEqual({}, config.agents)
+
+    def test_save_tree_writes_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            trees_dir = Path(tmp_dir) / "trees"
+            config = _ProjectConfig(path="/project", agents={"codex": AgentConfig(base="ubuntu")})
+            with mock.patch("aicage.config.config_store.TREES_DIR", trees_dir):
+                store = SettingsStore()
+                store.save_tree(Path("/project"), config)
+                saved = store.load_tree(Path("/project"))
+
+        self.assertEqual(config, saved)
