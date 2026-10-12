@@ -7,18 +7,268 @@ from aicage.cli_types import ParsedArgs
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.config_store import SettingsStore
+from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.image_refs import default_extended_image_ref
-from aicage.config.project_config import AgentConfig, _AgentMounts
+from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 from aicage.config.run_config_draft import RunConfigDraft
-from aicage.config.runtime_config import RunConfig, load_run_config
+from aicage.config.runtime_config import (
+    RunConfig,
+    configure_inherited_config,
+    load_run_config,
+)
 from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu.interaction import create_runtime_interaction
+from aicage.runtime.menu.scope_change import ConfigScopeChange
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 
 class RuntimeConfigTests(TestCase):
+    def test_load_run_config_resolves_file_backed_inherited_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root_path = Path(tmp_dir)
+            project_path = root_path / "workspace" / "project"
+            project_path.mkdir(parents=True)
+            with (
+                mock.patch(
+                    "aicage.config.config_store.PROJECTS_DIR",
+                    root_path / "projects",
+                ),
+                mock.patch(
+                    "aicage.config.config_store.GLOBAL_CONFIG_PATH",
+                    root_path / "config/global.yml",
+                ),
+                mock.patch(
+                    "aicage.config.config_store.TREES_DIR",
+                    root_path / "config/trees",
+                ),
+            ):
+                store = SettingsStore()
+                store.save_global(
+                    _ProjectConfig(
+                        path="/",
+                        agents={
+                            "codex": AgentConfig(
+                                base="ubuntu",
+                                docker_args="--global",
+                                mounts=_AgentMounts(gitconfig=True),
+                            )
+                        },
+                    )
+                )
+                store.save_tree(
+                    project_path.parent,
+                    _ProjectConfig(
+                        path=str(project_path.parent),
+                        agents={
+                            "codex": AgentConfig(
+                                docker_args="--tree",
+                                shares=["tree-share"],
+                            )
+                        },
+                    ),
+                )
+                store.save_project(
+                    project_path,
+                    _ProjectConfig(
+                        path=str(project_path),
+                        agents={
+                            "codex": AgentConfig(
+                                docker_args="--project",
+                                mounts=_AgentMounts(ssh=False),
+                                shares=["project-share"],
+                            )
+                        },
+                    ),
+                )
+
+                def store_factory(
+                    *_args: object, **_kwargs: object
+                ) -> SettingsStore:
+                    return SettingsStore()
+
+                def configure_run(
+                    draft: RunConfigDraft,
+                    context: ConfigContext,
+                    _agent: str,
+                ) -> object:
+                    self.assertEqual("ubuntu", draft.effective_agent_cfg.base)
+                    self.assertEqual(
+                        "--global --tree --project",
+                        draft.effective_agent_cfg.docker_args,
+                    )
+                    self.assertTrue(draft.effective_agent_cfg.mounts.gitconfig)
+                    self.assertFalse(draft.effective_agent_cfg.mounts.ssh)
+                    self.assertEqual(
+                        ["tree-share", "project-share"],
+                        draft.effective_agent_cfg.shares,
+                    )
+                    effective_config = context.project_cfg
+                    self.assertEqual(
+                        "--global --tree --project",
+                        effective_config.agents["codex"].docker_args,
+                    )
+                    return SimpleNamespace(
+                        selection=ImageSelection(
+                            image_ref="ref",
+                            base="ubuntu",
+                            extensions=[],
+                            agent_image_ref="ref",
+                        ),
+                        project_docker_args=draft.effective_agent_cfg.docker_args,
+                    )
+
+                interaction = mock.Mock()
+                interaction.configure_run.side_effect = configure_run
+                with (
+                    mock.patch(
+                        "aicage.config.runtime_config.SettingsStore",
+                        new=store_factory,
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.Path.cwd",
+                        return_value=project_path,
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.resolve_docker_args",
+                        return_value=([], []),
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_extensions", return_value={}
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_bases",
+                        return_value=self._get_bases(),
+                    ),
+                    mock.patch(
+                        "aicage.config.runtime_config.load_agents",
+                        return_value=self._get_agents(),
+                    ),
+                ):
+                    run_config = load_run_config("codex", interaction)
+
+        assert run_config is not None
+        self.assertEqual("--global --tree --project", run_config.project_docker_args)
+
+    def test_configure_inherited_config_saves_global_without_running_image_setup(
+        self,
+    ) -> None:
+        store = mock.Mock()
+        config = _ProjectConfig(path="/", agents={})
+        store.load_global.return_value = config
+        store.load_project.return_value = _ProjectConfig(path="/project", agents={})
+        store.load_tree.return_value = _ProjectConfig(path="/project", agents={})
+        interaction = mock.Mock()
+        with (
+            mock.patch(
+                "aicage.config.runtime_config.SettingsStore", return_value=store
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_bases",
+                return_value=self._get_bases(),
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_agents",
+                return_value=self._get_agents(),
+            ),
+            mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+        ):
+            configure_inherited_config("global", "codex", interaction)
+
+        interaction.configure_run.assert_called_once()
+        store.save_global.assert_called_once_with(config)
+
+    def test_configure_inherited_config_prefills_cli_values(self) -> None:
+        store = mock.Mock()
+        config = _ProjectConfig(path="/", agents={})
+        store.load_global.return_value = config
+        store.load_project.return_value = _ProjectConfig(path="/project", agents={})
+        store.load_tree.return_value = _ProjectConfig(path="/project", agents={})
+        parsed = ParsedArgs(
+            dry_run=False,
+            docker_args="-e GLOBAL_VAR=0",
+            agent="codex",
+            agent_args=[],
+            docker_socket=True,
+            shares=[],
+            config_action="global",
+            config_agent="codex",
+            menu="none",
+        )
+
+        def configure_run(
+            draft: RunConfigDraft, _context: object, _agent: str
+        ) -> object:
+            self.assertEqual("-e GLOBAL_VAR=0", draft.agent_cfg.docker_args)
+            self.assertTrue(draft.agent_cfg.mounts.docker)
+            return self._selection_result()
+
+        interaction = mock.Mock()
+        interaction.configure_run.side_effect = configure_run
+        with (
+            mock.patch(
+                "aicage.config.runtime_config.SettingsStore", return_value=store
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_bases",
+                return_value=self._get_bases(),
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_agents",
+                return_value=self._get_agents(),
+            ),
+            mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+        ):
+            configure_inherited_config("global", "codex", interaction, parsed)
+
+        store.save_global.assert_called_once_with(config)
+
+    def test_load_run_config_switches_to_global_configuration(self) -> None:
+        project_path = Path("/project")
+        project_config = _ProjectConfig(
+            path=str(project_path),
+            agents={"codex": AgentConfig(docker_args="--project")},
+        )
+        global_config = _ProjectConfig(
+            path="/", agents={"codex": AgentConfig(docker_args="--global")}
+        )
+        store = mock.Mock()
+        store.load_project.return_value = project_config
+        store.load_global.return_value = global_config
+        store.load_tree.return_value = _ProjectConfig(path=str(project_path))
+        interaction = mock.Mock()
+        interaction.configure_run.side_effect = [
+            ConfigScopeChange("global"),
+            self._selection_result(),
+        ]
+
+        with (
+            mock.patch(
+                "aicage.config.runtime_config.SettingsStore", return_value=store
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.Path.cwd", return_value=project_path
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_bases",
+                return_value=self._get_bases(),
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_agents",
+                return_value=self._get_agents(),
+            ),
+            mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+        ):
+            run_config = load_run_config("codex", interaction)
+
+        self.assertIsNone(run_config)
+        self.assertEqual(2, interaction.configure_run.call_count)
+        global_draft = interaction.configure_run.call_args_list[1].args[0]
+        self.assertEqual("global", global_draft.scope)
+        self.assertEqual("--global --project", global_draft.agent_cfg.docker_args)
+        store.save_global.assert_called_once_with(global_config)
+
     def test_load_run_config_reads_docker_args_and_mount_prefs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             projects_dir = Path(tmp_dir)
@@ -71,6 +321,7 @@ class RuntimeConfigTests(TestCase):
                 run_config = load_run_config("codex", self._interaction())
 
         self.assertIsInstance(run_config, RunConfig)
+        assert run_config is not None
         self.assertEqual("--project", run_config.project_docker_args)
         self.assertEqual(mounts, run_config.mounts)
         self.assertEqual(env, run_config.env)
@@ -150,6 +401,7 @@ class RuntimeConfigTests(TestCase):
 
                 updated_cfg = store.load_project(project_path)
 
+        assert run_config is not None
         self.assertEqual("--existing", run_config.project_docker_args)
         self.assertEqual("--existing", updated_cfg.agents["codex"].docker_args)
 
@@ -191,6 +443,7 @@ class RuntimeConfigTests(TestCase):
             ):
                 run_config = load_run_config("codex", self._interaction())
 
+        assert run_config is not None
         self.assertEqual("ubuntu", run_config.selection.base)
 
     def test_load_run_config_removes_missing_extensions_when_loading_project(
@@ -519,6 +772,7 @@ class RuntimeConfigTests(TestCase):
                     parsed,
                 )
 
+        assert run_config is not None
         self.assertEqual("--new", run_config.project_docker_args)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual([], parsed.shares)

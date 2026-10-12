@@ -81,6 +81,27 @@ Screen {
     margin-bottom: 1;
 }
 
+#scope_title {
+    text-style: bold;
+    margin-bottom: 0;
+}
+
+#scope_overview_list {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.scope_banner {
+    width: 100%;
+    height: auto;
+    padding: 0 1;
+    margin-bottom: 1;
+    border: round $primary 45%;
+    background: $primary 10%;
+    color: $primary-lighten-2;
+    text-style: bold;
+}
+
 .screen_title {
     text-style: bold;
     margin-bottom: 0;
@@ -143,6 +164,39 @@ Screen {
 #shares_overview_title {
     width: auto;
     margin-right: 1;
+}
+
+#git_support_overview {
+    height: 4;
+    width: 100%;
+}
+
+.git_support_row {
+    height: 1;
+    width: 100%;
+}
+
+.git_support_label {
+    width: 1fr;
+    height: 1;
+    margin-left: 1;
+}
+
+.git_support_control {
+    width: 6;
+    min-width: 6;
+    height: auto;
+    border: none;
+    background: $primary 30%;
+    color: $text;
+    text-style: none;
+    content-align: left middle;
+}
+
+.git_support_control:hover,
+.git_support_control:focus {
+    background: $primary;
+    color: $surface;
 }
 
 #add_share {

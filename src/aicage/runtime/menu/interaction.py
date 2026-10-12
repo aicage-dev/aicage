@@ -7,6 +7,7 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.reporting import ConsoleOperationReporter, OperationReporter
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu._none_interaction import _NoneInteraction
+from aicage.runtime.menu.scope_change import ConfigScopeChange
 from aicage.runtime.menu.textual.interaction import TextualInteraction
 from aicage.runtime.menu.textual.services.execution_reporting import ExecutionReporter
 
@@ -20,7 +21,7 @@ class RuntimeInteraction(Protocol):
         draft: RunConfigDraft,
         context: ConfigContext,
         agent: str,
-    ) -> ConfigSelectionResult: ...
+    ) -> ConfigSelectionResult | ConfigScopeChange: ...
 
     def confirm_aicage_update(
         self,

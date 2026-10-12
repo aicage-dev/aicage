@@ -31,6 +31,8 @@ class ConfigureRunTests(TestCase):
             result = resolved.configure_run(draft, _build_context(), "codex")
 
         edit_mock.assert_called_once_with(draft, mock.ANY)
+        self.assertIsInstance(result, ConfigSelectionResult)
+        assert isinstance(result, ConfigSelectionResult)
         self.assertIs(selection, result.selection)
         self.assertEqual("--project", result.project_docker_args)
 
@@ -101,8 +103,7 @@ class EditDraftWithTextualAppTests(TestCase):
             project_path=Path("/repo"),
         )
         context = _build_context()
-        app_mock = mock.Mock()
-        app_mock.run.return_value = mock.Mock(
+        app_result = ConfigSelectionResult(
             selection=ImageSelection(
                 image_ref="repo:ubuntu",
                 base="ubuntu",
@@ -114,7 +115,7 @@ class EditDraftWithTextualAppTests(TestCase):
 
         with mock.patch(
             "aicage.runtime.menu.textual.interaction.ConfigApp.run",
-            return_value=app_mock.run.return_value,
+            return_value=app_result,
         ):
             result = interaction._edit_draft_with_textual_app(
                 draft,
@@ -124,6 +125,8 @@ class EditDraftWithTextualAppTests(TestCase):
         parsed = draft.parsed
         if parsed is None:
             self.fail("Expected parsed args to be available.")
+        self.assertIsInstance(result, ConfigSelectionResult)
+        assert isinstance(result, ConfigSelectionResult)
         self.assertEqual("repo:ubuntu", result.selection.image_ref)
         self.assertEqual("--new", result.project_docker_args)
         self.assertEqual("--new", draft.agent_cfg.docker_args)

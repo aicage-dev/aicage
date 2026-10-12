@@ -1,7 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from aicage.cli_types import ParsedArgs
+from aicage.config._inheritance import merge_agent_configs
 from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.mounts.shares import merge_share_values
@@ -12,15 +13,28 @@ class RunConfigDraft:
     project_path: Path
     agent: str
     project_cfg: _ProjectConfig
+    inherited_project_cfg: _ProjectConfig
     parsed: ParsedArgs | None
     existing_project_docker_args: str
     initial_base: str | None
     initial_image_ref: str | None
     initial_extensions: list[str]
+    scope_title: str = "container config"
+    scope: str = "project"
+    scope_config_exists: dict[str, bool] = field(default_factory=dict)
+    pending_git_mounts: set[str] = field(default_factory=set)
+    pending_extension_mounts: set[str] = field(default_factory=set)
+    pending_docker_socket: bool = False
 
     @property
     def agent_cfg(self) -> AgentConfig:
         return self.project_cfg.agents.setdefault(self.agent, AgentConfig())
+
+    @property
+    def effective_agent_cfg(self) -> AgentConfig:
+        return merge_agent_configs(
+            self.inherited_project_cfg.agents.get(self.agent), self.agent_cfg
+        )
 
     def apply_selection(self, selection: ImageSelection) -> None:
         if self.agent_cfg.base is None:
@@ -107,12 +121,17 @@ def _create_run_config_draft(
     agent: str,
     project_cfg: _ProjectConfig,
     parsed: ParsedArgs | None,
+    inherited_project_cfg: _ProjectConfig | None = None,
 ) -> RunConfigDraft:
-    initial_agent_cfg = project_cfg.agents.get(agent, AgentConfig())
+    inherited_cfg = inherited_project_cfg or _ProjectConfig(path=project_cfg.path)
+    initial_agent_cfg = merge_agent_configs(
+        inherited_cfg.agents.get(agent), project_cfg.agents.get(agent, AgentConfig())
+    )
     return RunConfigDraft(
         project_path=project_path,
         agent=agent,
         project_cfg=project_cfg,
+        inherited_project_cfg=inherited_cfg,
         parsed=parsed,
         existing_project_docker_args=initial_agent_cfg.docker_args,
         initial_base=initial_agent_cfg.base,
