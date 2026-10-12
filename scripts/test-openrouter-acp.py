@@ -242,6 +242,7 @@ def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
         _write_marker_extension_config(agent, home_dir, workspace)
         _copy_docker_cli_plugins(home_dir)
         environment = _test_environment(home_dir, api_key)
+        _run_container_preflight(agent, aicage_path, environment, workspace)
         command = [str(aicage_path), "--menu", "none", *agent.aicage_args]
         client = _AcpClient(command, environment, workspace)
         _prompt_agent(client, workspace)
@@ -296,6 +297,77 @@ def _write_marker_extension_config(agent: _Agent, home_dir: Path, workspace: Pat
         "    extensions:\n"
         "      - marker\n",
         encoding="utf-8",
+    )
+
+
+def _run_container_preflight(
+    agent: _Agent, aicage_path: Path, environment: dict[str, str], workspace: Path
+) -> None:
+    command = _container_preflight_command(agent, aicage_path)
+    try:
+        result = subprocess.run(  # nosec B603 -- command is built from fixed smoke-test arguments.
+            command,
+            cwd=workspace,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=_REQUEST_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise TimeoutError("Container preflight timed out.") from exc
+    if result.returncode != 0:
+        output = "\n".join(part for part in (result.stdout, result.stderr) if part)
+        raise RuntimeError(f"Container preflight failed ({result.returncode}):\n{output.rstrip()}")
+    print(f"{agent.name}: container preflight passed")
+    print(result.stdout.rstrip())
+
+
+def _container_preflight_command(agent: _Agent, aicage_path: Path) -> list[str]:
+    separator = agent.aicage_args.index("--")
+    environment_args = _without_entrypoint_override(agent.aicage_args[:separator])
+    return [
+        str(aicage_path),
+        "--menu",
+        "none",
+        *environment_args,
+        "-e",
+        "AICAGE_ENTRYPOINT_CMD=/bin/bash",
+        "--",
+        agent.name,
+        "-c",
+        _container_preflight_script(agent),
+    ]
+
+
+def _without_entrypoint_override(arguments: tuple[str, ...]) -> list[str]:
+    result: list[str] = []
+    index = 0
+    while index < len(arguments):
+        if arguments[index] == "-e" and arguments[index + 1].startswith("AICAGE_ENTRYPOINT_CMD="):
+            index += 2
+            continue
+        result.append(arguments[index])
+        index += 1
+    return result
+
+
+def _container_preflight_script(agent: _Agent) -> str:
+    config_path = agent.config_destination.as_posix()
+    checks = [
+        'test "$(id -u)" = "$AICAGE_UID"',
+        'test "$(id -g)" = "$AICAGE_GID"',
+        'test "$HOME" = "$AICAGE_HOME"',
+        'test -n "${OPENROUTER_API_KEY:-}"',
+        f'test -r "$HOME/{config_path}"',
+    ]
+    if agent.name == "vibe":
+        checks.append('test "$VIBE_ACTIVE_MODEL" = "openrouter-free"')
+    return "set -eu\n" + "\n".join(
+        [
+            'printf "uid=%s gid=%s home=%s\\n" "$(id -u)" "$(id -g)" "$HOME"',
+            *checks,
+        ]
     )
 
 
