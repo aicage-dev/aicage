@@ -10,7 +10,7 @@ from aicage.config.agent.loader import load_agents
 from aicage.config.base.loader import load_bases
 from aicage.config.errors import ConfigError
 
-_MAX_CONFIG_TOKENS = 2
+_MAX_CONFIG_TOKENS = 3
 _DRY_RUN_OPTION = "--dry-run"
 _MENU_OPTION = "--menu"
 _DOCKER_OPTION = "--docker"
@@ -31,7 +31,7 @@ _OPTIONS_WITH_VALUES: set[str] = {
 _CONFIG_ACTION_ALIASES: dict[str, str] = {
     "print": "info",
 }
-_VALID_CONFIG_ACTIONS: set[str] = {"info", "remove"}
+_VALID_CONFIG_ACTIONS: set[str] = {"info", "remove", "global", "tree"}
 
 
 def parse_cli(argv: Sequence[str]) -> ParsedArgs:
@@ -120,7 +120,12 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             " [<agent-args>]\n"
             "  aicage --config\n"
             "  aicage --config info\n"
+            "  aicage --config info <global|tree>\n"
             "  aicage --config remove [<agent>]\n"
+            "  aicage --config remove <global|tree> [<agent>]\n"
+            "  aicage --config global <agent>\n"
+            "  aicage --config tree <agent>\n"
+            "  aicage [<docker-args>] --config <global|tree> -- <agent>\n"
             "  aicage --version\n\n"
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
@@ -129,7 +134,8 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  --git [on|off]   Enable or disable Git support mounts (default: on).\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --extension <id> Select an extension. Repeatable.\n"
-            "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
+            "  --config [<cmd>] Run config command: info [global|tree], remove [global|tree] [agent],\n"
+            "                   global <agent>, tree <agent>, or global|tree -- <agent>.\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
@@ -149,13 +155,13 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
 
     if opts.config is not None:
         config_tokens: list[str] = opts.config
-        config_action, config_agent = _validate_config_action(
-            config_tokens, opts, remaining, post_argv
+        config_action, config_agent, config_scope, config_update = (
+            _validate_config_action(config_tokens, opts, remaining, post_argv)
         )
         return ParsedArgs(
             opts.dry_run,
-            "",
-            "",
+            " ".join(remaining).strip() if config_update else "",
+            config_agent or "",
             [],
             opts.docker,
             opts.share,
@@ -163,6 +169,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             config_agent,
             opts.menu,
             extensions=opts.extension,
+            config_scope=config_scope,
             git=opts.git,
         )
 
@@ -252,20 +259,26 @@ def _validate_config_action(
     opts: argparse.Namespace,
     remaining: list[str],
     post_argv: list[str] | None,
-) -> tuple[str, str | None]:
+) -> tuple[str, str | None, str | None, bool]:
     if not config_tokens:
         config_tokens = ["info"]
     if len(config_tokens) > _MAX_CONFIG_TOKENS:
-        raise CliError("Too many values for --config. Use '--config remove [agent]'.")
+        raise CliError("Too many values for --config.")
     raw_action = config_tokens[0]
     config_action = _normalize_config_action(raw_action)
     if config_action not in _VALID_CONFIG_ACTIONS:
         raise CliError(f"Unknown config action: {raw_action}")
-    config_agent = (
-        config_tokens[1] if len(config_tokens) == _MAX_CONFIG_TOKENS else None
-    )
-    if config_action == "info" and config_agent is not None:
-        raise CliError("No agent value is allowed with '--config info'.")
+    if _is_config_update(config_action, config_tokens, post_argv):
+        if opts.dry_run:
+            raise CliError("--dry-run cannot be used when updating configuration.")
+        if post_argv is None or len(post_argv) != 1:
+            raise CliError(
+                "Configuration updates require exactly one agent after '--'."
+            )
+        return config_action, post_argv[0], None, True
+    config_agent, config_scope = _config_target(config_action, config_tokens)
+    if config_action in {"global", "tree"} and config_agent is None:
+        raise CliError(f"An agent is required with '--config {config_action}'.")
     if (
         remaining
         or post_argv
@@ -277,7 +290,55 @@ def _validate_config_action(
         or opts.menu != "ui"
     ):
         raise CliError("No additional arguments are allowed with --config.")
-    return config_action, config_agent
+    return config_action, config_agent, config_scope, False
+
+
+def _is_config_update(
+    config_action: str,
+    config_tokens: list[str],
+    post_argv: list[str] | None,
+) -> bool:
+    return (
+        config_action in {"global", "tree"}
+        and len(config_tokens) == 1
+        and post_argv is not None
+    )
+
+
+def _config_target(
+    config_action: str,
+    config_tokens: list[str],
+) -> tuple[str | None, str | None]:
+    values = config_tokens[1:]
+    if config_action in {"global", "tree"}:
+        if len(values) != 1:
+            raise CliError(f"An agent is required with '--config {config_action}'.")
+        return values[0], None
+    if config_action == "info":
+        return _info_config_target(values)
+    return _remove_config_target(values)
+
+
+def _info_config_target(values: list[str]) -> tuple[str | None, str | None]:
+    if not values:
+        return None, None
+    if len(values) == 1 and values[0] in {"global", "tree"}:
+        return None, values[0]
+    raise CliError("Use '--config info [global|tree]'.")
+
+
+def _remove_config_target(values: list[str]) -> tuple[str | None, str | None]:
+    if not values:
+        return None, None
+    if values[0] not in {"global", "tree"}:
+        if len(values) == 1:
+            return values[0], None
+        raise CliError("Use '--config remove [global|tree] [agent]'.")
+    if len(values) == 1:
+        return None, values[0]
+    if len(values) == _MAX_CONFIG_TOKENS - 1:
+        return values[1], values[0]
+    raise CliError("Use '--config remove [global|tree] [agent]'.")
 
 
 def _parse_agent_section(

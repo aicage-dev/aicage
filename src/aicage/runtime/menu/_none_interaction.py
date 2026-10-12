@@ -9,6 +9,7 @@ from aicage.registry.image_selection.interaction import (
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.reporting import OperationReporter
 from aicage.runtime.docker_args.mount_preferences import (
+    apply_extension_mount_defaults,
     apply_git_mount_defaults,
     apply_mount_preferences,
     disable_git_mounts,
@@ -41,7 +42,9 @@ class _NoneInteraction:
                 apply_git_mount_defaults(context, draft.agent_cfg)
             else:
                 disable_git_mounts(draft.agent_cfg)
-        if draft.parsed is None or draft.parsed.config_action is None:
+        if draft.parsed is not None and draft.parsed.config_action is not None:
+            apply_extension_mount_defaults(context, draft.agent_cfg)
+        else:
             apply_mount_preferences(
                 context,
                 agent,

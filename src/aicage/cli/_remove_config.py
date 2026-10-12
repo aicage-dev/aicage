@@ -1,24 +1,25 @@
 from pathlib import Path
+from typing import Any
 
 from aicage._logging import get_logger
 from aicage.config.config_store import SettingsStore
 
 
-def remove_project_config(agent: str | None = None) -> None:
+def remove_project_config(agent: str | None = None, scope: str | None = None) -> None:
     logger = get_logger()
     store = SettingsStore()
     project_path = Path.cwd().resolve()
-    config_path = store.project_config_path(project_path)
+    config_path, label = _config_path(store, project_path, scope)
     if agent is not None:
-        _remove_agent_config(store, project_path, config_path, agent)
+        _remove_agent_config(store, project_path, config_path, agent, scope)
         return
-    logger.info("Removing project config at %s", config_path)
+    logger.info("Removing %s config at %s", label.lower(), config_path)
     if config_path.exists():
         config_path.unlink()
-        print("Project config removed:")
+        print(f"{label} config removed:")
         print(config_path)
     else:
-        print("Project config not found:")
+        print(f"{label} config not found:")
         print(config_path)
 
 
@@ -27,21 +28,69 @@ def _remove_agent_config(
     project_path: Path,
     config_path: Path,
     agent: str,
+    scope: str | None,
 ) -> None:
     logger = get_logger()
+    label = _config_label(scope)
     logger.info("Removing agent config '%s' from %s", agent, config_path)
     if not config_path.exists():
-        print("Project config not found:")
+        print(f"{label} config not found:")
         print(config_path)
         return
-    config = store.load_project(project_path)
+    config = _load_config(store, project_path, scope)
     if agent not in config.agents:
         print("Agent config not found:")
         print(agent)
         return
     del config.agents[agent]
-    store.save_project(project_path, config)
+    _save_config(store, project_path, config, scope)
     print("Agent config removed:")
     print(agent)
-    print("Project config updated:")
+    print(f"{label} config updated:")
     print(config_path)
+
+
+def _config_path(
+    store: SettingsStore,
+    project_path: Path,
+    scope: str | None,
+) -> tuple[Path, str]:
+    if scope == "global":
+        return store.global_config_path(), _config_label(scope)
+    if scope == "tree":
+        return store.tree_config_path(project_path), _config_label(scope)
+    return store.project_config_path(project_path), _config_label(scope)
+
+
+def _config_label(scope: str | None) -> str:
+    if scope == "global":
+        return "Global"
+    if scope == "tree":
+        return "Directory tree"
+    return "Project"
+
+
+def _load_config(
+    store: SettingsStore,
+    project_path: Path,
+    scope: str | None,
+):
+    if scope == "global":
+        return store.load_global()
+    if scope == "tree":
+        return store.load_tree(project_path)
+    return store.load_project(project_path)
+
+
+def _save_config(
+    store: SettingsStore,
+    project_path: Path,
+    config: Any,
+    scope: str | None,
+) -> None:
+    if scope == "global":
+        store.save_global(config)
+    elif scope == "tree":
+        store.save_tree(project_path, config)
+    else:
+        store.save_project(project_path, config)

@@ -122,6 +122,28 @@ class MountPromptTests(TestCase):
         self.assertEqual(set(), prefs.git_mounts)
         self.assertEqual({"gh": False}, prefs.extension_mounts)
 
+    def test_extension_mount_defaults_enables_unconfigured_extensions(self) -> None:
+        agent_cfg = AgentConfig(
+            mounts=_AgentMounts(),
+            extensions=["gh", "configured"],
+            extension_mounts={"configured": False},
+        )
+        extension = ExtensionMetadata(
+            extension_id="gh",
+            name="GitHub CLI",
+            description="Desc",
+            shares=["~/.config/gh"],
+            directory=Path("/test-tmp/ext"),
+            scripts_dir=Path("/test-tmp/ext/scripts"),
+            dockerfile_path=None,
+        )
+
+        defaults = mount_prompt_module.extension_mount_defaults(
+            Path("/repo"), agent_cfg, {"gh": extension}
+        )
+
+        self.assertEqual({"gh": True}, defaults)
+
     def test_resolve_mount_prompt_prefs_skips_extensions_with_stored_choice(
         self,
     ) -> None:

@@ -8,7 +8,10 @@ _AGENT_DEFINITION_FILENAME: str = "agent.yml"
 EXTENDED_IMAGE_DEFINITION_FILENAME: str = "image-extended.yml"
 
 _CONFIG_BASE_DIR: Path = Path(expanduser("~/.aicage"))
+_CONFIG_DIR: Path = _CONFIG_BASE_DIR / "config"
 PROJECTS_DIR: Path = _CONFIG_BASE_DIR / "projects"
+GLOBAL_CONFIG_PATH: Path = _CONFIG_DIR / "global.yml"
+TREES_DIR: Path = _CONFIG_DIR / "trees"
 
 BASE_IMAGE_BUILD_STATE_DIR: Path = _CONFIG_BASE_DIR / "state/base-image/build"
 IMAGE_BUILD_STATE_DIR: Path = _CONFIG_BASE_DIR / "state/image/build"
