@@ -27,18 +27,18 @@ For Docker args, this will likely be an inherited string with project config app
 text area, we might have to show global config in a separate text area or as text. I do not think the Textual menu can
 make parts of a text area read-only.
 
-## Folder template
+## Folder tree
 
 It would be nice to have a second way to inherit config which is not global.
 
 ## Inherit by path
 
-One way would be a folder template: a config for a parent folder which is marked as a template and inherited by that
-folder and projects below it. This is separate from normal project config, because parent folders often are not
+One way would be a folder tree: a config for a parent folder which is inherited by that folder and projects below it.
+This is separate from normal project config, because parent folders often are not
 projects themselves.
 
-Folder templates recursively inherit their parents and global settings too. A project can add its own configuration on
+Folder trees recursively inherit their parents and global settings too. A project can add its own configuration on
 top. They should be configured through a dedicated CLI mode, similar to global config, rather than through the project
-menu. A menu option to make the current folder a template could be added later.
+menu. A menu option to make the current folder a tree could be added later.
 
 The menu shows the combined inherited configuration, but saving a project only persists its local configuration.

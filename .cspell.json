@@ -188,6 +188,7 @@
     "tcss",
     "tini",
     "toplevel",
+    "unconfigured",
     "userdel",
     "usermod",
     "venv",

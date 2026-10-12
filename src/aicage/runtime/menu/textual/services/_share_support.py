@@ -6,6 +6,7 @@ from aicage.config.project_config import (
     MOUNT_GITROOT_KEY,
     MOUNT_GNUPG_KEY,
     MOUNT_SSH_KEY,
+    AgentConfig,
 )
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime._errors import RuntimeExecutionError
@@ -45,7 +46,11 @@ def built_in_share_values(
     draft: RunConfigDraft,
     available_extensions: dict[str, ExtensionMetadata],
 ) -> list[BuiltInShareValue]:
-    mounts_cfg = draft.agent_cfg.mounts
+    mounts_cfg = draft.effective_agent_cfg.mounts
+    inherited_mounts = draft.inherited_project_cfg.agents.get(
+        draft.agent, AgentConfig()
+    ).mounts
+    local_mounts = draft.agent_cfg.mounts
     project_path = draft.project_path
     built_in_shares: list[BuiltInShareValue] = []
 
@@ -59,6 +64,9 @@ def built_in_share_values(
                 path=str(git_config),
                 persisted=mounts_cfg.gitconfig,
                 enabled=_built_in_share_enabled(mounts_cfg.gitconfig),
+                inherited=_is_inherited_mount(
+                    local_mounts.gitconfig, inherited_mounts.gitconfig
+                ),
             )
         )
 
@@ -72,6 +80,9 @@ def built_in_share_values(
                 path=str(git_root),
                 persisted=mounts_cfg.gitroot,
                 enabled=_built_in_share_enabled(mounts_cfg.gitroot),
+                inherited=_is_inherited_mount(
+                    local_mounts.gitroot, inherited_mounts.gitroot
+                ),
             )
         )
 
@@ -91,6 +102,9 @@ def built_in_share_values(
                     path=str(ssh_dir),
                     persisted=mounts_cfg.ssh,
                     enabled=_built_in_share_enabled(mounts_cfg.ssh),
+                    inherited=_is_inherited_mount(
+                        local_mounts.ssh, inherited_mounts.ssh
+                    ),
                 )
             )
 
@@ -106,6 +120,9 @@ def built_in_share_values(
                     path=str(gpg_home),
                     persisted=mounts_cfg.gnupg,
                     enabled=_built_in_share_enabled(mounts_cfg.gnupg),
+                    inherited=_is_inherited_mount(
+                        local_mounts.gnupg, inherited_mounts.gnupg
+                    ),
                 )
             )
 
@@ -121,14 +138,18 @@ def _extension_share_values(
     available_extensions: dict[str, ExtensionMetadata],
 ) -> list[BuiltInShareValue]:
     items: list[BuiltInShareValue] = []
-    for extension_id in draft.agent_cfg.extensions:
+    agent_cfg = draft.effective_agent_cfg
+    inherited_agent_cfg = draft.inherited_project_cfg.agents.get(
+        draft.agent, AgentConfig()
+    )
+    for extension_id in agent_cfg.extensions:
         extension = available_extensions.get(extension_id)
         if extension is None or not extension.shares:
             continue
         specs = resolve_share_specs(extension.shares, project_path)
         if not specs:
             continue
-        persisted = draft.agent_cfg.extension_mounts.get(extension_id)
+        persisted = agent_cfg.extension_mounts.get(extension_id)
         row_keys = _extension_row_keys(extension_id, specs)
         for spec, row_key in zip(specs, row_keys, strict=True):
             items.append(
@@ -140,6 +161,11 @@ def _extension_share_values(
                     persisted=persisted,
                     enabled=_built_in_share_enabled(persisted),
                     row_key=row_key,
+                    inherited=(
+                        extension_id in inherited_agent_cfg.extensions
+                        and extension_id not in draft.agent_cfg.extension_mounts
+                        and persisted is not False
+                    ),
                 )
             )
     return items
@@ -160,3 +186,7 @@ def _built_in_share_enabled(persisted: bool | None) -> bool:
     if persisted is not None:
         return persisted
     return True
+
+
+def _is_inherited_mount(local: bool | None, inherited: bool | None) -> bool:
+    return local is None and inherited is True
