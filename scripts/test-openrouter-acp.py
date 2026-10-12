@@ -238,6 +238,7 @@ def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
         workspace.mkdir()
         _write_agent_config(agent, home_dir)
         _write_marker_extension_config(agent, home_dir, workspace)
+        _copy_docker_cli_plugins(home_dir)
         environment = _test_environment(home_dir, api_key)
         command = [str(aicage_path), "--menu", "none", *agent.aicage_args]
         client = _AcpClient(command, environment, workspace)
@@ -293,6 +294,19 @@ def _write_marker_extension_config(agent: _Agent, home_dir: Path, workspace: Pat
     )
 
 
+def _copy_docker_cli_plugins(home_dir: Path) -> None:
+    source = _host_docker_config_dir() / "cli-plugins"
+    if source.is_dir():
+        shutil.copytree(source, home_dir / ".docker/cli-plugins", symlinks=True)
+
+
+def _host_docker_config_dir() -> Path:
+    configured_directory = os.environ.get("DOCKER_CONFIG")
+    if configured_directory:
+        return Path(configured_directory)
+    return Path(os.environ.get("HOME", str(Path.home()))) / ".docker"
+
+
 def _remove_temporary_root(temporary_root: Path) -> OSError | None:
     cleanup_error: OSError | None = None
     for _ in range(_CLEANUP_ATTEMPTS):
@@ -331,6 +345,7 @@ def _test_environment(home_dir: Path, api_key: str) -> dict[str, str]:
             "XDG_CONFIG_HOME": str(home_dir / ".config"),
             "XDG_DATA_HOME": str(home_dir / ".local/share"),
             "XDG_STATE_HOME": str(home_dir / ".local/state"),
+            "DOCKER_CONFIG": str(home_dir / ".docker"),
             "USERPROFILE": str(home_dir),
             "APPDATA": str(home_dir / "AppData/Roaming"),
             "LOCALAPPDATA": str(home_dir / "AppData/Local"),
