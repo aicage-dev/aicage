@@ -18,11 +18,13 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         docker_options: list[DockerOptionValue],
         git_support_shares: list[BuiltInShareValue],
         extension_shares: list[BuiltInShareValue],
+        scope: str = "project",
     ) -> None:
         super().__init__()
         self._docker_options = docker_options
         self._git_support_shares = git_support_shares
         self._extension_shares = extension_shares
+        self._scope = scope
 
     def compose(self) -> ComposeResult:
         docker_section = self._docker_section()
@@ -143,7 +145,7 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         return [
             Static("Git support", classes="screen_subtitle"),
             Static(
-                "Bind mounts host files and keys used for git, SSH remotes, and signing.",
+                self._git_support_hint(),
                 classes="screen_hint confirm_hint",
             ),
             Vertical(
@@ -151,6 +153,15 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
                 classes="checkbox_group confirm_section",
             ),
         ]
+
+    def _git_support_hint(self) -> str:
+        if self._scope == "global":
+            return "Persists Git support settings for every project."
+        if self._scope == "tree":
+            return (
+                "Persists Git support settings for this directory and its descendants."
+            )
+        return "Bind mounts host files and keys used for git, SSH remotes, and signing."
 
     def _extension_section(self) -> list[Static | Vertical] | None:
         if not self._extension_shares:

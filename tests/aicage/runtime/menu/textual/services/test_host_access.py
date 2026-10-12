@@ -198,13 +198,13 @@ class HostAccessTests(TestCase):
             merged_docker,
         )
 
-    def test_apply_confirmed_host_access_persists_values(self) -> None:
+    def test_apply_host_access_persists_values(self) -> None:
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
             ParsedArgs(False, "", "codex", [], False, [], None),
         )
 
-        host_access._apply_confirmed_host_access(
+        host_access.apply_host_access(
             draft,
             [
                 BuiltInShareValue(

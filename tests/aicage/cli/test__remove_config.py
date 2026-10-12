@@ -44,6 +44,23 @@ class RemoveConfigTests(TestCase):
         self.assertIn(str(config_path), output)
         self.assertFalse(config_path.exists())
 
+    def test_remove_project_config_global(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "global.yml"
+            config_path.write_text("agents: {}", encoding="utf-8")
+            store = mock.Mock()
+            store.global_config_path.return_value = config_path
+            with (
+                mock.patch(
+                    "aicage.cli._remove_config.SettingsStore", return_value=store
+                ),
+                mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            ):
+                remove_config.remove_project_config(scope="global")
+
+        self.assertIn("Global config removed:", stdout.getvalue())
+        self.assertFalse(config_path.exists())
+
     def test_remove_project_config_agent_missing_project_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "project.yml"
