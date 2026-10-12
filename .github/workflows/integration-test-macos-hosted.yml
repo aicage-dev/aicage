@@ -56,7 +56,7 @@ jobs:
           scripts/validate-config-with-schemas.sh
 
       - name: Set up Docker Desktop
-        uses: gh-workflow/setup-docker-desktop-macos@e20c593ec686d9af896d5db1f033e8d71fd82d67  # 0.0.12
+        uses: gh-workflow/setup-docker-desktop-macos@ba990fb265609c7d1cfe023ebdcb73ee49d907f1  # 0.0.14
         with:
           print_diagnostics: true
 
