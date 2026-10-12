@@ -92,5 +92,14 @@ jobs:
 
       - name: Run OpenRouter ACP smoke test
         env:
+          AICAGE_OPENROUTER_ARTIFACT_DIR: ${{ runner.temp }}/aicage-openrouter-logs
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python scripts/test-openrouter-acp.py
+
+      - name: Upload aicage logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: aicage-openrouter-logs-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/aicage-openrouter-logs
+          if-no-files-found: ignore

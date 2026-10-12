@@ -19,10 +19,12 @@ from time import monotonic, sleep
 from typing import Any
 
 _API_KEY_ENV: str = "OPENROUTER_API_KEY"
+_ARTIFACT_DIR_ENV: str = "AICAGE_OPENROUTER_ARTIFACT_DIR"
 _PROMPT: str = "say hello"
 _REQUEST_TIMEOUT_SECONDS: float = 600.0
 _CLEANUP_ATTEMPTS: int = 20
 _CLEANUP_RETRY_SECONDS: float = 0.25
+_FAILURE_LOG_TAIL_BYTES: int = 16_384
 _PROTOCOL_VERSION: int = 1
 _JSON_RPC_VERSION: str = "2.0"
 _CREATE_NEW_PROCESS_GROUP: int = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
@@ -229,11 +231,11 @@ def _select_agents(agent_names: Sequence[str]) -> tuple[_Agent, ...] | None:
 
 def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
     temporary_root = Path(tempfile.mkdtemp(prefix=f"aicage-openrouter-{agent.name}-"))
+    home_dir = temporary_root / "home"
     client: _AcpClient | None = None
     response = ""
     failure: Exception | None = None
     try:
-        home_dir = temporary_root / "home"
         workspace = temporary_root / "workspace"
         workspace.mkdir()
         _write_agent_config(agent, home_dir)
@@ -250,12 +252,15 @@ def _run_agent(agent: _Agent, aicage_path: Path, api_key: str) -> bool:
         if client is not None:
             client.close()
 
-    cleanup_error = _remove_temporary_root(temporary_root)
     if failure is not None:
         print(f"{agent.name}: FAIL: {failure}", file=sys.stderr)
         if client is not None:
             _print_stderr(client.stderr())
+        _print_image_logs(home_dir)
+        _copy_aicage_logs(home_dir, agent.name)
+        print(f"{agent.name}: retained failed test home at {temporary_root}", file=sys.stderr)
         return False
+    cleanup_error = _remove_temporary_root(temporary_root)
     if cleanup_error is not None:
         print(f"{agent.name}: FAIL: could not remove {temporary_root}: {cleanup_error}", file=sys.stderr)
         return False
@@ -380,6 +385,27 @@ def _prompt_agent(client: _AcpClient, workspace: Path) -> None:
 def _print_stderr(stderr: str) -> None:
     if stderr:
         print(stderr.rstrip(), file=sys.stderr)
+
+
+def _print_image_logs(home_dir: Path) -> None:
+    log_directory = home_dir / ".aicage/logs/image"
+    for log_path in sorted(log_directory.rglob("*.log")):
+        contents = log_path.read_bytes()
+        tail = contents[-_FAILURE_LOG_TAIL_BYTES:].decode("utf-8", errors="replace")
+        print(f"[aicage] Image log {log_path.relative_to(home_dir)}:", file=sys.stderr)
+        print(tail.rstrip(), file=sys.stderr)
+
+
+def _copy_aicage_logs(home_dir: Path, agent_name: str) -> None:
+    artifact_directory = os.environ.get(_ARTIFACT_DIR_ENV)
+    source = home_dir / ".aicage"
+    if not artifact_directory or not source.is_dir():
+        return
+    destination = Path(artifact_directory) / agent_name
+    try:
+        shutil.copytree(source, destination, symlinks=True)
+    except OSError as exc:
+        print(f"{agent_name}: could not collect aicage logs: {exc}", file=sys.stderr)
 
 
 if __name__ == "__main__":
