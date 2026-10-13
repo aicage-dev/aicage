@@ -11,9 +11,19 @@ from aicage.config.base.loader import load_bases
 from aicage.config.errors import ConfigError
 
 _MAX_CONFIG_TOKENS = 2
-_MENU_OPTION = "--" + "menu"
-_OPTIONS_WITH_VALUES: set[str] = {_MENU_OPTION, "--share"}
-_CONFIG_OPTION = "--" + "config"
+_DRY_RUN_OPTION = "--dry-run"
+_MENU_OPTION = "--menu"
+_DOCKER_OPTION = "--docker"
+_SHARE_OPTION = "--share"
+_CONFIG_OPTION = "--config"
+_HELP_SHORT_OPTION = "-h"
+_HELP_OPTION = "--help"
+_VERSION_SHORT_OPTION = "-v"
+_VERSION_OPTION = "--version"
+_OPTIONS_WITH_VALUES: set[str] = {
+    _MENU_OPTION,
+    _SHARE_OPTION,
+}
 _CONFIG_ACTION_ALIASES: dict[str, str] = {
     "print": "info",
 }
@@ -27,7 +37,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
-        "--dry-run",
+        _DRY_RUN_OPTION,
         action="store_true",
         help="Print docker run command without executing.",
     )
@@ -38,12 +48,12 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         help="Select menu mode: ui, simple, or none.",
     )
     parser.add_argument(
-        "--docker",
+        _DOCKER_OPTION,
         action="store_true",
         help="Mount the host Docker socket into the container.",
     )
     parser.add_argument(
-        "--share",
+        _SHARE_OPTION,
         action="append",
         default=[],
         help="Mount a host directory into the container (repeatable).",
@@ -54,13 +64,20 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         help="Perform config actions such as the default info or 'remove [agent]'.",
     )
     parser.add_argument(
-        "-h", "--help", action="store_true", help="Show help message and exit."
+        _HELP_SHORT_OPTION,
+        _HELP_OPTION,
+        action="store_true",
+        help="Show help message and exit.",
     )
     pre_argv, post_argv = _split_argv(argv)
 
     opts: argparse.Namespace
     remaining: list[str]
-    if len(pre_argv) == 1 and pre_argv[0] in ("-v", "--version") and post_argv is None:
+    if (
+        len(pre_argv) == 1
+        and pre_argv[0] in (_VERSION_SHORT_OPTION, _VERSION_OPTION)
+        and post_argv is None
+    ):
         print(__version__)
         get_logger().info("Displayed CLI version.")
         sys.exit(0)
