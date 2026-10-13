@@ -1,3 +1,4 @@
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
@@ -245,8 +246,12 @@ class Overview(Container):
         ]
         selection_list.add_options(options)
 
-    def _section_label(self, title: str, summary: str) -> str:
-        return f"{title}\n{self._truncate_summary(summary)}"
+    def _section_label(self, title: str, summary: str) -> Text:
+        return Text.assemble(
+            (title, "bold"),
+            "\n",
+            (self._truncate_summary(summary), "dim not bold"),
+        )
 
     @classmethod
     def _context_line(cls, label: str, value: str) -> str:
