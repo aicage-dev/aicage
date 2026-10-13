@@ -206,6 +206,37 @@ class ParseCliTests(TestCase):
             "No agent value is allowed with '--config info'.", str(ctx.exception)
         )
 
+    def test_parse_cli_accepts_git_for_agent(self) -> None:
+        parsed = parse_cli(["--git", "--", "codex"])
+
+        self.assertEqual("codex", parsed.agent)
+        self.assertTrue(parsed.git)
+
+    def test_parse_cli_accepts_bare_git_for_agent(self) -> None:
+        parsed = parse_cli(["--git", "codex"])
+
+        self.assertEqual("codex", parsed.agent)
+        self.assertTrue(parsed.git)
+
+    def test_parse_cli_accepts_git_off_for_agent(self) -> None:
+        parsed = parse_cli(["--git", "off", "codex"])
+
+        self.assertEqual("codex", parsed.agent)
+        self.assertFalse(parsed.git)
+
+    def test_parse_cli_leaves_git_unset_without_option(self) -> None:
+        parsed = parse_cli(["codex"])
+
+        self.assertIsNone(parsed.git)
+
+    def test_parse_cli_config_info_rejects_git_off(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--git", "off", "--config", "info"])
+
+        self.assertEqual(
+            "No additional arguments are allowed with --config.", str(ctx.exception)
+        )
+
     def test_parse_cli_config_rejects_too_many_values(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "remove", "codex", "extra"])
@@ -236,9 +267,7 @@ class ParseCliTests(TestCase):
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_extensions(self) -> None:
-        parsed = parse_cli(
-            ["--extension", "one", "--extension", "two", "--", "codex"]
-        )
+        parsed = parse_cli(["--extension", "one", "--extension", "two", "--", "codex"])
 
         self.assertEqual(["one", "two"], parsed.extensions)
 
@@ -276,4 +305,10 @@ class ParseCliTests(TestCase):
             output,
         )
         self.assertIn("--menu <mode>", output)
+        self.assertIn("[--git [on|off]]", output)
+        self.assertIn("[--extension <id>]...", output)
+        self.assertIn(
+            "--git [on|off]   Enable or disable Git support mounts (default: on).",
+            output,
+        )
         self.assertNotIn("--stdio", output)

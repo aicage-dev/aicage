@@ -146,3 +146,27 @@ def _git_support_prompt_items(
                 )
             )
     return [(item.key, f"{item.label}: {item.path}") for item in git_items]
+
+
+def git_mount_defaults(project_path: Path, mounts_cfg: _MountPrefs) -> set[str]:
+    return {
+        key
+        for key in detected_git_mounts(project_path)
+        if getattr(mounts_cfg, key) is None
+    }
+
+
+def detected_git_mounts(project_path: Path) -> set[str]:
+    return {
+        key
+        for key, _description in _git_support_prompt_items(
+            project_path, _UnsetMountPrefs()
+        )
+    }
+
+
+class _UnsetMountPrefs:
+    gitconfig: bool | None = None
+    gitroot: bool | None = None
+    gnupg: bool | None = None
+    ssh: bool | None = None
