@@ -1,5 +1,6 @@
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
+from aicage.constants import DEFAULT_EXTENDED_IMAGE_NAME
 
 from ._fresh_selection import fresh_selection
 from ._metadata import require_agent_metadata, validate_base
@@ -19,6 +20,8 @@ def select_agent_image(
     agent_cfg = context.project_cfg.agents.setdefault(agent, AgentConfig())
     agent_metadata = require_agent_metadata(agent, context)
     base = agent_cfg.base
+
+    _clear_stale_extended_image_ref(agent_cfg)
 
     if agent_cfg.image_ref:
         if base is None:
@@ -46,3 +49,10 @@ def select_agent_image(
         ),
         selection_interaction,
     )
+
+
+def _clear_stale_extended_image_ref(agent_cfg: AgentConfig) -> None:
+    if agent_cfg.extensions or not agent_cfg.image_ref:
+        return
+    if agent_cfg.image_ref.startswith(f"{DEFAULT_EXTENDED_IMAGE_NAME}:"):
+        agent_cfg.image_ref = None
