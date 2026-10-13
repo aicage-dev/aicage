@@ -51,6 +51,58 @@ class ConfigureRunTests(TestCase):
 
         self.assertIs(selection, result.selection)
 
+    def test_configure_run_applies_git_mount_defaults(self) -> None:
+        resolved = interaction.SimpleInteraction(mock.Mock())
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], None, menu="simple", git=True),
+        )
+        selection = mock.Mock()
+        selection.base = "ubuntu"
+
+        with (
+            mock.patch(
+                "aicage.runtime.menu.prompts.interaction.select_agent_image",
+                return_value=selection,
+            ),
+            mock.patch(
+                "aicage.runtime.menu.prompts.interaction.apply_git_mount_defaults"
+            ) as git_mount_mock,
+            mock.patch(
+                "aicage.runtime.menu.prompts.interaction.apply_mount_preferences"
+            ),
+        ):
+            resolved.configure_run(draft, _build_context(), "codex")
+
+        self.assertEqual(2, git_mount_mock.call_count)
+        git_mount_mock.assert_any_call(mock.ANY, draft.agent_cfg)
+
+    def test_configure_run_disables_git_mounts_for_git_off(self) -> None:
+        resolved = interaction.SimpleInteraction(mock.Mock())
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], None, menu="simple", git=False),
+        )
+        selection = mock.Mock()
+        selection.base = "ubuntu"
+
+        with (
+            mock.patch(
+                "aicage.runtime.menu.prompts.interaction.select_agent_image",
+                return_value=selection,
+            ),
+            mock.patch(
+                "aicage.runtime.menu.prompts.interaction.disable_git_mounts"
+            ) as disable_git_mounts_mock,
+            mock.patch(
+                "aicage.runtime.menu.prompts.interaction.apply_mount_preferences"
+            ),
+        ):
+            resolved.configure_run(draft, _build_context(), "codex")
+
+        self.assertEqual(2, disable_git_mounts_mock.call_count)
+        disable_git_mounts_mock.assert_any_call(draft.agent_cfg)
+
 
 class ExecuteImageSetupTests(TestCase):
     def test_execute_image_setup(self) -> None:

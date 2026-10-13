@@ -5,11 +5,16 @@ from aicage.config.context import ConfigContext
 from aicage.config.project_config import (
     MOUNT_GITCONFIG_KEY,
     MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
     AgentConfig,
     _AgentMounts,
     _ProjectConfig,
 )
-from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
+from aicage.runtime.docker_args.mount_preferences import (
+    apply_git_mount_defaults,
+    apply_mount_preferences,
+    disable_git_mounts,
+)
 
 _MODULE = "aicage.runtime.docker_args.mount_preferences"
 
@@ -75,6 +80,26 @@ class MountPreferencesTests(TestCase):
             )
 
         confirm_persist.assert_not_called()
+
+    def test_apply_git_mount_defaults_persists_detected_mounts(self) -> None:
+        agent_cfg = AgentConfig()
+        context = _build_context(agent_cfg)
+
+        with mock.patch(f"{_MODULE}.git_mount_defaults", return_value={MOUNT_SSH_KEY}):
+            apply_git_mount_defaults(context, agent_cfg)
+
+        self.assertIsNone(agent_cfg.mounts.gitconfig)
+        self.assertTrue(agent_cfg.mounts.ssh)
+
+    def test_disable_git_mounts_disables_all_git_mounts(self) -> None:
+        agent_cfg = AgentConfig()
+
+        disable_git_mounts(agent_cfg)
+
+        self.assertFalse(agent_cfg.mounts.gitconfig)
+        self.assertFalse(agent_cfg.mounts.gitroot)
+        self.assertFalse(agent_cfg.mounts.gnupg)
+        self.assertFalse(agent_cfg.mounts.ssh)
 
 
 def _build_context(agent_cfg: AgentConfig) -> ConfigContext:
