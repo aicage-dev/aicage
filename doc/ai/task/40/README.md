@@ -42,11 +42,3 @@ top. They should be configured through a dedicated CLI mode, similar to global c
 menu. A menu option to make the current folder a template could be added later.
 
 The menu shows the combined inherited configuration, but saving a project only persists its local configuration.
-
-## Upfront related changes/issues in current code
-
-### No CLI option to set extensions
-
-Docker args can be set by CLI args, and I think shares can too. While I do not think users will use those CLI args much,
-I noticed that there is no way to define extensions by CLI args. That would be handy for tests and make CLI args more
-consistent with the rest.
