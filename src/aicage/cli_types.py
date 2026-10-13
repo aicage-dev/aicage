@@ -16,3 +16,4 @@ class ParsedArgs:
     config_agent: str | None = None
     menu: MenuMode = "ui"
     extensions: list[str] = field(default_factory=list)
+    git: bool | None = None

@@ -67,6 +67,69 @@ class ConfigureRunTests(TestCase):
         merge_shares_mock.assert_called_once_with()
         persist_shares_mock.assert_not_called()
 
+    def test_configure_run_applies_git_mount_defaults_for_run(self) -> None:
+        resolved = _none_interaction._NoneInteraction(mock.Mock())
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(
+                False,
+                "",
+                "codex",
+                [],
+                False,
+                [],
+                None,
+                menu="none",
+                git=True,
+            ),
+        )
+        selection = mock.Mock()
+        selection.base = "ubuntu"
+
+        with (
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.select_agent_image",
+                return_value=selection,
+            ),
+            mock.patch.object(draft, "apply_selection"),
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.apply_git_mount_defaults"
+            ) as git_mount_mock,
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.apply_mount_preferences"
+            ) as mount_mock,
+        ):
+            resolved.configure_run(draft, _build_context(), "codex")
+
+        git_mount_mock.assert_called_once_with(mock.ANY, draft.agent_cfg)
+        mount_mock.assert_called_once()
+
+    def test_configure_run_disables_git_mounts_for_git_off(self) -> None:
+        resolved = _none_interaction._NoneInteraction(mock.Mock())
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], None, menu="none", git=False),
+        )
+        selection = mock.Mock()
+        selection.base = "ubuntu"
+
+        with (
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.select_agent_image",
+                return_value=selection,
+            ),
+            mock.patch.object(draft, "apply_selection"),
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.disable_git_mounts"
+            ) as disable_git_mounts_mock,
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.apply_mount_preferences"
+            ),
+        ):
+            resolved.configure_run(draft, _build_context(), "codex")
+
+        disable_git_mounts_mock.assert_called_once_with(draft.agent_cfg)
+
 
 class ExecuteImageSetupTests(TestCase):
     def test_execute_image_setup(self) -> None:

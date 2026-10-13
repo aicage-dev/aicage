@@ -14,6 +14,7 @@ from aicage.config.project_config import (
     AgentConfig,
 )
 
+from .support.git_support import git_mount_defaults
 from .support.mount_prompt import MountSelectionPrompt, resolve_mount_prompt_prefs
 
 _ConfirmPreference: TypeAlias = Callable[[], bool]
@@ -38,6 +39,23 @@ def apply_mount_preferences(
         parsed,
         confirm_persist_docker_socket,
     )
+
+
+def apply_git_mount_defaults(context: ConfigContext, agent_cfg: AgentConfig) -> None:
+    for key in git_mount_defaults(
+        Path(context.project_cfg.path).resolve(), agent_cfg.mounts
+    ):
+        setattr(agent_cfg.mounts, key, True)
+
+
+def disable_git_mounts(agent_cfg: AgentConfig) -> None:
+    for key in (
+        MOUNT_GITCONFIG_KEY,
+        MOUNT_GITROOT_KEY,
+        MOUNT_GNUPG_KEY,
+        MOUNT_SSH_KEY,
+    ):
+        setattr(agent_cfg.mounts, key, False)
 
 
 def _apply_git_and_extension_mount_preferences(

@@ -16,6 +16,7 @@ _MENU_OPTION = "--menu"
 _DOCKER_OPTION = "--docker"
 _SHARE_OPTION = "--share"
 _EXTENSION_OPTION = "--extension"
+_GIT_OPTION = "--git"
 _CONFIG_OPTION = "--config"
 _HELP_SHORT_OPTION = "-h"
 _HELP_OPTION = "--help"
@@ -25,6 +26,7 @@ _OPTIONS_WITH_VALUES: set[str] = {
     _MENU_OPTION,
     _SHARE_OPTION,
     _EXTENSION_OPTION,
+    _GIT_OPTION,
 }
 _CONFIG_ACTION_ALIASES: dict[str, str] = {
     "print": "info",
@@ -67,6 +69,11 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         help="Select an extension (repeatable).",
     )
     parser.add_argument(
+        _GIT_OPTION,
+        choices=["on", "off"],
+        help="Enable or disable Git support mounts.",
+    )
+    parser.add_argument(
         _CONFIG_OPTION,
         nargs="*",
         help="Perform config actions such as the default info or 'remove [agent]'.",
@@ -78,6 +85,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         help="Show help message and exit.",
     )
     pre_argv, post_argv = _split_argv(argv)
+    pre_argv = _normalize_git_option(pre_argv)
 
     opts: argparse.Namespace
     remaining: list[str]
@@ -92,6 +100,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
 
     option_argv, agent_argv = _split_before_agent_args(pre_argv, post_argv)
     opts, remaining = parser.parse_known_args(option_argv)
+    opts.git = _git_value(opts.git)
     remaining.extend(agent_argv)
     if (
         opts.config is None
@@ -117,6 +126,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  --dry-run        Print the generated docker run command and exit.\n"
             "  --menu <mode>    Choose menu mode: ui, simple, or none.\n"
             "  --docker         Mount /run/docker.sock into the container.\n"
+            "  --git [on|off]   Enable or disable Git support mounts (default: on).\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --extension <id> Select an extension. Repeatable.\n"
             "  --config [<cmd>] Run config command: default info, or remove [agent].\n"
@@ -153,6 +163,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             config_agent,
             opts.menu,
             extensions=opts.extension,
+            git=opts.git,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -171,6 +182,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         None,
         opts.menu,
         extensions=opts.extension,
+        git=opts.git,
     )
 
 
@@ -181,6 +193,30 @@ def _split_argv(argv: Sequence[str]) -> tuple[list[str], list[str] | None]:
     pre_argv = list(argv[:sep_index])
     post_argv = list(argv[sep_index + 1 :])
     return pre_argv, post_argv
+
+
+def _normalize_git_option(argv: list[str]) -> list[str]:
+    normalized: list[str] = []
+    index = 0
+    while index < len(argv):
+        token = argv[index]
+        if token != _GIT_OPTION:
+            normalized.append(token)
+            index += 1
+            continue
+        if index + 1 < len(argv) and argv[index + 1] in {"on", "off"}:
+            normalized.extend((token, argv[index + 1]))
+            index += 2
+            continue
+        normalized.append(f"{_GIT_OPTION}=on")
+        index += 1
+    return normalized
+
+
+def _git_value(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    return value == "on"
 
 
 def _split_before_agent_args(
@@ -237,6 +273,7 @@ def _validate_config_action(
         or opts.dry_run
         or opts.share
         or opts.extension
+        or opts.git is not None
         or opts.menu != "ui"
     ):
         raise CliError("No additional arguments are allowed with --config.")

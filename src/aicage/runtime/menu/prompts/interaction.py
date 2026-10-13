@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 from aicage.config.context import ConfigContext
+from aicage.config.project_config import AgentConfig
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.ensure_image import ensure_image
@@ -10,7 +11,11 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.reporting import OperationReporter
-from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
+from aicage.runtime.docker_args.mount_preferences import (
+    apply_git_mount_defaults,
+    apply_mount_preferences,
+    disable_git_mounts,
+)
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 
 from ._base import BaseSelectionRequest, prompt_for_base
@@ -52,6 +57,8 @@ class SimpleInteraction:
         draft.apply_selection(selection)
         _persist_docker_args(draft, prompt_persist_docker_args)
         _persist_shares(draft, prompt_persist_shares)
+        if draft.parsed is not None and draft.parsed.git is not None:
+            _apply_git_mount_preference(context, draft, agent, draft.parsed.git)
         apply_mount_preferences(
             context,
             agent,
@@ -84,6 +91,30 @@ class SimpleInteraction:
             update_approved=update_approved,
             reporter=self.reporter,
         )
+
+
+def _apply_git_mount_preference(
+    context: ConfigContext,
+    draft: RunConfigDraft,
+    agent: str,
+    enabled: bool,
+) -> None:
+    _apply_git_mounts(context, draft.agent_cfg, enabled)
+    preferences_agent_cfg = context.project_cfg.agents.setdefault(agent, AgentConfig())
+    if preferences_agent_cfg is draft.agent_cfg:
+        return
+    _apply_git_mounts(context, preferences_agent_cfg, enabled)
+
+
+def _apply_git_mounts(
+    context: ConfigContext,
+    agent_cfg: AgentConfig,
+    enabled: bool,
+) -> None:
+    if enabled:
+        apply_git_mount_defaults(context, agent_cfg)
+    else:
+        disable_git_mounts(agent_cfg)
 
 
 class _SimpleSelectionInteraction:
