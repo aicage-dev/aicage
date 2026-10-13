@@ -7,7 +7,12 @@ from aicage.config.context import ConfigContext
 from aicage.config.extensions.loader import ExtensionMetadata
 from aicage.config.image_refs import local_image_ref
 from aicage.config.project_config import AgentConfig, _ProjectConfig
-from aicage.constants import IMAGE_REGISTRY, IMAGE_REPOSITORY, LOCAL_IMAGE_REPOSITORY
+from aicage.constants import (
+    DEFAULT_EXTENDED_IMAGE_NAME,
+    IMAGE_REGISTRY,
+    IMAGE_REPOSITORY,
+    LOCAL_IMAGE_REPOSITORY,
+)
 from aicage.registry._errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.registry.image_selection.selection import select_agent_image
@@ -129,6 +134,23 @@ class ImageSelectionTests(TestCase):
         context.project_cfg.agents["codex"] = agent_cfg
         selection = select_agent_image("codex", context, mock.Mock())
         self.assertEqual("aicage:codex-ubuntu", selection.image_ref)
+
+    def test_select_agent_image_ignores_stale_extended_image_ref(self) -> None:
+        context = build_context(
+            mock.Mock(spec=SettingsStore), Path("/test-tmp/project"), bases=["ubuntu"]
+        )
+        agent_cfg = AgentConfig(
+            base="ubuntu",
+            image_ref=f"{DEFAULT_EXTENDED_IMAGE_NAME}:codex-ubuntu-regctl",
+        )
+        context.project_cfg.agents["codex"] = agent_cfg
+
+        selection = select_agent_image("codex", context, _selection_interaction())
+
+        self.assertEqual(
+            f"{IMAGE_REGISTRY}/{IMAGE_REPOSITORY}:codex-ubuntu", selection.image_ref
+        )
+        self.assertEqual(selection.image_ref, agent_cfg.image_ref)
 
     def test_select_agent_image_raises_when_agent_missing(self) -> None:
         context = ConfigContext(
