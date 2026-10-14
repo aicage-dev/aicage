@@ -137,7 +137,7 @@ Use `Bind Mounts` when the agent needs access to files or directories outside th
 
 To adjust how the container starts, open `Docker Args` in the setup screen.
 
-![Docker args](assets/screenshots/textual/Screenshot_docker_args.png)
+![Docker args](assets/screenshots/textual/Screenshot_docker_args.svg)
 
 Use it for normal `docker run` arguments such as:
 
@@ -153,7 +153,7 @@ See [Docker run pass-through args](https://github.com/aicage/aicage/wiki/Docker-
 
 Extensions let you add tools on top of an existing agent image. Quick start:
 
-![Extensions](assets/screenshots/textual/Screenshot_extensions.png)
+![Extensions](assets/screenshots/textual/Screenshot_extensions.svg)
 
 ```bash
 git clone https://github.com/aicage/aicage-custom-samples.git $HOME/.aicage-custom
