@@ -271,6 +271,11 @@ class ParseCliTests(TestCase):
 
         self.assertEqual(["one", "two"], parsed.extensions)
 
+    def test_parse_cli_with_base(self) -> None:
+        parsed = parse_cli(["--base", "ubuntu", "--", "codex"])
+
+        self.assertEqual("ubuntu", parsed.base)
+
     def test_parse_cli_with_menu_none(self) -> None:
         parsed = parse_cli(["--menu", "none", "codex"])
         self.assertEqual("none", parsed.menu)
@@ -289,6 +294,10 @@ class ParseCliTests(TestCase):
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "--extension", "one"])
 
+    def test_parse_cli_config_rejects_base(self) -> None:
+        with self.assertRaises(CliError):
+            parse_cli(["--config", "info", "--base", "ubuntu"])
+
     def test_parse_cli_config_rejects_non_default_menu(self) -> None:
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "--menu", "none"])
@@ -306,7 +315,9 @@ class ParseCliTests(TestCase):
         )
         self.assertIn("--menu <mode>", output)
         self.assertIn("[--git [on|off]]", output)
+        self.assertIn("[--base <id>]", output)
         self.assertIn("[--extension <id>]...", output)
+        self.assertIn("--base <id>      Select the agent base image.", output)
         self.assertIn(
             "--git [on|off]   Enable or disable Git support mounts (default: on).",
             output,
