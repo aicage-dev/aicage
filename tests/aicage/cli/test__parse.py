@@ -202,9 +202,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_info_rejects_agent(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "info", "codex"])
-        self.assertEqual(
-            "Use '--config info [global|tree]'.", str(ctx.exception)
-        )
+        self.assertEqual("Use '--config info [global|tree]'.", str(ctx.exception))
 
     def test_parse_cli_config_info_global(self) -> None:
         parsed = parse_cli(["--config", "info", "global"])

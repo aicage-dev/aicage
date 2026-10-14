@@ -156,7 +156,9 @@ def apply_host_access(
     custom_shares: list[CustomShareValue],
     docker_options: list[DockerOptionValue],
 ) -> None:
-    draft.agent_cfg.shares = [item.value for item in custom_shares if not item.inherited]
+    draft.agent_cfg.shares = [
+        item.value for item in custom_shares if not item.inherited
+    ]
     for item in built_in_shares:
         if item.inherited:
             continue

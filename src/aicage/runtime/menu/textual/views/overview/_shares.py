@@ -43,7 +43,11 @@ def refresh_shares(
     include_git_support: bool = False,
 ) -> None:
     overview = container.query_one("#shares_overview", Vertical)
-    if not state.built_in_shares and not state.custom_shares and not include_git_support:
+    if (
+        not state.built_in_shares
+        and not state.custom_shares
+        and not include_git_support
+    ):
         overview.display = False
         return
     overview.display = True
@@ -130,9 +134,7 @@ def _git_support_widgets(state: OverviewState) -> list[Vertical]:
                         id=_git_support_button_id(key),
                         classes="git_support_control",
                     ),
-                    Static(
-                        git_support_config_label(key), classes="git_support_label"
-                    ),
+                    Static(git_support_config_label(key), classes="git_support_label"),
                     classes="git_support_row",
                 )
                 for key in _GIT_MOUNT_KEYS

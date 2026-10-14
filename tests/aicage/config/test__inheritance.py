@@ -11,21 +11,39 @@ class InheritanceTests(TestCase):
     def test_load_effective_project_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with (
-                mock.patch("aicage.config.config_store.PROJECTS_DIR", Path(tmp_dir) / "projects"),
-                mock.patch("aicage.config.config_store.TREES_DIR", Path(tmp_dir) / "trees"),
-                mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", Path(tmp_dir) / "global.yml"),
+                mock.patch(
+                    "aicage.config.config_store.PROJECTS_DIR",
+                    Path(tmp_dir) / "projects",
+                ),
+                mock.patch(
+                    "aicage.config.config_store.TREES_DIR", Path(tmp_dir) / "trees"
+                ),
+                mock.patch(
+                    "aicage.config.config_store.GLOBAL_CONFIG_PATH",
+                    Path(tmp_dir) / "global.yml",
+                ),
             ):
                 store = SettingsStore()
                 project_path = Path(tmp_dir) / "workspace" / "project"
-                store.save_global(_ProjectConfig(path="/", agents={"codex": AgentConfig(base="ubuntu")}))
+                store.save_global(
+                    _ProjectConfig(
+                        path="/", agents={"codex": AgentConfig(base="ubuntu")}
+                    )
+                )
                 store.save_tree(
                     project_path.parent,
-                    _ProjectConfig(path=str(project_path.parent), agents={"codex": AgentConfig(extensions=["gh"])}),
+                    _ProjectConfig(
+                        path=str(project_path.parent),
+                        agents={"codex": AgentConfig(extensions=["gh"])},
+                    ),
                 )
                 config = inheritance.load_effective_project_config(
                     store,
                     project_path,
-                    _ProjectConfig(path=str(project_path), agents={"codex": AgentConfig(shares=["data"])}),
+                    _ProjectConfig(
+                        path=str(project_path),
+                        agents={"codex": AgentConfig(shares=["data"])},
+                    ),
                 )
 
         self.assertEqual("ubuntu", config.agents["codex"].base)

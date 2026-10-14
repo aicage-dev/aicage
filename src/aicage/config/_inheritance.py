@@ -45,7 +45,9 @@ def rebase_agent_config(
     inherited_config = inherited or AgentConfig()
     return AgentConfig(
         base=effective.base if effective.base != inherited_config.base else None,
-        docker_args=_local_docker_args(effective.docker_args, inherited_config.docker_args),
+        docker_args=_local_docker_args(
+            effective.docker_args, inherited_config.docker_args
+        ),
         mounts=_local_mounts(effective.mounts, inherited_config.mounts),
         image_ref=(
             effective.image_ref
@@ -95,9 +97,11 @@ def _merge_mounts(
 ) -> _AgentMounts:
     return _AgentMounts(
         **{
-            name: getattr(local, name)
-            if getattr(local, name) is not None
-            else getattr(inherited, name)
+            name: (
+                getattr(local, name)
+                if getattr(local, name) is not None
+                else getattr(inherited, name)
+            )
             for name in ("gitconfig", "gitroot", "gnupg", "ssh", "docker")
         }
     )
