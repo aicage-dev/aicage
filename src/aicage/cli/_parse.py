@@ -155,8 +155,8 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
 
     if opts.config is not None:
         config_tokens: list[str] = opts.config
-        config_action, config_agent, config_scope, config_update = _validate_config_action(
-            config_tokens, opts, remaining, post_argv
+        config_action, config_agent, config_scope, config_update = (
+            _validate_config_action(config_tokens, opts, remaining, post_argv)
         )
         return ParsedArgs(
             opts.dry_run,
@@ -272,7 +272,9 @@ def _validate_config_action(
         if opts.dry_run:
             raise CliError("--dry-run cannot be used when updating configuration.")
         if post_argv is None or len(post_argv) != 1:
-            raise CliError("Configuration updates require exactly one agent after '--'.")
+            raise CliError(
+                "Configuration updates require exactly one agent after '--'."
+            )
         return config_action, post_argv[0], None, True
     config_agent, config_scope = _config_target(config_action, config_tokens)
     if config_action in {"global", "tree"} and config_agent is None:
