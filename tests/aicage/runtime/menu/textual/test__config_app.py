@@ -57,7 +57,12 @@ class ConfigAppTests(TestCase):
             ParsedArgs(False, "", "codex", [], False, [], None, menu="ui", git=True),
         )
         built_in_share = BuiltInShareValue(
-            "git_support", "gitconfig", "Git config", "/test-tmp/gitconfig", False, False
+            "git_support",
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            False,
+            False,
         )
 
         with (
@@ -326,9 +331,7 @@ class ConfigAppTests(TestCase):
 
         with (
             mock.patch.object(app, "_overview", return_value=overview),
-            mock.patch.object(
-                app, "_push_view", new=mock.AsyncMock(return_value=None)
-            ),
+            mock.patch.object(app, "_push_view", new=mock.AsyncMock(return_value=None)),
             mock.patch.object(app, "_apply_current_host_access") as apply_mock,
             mock.patch.object(app, "_finish") as finish_mock,
         ):

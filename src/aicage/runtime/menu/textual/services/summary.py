@@ -17,7 +17,9 @@ def extras_values(draft: RunConfigDraft) -> ExtrasValues:
     return ExtrasValues(
         docker_args=draft.agent_cfg.docker_args,
         inherited_docker_args=(
-            draft.inherited_project_cfg.agents.get(draft.agent, AgentConfig()).docker_args
+            draft.inherited_project_cfg.agents.get(
+                draft.agent, AgentConfig()
+            ).docker_args
         ),
     )
 

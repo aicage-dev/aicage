@@ -34,9 +34,17 @@ class RuntimeConfigTests(TestCase):
         store.load_tree.return_value = _ProjectConfig(path="/project", agents={})
         interaction = mock.Mock()
         with (
-            mock.patch("aicage.config.runtime_config.SettingsStore", return_value=store),
-            mock.patch("aicage.config.runtime_config.load_bases", return_value=self._get_bases()),
-            mock.patch("aicage.config.runtime_config.load_agents", return_value=self._get_agents()),
+            mock.patch(
+                "aicage.config.runtime_config.SettingsStore", return_value=store
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_bases",
+                return_value=self._get_bases(),
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_agents",
+                return_value=self._get_agents(),
+            ),
             mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
         ):
             configure_inherited_config("global", "codex", interaction)
@@ -72,9 +80,17 @@ class RuntimeConfigTests(TestCase):
         interaction = mock.Mock()
         interaction.configure_run.side_effect = configure_run
         with (
-            mock.patch("aicage.config.runtime_config.SettingsStore", return_value=store),
-            mock.patch("aicage.config.runtime_config.load_bases", return_value=self._get_bases()),
-            mock.patch("aicage.config.runtime_config.load_agents", return_value=self._get_agents()),
+            mock.patch(
+                "aicage.config.runtime_config.SettingsStore", return_value=store
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_bases",
+                return_value=self._get_bases(),
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_agents",
+                return_value=self._get_agents(),
+            ),
             mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
         ):
             configure_inherited_config("global", "codex", interaction, parsed)
@@ -101,10 +117,20 @@ class RuntimeConfigTests(TestCase):
         ]
 
         with (
-            mock.patch("aicage.config.runtime_config.SettingsStore", return_value=store),
-            mock.patch("aicage.config.runtime_config.Path.cwd", return_value=project_path),
-            mock.patch("aicage.config.runtime_config.load_bases", return_value=self._get_bases()),
-            mock.patch("aicage.config.runtime_config.load_agents", return_value=self._get_agents()),
+            mock.patch(
+                "aicage.config.runtime_config.SettingsStore", return_value=store
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.Path.cwd", return_value=project_path
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_bases",
+                return_value=self._get_bases(),
+            ),
+            mock.patch(
+                "aicage.config.runtime_config.load_agents",
+                return_value=self._get_agents(),
+            ),
             mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
         ):
             run_config = load_run_config("codex", interaction)
