@@ -158,7 +158,9 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         if self._scope == "global":
             return "Persists Git support settings for every project."
         if self._scope == "tree":
-            return "Persists Git support settings for this directory and its descendants."
+            return (
+                "Persists Git support settings for this directory and its descendants."
+            )
         return "Bind mounts host files and keys used for git, SSH remotes, and signing."
 
     def _extension_section(self) -> list[Static | Vertical] | None:
