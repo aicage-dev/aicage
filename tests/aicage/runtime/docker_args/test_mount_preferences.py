@@ -86,7 +86,9 @@ class MountPreferencesTests(TestCase):
         agent_cfg = AgentConfig(extensions=["gh"])
         context = _build_context(agent_cfg)
 
-        with mock.patch(f"{_MODULE}.extension_mount_defaults", return_value={"gh": True}):
+        with mock.patch(
+            f"{_MODULE}.extension_mount_defaults", return_value={"gh": True}
+        ):
             apply_extension_mount_defaults(context, agent_cfg)
 
         self.assertEqual({"gh": True}, agent_cfg.extension_mounts)

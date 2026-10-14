@@ -58,7 +58,9 @@ def load_run_config(
     _remove_missing_extensions(agent, draft.project_cfg, extensions)
     context = ConfigContext(
         store=store,
-        project_cfg=load_effective_project_config(store, project_path, local_project_cfg),
+        project_cfg=load_effective_project_config(
+            store, project_path, local_project_cfg
+        ),
         agents=agents,
         bases=bases,
         extensions=extensions,

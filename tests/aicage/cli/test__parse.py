@@ -202,9 +202,7 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_info_rejects_agent(self) -> None:
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "info", "codex"])
-        self.assertEqual(
-            "Use '--config info [global|tree]'.", str(ctx.exception)
-        )
+        self.assertEqual("Use '--config info [global|tree]'.", str(ctx.exception))
 
     def test_parse_cli_config_info_global(self) -> None:
         parsed = parse_cli(["--config", "info", "global"])
@@ -294,7 +292,9 @@ class ParseCliTests(TestCase):
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--git", "off", "--config", "info"])
 
-        self.assertEqual("No additional arguments are allowed with --config.", str(ctx.exception))
+        self.assertEqual(
+            "No additional arguments are allowed with --config.", str(ctx.exception)
+        )
 
     def test_parse_cli_config_rejects_too_many_values(self) -> None:
         with self.assertRaises(CliError) as ctx:
@@ -326,9 +326,7 @@ class ParseCliTests(TestCase):
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_extensions(self) -> None:
-        parsed = parse_cli(
-            ["--extension", "one", "--extension", "two", "--", "codex"]
-        )
+        parsed = parse_cli(["--extension", "one", "--extension", "two", "--", "codex"])
 
         self.assertEqual(["one", "two"], parsed.extensions)
 
