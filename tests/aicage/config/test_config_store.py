@@ -34,7 +34,9 @@ class ConfigStoreTests(TestCase):
     def test_global_config_path_returns_global_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             global_path = Path(tmp_dir) / "global.yml"
-            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+            with mock.patch(
+                "aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path
+            ):
                 path = SettingsStore().global_config_path()
 
         self.assertEqual(global_path, path)
@@ -120,7 +122,9 @@ class ConfigStoreTests(TestCase):
     def test_load_global_returns_empty_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             global_path = Path(tmp_dir) / "global.yml"
-            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+            with mock.patch(
+                "aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path
+            ):
                 config = SettingsStore().load_global()
 
         self.assertEqual({}, config.agents)
@@ -128,11 +132,17 @@ class ConfigStoreTests(TestCase):
     def test_save_global_writes_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             global_path = Path(tmp_dir) / "global.yml"
-            config = _ProjectConfig(path="/", agents={"codex": AgentConfig(base="ubuntu")})
-            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+            config = _ProjectConfig(
+                path="/", agents={"codex": AgentConfig(base="ubuntu")}
+            )
+            with mock.patch(
+                "aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path
+            ):
                 SettingsStore().save_global(config)
 
-            self.assertEqual(config.to_mapping(), yaml.safe_load(global_path.read_text()))
+            self.assertEqual(
+                config.to_mapping(), yaml.safe_load(global_path.read_text())
+            )
 
     def test_save_global_writes_false_values(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -146,7 +156,9 @@ class ConfigStoreTests(TestCase):
                     )
                 },
             )
-            with mock.patch("aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path):
+            with mock.patch(
+                "aicage.config.config_store.GLOBAL_CONFIG_PATH", global_path
+            ):
                 SettingsStore().save_global(config)
 
             saved = yaml.safe_load(global_path.read_text())
@@ -159,7 +171,7 @@ class ConfigStoreTests(TestCase):
                         "mounts": {"gitconfig": False, "docker": True},
                         "extension_mounts": {"gh": False, "gcloud": True},
                     }
-                }
+                },
             },
             saved,
         )
@@ -175,7 +187,9 @@ class ConfigStoreTests(TestCase):
     def test_save_tree_writes_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             trees_dir = Path(tmp_dir) / "trees"
-            config = _ProjectConfig(path="/project", agents={"codex": AgentConfig(base="ubuntu")})
+            config = _ProjectConfig(
+                path="/project", agents={"codex": AgentConfig(base="ubuntu")}
+            )
             with mock.patch("aicage.config.config_store.TREES_DIR", trees_dir):
                 store = SettingsStore()
                 store.save_tree(Path("/project"), config)

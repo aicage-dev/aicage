@@ -341,7 +341,9 @@ class OverviewTests(TestCase):
         self.assertEqual(None, shares_list.highlighted)
         self.assertEqual(None, docker_list.highlighted)
 
-    def test_refresh_from_hides_git_support_mounts_for_global_configuration(self) -> None:
+    def test_refresh_from_hides_git_support_mounts_for_global_configuration(
+        self,
+    ) -> None:
         overview = Overview(
             "codex",
             "/test-tmp/project",
