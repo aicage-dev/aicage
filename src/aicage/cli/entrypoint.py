@@ -10,13 +10,20 @@ from aicage.cli._parse import parse_cli
 from aicage.cli._remove_config import remove_project_config
 from aicage.cli._version_check import maybe_prompt_update
 from aicage.cli_types import ParsedArgs
-from aicage.config.runtime_config import RunConfig, load_run_config
+from aicage.config.runtime_config import (
+    RunConfig,
+    configure_inherited_config,
+    load_run_config,
+)
 from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
 from aicage.runtime.image_setup import prepare_image
-from aicage.runtime.menu.interaction import create_runtime_interaction
+from aicage.runtime.menu.interaction import (
+    RuntimeInteraction,
+    create_runtime_interaction,
+)
 from aicage.runtime.run_args import DockerRunArgs
 from aicage.runtime.run_plan import build_run_args
 
@@ -30,12 +37,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         interaction = create_runtime_interaction(parsed.menu)
         if maybe_prompt_update(__version__, interaction.confirm_aicage_update):
             _restart_with_current_args(parsed_argv)
-        if parsed.config_action == "info":
-            info_project_config()
-        elif parsed.config_action == "remove":
-            remove_project_config(parsed.config_agent)
+        if _handle_config_action(parsed, interaction):
+            pass
         else:
-            run_config: RunConfig = load_run_config(parsed.agent, interaction, parsed)
+            run_config: RunConfig | None = load_run_config(
+                parsed.agent, interaction, parsed
+            )
+            if run_config is None:
+                return exit_code
             run_args: DockerRunArgs = build_run_args(config=run_config, parsed=parsed)
             logger.info("Resolved run config for agent %s", run_config.agent)
             prepare_image(run_config, interaction)
@@ -62,6 +71,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         logger.exception("Unhandled exception during CLI execution")
         exit_code = 1
     return exit_code
+
+
+def _handle_config_action(
+    parsed: ParsedArgs,
+    interaction: RuntimeInteraction,
+) -> bool:
+    if parsed.config_action == "info":
+        _info_config(parsed.config_scope)
+        return True
+    if parsed.config_action == "remove":
+        _remove_config(parsed.config_agent, parsed.config_scope)
+        return True
+    if parsed.config_action in {"global", "tree"}:
+        configure_inherited_config(
+            parsed.config_action, parsed.config_agent or "", interaction, parsed
+        )
+        return True
+    return False
+
+
+def _info_config(scope: str | None) -> None:
+    if scope is None:
+        info_project_config()
+    else:
+        info_project_config(scope)
+
+
+def _remove_config(agent: str | None, scope: str | None) -> None:
+    if scope is None:
+        remove_project_config(agent)
+    else:
+        remove_project_config(agent, scope)
 
 
 def _print_docker_error(exc: DockerError) -> None:

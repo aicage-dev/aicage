@@ -85,6 +85,22 @@ def _extension_mount_prompt_items(
     return items
 
 
+def extension_mount_defaults(
+    project_path: Path,
+    agent_cfg: AgentConfig,
+    available_extensions: dict[str, ExtensionMetadata],
+) -> dict[str, bool]:
+    return {
+        item.extension_id: True
+        for item in _extension_mount_prompt_items(
+            project_path,
+            agent_cfg.extensions,
+            agent_cfg.extension_mounts,
+            available_extensions,
+        )
+    }
+
+
 def _format_share_value(spec: ShareSpec) -> str:
     host_value = str(spec.host_path)
     return f"{host_value}:ro" if spec.read_only else host_value

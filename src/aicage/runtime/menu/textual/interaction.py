@@ -6,6 +6,7 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.reporting import OperationReporter
 from aicage.runtime._confirm import prompt_update_aicage
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
+from aicage.runtime.menu.scope_change import ConfigScopeChange
 
 from ._config_app import ConfigApp
 from ._execution_app import ExecutionApp
@@ -26,7 +27,7 @@ class TextualInteraction:
         draft: RunConfigDraft,
         context: ConfigContext,
         agent: str,
-    ) -> ConfigSelectionResult:
+    ) -> ConfigSelectionResult | ConfigScopeChange:
         del agent  # Textual reads agent from draft.agent.
         return _edit_draft_with_textual_app(draft, context)
 
@@ -56,7 +57,7 @@ class TextualInteraction:
 def _edit_draft_with_textual_app(
     draft: RunConfigDraft,
     context: ConfigContext,
-) -> ConfigSelectionResult:
+) -> ConfigSelectionResult | ConfigScopeChange:
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()

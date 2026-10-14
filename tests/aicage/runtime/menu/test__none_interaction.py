@@ -67,6 +67,40 @@ class ConfigureRunTests(TestCase):
         merge_shares_mock.assert_called_once_with()
         persist_shares_mock.assert_not_called()
 
+    def test_configure_run_skips_implicit_mounts_for_config_update(self) -> None:
+        resolved = _none_interaction._NoneInteraction(mock.Mock())
+        draft = _build_draft(
+            AgentConfig(base="ubuntu", extensions=["gh"]),
+            ParsedArgs(
+                False,
+                "",
+                "codex",
+                [],
+                False,
+                [],
+                "global",
+                "codex",
+                menu="none",
+            ),
+        )
+        selection = mock.Mock()
+        selection.base = "ubuntu"
+
+        with (
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.select_agent_image",
+                return_value=selection,
+            ),
+            mock.patch.object(draft, "apply_selection"),
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.apply_mount_preferences"
+            ) as mount_mock,
+        ):
+            resolved.configure_run(draft, _build_context(), "codex")
+
+        mount_mock.assert_not_called()
+        self.assertEqual({"gh": True}, draft.agent_cfg.extension_mounts)
+
     def test_configure_run_applies_git_mount_defaults_for_run(self) -> None:
         resolved = _none_interaction._NoneInteraction(mock.Mock())
         draft = _build_draft(
