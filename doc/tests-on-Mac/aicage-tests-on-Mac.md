@@ -9,7 +9,7 @@
 Make sure these tools are installed and working:
 
 - Docker Desktop
-- Python 3.10+ and `pipx`
+- Python 3.11+ and `pipx`
 
 ### Installation
 
