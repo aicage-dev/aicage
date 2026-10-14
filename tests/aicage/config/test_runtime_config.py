@@ -83,9 +83,7 @@ class RuntimeConfigTests(TestCase):
                     ),
                 )
 
-                def store_factory(
-                    *_args: object, **_kwargs: object
-                ) -> SettingsStore:
+                def store_factory(*_args: object, **_kwargs: object) -> SettingsStore:
                     return SettingsStore()
 
                 def configure_run(

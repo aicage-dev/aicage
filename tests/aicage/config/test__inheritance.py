@@ -21,9 +21,7 @@ class InheritanceTests(TestCase):
                     "aicage.config.config_store.PROJECTS_DIR",
                     root_path / "projects",
                 ),
-                mock.patch(
-                    "aicage.config.config_store.TREES_DIR", root_path / "trees"
-                ),
+                mock.patch("aicage.config.config_store.TREES_DIR", root_path / "trees"),
                 mock.patch(
                     "aicage.config.config_store.GLOBAL_CONFIG_PATH",
                     root_path / "global.yml",
