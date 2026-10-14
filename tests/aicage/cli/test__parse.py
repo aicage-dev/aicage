@@ -281,10 +281,11 @@ class ParseCliTests(TestCase):
         self.assertEqual("none", parsed.menu)
         self.assertEqual("codex", parsed.agent)
 
-    def test_parse_cli_with_menu_simple(self) -> None:
-        parsed = parse_cli(["--menu", "simple", "codex"])
-        self.assertEqual("simple", parsed.menu)
-        self.assertEqual("codex", parsed.agent)
+    def test_parse_cli_rejects_simple_menu(self) -> None:
+        with self.assertRaises(SystemExit) as ctx:
+            parse_cli(["--menu", "simple", "codex"])
+
+        self.assertEqual(2, ctx.exception.code)
 
     def test_parse_cli_config_rejects_share(self) -> None:
         with self.assertRaises(CliError):
@@ -322,4 +323,5 @@ class ParseCliTests(TestCase):
             "--git [on|off]   Enable or disable Git support mounts (default: on).",
             output,
         )
+        self.assertNotIn("simple", output)
         self.assertNotIn("--stdio", output)

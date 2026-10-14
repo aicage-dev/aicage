@@ -21,11 +21,3 @@ class CreateRuntimeInteractionTests(TestCase):
 
         self.assertEqual("_NoneInteraction", resolved.__class__.__name__)
         self.assertIsInstance(resolved.reporter, ConsoleOperationReporter)
-
-    def test_create_runtime_interaction_returns_simple_interaction_for_simple_mode(
-        self,
-    ) -> None:
-        resolved = interaction.create_runtime_interaction("simple")
-
-        self.assertEqual("SimpleInteraction", resolved.__class__.__name__)
-        self.assertIsInstance(resolved.reporter, ConsoleOperationReporter)

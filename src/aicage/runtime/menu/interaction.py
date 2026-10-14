@@ -7,7 +7,6 @@ from aicage.config.run_config_draft import RunConfigDraft
 from aicage.reporting import ConsoleOperationReporter, OperationReporter
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu._none_interaction import _NoneInteraction
-from aicage.runtime.menu.prompts.interaction import SimpleInteraction
 from aicage.runtime.menu.textual.interaction import TextualInteraction
 from aicage.runtime.menu.textual.services.execution_reporting import ExecutionReporter
 
@@ -37,8 +36,6 @@ class RuntimeInteraction(Protocol):
 
 
 def create_runtime_interaction(menu: MenuMode) -> RuntimeInteraction:
-    if menu == "ui":
-        return TextualInteraction(ExecutionReporter())
     if menu == "none":
         return _NoneInteraction(ConsoleOperationReporter())
-    return SimpleInteraction(ConsoleOperationReporter())
+    return TextualInteraction(ExecutionReporter())

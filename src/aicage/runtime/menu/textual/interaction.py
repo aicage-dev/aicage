@@ -4,8 +4,8 @@ from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.reporting import OperationReporter
+from aicage.runtime._confirm import prompt_update_aicage
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
-from aicage.runtime.menu.prompts.interaction import prompt_update_aicage
 
 from ._config_app import ConfigApp
 from ._execution_app import ExecutionApp
