@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "aicage"
 description = "Runs agentic coding assistants in docker containers"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Stefan Kuhn" }]
 dependencies = [
