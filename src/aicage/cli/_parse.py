@@ -49,9 +49,9 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
     )
     parser.add_argument(
         _MENU_OPTION,
-        choices=["ui", "simple", "none"],
+        choices=["ui", "none"],
         default="ui",
-        help="Select menu mode: ui, simple, or none.",
+        help="Select menu mode: ui or none.",
     )
     parser.add_argument(
         _DOCKER_OPTION,
@@ -130,7 +130,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  aicage --version\n\n"
             "Arguments:\n"
             "  --dry-run        Print the generated docker run command and exit.\n"
-            "  --menu <mode>    Choose menu mode: ui, simple, or none.\n"
+            "  --menu <mode>    Choose menu mode: ui or none.\n"
             "  --docker         Mount /run/docker.sock into the container.\n"
             "  --base <id>      Select the agent base image.\n"
             "  --git [on|off]   Enable or disable Git support mounts (default: on).\n"
@@ -141,7 +141,6 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
             "  - '--menu ui' uses the default config overview.\n"
-            "  - '--menu simple' uses the line-based setup prompts.\n"
             "  - '--menu none' skips menus and uses defaults.\n"
             "  - The default menu is 'ui' with a TTY and 'none' without one.\n"
             "  - Docker TTY allocation is enabled only when stdin is a TTY.\n"

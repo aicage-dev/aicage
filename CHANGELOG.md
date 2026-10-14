@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the line-based `--menu simple` setup flow. Use the default `--menu ui` configuration UI, or `--menu none`
+  with CLI options for non-interactive runs.
+
 ## [1.5.2] - 2026-10-10
 
 ### Added

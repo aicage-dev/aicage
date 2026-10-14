@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-MenuMode = Literal["ui", "simple", "none"]
+MenuMode = Literal["ui", "none"]
 
 
 @dataclass

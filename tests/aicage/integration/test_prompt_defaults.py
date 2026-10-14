@@ -11,32 +11,6 @@ from ._helpers import require_integration, run_cli_pty, setup_workspace
 pytestmark = pytest.mark.integration
 
 
-def test_git_support_prompt_persists_selected_mounts(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    require_integration()
-    workspace, env = setup_workspace(monkeypatch, tmp_path, "codex")
-    project_dir = workspace / "project"
-    project_dir.mkdir()
-    _init_git_repo(workspace)
-    _write_global_gitconfig(Path(env["HOME"]))
-    _save_project_config(project_dir, mounts=_AgentMounts())
-
-    exit_code, output = run_cli_pty(
-        ["--menu", "simple", "--dry-run", "codex"],
-        env=env,
-        cwd=project_dir,
-        input_data="1\n",
-    )
-
-    assert exit_code == 0, output
-    assert "Select mounts (comma-separated numbers) [all, default on Enter]:" in output
-    agent_cfg = SettingsStore().load_project(project_dir).agents["codex"]
-    assert agent_cfg.mounts.gitconfig is True
-    assert agent_cfg.mounts.gitroot is False
-
-
 def test_none_uses_default_mount_selection_without_saving(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
