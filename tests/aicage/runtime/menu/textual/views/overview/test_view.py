@@ -18,6 +18,17 @@ from ...._test_support import _build_context, _build_draft
 
 
 class OverviewTests(TestCase):
+    def test_section_label_dims_summary(self) -> None:
+        overview = Overview(
+            "codex", "/test-tmp/project", OverviewState(None, [], [], False)
+        )
+
+        value = overview._section_label("Extensions", "none")
+
+        self.assertEqual("Extensions\nnone", str(value))
+        self.assertEqual("bold", str(value.spans[0].style))
+        self.assertEqual("dim not bold", str(value.spans[1].style))
+
     def test_compose_builds_widgets(self) -> None:
         widgets = list(
             Overview(
@@ -226,9 +237,9 @@ class OverviewTests(TestCase):
             )
             overview.refresh_from(draft, _build_context())
 
-        self.assertEqual("Base\nubuntu", base_button.label)
-        self.assertEqual("Extensions\nnone", extensions_button.label)
-        self.assertEqual("Docker Args\nnone", extras_button.label)
+        self.assertEqual("Base\nubuntu", str(base_button.label))
+        self.assertEqual("Extensions\nnone", str(extensions_button.label))
+        self.assertEqual("Docker Args\nnone", str(extras_button.label))
         self.assertEqual(None, shares_list.highlighted)
         self.assertEqual(None, docker_list.highlighted)
 
