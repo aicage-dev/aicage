@@ -63,6 +63,7 @@
     "contextmanager",
     "cooldown",
     "coredump",
+    "creationflags",
     "creds",
     "dataclasses",
     "datatypes",
