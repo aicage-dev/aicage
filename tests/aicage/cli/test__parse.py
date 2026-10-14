@@ -236,9 +236,7 @@ class ParseCliTests(TestCase):
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_extensions(self) -> None:
-        parsed = parse_cli(
-            ["--extension", "one", "--extension", "two", "--", "codex"]
-        )
+        parsed = parse_cli(["--extension", "one", "--extension", "two", "--", "codex"])
 
         self.assertEqual(["one", "two"], parsed.extensions)
 
