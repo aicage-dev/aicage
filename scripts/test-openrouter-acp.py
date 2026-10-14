@@ -30,7 +30,9 @@ _FAILURE_LOG_TAIL_BYTES: int = 16_384
 _PROTOCOL_VERSION: int = 1
 _JSON_RPC_VERSION: str = "2.0"
 _CONFIG_ROOT: Path = Path(__file__).resolve().parents[1] / "doc/ai/task/39/agent-config"
-_MARKER_EXTENSION_SOURCE: Path = Path(__file__).resolve().parents[1] / "doc/sample/custom/extensions/marker"
+_MARKER_EXTENSION_SOURCE: Path = (
+    Path(__file__).resolve().parents[1] / "doc/sample/custom/extensions/marker"
+)
 _CODEX_ACP_PACKAGE: str = "@agentclientprotocol/codex-acp"
 _CODEX_ACP_DIRECTORY: str = ".codex-acp"
 
@@ -75,7 +77,9 @@ _AGENTS: tuple[_Agent, ...] = (
 
 
 class _AcpClient:
-    def __init__(self, command: list[str], environment: dict[str, str], cwd: Path) -> None:
+    def __init__(
+        self, command: list[str], environment: dict[str, str], cwd: Path
+    ) -> None:
         # The command is built from fixed smoke-test arguments.
         self._process = subprocess.Popen(  # nosec B603
             command,
@@ -86,7 +90,9 @@ class _AcpClient:
             stderr=subprocess.PIPE,
             start_new_session=True,
         )
-        self._messages: queue.Queue[dict[str, Any] | BaseException | None] = queue.Queue()
+        self._messages: queue.Queue[dict[str, Any] | BaseException | None] = (
+            queue.Queue()
+        )
         self._stderr: list[bytes] = []
         self._next_request_id = 1
         self._response_chunks: list[str] = []
@@ -182,7 +188,10 @@ class _AcpClient:
         if not isinstance(params, dict):
             return
         update = params.get("update")
-        if not isinstance(update, dict) or update.get("sessionUpdate") != "agent_message_chunk":
+        if (
+            not isinstance(update, dict)
+            or update.get("sessionUpdate") != "agent_message_chunk"
+        ):
             return
         content = update.get("content")
         if isinstance(content, dict) and content.get("type") == "text":
@@ -245,7 +254,9 @@ def _select_agents(agent_names: Sequence[str]) -> tuple[_Agent, ...] | None:
 def _run_agent(
     agent: _Agent, aicage_path: Path, api_key: str, preflight_only: bool
 ) -> bool:
-    temporary_root = Path(tempfile.mkdtemp(prefix=f"aicage-openrouter-{agent.name}-")).resolve()
+    temporary_root = Path(
+        tempfile.mkdtemp(prefix=f"aicage-openrouter-{agent.name}-")
+    ).resolve()
     temporary_root.chmod(0o755)
     home_dir = temporary_root / "home"
     client: _AcpClient | None = None
@@ -255,16 +266,24 @@ def _run_agent(
         workspace = temporary_root / "workspace"
         workspace.mkdir()
         _write_agent_config(agent, home_dir)
-        _write_project_config(agent, home_dir, workspace, include_marker=not preflight_only)
+        _write_project_config(
+            agent, home_dir, workspace, include_marker=not preflight_only
+        )
         _copy_docker_cli_plugins(home_dir)
         environment = _test_environment(home_dir, api_key)
         if agent.name == "codex" and not preflight_only:
             _install_codex_acp(home_dir, environment)
         _run_container_preflight(
-            agent, aicage_path, environment, workspace, include_marker=not preflight_only
+            agent,
+            aicage_path,
+            environment,
+            workspace,
+            include_marker=not preflight_only,
         )
         if not preflight_only:
-            command = _acp_command(agent, aicage_path, environment, home_dir, temporary_root)
+            command = _acp_command(
+                agent, aicage_path, environment, home_dir, temporary_root
+            )
             client = _AcpClient(command, environment, workspace)
             _prompt_agent(client, workspace)
             response = client.response_text()
@@ -280,11 +299,17 @@ def _run_agent(
             _print_stderr(client.stderr())
         _print_image_logs(home_dir)
         _copy_aicage_logs(home_dir, agent.name)
-        print(f"{agent.name}: retained failed test home at {temporary_root}", file=sys.stderr)
+        print(
+            f"{agent.name}: retained failed test home at {temporary_root}",
+            file=sys.stderr,
+        )
         return False
     cleanup_error = _remove_temporary_root(temporary_root)
     if cleanup_error is not None:
-        print(f"{agent.name}: FAIL: could not remove {temporary_root}: {cleanup_error}", file=sys.stderr)
+        print(
+            f"{agent.name}: FAIL: could not remove {temporary_root}: {cleanup_error}",
+            file=sys.stderr,
+        )
         return False
     if preflight_only:
         print(f"{agent.name}: PASS (container preflight)")
@@ -330,7 +355,7 @@ def _write_codex_launcher(temporary_root: Path) -> Path:
     contents = (
         "#!/bin/sh\nexec aicage --menu none"
         " --extension marker"
-        " -e OPENROUTER_API_KEY -- codex \"$@\"\n"
+        ' -e OPENROUTER_API_KEY -- codex "$@"\n'
     )
     launcher.write_text(contents, encoding="utf-8")
     launcher.chmod(0o755)
@@ -341,7 +366,9 @@ def _install_codex_acp(home_dir: Path, environment: dict[str, str]) -> None:
     installation_directory = home_dir / _CODEX_ACP_DIRECTORY
     npm_path = shutil.which("npm")
     if npm_path is None:
-        raise RuntimeError("npm must be available to install codex-acp in the fake home.")
+        raise RuntimeError(
+            "npm must be available to install codex-acp in the fake home."
+        )
     try:
         # This is a fixed npm command for the smoke-test bridge.
         result = subprocess.run(  # nosec B603
@@ -360,18 +387,24 @@ def _install_codex_acp(home_dir: Path, environment: dict[str, str]) -> None:
             timeout=_REQUEST_TIMEOUT_SECONDS,
         )
     except FileNotFoundError as exc:
-        raise RuntimeError("npm must be available to install codex-acp in the fake home.") from exc
+        raise RuntimeError(
+            "npm must be available to install codex-acp in the fake home."
+        ) from exc
     except subprocess.TimeoutExpired as exc:
         raise TimeoutError("Installing codex-acp in the fake home timed out.") from exc
     if result.returncode != 0:
         output = "\n".join(part for part in (result.stdout, result.stderr) if part)
-        raise RuntimeError(f"Could not install codex-acp in the fake home:\n{output.rstrip()}")
+        raise RuntimeError(
+            f"Could not install codex-acp in the fake home:\n{output.rstrip()}"
+        )
 
 
 def _write_agent_config(agent: _Agent, home_dir: Path) -> None:
     destination = home_dir / agent.config_destination
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(agent.config_source.read_text(encoding="utf-8"), encoding="utf-8")
+    destination.write_text(
+        agent.config_source.read_text(encoding="utf-8"), encoding="utf-8"
+    )
     destination.chmod(0o644)
     _make_path_traversable(destination.parent, home_dir)
 
@@ -379,7 +412,13 @@ def _write_agent_config(agent: _Agent, home_dir: Path) -> None:
 def _make_path_traversable(path: Path, root: Path) -> None:
     current = path
     while True:
-        current.chmod(current.stat().st_mode | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        current.chmod(
+            current.stat().st_mode
+            | stat.S_IRGRP
+            | stat.S_IXGRP
+            | stat.S_IROTH
+            | stat.S_IXOTH
+        )
         if current == root:
             return
         current = current.parent
@@ -397,11 +436,7 @@ def _write_project_config(
     project_hash = hashlib.sha256(str(workspace.resolve()).encode("utf-8")).hexdigest()
     project_config = config_dir / f"{project_hash}.yml"
     project_config.parent.mkdir(parents=True, exist_ok=True)
-    contents = (
-        "agents:\n"
-        f"  {agent.name}:\n"
-        "    base: ubuntu\n"
-    )
+    contents = "agents:\n" f"  {agent.name}:\n" "    base: ubuntu\n"
     project_config.write_text(contents, encoding="utf-8")
 
 
@@ -413,7 +448,9 @@ def _run_container_preflight(
     *,
     include_marker: bool,
 ) -> None:
-    command = _container_preflight_command(agent, aicage_path, include_marker=include_marker)
+    command = _container_preflight_command(
+        agent, aicage_path, include_marker=include_marker
+    )
     try:
         # The command is built from fixed smoke-test arguments.
         result = subprocess.run(  # nosec B603
@@ -429,7 +466,9 @@ def _run_container_preflight(
         raise TimeoutError("Container preflight timed out.") from exc
     if result.returncode != 0:
         output = "\n".join(part for part in (result.stdout, result.stderr) if part)
-        raise RuntimeError(f"Container preflight failed ({result.returncode}):\n{output.rstrip()}")
+        raise RuntimeError(
+            f"Container preflight failed ({result.returncode}):\n{output.rstrip()}"
+        )
     print(f"{agent.name}: container preflight passed")
     print(result.stdout.rstrip())
 
@@ -462,7 +501,9 @@ def _without_entrypoint_override(arguments: tuple[str, ...]) -> list[str]:
     result: list[str] = []
     index = 0
     while index < len(arguments):
-        if arguments[index] == "-e" and arguments[index + 1].startswith("AICAGE_ENTRYPOINT_CMD="):
+        if arguments[index] == "-e" and arguments[index + 1].startswith(
+            "AICAGE_ENTRYPOINT_CMD="
+        ):
             index += 2
             continue
         result.append(arguments[index])
@@ -480,7 +521,9 @@ def _container_preflight_script(agent: _Agent) -> str:
         (f"readable {config_path}", f'test -r "$HOME/{config_path}"'),
     ]
     if agent.name == "vibe":
-        checks.append(("active Vibe model", 'test "$VIBE_ACTIVE_MODEL" = "openrouter-free"'))
+        checks.append(
+            ("active Vibe model", 'test "$VIBE_ACTIVE_MODEL" = "openrouter-free"')
+        )
     lines = [
         "set -eu",
         'printf "uid=%s expected_uid=%s gid=%s expected_gid=%s\\n" "$(id -u)" "$AICAGE_UID" "$(id -g)" "$AICAGE_GID"',

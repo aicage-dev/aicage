@@ -243,9 +243,7 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
             overview.refresh_scope(self._draft.scope)
             self._focus_last_section()
 
-    def _finish(
-        self, result: ConfigSelectionResult | ConfigScopeChange | None
-    ) -> None:
+    def _finish(self, result: ConfigSelectionResult | ConfigScopeChange | None) -> None:
         self.exit(result)
 
     def _focus_last_section(self) -> None:
@@ -275,12 +273,12 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
             overview.current_host_options(
                 self._docker_socket_value_for_confirmation(),
                 self._draft.agent_cfg.mounts.docker is None
-                and self._draft.inherited_project_cfg.agents.get(
-                    self._draft.agent
-                ) is not None
+                and self._draft.inherited_project_cfg.agents.get(self._draft.agent)
+                is not None
                 and self._draft.inherited_project_cfg.agents[
                     self._draft.agent
-                ].mounts.docker is True,
+                ].mounts.docker
+                is True,
             ),
             self._confirm_host_access,
         )
@@ -308,7 +306,9 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
         pending_git_mounts = {
             item.key
             for item in current_built_in_shares
-            if item.source == "git_support" and item.enabled and item.persisted is not True
+            if item.source == "git_support"
+            and item.enabled
+            and item.persisted is not True
         }
         if self._uses_git_support_screen():
             self._draft.pending_git_mounts.update(pending_git_mounts)
@@ -317,7 +317,9 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
         self._draft.pending_extension_mounts = {
             item.key
             for item in current_built_in_shares
-            if item.source == "extension" and item.enabled and item.persisted is not True
+            if item.source == "extension"
+            and item.enabled
+            and item.persisted is not True
         }
         self._draft.pending_docker_socket = any(
             option.enabled and option.persisted is not True
@@ -373,24 +375,19 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
                     self._draft.agent, AgentConfig()
                 ).shares
             ]
-            + [
-                CustomShareValue(share)
-                for share in self._draft.agent_cfg.shares
-            ],
+            + [CustomShareValue(share) for share in self._draft.agent_cfg.shares],
             docker_socket_enabled=bool(self._draft.effective_agent_cfg.mounts.docker),
             docker_socket_inherited=(
                 self._draft.agent_cfg.mounts.docker is None
-                and self._draft.inherited_project_cfg.agents.get(
-                    self._draft.agent
-                ) is not None
+                and self._draft.inherited_project_cfg.agents.get(self._draft.agent)
+                is not None
                 and self._draft.inherited_project_cfg.agents[
                     self._draft.agent
-                ].mounts.docker is True
+                ].mounts.docker
+                is True
             ),
             git_support_values=(
-                self._git_support_values()
-                if self._uses_git_support_screen()
-                else {}
+                self._git_support_values() if self._uses_git_support_screen() else {}
             ),
         )
 
@@ -409,9 +406,7 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
                 else item
             )
             for item in shares_values(self._draft, self._config_context).built_in_shares
-            if not (
-                self._uses_git_support_screen() and item.source == "git_support"
-            )
+            if not (self._uses_git_support_screen() and item.source == "git_support")
         ]
 
     def _current_built_in_shares(self, overview: Overview) -> list[BuiltInShareValue]:
@@ -458,9 +453,8 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
                 self._draft.pending_git_mounts.add(key)
 
     def _mark_new_config_auto_git_mounts_pending(self) -> None:
-        if (
-            not self._uses_git_support_screen()
-            or self._draft.scope_config_exists.get(self._draft.scope, True)
+        if not self._uses_git_support_screen() or self._draft.scope_config_exists.get(
+            self._draft.scope, True
         ):
             return
         self._draft.pending_git_mounts.update(
