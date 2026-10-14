@@ -20,7 +20,10 @@ from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
 from aicage.runtime.image_setup import prepare_image
-from aicage.runtime.menu.interaction import RuntimeInteraction, create_runtime_interaction
+from aicage.runtime.menu.interaction import (
+    RuntimeInteraction,
+    create_runtime_interaction,
+)
 from aicage.runtime.run_args import DockerRunArgs
 from aicage.runtime.run_plan import build_run_args
 
