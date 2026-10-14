@@ -52,6 +52,7 @@ class RunConfigDraft:
     def prefill_for_overview(self) -> None:
         if self.parsed is None:
             return
+        self.apply_cli_base()
         if self.parsed.docker_args:
             self.agent_cfg.docker_args = self.parsed.docker_args
         if self.parsed.docker_socket:
@@ -68,6 +69,14 @@ class RunConfigDraft:
         if self.parsed is None or not self.parsed.extensions:
             return
         self.agent_cfg.extensions = list(self.parsed.extensions)
+        self.reset_extension_image()
+
+    def apply_cli_base(self) -> None:
+        if self.parsed is None or self.parsed.base is None:
+            return
+        if self.agent_cfg.base == self.parsed.base:
+            return
+        self.agent_cfg.base = self.parsed.base
         self.reset_extension_image()
 
     def consume_overview_prefill(self) -> None:

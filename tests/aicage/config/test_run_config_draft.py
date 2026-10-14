@@ -121,6 +121,26 @@ class RunConfigDraftTests(TestCase):
         self.assertIsNone(draft.agent_cfg.image_ref)
         self.assertEqual({}, draft.agent_cfg.extension_mounts)
 
+    def test_apply_cli_base_replaces_base_and_resets_extension_image(self) -> None:
+        draft = _build_draft(
+            AgentConfig(
+                base="debian",
+                image_ref="aicage:existing",
+                extensions=["one"],
+                extension_mounts={"one": True},
+            ),
+        )
+        parsed = draft.parsed
+        if parsed is None:
+            self.fail("Expected parsed args to be available.")
+        parsed.base = "ubuntu"
+
+        draft.apply_cli_base()
+
+        self.assertEqual("ubuntu", draft.agent_cfg.base)
+        self.assertIsNone(draft.agent_cfg.image_ref)
+        self.assertEqual({"one": True}, draft.agent_cfg.extension_mounts)
+
     def test_consume_overview_prefill_clears_cli_runtime_values(self) -> None:
         draft = _build_draft(AgentConfig(), docker_args="--new", shares=["logs"])
         parsed = draft.parsed
@@ -184,6 +204,7 @@ def _build_parsed(
     docker_args: str = "",
     shares: list[str] | None = None,
     extensions: list[str] | None = None,
+    base: str | None = None,
 ) -> ParsedArgs:
     return ParsedArgs(
         dry_run=False,
@@ -194,6 +215,7 @@ def _build_parsed(
         shares=shares or [],
         config_action=None,
         extensions=extensions or [],
+        base=base,
     )
 
 

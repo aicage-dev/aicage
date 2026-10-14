@@ -32,6 +32,12 @@ aicage --menu none --extension <EXTENSION> <agent>
 Repeat `--extension` to select multiple extensions. The supplied list replaces the agent's saved extension
 selection for the project.
 
+Select a base image for the run with `--base <BASE>`. For example:
+
+```bash
+aicage --menu none --base ubuntu --extension <EXTENSION> <agent>
+```
+
 ## extension.yml
 
 `extension.yml` (or `extension.yaml`) must contain the following keys:

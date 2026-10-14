@@ -14,6 +14,7 @@ _MAX_CONFIG_TOKENS = 2
 _DRY_RUN_OPTION = "--dry-run"
 _MENU_OPTION = "--menu"
 _DOCKER_OPTION = "--docker"
+_BASE_OPTION = "--base"
 _SHARE_OPTION = "--share"
 _EXTENSION_OPTION = "--extension"
 _GIT_OPTION = "--git"
@@ -24,6 +25,7 @@ _VERSION_SHORT_OPTION = "-v"
 _VERSION_OPTION = "--version"
 _OPTIONS_WITH_VALUES: set[str] = {
     _MENU_OPTION,
+    _BASE_OPTION,
     _SHARE_OPTION,
     _EXTENSION_OPTION,
     _GIT_OPTION,
@@ -55,6 +57,10 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         _DOCKER_OPTION,
         action="store_true",
         help="Mount the host Docker socket into the container.",
+    )
+    parser.add_argument(
+        _BASE_OPTION,
+        help="Select the agent base image.",
     )
     parser.add_argument(
         _SHARE_OPTION,
@@ -113,9 +119,9 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         usage: str = (
             "Usage:\n"
             "  aicage <agent>\n"
-            "  aicage [--menu <mode>] [--dry-run] [--docker] [--git [on|off]] "
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--base <id>] [--git [on|off]] "
             "[--share <path>]... [--extension <id>]... <agent> [<agent-args>]\n"
-            "  aicage [--menu <mode>] [--dry-run] [--docker] [--git [on|off]] "
+            "  aicage [--menu <mode>] [--dry-run] [--docker] [--base <id>] [--git [on|off]] "
             "[--share <path>]... [--extension <id>]... <docker-args> -- <agent>"
             " [<agent-args>]\n"
             "  aicage --config\n"
@@ -126,6 +132,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             "  --dry-run        Print the generated docker run command and exit.\n"
             "  --menu <mode>    Choose menu mode: ui, simple, or none.\n"
             "  --docker         Mount /run/docker.sock into the container.\n"
+            "  --base <id>      Select the agent base image.\n"
             "  --git [on|off]   Enable or disable Git support mounts (default: on).\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --extension <id> Select an extension. Repeatable.\n"
@@ -164,6 +171,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
             opts.menu,
             extensions=opts.extension,
             git=opts.git,
+            base=opts.base,
         )
 
     docker_args, agent, agent_args = _parse_agent_section(remaining, post_argv)
@@ -183,6 +191,7 @@ def parse_cli(argv: Sequence[str]) -> ParsedArgs:
         opts.menu,
         extensions=opts.extension,
         git=opts.git,
+        base=opts.base,
     )
 
 
@@ -270,6 +279,7 @@ def _validate_config_action(
         remaining
         or post_argv
         or opts.docker
+        or opts.base is not None
         or opts.dry_run
         or opts.share
         or opts.extension

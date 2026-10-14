@@ -26,6 +26,7 @@ class _NoneInteraction:
         context: ConfigContext,
         agent: str,
     ) -> ConfigSelectionResult:
+        draft.apply_cli_base()
         draft.apply_cli_extensions()
         selection = select_agent_image(
             agent,
