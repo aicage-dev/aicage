@@ -55,7 +55,9 @@ class ConfigureRunTests(TestCase):
         resolved = interaction.SimpleInteraction(mock.Mock())
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None, menu="simple", git=True),
+            ParsedArgs(
+                False, "", "codex", [], False, [], None, menu="simple", git=True
+            ),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"
@@ -81,7 +83,9 @@ class ConfigureRunTests(TestCase):
         resolved = interaction.SimpleInteraction(mock.Mock())
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None, menu="simple", git=False),
+            ParsedArgs(
+                False, "", "codex", [], False, [], None, menu="simple", git=False
+            ),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"

@@ -122,9 +122,7 @@ class ConfigureRunTests(TestCase):
             mock.patch(
                 "aicage.runtime.menu._none_interaction.disable_git_mounts"
             ) as disable_git_mounts_mock,
-            mock.patch(
-                "aicage.runtime.menu._none_interaction.apply_mount_preferences"
-            ),
+            mock.patch("aicage.runtime.menu._none_interaction.apply_mount_preferences"),
         ):
             resolved.configure_run(draft, _build_context(), "codex")
 

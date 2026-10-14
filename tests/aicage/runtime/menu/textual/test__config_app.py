@@ -54,7 +54,12 @@ class ConfigAppTests(TestCase):
             ParsedArgs(False, "", "codex", [], False, [], None, menu="ui", git=True),
         )
         built_in_share = BuiltInShareValue(
-            "git_support", "gitconfig", "Git config", "/test-tmp/gitconfig", False, False
+            "git_support",
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            False,
+            False,
         )
 
         with (
