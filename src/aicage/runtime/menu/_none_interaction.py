@@ -22,10 +22,13 @@ class _NoneInteraction:
         context: ConfigContext,
         agent: str,
     ) -> ConfigSelectionResult:
+        draft.apply_cli_extensions()
         selection = select_agent_image(
             agent,
             context,
-            _NonInteractiveSelectionInteraction(),
+            _NonInteractiveSelectionInteraction(
+                draft.parsed.extensions if draft.parsed is not None else []
+            ),
         )
         draft.apply_selection(selection)
         draft.merge_shares()
@@ -66,6 +69,9 @@ class _NoneInteraction:
 
 
 class _NonInteractiveSelectionInteraction:
+    def __init__(self, extensions: list[str] | None = None) -> None:
+        self._extensions = extensions or []
+
     def choose_base(self, request: BaseChoiceRequest) -> str:
         return request.default_base
 
@@ -74,7 +80,7 @@ class _NonInteractiveSelectionInteraction:
         options: list[ExtensionChoiceOption],
     ) -> list[str]:
         del options
-        return []
+        return list(self._extensions)
 
     def choose_image_ref(self, default_ref: str) -> str:
         return default_ref

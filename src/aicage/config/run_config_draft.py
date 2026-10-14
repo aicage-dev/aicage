@@ -62,6 +62,13 @@ class RunConfigDraft:
                 self.agent_cfg.shares,
                 self.project_path,
             )[0]
+        self.apply_cli_extensions()
+
+    def apply_cli_extensions(self) -> None:
+        if self.parsed is None or not self.parsed.extensions:
+            return
+        self.agent_cfg.extensions = list(self.parsed.extensions)
+        self.reset_extension_image()
 
     def consume_overview_prefill(self) -> None:
         if self.parsed is None:

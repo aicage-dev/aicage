@@ -81,9 +81,15 @@ class RunConfigDraftTests(TestCase):
 
     def test_prefill_for_overview_applies_cli_values(self) -> None:
         draft = _build_draft(
-            AgentConfig(docker_args="--existing", shares=["/repo/existing"]),
+            AgentConfig(
+                docker_args="--existing",
+                shares=["/repo/existing"],
+                extensions=["existing"],
+                image_ref="aicage:existing",
+            ),
             docker_args="--new",
             shares=["logs"],
+            extensions=["one", "two"],
             project_path=Path("/repo"),
         )
         parsed = draft.parsed
@@ -96,6 +102,24 @@ class RunConfigDraftTests(TestCase):
         self.assertEqual("--new", draft.agent_cfg.docker_args)
         self.assertEqual(["/repo/logs", "/repo/existing"], draft.agent_cfg.shares)
         self.assertTrue(draft.agent_cfg.mounts.docker)
+        self.assertEqual(["one", "two"], draft.agent_cfg.extensions)
+        self.assertIsNone(draft.agent_cfg.image_ref)
+
+    def test_apply_cli_extensions_replaces_extensions_and_resets_image(self) -> None:
+        draft = _build_draft(
+            AgentConfig(
+                extensions=["existing"],
+                image_ref="aicage:existing",
+                extension_mounts={"existing": True},
+            ),
+            extensions=["one", "two"],
+        )
+
+        draft.apply_cli_extensions()
+
+        self.assertEqual(["one", "two"], draft.agent_cfg.extensions)
+        self.assertIsNone(draft.agent_cfg.image_ref)
+        self.assertEqual({}, draft.agent_cfg.extension_mounts)
 
     def test_consume_overview_prefill_clears_cli_runtime_values(self) -> None:
         draft = _build_draft(AgentConfig(), docker_args="--new", shares=["logs"])
@@ -141,17 +165,26 @@ def _build_draft(
     agent_cfg: AgentConfig,
     docker_args: str = "",
     shares: list[str] | None = None,
+    extensions: list[str] | None = None,
     project_path: Path = Path("/test-tmp/project"),
 ) -> RunConfigDraft:
     return _create_run_config_draft(
         project_path,
         "codex",
         _ProjectConfig(path=str(project_path), agents={"codex": agent_cfg}),
-        _build_parsed(docker_args=docker_args, shares=shares or []),
+        _build_parsed(
+            docker_args=docker_args,
+            shares=shares or [],
+            extensions=extensions or [],
+        ),
     )
 
 
-def _build_parsed(docker_args: str = "", shares: list[str] | None = None) -> ParsedArgs:
+def _build_parsed(
+    docker_args: str = "",
+    shares: list[str] | None = None,
+    extensions: list[str] | None = None,
+) -> ParsedArgs:
     return ParsedArgs(
         dry_run=False,
         docker_args=docker_args,
@@ -160,6 +193,7 @@ def _build_parsed(docker_args: str = "", shares: list[str] | None = None) -> Par
         docker_socket=False,
         shares=shares or [],
         config_action=None,
+        extensions=extensions or [],
     )
 
 
