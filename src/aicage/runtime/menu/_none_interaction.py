@@ -8,7 +8,11 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.reporting import OperationReporter
-from aicage.runtime.docker_args.mount_preferences import apply_mount_preferences
+from aicage.runtime.docker_args.mount_preferences import (
+    apply_git_mount_defaults,
+    apply_mount_preferences,
+    disable_git_mounts,
+)
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 
 
@@ -32,13 +36,19 @@ class _NoneInteraction:
         )
         draft.apply_selection(selection)
         draft.merge_shares()
-        apply_mount_preferences(
-            context,
-            agent,
-            draft.parsed,
-            _select_all_mounts,
-            _always_confirm,
-        )
+        if draft.parsed is not None and draft.parsed.git is not None:
+            if draft.parsed.git:
+                apply_git_mount_defaults(context, draft.agent_cfg)
+            else:
+                disable_git_mounts(draft.agent_cfg)
+        if draft.parsed is None or draft.parsed.config_action is None:
+            apply_mount_preferences(
+                context,
+                agent,
+                draft.parsed,
+                _select_all_mounts,
+                _always_confirm,
+            )
         return ConfigSelectionResult(
             selection=selection,
             project_docker_args=draft.existing_project_docker_args,

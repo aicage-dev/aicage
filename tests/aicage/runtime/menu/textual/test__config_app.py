@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
-from aicage.config.project_config import AgentConfig
+from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.textual import _config_app
 from aicage.runtime.menu.textual._models import (
@@ -12,6 +12,7 @@ from aicage.runtime.menu.textual._models import (
     DockerOptionValue,
     HostAccessConfirmValues,
     ShareEditorResult,
+    SharesValues,
 )
 from aicage.runtime.menu.textual.views.overview.view import Overview
 
@@ -20,6 +21,14 @@ from ._test_support import _call_work_async
 
 
 class ConfigAppTests(TestCase):
+    def test_init_disables_git_mounts_for_git_off(self) -> None:
+        app = _build_app(git=False)
+
+        self.assertFalse(app._draft.agent_cfg.mounts.gitconfig)
+        self.assertFalse(app._draft.agent_cfg.mounts.gitroot)
+        self.assertFalse(app._draft.agent_cfg.mounts.gnupg)
+        self.assertFalse(app._draft.agent_cfg.mounts.ssh)
+
     def test_command_palette_is_disabled(self) -> None:
         self.assertFalse(_config_app.ConfigApp.ENABLE_COMMAND_PALETTE)
 
@@ -38,6 +47,36 @@ class ConfigAppTests(TestCase):
         app = _build_app()
 
         self.assertEqual("container config", app.sub_title)
+
+    def test_init_selects_detected_git_mounts(self) -> None:
+        draft = _build_draft(
+            AgentConfig(base="ubuntu", mounts=_AgentMounts(gitconfig=False)),
+            ParsedArgs(False, "", "codex", [], False, [], None, menu="ui", git=True),
+        )
+        built_in_share = BuiltInShareValue(
+            "git_support",
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            False,
+            False,
+        )
+
+        with (
+            mock.patch(
+                "aicage.runtime.menu.textual._config_app.detected_git_mounts",
+                return_value={"gitconfig"},
+            ),
+            mock.patch(
+                "aicage.runtime.menu.textual._config_app.shares_values",
+                return_value=SharesValues([], [built_in_share]),
+            ),
+        ):
+            app = _config_app.ConfigApp(draft, _build_context())
+
+        self.assertEqual(False, app._state.built_in_shares[0].persisted)
+        self.assertTrue(app._state.built_in_shares[0].enabled)
+        self.assertFalse(draft.agent_cfg.mounts.gitconfig)
 
     def test_format_title_bolds_app_name_and_dims_subtitle(self) -> None:
         app = _build_app()
@@ -438,6 +477,7 @@ class ConfigAppTests(TestCase):
 def _build_app(
     agent_cfg: AgentConfig | None = None,
     built_in_shares: list[BuiltInShareValue] | None = None,
+    git: bool | None = None,
 ) -> _config_app.ConfigApp:
     with mock.patch(
         "aicage.runtime.menu.textual.services.summary.built_in_share_values",
@@ -446,7 +486,7 @@ def _build_app(
         return _config_app.ConfigApp(
             _build_draft(
                 agent_cfg or AgentConfig(base="ubuntu"),
-                ParsedArgs(False, "", "codex", [], False, [], None),
+                ParsedArgs(False, "", "codex", [], False, [], None, git=git),
                 project_path=Path("/test-tmp/project"),
             ),
             _build_context(),

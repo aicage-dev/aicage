@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import TypeVar
 
 from textual import work
@@ -10,6 +11,8 @@ from aicage.config.extensions.order import canonical_extensions
 from aicage.config.overview_selection import resolve_overview_selection
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.interaction import ExtensionChoiceOption
+from aicage.runtime.docker_args.mount_preferences import disable_git_mounts
+from aicage.runtime.docker_args.support.git_support import detected_git_mounts
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
@@ -41,6 +44,8 @@ class ConfigApp(TextualApp[ConfigSelectionResult | None]):
         super().__init__("container config")
         self._draft = draft
         self._config_context = context
+        if self._draft.parsed is not None and self._draft.parsed.git is False:
+            disable_git_mounts(self._draft.agent_cfg)
         self._state = self._initial_state()
 
     def compose(self) -> ComposeResult:
@@ -225,11 +230,22 @@ class ConfigApp(TextualApp[ConfigSelectionResult | None]):
         )
 
     def _initial_state(self) -> OverviewState:
+        built_in_shares = shares_values(
+            self._draft, self._config_context
+        ).built_in_shares
+        if self._draft.parsed is not None and self._draft.parsed.git:
+            detected_mounts = detected_git_mounts(self._draft.project_path)
+            built_in_shares = [
+                (
+                    replace(item, enabled=True)
+                    if item.source == "git_support" and item.key in detected_mounts
+                    else item
+                )
+                for item in built_in_shares
+            ]
         return OverviewState(
             last_section_id=None,
-            built_in_shares=shares_values(
-                self._draft, self._config_context
-            ).built_in_shares,
+            built_in_shares=built_in_shares,
             custom_shares=[
                 CustomShareValue(share) for share in self._draft.agent_cfg.shares
             ],

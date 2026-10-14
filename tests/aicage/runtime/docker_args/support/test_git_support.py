@@ -204,6 +204,27 @@ class GitSupportTests(TestCase):
 
         self.assertEqual([], items)
 
+    def test_git_mount_defaults_returns_detected_mounts(self) -> None:
+        mounts_cfg = _AgentMounts()
+        with mock.patch(
+            f"{_MODULE}.detected_git_mounts",
+            return_value={MOUNT_GITCONFIG_KEY, MOUNT_GNUPG_KEY},
+        ):
+            defaults = git_support.git_mount_defaults(Path("/repo"), mounts_cfg)
+
+        self.assertEqual({MOUNT_GITCONFIG_KEY, MOUNT_GNUPG_KEY}, defaults)
+
+    def test_detected_git_mounts_ignores_mount_preferences(self) -> None:
+        with mock.patch(
+            f"{_MODULE}._git_support_prompt_items",
+            return_value=[(MOUNT_GITCONFIG_KEY, "Git config")],
+        ) as prompt_items_mock:
+            mounts = git_support.detected_git_mounts(Path("/repo"))
+
+        self.assertEqual({MOUNT_GITCONFIG_KEY}, mounts)
+        mount_prefs = prompt_items_mock.call_args.args[1]
+        self.assertIsNone(mount_prefs.gitconfig)
+
     def test__git_support_prompt_items_include_ssh_for_ssh_remotes(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
