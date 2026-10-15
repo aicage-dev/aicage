@@ -9,7 +9,7 @@ from aicage.cli._info_config import info_project_config
 from aicage.cli._parse import parse_cli
 from aicage.cli._remove_config import remove_project_config
 from aicage.cli._version_check import maybe_prompt_update
-from aicage.cli_types import ParsedArgs
+from aicage.cli_types import CliArgs, ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs
 from aicage.config.runtime_config import (
     RunConfig,
     configure_inherited_config,
@@ -20,10 +20,7 @@ from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
 from aicage.runtime.image_setup import prepare_image
-from aicage.runtime.menu.interaction import (
-    RuntimeInteraction,
-    create_runtime_interaction,
-)
+from aicage.runtime.menu.interaction import create_runtime_interaction
 from aicage.runtime.run_args import DockerRunArgs
 from aicage.runtime.run_plan import build_run_args
 
@@ -33,12 +30,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger = get_logger()
     exit_code = 0
     try:
-        parsed: ParsedArgs = parse_cli(parsed_argv)
+        parsed: CliArgs = parse_cli(parsed_argv)
+        if isinstance(parsed, ConfigInfoArgs):
+            _info_config(parsed.scope)
+            return exit_code
+        if isinstance(parsed, ConfigRemoveArgs):
+            remove_project_config(parsed.agent, parsed.scope)
+            return exit_code
         interaction = create_runtime_interaction(parsed.menu)
         if maybe_prompt_update(__version__, interaction.confirm_aicage_update):
             _restart_with_current_args(parsed_argv)
-        if _handle_config_action(parsed, interaction):
-            pass
+        if isinstance(parsed, ConfigUpdateArgs):
+            configure_inherited_config(parsed.scope, parsed.agent, interaction, parsed)
         else:
             run_config: RunConfig | None = load_run_config(
                 parsed.agent, interaction, parsed
@@ -73,36 +76,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     return exit_code
 
 
-def _handle_config_action(
-    parsed: ParsedArgs,
-    interaction: RuntimeInteraction,
-) -> bool:
-    if parsed.config_action == "info":
-        _info_config(parsed.config_scope)
-        return True
-    if parsed.config_action == "remove":
-        _remove_config(parsed.config_agent, parsed.config_scope)
-        return True
-    if parsed.config_action in {"global", "tree"}:
-        configure_inherited_config(
-            parsed.config_action, parsed.config_agent or "", interaction, parsed
-        )
-        return True
-    return False
-
-
 def _info_config(scope: str | None) -> None:
     if scope is None:
         info_project_config()
     else:
         info_project_config(scope)
-
-
-def _remove_config(agent: str | None, scope: str | None) -> None:
-    if scope is None:
-        remove_project_config(agent)
-    else:
-        remove_project_config(agent, scope)
 
 
 def _print_docker_error(exc: DockerError) -> None:

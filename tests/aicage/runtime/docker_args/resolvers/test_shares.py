@@ -59,7 +59,7 @@ class ShareResolverTests(TestCase):
                 path=str(cwd / "project"),
                 agents={"codex": AgentConfig(shares=["data"])},
             )
-            parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, [])
             context = ConfigContext(
                 store=mock.Mock(),
                 project_cfg=project_cfg,
@@ -84,7 +84,7 @@ class ShareResolverTests(TestCase):
     def test_resolve_returns_share_mounts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            parsed = ParsedArgs(False, "", "codex", [], False, ["data:ro"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["data:ro"])
             context = ConfigContext(
                 store=mock.Mock(),
                 project_cfg=_ProjectConfig(path=str(cwd / "project"), agents={}),
@@ -117,7 +117,7 @@ class ShareResolverTests(TestCase):
                     )
                 },
             )
-            parsed = ParsedArgs(False, "", "codex", [], False, ["data"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["data"])
             context = ConfigContext(
                 store=mock.Mock(),
                 project_cfg=project_cfg,
@@ -166,7 +166,7 @@ class ShareResolverTests(TestCase):
                     )
                 },
             )
-            parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, [])
             context = ConfigContext(
                 store=mock.Mock(),
                 project_cfg=project_cfg,
@@ -203,7 +203,7 @@ class ShareResolverTests(TestCase):
                     )
                 },
             )
-            parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, [])
             context = ConfigContext(
                 store=mock.Mock(),
                 project_cfg=project_cfg,

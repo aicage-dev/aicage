@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 MenuMode = Literal["ui", "none"]
+ConfigScope = Literal["global", "tree"]
 
 
 @dataclass
@@ -12,10 +13,26 @@ class ParsedArgs:
     agent_args: list[str]
     docker_socket: bool
     shares: list[str]
-    config_action: str | None
-    config_agent: str | None = None
     menu: MenuMode = "ui"
     extensions: list[str] = field(default_factory=list)
-    config_scope: str | None = None
     git: bool | None = None
     base: str | None = None
+
+
+@dataclass
+class ConfigInfoArgs:
+    scope: ConfigScope | None
+
+
+@dataclass
+class ConfigRemoveArgs:
+    agent: str | None
+    scope: ConfigScope | None
+
+
+@dataclass
+class ConfigUpdateArgs(ParsedArgs):
+    scope: ConfigScope = field(kw_only=True)
+
+
+CliArgs = ParsedArgs | ConfigInfoArgs | ConfigRemoveArgs

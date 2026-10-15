@@ -17,7 +17,7 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
         self,
     ) -> None:
         draft = _build_draft(
-            AgentConfig(), ParsedArgs(False, "", "codex", [], False, [], None)
+            AgentConfig(), ParsedArgs(False, "", "codex", [], False, [])
         )
         built_in_shares = [
             BuiltInShareValue(

@@ -16,7 +16,7 @@ class OverviewSummaryTests(TestCase):
     def test_extras_values_reads_mount_preferences(self) -> None:
         draft = _build_draft(
             AgentConfig(base="ubuntu", docker_args="--rm"),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
 
         values = summary.extras_values(draft)
@@ -41,7 +41,7 @@ class OverviewSummaryTests(TestCase):
     def test_shares_values_reads_mount_preferences(self) -> None:
         draft = _build_draft(
             AgentConfig(base="ubuntu", shares=["/test-tmp/logs"]),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
         built_in_share = BuiltInShareValue(
             "git_support", "gitconfig", "Git config", "/test-tmp/gitconfig", True, True

@@ -126,4 +126,4 @@ def _build_context(agent_cfg: AgentConfig) -> ConfigContext:
 
 
 def _build_parsed(docker_socket: bool = False) -> ParsedArgs:
-    return ParsedArgs(False, "", "codex", [], docker_socket, [], None)
+    return ParsedArgs(False, "", "codex", [], docker_socket, [])

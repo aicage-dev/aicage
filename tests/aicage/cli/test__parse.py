@@ -1,10 +1,19 @@
 import io
+from collections.abc import Sequence
 from unittest import TestCase, mock
 
 from aicage import __version__
 from aicage.cli._errors import CliError
 from aicage.cli._parse import parse_cli
+from aicage.cli_types import ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs, ParsedArgs
 from aicage.config.errors import ConfigError
+
+
+def _parse_run(argv: Sequence[str]) -> ParsedArgs:
+    parsed = parse_cli(argv)
+    if not isinstance(parsed, ParsedArgs):
+        raise AssertionError(f"Expected a runnable command, got {type(parsed).__name__}.")
+    return parsed
 
 
 class ParseCliTests(TestCase):
@@ -17,7 +26,7 @@ class ParseCliTests(TestCase):
 
     def test_parse_cli_with_separator(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=True):
-            parsed = parse_cli(["--dry-run", "--", "codex", "--bar"])
+            parsed = _parse_run(["--dry-run", "--", "codex", "--bar"])
         self.assertTrue(parsed.dry_run)
         self.assertEqual("ui", parsed.menu)
         self.assertEqual("", parsed.docker_args)
@@ -27,7 +36,7 @@ class ParseCliTests(TestCase):
 
     def test_parse_cli_with_separator_and_docker_args(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=True):
-            parsed = parse_cli(
+            parsed = _parse_run(
                 [
                     "--dry-run",
                     "-v",
@@ -44,11 +53,11 @@ class ParseCliTests(TestCase):
         self.assertEqual(["--bar"], parsed.agent_args)
         self.assertFalse(parsed.docker_socket)
         self.assertEqual([], parsed.shares)
-        self.assertIsNone(parsed.config_action)
+        self.assertIsInstance(parsed, ParsedArgs)
 
     def test_parse_cli_without_docker_args(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=True):
-            parsed = parse_cli(["codex", "--flag"])
+            parsed = _parse_run(["codex", "--flag"])
         self.assertFalse(parsed.dry_run)
         self.assertEqual("ui", parsed.menu)
         self.assertEqual("", parsed.docker_args)
@@ -56,10 +65,10 @@ class ParseCliTests(TestCase):
         self.assertEqual(["--flag"], parsed.agent_args)
         self.assertFalse(parsed.docker_socket)
         self.assertEqual([], parsed.shares)
-        self.assertIsNone(parsed.config_action)
+        self.assertIsInstance(parsed, ParsedArgs)
 
     def test_parse_cli_agent_config_flag_after_agent(self) -> None:
-        parsed = parse_cli(
+        parsed = _parse_run(
             [
                 "--menu",
                 "none",
@@ -79,30 +88,30 @@ class ParseCliTests(TestCase):
             ],
             parsed.agent_args,
         )
-        self.assertIsNone(parsed.config_action)
+        self.assertIsInstance(parsed, ParsedArgs)
 
     def test_parse_cli_flags_after_agent_are_agent_args(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=True):
-            parsed = parse_cli(["codex", "--foo", "--menu", "none"])
+            parsed = _parse_run(["codex", "--foo", "--menu", "none"])
         self.assertEqual("ui", parsed.menu)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual(["--foo", "--menu", "none"], parsed.agent_args)
 
     def test_parse_cli_unknown_agent_preserves_config_flag_after_agent(self) -> None:
-        parsed = parse_cli(["forge", "exec", "--config", "custom=true"])
+        parsed = _parse_run(["forge", "exec", "--config", "custom=true"])
         self.assertEqual("forge", parsed.agent)
         self.assertEqual(["exec", "--config", "custom=true"], parsed.agent_args)
-        self.assertIsNone(parsed.config_action)
+        self.assertIsInstance(parsed, ParsedArgs)
 
     def test_parse_cli_uses_no_menu_without_tty(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=False):
-            parsed = parse_cli(["codex"])
+            parsed = _parse_run(["codex"])
 
         self.assertEqual("none", parsed.menu)
 
     def test_parse_cli_preserves_explicit_ui_menu_without_tty(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=False):
-            parsed = parse_cli(["--menu", "ui", "codex"])
+            parsed = _parse_run(["--menu", "ui", "codex"])
 
         self.assertEqual("ui", parsed.menu)
 
@@ -163,27 +172,18 @@ class ParseCliTests(TestCase):
 
     def test_parse_cli_config_info(self) -> None:
         parsed = parse_cli(["--config", "info"])
-        self.assertEqual("info", parsed.config_action)
-        self.assertIsNone(parsed.config_agent)
-        self.assertEqual("", parsed.docker_args)
-        self.assertEqual("", parsed.agent)
-        self.assertEqual([], parsed.agent_args)
-        self.assertEqual([], parsed.shares)
+        assert isinstance(parsed, ConfigInfoArgs)
+        self.assertIsNone(parsed.scope)
 
     def test_parse_cli_config_defaults_to_info(self) -> None:
         with mock.patch("sys.stdin.isatty", return_value=False):
             parsed = parse_cli(["--config"])
-        self.assertEqual("info", parsed.config_action)
-        self.assertEqual("ui", parsed.menu)
-        self.assertIsNone(parsed.config_agent)
-        self.assertEqual("", parsed.docker_args)
-        self.assertEqual("", parsed.agent)
-        self.assertEqual([], parsed.agent_args)
-        self.assertEqual([], parsed.shares)
+        assert isinstance(parsed, ConfigInfoArgs)
+        self.assertIsNone(parsed.scope)
 
     def test_parse_cli_config_print_alias(self) -> None:
         parsed = parse_cli(["--config", "print"])
-        self.assertEqual("info", parsed.config_action)
+        assert isinstance(parsed, ConfigInfoArgs)
 
     def test_parse_cli_config_info_rejects_args(self) -> None:
         with self.assertRaises(CliError):
@@ -191,13 +191,15 @@ class ParseCliTests(TestCase):
 
     def test_parse_cli_config_remove(self) -> None:
         parsed = parse_cli(["--config", "remove"])
-        self.assertEqual("remove", parsed.config_action)
-        self.assertIsNone(parsed.config_agent)
+        assert isinstance(parsed, ConfigRemoveArgs)
+        self.assertIsNone(parsed.agent)
+        self.assertIsNone(parsed.scope)
 
     def test_parse_cli_config_remove_with_agent(self) -> None:
         parsed = parse_cli(["--config", "remove", "codex"])
-        self.assertEqual("remove", parsed.config_action)
-        self.assertEqual("codex", parsed.config_agent)
+        assert isinstance(parsed, ConfigRemoveArgs)
+        self.assertEqual("codex", parsed.agent)
+        self.assertIsNone(parsed.scope)
 
     def test_parse_cli_config_info_rejects_agent(self) -> None:
         with self.assertRaises(CliError) as ctx:
@@ -207,15 +209,15 @@ class ParseCliTests(TestCase):
     def test_parse_cli_config_info_global(self) -> None:
         parsed = parse_cli(["--config", "info", "global"])
 
-        self.assertEqual("info", parsed.config_action)
-        self.assertEqual("global", parsed.config_scope)
+        assert isinstance(parsed, ConfigInfoArgs)
+        self.assertEqual("global", parsed.scope)
 
     def test_parse_cli_config_remove_tree_agent(self) -> None:
         parsed = parse_cli(["--config", "remove", "tree", "codex"])
 
-        self.assertEqual("remove", parsed.config_action)
-        self.assertEqual("tree", parsed.config_scope)
-        self.assertEqual("codex", parsed.config_agent)
+        assert isinstance(parsed, ConfigRemoveArgs)
+        self.assertEqual("tree", parsed.scope)
+        self.assertEqual("codex", parsed.agent)
 
     def test_parse_cli_config_global_update_with_docker_args(self) -> None:
         parsed = parse_cli(
@@ -237,8 +239,8 @@ class ParseCliTests(TestCase):
             ]
         )
 
-        self.assertEqual("global", parsed.config_action)
-        self.assertEqual("codex", parsed.config_agent)
+        assert isinstance(parsed, ConfigUpdateArgs)
+        self.assertEqual("global", parsed.scope)
         self.assertEqual("codex", parsed.agent)
         self.assertEqual("-e GLOBAL_VAR=0", parsed.docker_args)
         self.assertEqual("none", parsed.menu)
@@ -266,25 +268,25 @@ class ParseCliTests(TestCase):
         )
 
     def test_parse_cli_accepts_git_for_agent(self) -> None:
-        parsed = parse_cli(["--git", "--", "codex"])
+        parsed = _parse_run(["--git", "--", "codex"])
 
         self.assertEqual("codex", parsed.agent)
         self.assertTrue(parsed.git)
 
     def test_parse_cli_accepts_bare_git_for_agent(self) -> None:
-        parsed = parse_cli(["--git", "codex"])
+        parsed = _parse_run(["--git", "codex"])
 
         self.assertEqual("codex", parsed.agent)
         self.assertTrue(parsed.git)
 
     def test_parse_cli_accepts_git_off_for_agent(self) -> None:
-        parsed = parse_cli(["--git", "off", "codex"])
+        parsed = _parse_run(["--git", "off", "codex"])
 
         self.assertEqual("codex", parsed.agent)
         self.assertFalse(parsed.git)
 
     def test_parse_cli_leaves_git_unset_without_option(self) -> None:
-        parsed = parse_cli(["codex"])
+        parsed = _parse_run(["codex"])
 
         self.assertIsNone(parsed.git)
 
@@ -305,7 +307,7 @@ class ParseCliTests(TestCase):
         )
 
     def test_parse_cli_flags_before_separator(self) -> None:
-        parsed = parse_cli(
+        parsed = _parse_run(
             [
                 "--docker",
                 "--dry-run",
@@ -320,23 +322,25 @@ class ParseCliTests(TestCase):
         self.assertEqual([], parsed.shares)
 
     def test_parse_cli_with_share(self) -> None:
-        parsed = parse_cli(
+        parsed = _parse_run(
             ["--share", "data", "--share", "/test-tmp/one:ro", "--", "codex"]
         )
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_extensions(self) -> None:
-        parsed = parse_cli(["--extension", "one", "--extension", "two", "--", "codex"])
+        parsed = _parse_run(
+            ["--extension", "one", "--extension", "two", "--", "codex"]
+        )
 
         self.assertEqual(["one", "two"], parsed.extensions)
 
     def test_parse_cli_with_base(self) -> None:
-        parsed = parse_cli(["--base", "ubuntu", "--", "codex"])
+        parsed = _parse_run(["--base", "ubuntu", "--", "codex"])
 
         self.assertEqual("ubuntu", parsed.base)
 
     def test_parse_cli_with_menu_none(self) -> None:
-        parsed = parse_cli(["--menu", "none", "codex"])
+        parsed = _parse_run(["--menu", "none", "codex"])
         self.assertEqual("none", parsed.menu)
         self.assertEqual("codex", parsed.agent)
 

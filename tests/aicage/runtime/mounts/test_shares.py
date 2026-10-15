@@ -37,7 +37,7 @@ class ShareMountsTests(TestCase):
             cwd = Path(tmp_dir)
             share_dir = cwd / "data"
             share_dir.mkdir()
-            parsed = ParsedArgs(False, "", "codex", [], False, ["data"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["data"])
 
             with mock.patch("aicage.runtime.mounts.shares.Path.cwd", return_value=cwd):
                 mounts = resolve_share_specs(parsed.shares, cwd)
@@ -51,7 +51,7 @@ class ShareMountsTests(TestCase):
             cwd = Path(tmp_dir)
             share_dir = cwd / "data"
             share_dir.mkdir()
-            parsed = ParsedArgs(False, "", "codex", [], False, ["data:ro"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["data:ro"])
 
             with mock.patch("aicage.runtime.mounts.shares.Path.cwd", return_value=cwd):
                 mounts = resolve_share_specs(parsed.shares, cwd)
@@ -71,7 +71,6 @@ class ShareMountsTests(TestCase):
                 [],
                 False,
                 ["shared", "shared:ro"],
-                None,
             )
 
             with mock.patch("aicage.runtime.mounts.shares.Path.cwd", return_value=cwd):
@@ -83,7 +82,7 @@ class ShareMountsTests(TestCase):
     def test_resolve_share_mounts_does_not_create_missing_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            parsed = ParsedArgs(False, "", "codex", [], False, ["missing"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["missing"])
 
             with mock.patch("aicage.runtime.mounts.shares.Path.cwd", return_value=cwd):
                 mounts = resolve_share_specs(parsed.shares, cwd)
@@ -94,7 +93,7 @@ class ShareMountsTests(TestCase):
     def test_resolve_share_mounts_does_not_create_missing_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            parsed = ParsedArgs(False, "", "codex", [], False, ["missing.txt"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["missing.txt"])
 
             with mock.patch("aicage.runtime.mounts.shares.Path.cwd", return_value=cwd):
                 mounts = resolve_share_specs(parsed.shares, cwd)
@@ -105,7 +104,7 @@ class ShareMountsTests(TestCase):
     def test_resolve_share_mounts_rejects_destination(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             cwd = Path(tmp_dir)
-            parsed = ParsedArgs(False, "", "codex", [], False, ["data:/dst"], None)
+            parsed = ParsedArgs(False, "", "codex", [], False, ["data:/dst"])
 
             with (
                 mock.patch("aicage.runtime.mounts.shares.Path.cwd", return_value=cwd),

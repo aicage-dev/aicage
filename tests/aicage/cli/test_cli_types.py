@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from aicage.cli_types import ParsedArgs
+from aicage.cli_types import ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs, ParsedArgs
 
 
 class ParsedArgsTests(TestCase):
@@ -12,7 +12,6 @@ class ParsedArgsTests(TestCase):
             agent_args=["--flag"],
             docker_socket=False,
             shares=["/test-tmp/one", "/test-tmp/two:ro"],
-            config_action=None,
         )
 
         self.assertTrue(parsed.dry_run)
@@ -21,6 +20,13 @@ class ParsedArgsTests(TestCase):
         self.assertEqual(["--flag"], parsed.agent_args)
         self.assertFalse(parsed.docker_socket)
         self.assertEqual(["/test-tmp/one", "/test-tmp/two:ro"], parsed.shares)
-        self.assertIsNone(parsed.config_action)
-        self.assertIsNone(parsed.config_agent)
         self.assertEqual("ui", parsed.menu)
+
+    def test_config_command_shapes(self) -> None:
+        self.assertIsNone(ConfigInfoArgs(scope=None).scope)
+        self.assertIsNone(ConfigRemoveArgs(None, None).agent)
+        self.assertEqual("codex", ConfigRemoveArgs("codex", None).agent)
+        self.assertEqual(
+            "global",
+            ConfigUpdateArgs(False, "", "codex", [], False, [], scope="global").scope,
+        )

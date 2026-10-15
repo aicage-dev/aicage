@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli.entrypoint import main
-from aicage.cli_types import ParsedArgs
+from aicage.cli_types import ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs, ParsedArgs
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
@@ -96,38 +96,15 @@ def _build_agents_and_bases() -> (
 
 
 class EntrypointTests(TestCase):
-    def test_main_restarts_when_update_succeeds(self) -> None:
-        with (
-            mock.patch(
-                "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(
-                    False, "", "", [], False, [], "info", None, "none"
-                ),
-            ),
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=True),
-            mock.patch(
-                "aicage.cli.entrypoint._restart_with_current_args",
-                side_effect=SystemExit(0),
-            ) as restart_mock,
-            mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
-        ):
-            with self.assertRaises(SystemExit):
-                main(["--config", "info"])
-
-        restart_mock.assert_called_once_with(["--config", "info"])
-        info_mock.assert_not_called()
-
     def test_main_config_info(self) -> None:
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(
-                    False, "", "", [], False, [], "info", None, "none"
-                ),
+                return_value=ConfigInfoArgs(scope=None),
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
             mock.patch(
                 "aicage.cli.entrypoint.create_runtime_interaction"
             ) as create_interaction_mock,
@@ -135,7 +112,8 @@ class EntrypointTests(TestCase):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_called_once_with("none")
+        create_interaction_mock.assert_not_called()
+        update_mock.assert_not_called()
         info_mock.assert_called_once()
         load_mock.assert_not_called()
 
@@ -143,27 +121,18 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(
-                    False,
-                    "",
-                    "",
-                    [],
-                    False,
-                    [],
-                    "info",
-                    None,
-                    "none",
-                    config_scope="global",
-                ),
+                return_value=ConfigInfoArgs(scope="global"),
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
-            mock.patch("aicage.cli.entrypoint.create_runtime_interaction"),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
+            mock.patch("aicage.cli.entrypoint.create_runtime_interaction") as interaction_mock,
         ):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
         info_mock.assert_called_once_with("global")
+        update_mock.assert_not_called()
+        interaction_mock.assert_not_called()
 
     def test_main_skips_ensure_for_ui_menu(self) -> None:
         run_config = _build_run_config(Path("/test-tmp/project"), "repo:tag")
@@ -172,9 +141,7 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(
-                    False, "", "codex", [], False, [], None, None, "ui"
-                ),
+                return_value=ParsedArgs(False, "", "codex", [], False, [], "ui"),
             ),
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
             mock.patch(
@@ -202,11 +169,11 @@ class EntrypointTests(TestCase):
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(False, "", "", [], False, [], "remove"),
+                return_value=ConfigRemoveArgs(None, None),
             ),
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
             mock.patch(
                 "aicage.cli.entrypoint.create_runtime_interaction"
             ) as create_interaction_mock,
@@ -214,21 +181,20 @@ class EntrypointTests(TestCase):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_called_once_with("ui")
-        remove_mock.assert_called_once_with(None)
+        create_interaction_mock.assert_not_called()
+        update_mock.assert_not_called()
+        remove_mock.assert_called_once_with(None, None)
         load_mock.assert_not_called()
 
     def test_main_config_remove_with_agent(self) -> None:
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
-                return_value=ParsedArgs(
-                    False, "", "", [], False, [], "remove", "codex"
-                ),
+                return_value=ConfigRemoveArgs("codex", None),
             ),
             mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update", return_value=False),
+            mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
             mock.patch(
                 "aicage.cli.entrypoint.create_runtime_interaction"
             ) as create_interaction_mock,
@@ -236,23 +202,23 @@ class EntrypointTests(TestCase):
             exit_code = main([])
 
         self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_called_once_with("ui")
-        remove_mock.assert_called_once_with("codex")
+        create_interaction_mock.assert_not_called()
+        update_mock.assert_not_called()
+        remove_mock.assert_called_once_with("codex", None)
         load_mock.assert_not_called()
 
     def test_main_config_global_passes_parsed_values_without_running_image_setup(
         self,
     ) -> None:
-        parsed = ParsedArgs(
+        parsed = ConfigUpdateArgs(
             False,
             "-e GLOBAL_VAR=0",
             "codex",
             [],
             False,
             [],
-            "global",
-            "codex",
             "none",
+            scope="global",
         )
         interaction = mock.Mock()
         with (
@@ -290,7 +256,7 @@ class EntrypointTests(TestCase):
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
                     return_value=ParsedArgs(
-                        False, "--cli", "codex", ["--flag"], False, [], None
+                        False, "--cli", "codex", ["--flag"], False, [], "ui"
                     ),
                 ),
                 mock.patch(
@@ -332,7 +298,7 @@ class EntrypointTests(TestCase):
                 mock.patch(
                     "aicage.cli.entrypoint.parse_cli",
                     return_value=ParsedArgs(
-                        False, "--cli", "codex", ["--flag"], False, [], None
+                        False, "--cli", "codex", ["--flag"], False, [], "ui"
                     ),
                 ),
                 mock.patch(
@@ -362,7 +328,7 @@ class EntrypointTests(TestCase):
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
                 return_value=ParsedArgs(
-                    False, "--cli", "codex", ["--flag"], False, [], None
+                    False, "--cli", "codex", ["--flag"], False, [], "ui"
                 ),
             ),
             mock.patch("aicage.cli.entrypoint.get_logger", return_value=logger),
@@ -394,7 +360,7 @@ class EntrypointTests(TestCase):
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
                 return_value=ParsedArgs(
-                    False, "--cli", "codex", ["--flag"], False, [], None
+                    False, "--cli", "codex", ["--flag"], False, [], "ui"
                 ),
             ),
             mock.patch("aicage.cli.entrypoint.get_logger", return_value=logger),

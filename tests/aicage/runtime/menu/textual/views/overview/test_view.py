@@ -311,7 +311,7 @@ class OverviewTests(TestCase):
 
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
 
         with (
@@ -386,7 +386,7 @@ class OverviewTests(TestCase):
 
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
 
         with (

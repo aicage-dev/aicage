@@ -17,4 +17,4 @@ def build_context(agent_cfg: AgentConfig) -> ConfigContext:
 
 
 def build_parsed() -> ParsedArgs:
-    return ParsedArgs(False, "", "codex", [], False, [], None)
+    return ParsedArgs(False, "", "codex", [], False, [])

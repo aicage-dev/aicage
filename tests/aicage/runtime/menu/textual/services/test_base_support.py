@@ -11,7 +11,7 @@ class BaseSupportTests(TestCase):
     def test_base_metadata_for_draft_returns_available_bases(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
         )
 
         options = base_support.base_metadata_for_draft(draft, _build_context())
@@ -21,7 +21,7 @@ class BaseSupportTests(TestCase):
     def test_ensure_base_default_sets_default_base(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
         )
 
         base_support.ensure_base_default(draft, _build_context())

@@ -201,7 +201,7 @@ class HostAccessTests(TestCase):
     def test_apply_host_access_persists_values(self) -> None:
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
 
         host_access.apply_host_access(
