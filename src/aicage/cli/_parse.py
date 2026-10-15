@@ -136,8 +136,8 @@ def parse_cli(argv: Sequence[str]) -> CliArgs:
             "  aicage --config\n"
             "  aicage --config info\n"
             "  aicage --config info <global|tree>\n"
-            "  aicage --config remove [<agent>]\n"
-            "  aicage --config remove <global|tree> [<agent>]\n"
+            "  aicage --config remove <agent>\n"
+            "  aicage --config remove <global|tree> <agent>\n"
             "  aicage --config global <agent>\n"
             "  aicage --config tree <agent>\n"
             "  aicage [<docker-args>] --config <global|tree> -- <agent>\n"
@@ -150,8 +150,7 @@ def parse_cli(argv: Sequence[str]) -> CliArgs:
             "  --git [on|off]   Enable or disable Git support mounts (default: on).\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --extension <id> Select an extension. Repeatable.\n"
-            "  --config [<cmd>] Run config command: info [global|tree], remove [global|tree] [agent],\n"
-            "                   global <agent>, tree <agent>, or global|tree -- <agent>.\n"
+            "  --config [<command>] Inspect or change saved configuration; see usage above.\n"
             "  -v, --version    Print aicage version and exit.\n"
             "  -h, --help       Show this help and exit.\n\n"
             "Behavior:\n"
@@ -291,7 +290,6 @@ def _parse_config_command(
             base=opts.base,
             scope=scope,
         )
-    config_agent, config_scope = _config_target(config_action, config_tokens)
     if (
         remaining
         or post_argv
@@ -304,10 +302,12 @@ def _parse_config_command(
         or opts.menu != "ui"
     ):
         raise CliError("No additional arguments are allowed with --config.")
+    if config_action == "remove":
+        remove_agent, remove_scope = _remove_config_target(config_tokens[1:])
+        return ConfigRemoveArgs(remove_agent, remove_scope)
+    config_agent, config_scope = _config_target(config_action, config_tokens)
     if config_action == "info":
         return ConfigInfoArgs(config_scope)
-    if config_action == "remove":
-        return ConfigRemoveArgs(config_agent, config_scope)
     if config_agent is None:
         raise CliError(f"An agent is required with '--config {config_action}'.")
     return ConfigUpdateArgs(
@@ -360,19 +360,18 @@ def _info_config_target(values: list[str]) -> tuple[None, ConfigScope | None]:
     raise CliError("Use '--config info [global|tree]'.")
 
 
-def _remove_config_target(values: list[str]) -> tuple[str | None, ConfigScope | None]:
+def _remove_config_target(values: list[str]) -> tuple[str, ConfigScope | None]:
+    usage = "Use '--config remove <agent>' or '--config remove <global|tree> <agent>'."
     if not values:
-        return None, None
+        raise CliError(usage)
     scope = _config_scope(values[0])
     if scope is None:
         if len(values) == 1:
             return values[0], None
-        raise CliError("Use '--config remove [global|tree] [agent]'.")
-    if len(values) == 1:
-        return None, scope
+        raise CliError(usage)
     if len(values) == _MAX_CONFIG_TOKENS - 1:
         return values[1], scope
-    raise CliError("Use '--config remove [global|tree] [agent]'.")
+    raise CliError(usage)
 
 
 def _config_scope(value: str) -> ConfigScope | None:

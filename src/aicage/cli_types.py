@@ -26,7 +26,7 @@ class ConfigInfoArgs:
 
 @dataclass
 class ConfigRemoveArgs:
-    agent: str | None
+    agent: str
     scope: ConfigScope | None
 
 

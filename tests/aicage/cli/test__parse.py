@@ -196,11 +196,21 @@ class ParseCliTests(TestCase):
         with self.assertRaises(CliError):
             parse_cli(["--config", "info", "codex"])
 
-    def test_parse_cli_config_remove(self) -> None:
-        parsed = parse_cli(["--config", "remove"])
-        assert isinstance(parsed, ConfigRemoveArgs)
-        self.assertIsNone(parsed.agent)
-        self.assertIsNone(parsed.scope)
+    def test_parse_cli_config_remove_requires_agent(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--config", "remove"])
+        self.assertEqual(
+            "Use '--config remove <agent>' or '--config remove <global|tree> <agent>'.",
+            str(ctx.exception),
+        )
+
+    def test_parse_cli_config_remove_scope_requires_agent(self) -> None:
+        with self.assertRaises(CliError) as ctx:
+            parse_cli(["--config", "remove", "global"])
+        self.assertEqual(
+            "Use '--config remove <agent>' or '--config remove <global|tree> <agent>'.",
+            str(ctx.exception),
+        )
 
     def test_parse_cli_config_remove_with_agent(self) -> None:
         parsed = parse_cli(["--config", "remove", "codex"])
@@ -309,7 +319,7 @@ class ParseCliTests(TestCase):
         with self.assertRaises(CliError) as ctx:
             parse_cli(["--config", "remove", "codex", "extra"])
         self.assertEqual(
-            "Use '--config remove [global|tree] [agent]'.",
+            "Use '--config remove <agent>' or '--config remove <global|tree> <agent>'.",
             str(ctx.exception),
         )
 
@@ -379,8 +389,7 @@ class ParseCliTests(TestCase):
         output = stdout.getvalue()
         self.assertIn("aicage --config\n", output)
         self.assertIn(
-            "--config [<cmd>] Run config command: info [global|tree], remove [global|tree] [agent],\n"
-            "                   global <agent>, tree <agent>, or global|tree -- <agent>.",
+            "--config [<command>] Inspect or change saved configuration; see usage above.",
             output,
         )
         self.assertIn("--menu <mode>", output)

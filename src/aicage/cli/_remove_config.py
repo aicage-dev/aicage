@@ -5,33 +5,11 @@ from aicage._logging import get_logger
 from aicage.config.config_store import SettingsStore
 
 
-def remove_project_config(agent: str | None = None, scope: str | None = None) -> None:
+def remove_agent_config(agent: str, scope: str | None = None) -> None:
     logger = get_logger()
     store = SettingsStore()
     project_path = Path.cwd().resolve()
     config_path, label = _config_path(store, project_path, scope)
-    if agent is not None:
-        _remove_agent_config(store, project_path, config_path, agent, scope)
-        return
-    logger.info("Removing %s config at %s", label.lower(), config_path)
-    if config_path.exists():
-        config_path.unlink()
-        print(f"{label} config removed:")
-        print(config_path)
-    else:
-        print(f"{label} config not found:")
-        print(config_path)
-
-
-def _remove_agent_config(
-    store: SettingsStore,
-    project_path: Path,
-    config_path: Path,
-    agent: str,
-    scope: str | None,
-) -> None:
-    logger = get_logger()
-    label = _config_label(scope)
     logger.info("Removing agent config '%s' from %s", agent, config_path)
     if not config_path.exists():
         print(f"{label} config not found:")
