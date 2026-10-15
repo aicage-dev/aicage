@@ -103,14 +103,24 @@ jobs:
             throw "Could not determine the WSL IPv4 address: $wslNetwork"
           }
           Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$($wslIpMatch.Groups[1].Value):2375"
-          Add-Content -Path $env:GITHUB_ENV -Value "AICAGE_WSL_DISTRIBUTION=Ubuntu-26.04"
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_DISTRIBUTION=Ubuntu-26.04"
 
           $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
           New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
-          @'
-          @echo off
-          python "%GITHUB_WORKSPACE%\scripts\docker-wsl-shim.py" %*
-          '@ | Set-Content -Encoding ascii -NoNewline -Path (Join-Path $shimDirectory "docker.cmd")
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_PYTHON=$env:pythonLocation\python.exe"
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_SCRIPT=$env:GITHUB_WORKSPACE\scripts\docker-wsl-shim.py"
+
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsDevCmd = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find "Common7\Tools\VsDevCmd.bat"
+          if (-not $vsDevCmd) {
+            throw "Visual C++ build tools were not found on the runner."
+          }
+          $launcher = Join-Path $env:GITHUB_WORKSPACE "scripts\docker-wsl-shim-launcher.c"
+          $output = Join-Path $shimDirectory "docker.exe"
+          cmd.exe /d /c "call `"$vsDevCmd`" -arch=x64 -host_arch=x64 >nul && cl.exe /nologo /O2 /Fe:`"$output`" `"$launcher`""
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to build the WSL Docker executable shim."
+          }
           Add-Content -Path $env:GITHUB_PATH -Value $shimDirectory
 
       - name: Validate Windows Docker CLI
