@@ -7,7 +7,7 @@ from aicage import __version__
 from aicage._logging import get_logger
 from aicage.cli._info_config import info_project_config
 from aicage.cli._parse import parse_cli
-from aicage.cli._remove_config import remove_project_config
+from aicage.cli._remove_config import remove_agent_config
 from aicage.cli._version_check import maybe_prompt_update
 from aicage.cli_types import CliArgs, ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs
 from aicage.config.runtime_config import (
@@ -35,7 +35,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             _info_config(parsed.scope)
             return exit_code
         if isinstance(parsed, ConfigRemoveArgs):
-            remove_project_config(parsed.agent, parsed.scope)
+            remove_agent_config(parsed.agent, parsed.scope)
             return exit_code
         interaction = create_runtime_interaction(parsed.menu)
         if maybe_prompt_update(__version__, interaction.confirm_aicage_update):

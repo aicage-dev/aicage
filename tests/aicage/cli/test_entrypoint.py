@@ -172,34 +172,13 @@ class EntrypointTests(TestCase):
         prepare_image_mock.assert_called_once_with(run_config, interaction)
         run_container_mock.assert_called_once()
 
-    def test_main_config_remove(self) -> None:
-        with (
-            mock.patch(
-                "aicage.cli.entrypoint.parse_cli",
-                return_value=ConfigRemoveArgs(None, None),
-            ),
-            mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
-            mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
-            mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
-            mock.patch(
-                "aicage.cli.entrypoint.create_runtime_interaction"
-            ) as create_interaction_mock,
-        ):
-            exit_code = main([])
-
-        self.assertEqual(0, exit_code)
-        create_interaction_mock.assert_not_called()
-        update_mock.assert_not_called()
-        remove_mock.assert_called_once_with(None, None)
-        load_mock.assert_not_called()
-
     def test_main_config_remove_with_agent(self) -> None:
         with (
             mock.patch(
                 "aicage.cli.entrypoint.parse_cli",
                 return_value=ConfigRemoveArgs("codex", None),
             ),
-            mock.patch("aicage.cli.entrypoint.remove_project_config") as remove_mock,
+            mock.patch("aicage.cli.entrypoint.remove_agent_config") as remove_mock,
             mock.patch("aicage.cli.entrypoint.load_run_config") as load_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
             mock.patch(

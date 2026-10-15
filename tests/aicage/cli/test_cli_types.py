@@ -29,7 +29,6 @@ class ParsedArgsTests(TestCase):
 
     def test_config_command_shapes(self) -> None:
         self.assertIsNone(ConfigInfoArgs(scope=None).scope)
-        self.assertIsNone(ConfigRemoveArgs(None, None).agent)
         self.assertEqual("codex", ConfigRemoveArgs("codex", None).agent)
         self.assertEqual(
             "global",
