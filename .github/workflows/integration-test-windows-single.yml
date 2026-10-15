@@ -24,17 +24,33 @@ jobs:
         run: |
           scripts/sync-with-aicage-image-projects.sh
 
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.15"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install Python dependencies
+        shell: powershell
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
       - name: Set up WSL
         uses: Vampire/setup-wsl@4c48163d9f981914dd8caa0fc335fe19cca5bff4  # v7.2.0
         with:
           distribution: Ubuntu-26.04
           update: "true"
-          additional-packages: docker.io python3-venv
+          additional-packages: docker.io
 
       - name: Start Docker daemon
         shell: wsl-bash -u root {0}
         run: |
-          nohup dockerd > /var/log/dockerd.log 2>&1 &
+          nohup dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock \
+            > /var/log/dockerd.log 2>&1 &
           for _ in {1..30}; do
             if docker info >/dev/null 2>&1; then
               exit 0
@@ -49,18 +65,99 @@ jobs:
         run: |
           test "$(docker info --format '{{.OSType}}')" = linux
 
-      - name: Install Python dependencies
-        shell: wsl-bash -u root {0}
+      - name: Configure Windows Docker access
+        shell: powershell
         run: |
-          python3 -m venv .venv
-          . .venv/bin/activate
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          $ErrorActionPreference = "Stop"
+          $wslIp = (wsl -d Ubuntu-26.04 -u root -- hostname -I).Trim().Split(" ")[0]
+          if (-not $wslIp) {
+            throw "Unable to resolve the WSL Docker daemon IP address."
+          }
+          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$wslIp:2375"
 
-      - name: Run WSL Docker integration tests
-        shell: wsl-bash -u root {0}
+          $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
+          New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
+          @'
+          @echo off
+          powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0docker-wsl.ps1" %*
+          '@ | Set-Content -Encoding ascii -NoNewline -Path (Join-Path $shimDirectory "docker.cmd")
+          @'
+          param([Parameter(ValueFromRemainingArguments = $true)][string[]]$DockerArgs)
+
+          $ErrorActionPreference = "Stop"
+
+          function Convert-WindowsPathToWsl([string]$Path) {
+            if ($Path -notmatch '^[A-Za-z]:[\\/]') {
+              return $Path
+            }
+            $drive = $Path.Substring(0, 1).ToLowerInvariant()
+            $tail = $Path.Substring(2).Replace('\\', '/')
+            return "/mnt/$drive$tail"
+          }
+
+          function Convert-MountValue([string]$Value) {
+            return [regex]::Replace(
+              $Value,
+              '(^|,)src=([A-Za-z]:[\\/][^,]*)',
+              {
+                param($match)
+                return "$($match.Groups[1].Value)src=$(Convert-WindowsPathToWsl $match.Groups[2].Value)"
+              }
+            )
+          }
+
+          function Convert-VolumeValue([string]$Value) {
+            if ($Value -match '^([A-Za-z]:[\\/][^:]*)(:.*)$') {
+              return "$(Convert-WindowsPathToWsl $Matches[1])$($Matches[2])"
+            }
+            return $Value
+          }
+
+          $translatedArgs = [System.Collections.Generic.List[string]]::new()
+          for ($index = 0; $index -lt $DockerArgs.Count; $index++) {
+            $arg = $DockerArgs[$index]
+            if ($arg -in @('--mount', '--volume', '-v', '--file')) {
+              $translatedArgs.Add($arg)
+              $index++
+              if ($index -ge $DockerArgs.Count) {
+                throw "Missing value for Docker argument $arg."
+              }
+              $value = $DockerArgs[$index]
+              if ($arg -eq '--mount') {
+                $translatedArgs.Add((Convert-MountValue $value))
+              } elseif ($arg -in @('--volume', '-v')) {
+                $translatedArgs.Add((Convert-VolumeValue $value))
+              } else {
+                $translatedArgs.Add((Convert-WindowsPathToWsl $value))
+              }
+              continue
+            }
+            if ($arg.StartsWith('--mount=')) {
+              $translatedArgs.Add("--mount=$(Convert-MountValue $arg.Substring(8))")
+              continue
+            }
+            $translatedArgs.Add((Convert-WindowsPathToWsl $arg))
+          }
+
+          & wsl.exe -d Ubuntu-26.04 -u root -- env -u DOCKER_HOST docker @translatedArgs
+          exit $LASTEXITCODE
+          '@ | Set-Content -Encoding utf8 -Path (Join-Path $shimDirectory "docker-wsl.ps1")
+          Add-Content -Path $env:GITHUB_PATH -Value $shimDirectory
+
+      - name: Validate Windows Docker client
+        shell: powershell
+        run: |
+          python -c @'
+          import docker
+
+          client = docker.from_env()
+          client.ping()
+          assert client.info()["OSType"] == "linux"
+          '@
+
+      - name: Run Windows Docker smoke test
+        shell: bash
         env:
           AICAGE_RUN_INTEGRATION: "1"
         run: |
-          . .venv/bin/activate
-          pytest -m "integration and not proxy_integration"
+          pytest tests/aicage/integration/remote_builtin/test_run.py::test_builtin_agent_runs
