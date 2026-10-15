@@ -44,7 +44,9 @@ jobs:
         with:
           distribution: Ubuntu-26.04
           update: "true"
-          additional-packages: docker.io
+          additional-packages: |
+            docker.io
+            docker-buildx
 
       - name: Start Docker daemon
         shell: wsl-bash -u root {0}
@@ -86,6 +88,7 @@ jobs:
         shell: wsl-bash -u root {0}
         run: |
           test "$(docker info --format '{{.OSType}}')" = linux
+          docker buildx version
 
       - name: Configure Windows Docker access
         shell: powershell
@@ -173,6 +176,7 @@ jobs:
       - name: Validate Windows Docker client
         shell: powershell
         run: |
+          docker buildx version
           @'
           import docker
 
