@@ -103,87 +103,21 @@ jobs:
             throw "Could not determine the WSL IPv4 address: $wslNetwork"
           }
           Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$($wslIpMatch.Groups[1].Value):2375"
+          Add-Content -Path $env:GITHUB_ENV -Value "AICAGE_WSL_DISTRIBUTION=Ubuntu-26.04"
 
           $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
           New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
           @'
           @echo off
-          powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0docker-wsl.ps1" %*
+          python "%GITHUB_WORKSPACE%\scripts\docker-wsl-shim.py" %*
           '@ | Set-Content -Encoding ascii -NoNewline -Path (Join-Path $shimDirectory "docker.cmd")
-          @'
-          param([Parameter(ValueFromRemainingArguments = $true)][string[]]$DockerArgs)
-
-          $ErrorActionPreference = "Stop"
-
-          function Convert-WindowsPathToWsl([string]$Path) {
-            if ($Path -notmatch '^[A-Za-z]:[\\/]') {
-              return $Path
-            }
-            $drive = $Path.Substring(0, 1).ToLowerInvariant()
-            $tail = $Path.Substring(2).Replace('\\', '/')
-            return "/mnt/$drive$tail"
-          }
-
-          function Convert-MountValue([string]$Value) {
-            return [regex]::Replace(
-              $Value,
-              '(^|,)src=([A-Za-z]:[\\/][^,]*)',
-              {
-                param($match)
-                return "$($match.Groups[1].Value)src=$(Convert-WindowsPathToWsl $match.Groups[2].Value)"
-              }
-            )
-          }
-
-          function Convert-VolumeValue([string]$Value) {
-            if ($Value -match '^([A-Za-z]:[\\/][^:]*)(:.*)$') {
-              return "$(Convert-WindowsPathToWsl $Matches[1])$($Matches[2])"
-            }
-            return $Value
-          }
-
-          $translatedArgs = [System.Collections.Generic.List[string]]::new()
-          for ($index = 0; $index -lt $DockerArgs.Count; $index++) {
-            $arg = $DockerArgs[$index]
-            if ($arg -in @('--mount', '--volume', '-v', '--file')) {
-              $translatedArgs.Add($arg)
-              $index++
-              if ($index -ge $DockerArgs.Count) {
-                throw "Missing value for Docker argument $arg."
-              }
-              $value = $DockerArgs[$index]
-              if ($arg -eq '--mount') {
-                $translatedArgs.Add((Convert-MountValue $value))
-              } elseif ($arg -in @('--volume', '-v')) {
-                $translatedArgs.Add((Convert-VolumeValue $value))
-              } else {
-                $translatedArgs.Add((Convert-WindowsPathToWsl $value))
-              }
-              continue
-            }
-            if ($arg.StartsWith('--mount=')) {
-              $translatedArgs.Add("--mount=$(Convert-MountValue $arg.Substring(8))")
-              continue
-            }
-            $translatedArgs.Add((Convert-WindowsPathToWsl $arg))
-          }
-
-          & wsl.exe -d Ubuntu-26.04 -u root -- env -u DOCKER_HOST docker @translatedArgs
-          exit $LASTEXITCODE
-          '@ | Set-Content -Encoding utf8 -Path (Join-Path $shimDirectory "docker-wsl.ps1")
           Add-Content -Path $env:GITHUB_PATH -Value $shimDirectory
 
-      - name: Validate Windows Docker client
+      - name: Validate Windows Docker CLI
         shell: powershell
         run: |
           docker buildx version
-          @'
-          import docker
-
-          client = docker.from_env()
-          client.ping()
-          assert client.info()["OSType"] == "linux"
-          '@ | python -
+          docker buildx imagetools inspect --raw ghcr.io/aicage-dev/aicage:codex-ubuntu | Out-Null
 
       - name: Run Windows Docker smoke test
         shell: bash
