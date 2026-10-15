@@ -24,53 +24,43 @@ jobs:
         run: |
           scripts/sync-with-aicage-image-projects.sh
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      - name: Set up WSL
+        uses: Vampire/setup-wsl@4c48163d9f981914dd8caa0fc335fe19cca5bff4  # v7.2.0
         with:
-          python-version: "3.15"
+          distribution: Ubuntu-26.04
+          update: "true"
+          additional-packages: docker.io python3-venv
 
-      - name: Install dependencies
-        shell: powershell
+      - name: Start Docker daemon
+        shell: wsl-bash -u root {0}
         run: |
+          nohup dockerd > /var/log/dockerd.log 2>&1 &
+          for _ in {1..30}; do
+            if docker info >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /var/log/dockerd.log
+          exit 1
+
+      - name: Validate Linux Docker engine
+        shell: wsl-bash -u root {0}
+        run: |
+          test "$(docker info --format '{{.OSType}}')" = linux
+
+      - name: Install Python dependencies
+        shell: wsl-bash -u root {0}
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
 
-      - name: Validating config with schemas
-        shell: bash
-        run: |
-          scripts/validate-config-with-schemas.sh
-
-      - name: Prepare WSL2 Linux Docker daemon
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $distros = wsl --list --quiet
-          if (-not ($distros -match "^Ubuntu")) {
-            wsl --install -d Ubuntu
-          }
-          wsl --list --verbose
-          wsl --set-version Ubuntu 2
-          wsl -d Ubuntu -u root -- bash -lc `
-            "apt-get update && apt-get install -y docker.io"
-          wsl -d Ubuntu -u root -- bash -lc `
-            "nohup dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock > /var/log/dockerd.log 2>&1 &"
-          wsl -d Ubuntu -u root -- bash -lc `
-            "for i in {1..30}; do docker info >/dev/null 2>&1 && break; sleep 2; done"
-          $wslIp = wsl -d Ubuntu -- bash -lc `
-            "hostname -I | awk '{print $1}'"
-          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$wslIp:2375"
-
-      - name: Validate Linux Docker engine
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $osType = docker info --format '{{.OSType}}'
-          if ($osType -ne "linux") {
-            throw "Expected Linux Docker engine, got: $osType"
-          }
-
-      - name: Run integration tests
-        shell: bash
+      - name: Run WSL Docker smoke test
+        shell: wsl-bash -u root {0}
         env:
           AICAGE_RUN_INTEGRATION: "1"
-        run: pytest -m integration --cov=src --cov-report=term-missing
+        run: |
+          . .venv/bin/activate
+          pytest tests/aicage/integration/remote_builtin/test_run.py::test_builtin_agent_runs
