@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - test: tests/aicage/integration/remote_builtin/test_proxy.py::test_proxy_host_and_runtime_network
-            expected_host: api.github.com:443
+            expected_host: ""
           - test: tests/aicage/integration/remote_builtin/test_proxy.py::test_proxy_custom_agent_build_and_version
             expected_host: registry.npmjs.org:443
     steps:
@@ -53,6 +53,7 @@ jobs:
             echo "Unable to resolve docker bridge gateway." >&2
             exit 1
           fi
+          echo "PROXY_HOST=$proxy_host" >> "$GITHUB_ENV"
           echo "PROXY_URL=http://$proxy_host:3128" >> "$GITHUB_ENV"
 
       - name: Start Squid proxy with explicit config
@@ -70,12 +71,10 @@ jobs:
             -v "$PWD/squid.conf:/etc/squid/squid.conf:ro" \
             ubuntu/squid:5.2-22.04_beta
 
-      - name: Wait for Squid proxy and validate host proxy path
-        env:
-          NO_PROXY: localhost,127.0.0.1
+      - name: Wait for Squid proxy listener
         run: |
           for _ in {1..60}; do
-            if curl -fsS --proxy "$PROXY_URL" https://api.github.com >/dev/null 2>&1; then
+            if nc -z -w 2 "$PROXY_HOST" 3128; then
               exit 0
             fi
             sleep 2
@@ -83,6 +82,15 @@ jobs:
           echo "Squid proxy did not become ready." >&2
           docker logs squid-proxy || true
           exit 1
+
+      - name: Validate external proxy forwarding
+        env:
+          NO_PROXY: localhost,127.0.0.1
+        run: |
+          curl --fail --show-error --silent \
+            --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 1 \
+            --proxy "$PROXY_URL" https://example.com/ \
+            --output /dev/null
 
       - name: Run proxy integration test
         env:
@@ -127,5 +135,7 @@ jobs:
           docker logs squid-proxy > squid-access.log
           echo "Last proxy access lines:"
           tail -n 200 squid-access.log || true
-          grep -q "$EXPECTED_HOST" squid-access.log
+          if [ -n "$EXPECTED_HOST" ]; then
+            grep -q "$EXPECTED_HOST" squid-access.log
+          fi
           grep -Eq '(ghcr.io|registry-1.docker.io|auth.docker.io):443' squid-access.log

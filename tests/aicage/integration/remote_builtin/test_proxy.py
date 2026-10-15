@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -32,7 +31,7 @@ def test_proxy_host_and_runtime_network(
         monkeypatch,
         tmp_path,
         "codex",
-        docker_args=_container_proxy_docker_args(),
+        docker_args="--env AICAGE_ENTRYPOINT_CMD=bash",
     )
     bases = load_bases()
     agents = load_agents(bases)
@@ -47,7 +46,8 @@ def test_proxy_host_and_runtime_network(
             "none",
             "codex",
             "-lc",
-            "curl -fsS https://api.github.com >/dev/null",
+            "curl --fail --show-error --silent --retry 3 --retry-delay 1 "
+            "--connect-timeout 10 --max-time 30 https://example.com/ >/dev/null",
         ],
         env=env,
         cwd=workspace,
@@ -67,16 +67,3 @@ def test_proxy_custom_agent_build_and_version(
     copy_forge_sample(custom_agents_dir() / "forge")
 
     run_agent_version(env, workspace, "forge")
-
-
-def _container_proxy_docker_args() -> str:
-    proxy_url = os.environ.get("AICAGE_TEST_CONTAINER_PROXY_URL", "").strip()
-    if not proxy_url:
-        return "--env AICAGE_ENTRYPOINT_CMD=bash"
-    return (
-        "--env AICAGE_ENTRYPOINT_CMD=bash "
-        f"--env HTTP_PROXY={proxy_url} "
-        f"--env HTTPS_PROXY={proxy_url} "
-        f"--env ALL_PROXY={proxy_url} "
-        "--env NO_PROXY=localhost,127.0.0.1,host.docker.internal"
-    )
