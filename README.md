@@ -115,15 +115,13 @@ project configuration.
 
 After `aicage <agent>` starts, you will see this setup overview:
 
-![Overview screen](assets/screenshots/textual/Screenshot_overview.png)
+![Overview screen](assets/screenshots/textual/Screenshot_overview.svg)
 
-The overview brings the most common choices together in one place:
-
-- `Agent`: the built-in or custom agent you want to run.
+- `Configuration Scope`: use `Global` or `Directory tree` to reuse settings.
 - `Bind Mounts`: extra host files and directories the container should be able to access.
-- `Base`: the base image used for the agent image. The suggested default is best for most users.
 - `Extensions`: optional local additions that install tools or request extra host shares.
 - `Docker Args`: extra `docker run` arguments such as `-e`, `-p`, or `--network`.
+- `Base`: the base image used for the agent image. The suggested default is best for most users.
 - `Docker socket`: lets the agent use Docker on the host when you explicitly enable it.
 - `OK`: saves the current project config for that agent and starts the container.
 
