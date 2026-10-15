@@ -38,6 +38,9 @@ jobs:
       issues: write
       pull-requests: write
 
+  integration-test-windows:
+    uses: ./.github/workflows/integration-test-windows.yml
+
   publish:
     name: Publish to PyPI
     needs: [verify-tagged-commit, change-validation]
