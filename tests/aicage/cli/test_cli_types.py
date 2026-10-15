@@ -1,6 +1,11 @@
 from unittest import TestCase
 
-from aicage.cli_types import ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs, ParsedArgs
+from aicage.cli_types import (
+    ConfigInfoArgs,
+    ConfigRemoveArgs,
+    ConfigUpdateArgs,
+    ParsedArgs,
+)
 
 
 class ParsedArgsTests(TestCase):

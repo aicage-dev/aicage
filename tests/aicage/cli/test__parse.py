@@ -5,14 +5,21 @@ from unittest import TestCase, mock
 from aicage import __version__
 from aicage.cli._errors import CliError
 from aicage.cli._parse import parse_cli
-from aicage.cli_types import ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs, ParsedArgs
+from aicage.cli_types import (
+    ConfigInfoArgs,
+    ConfigRemoveArgs,
+    ConfigUpdateArgs,
+    ParsedArgs,
+)
 from aicage.config.errors import ConfigError
 
 
 def _parse_run(argv: Sequence[str]) -> ParsedArgs:
     parsed = parse_cli(argv)
     if not isinstance(parsed, ParsedArgs):
-        raise AssertionError(f"Expected a runnable command, got {type(parsed).__name__}.")
+        raise AssertionError(
+            f"Expected a runnable command, got {type(parsed).__name__}."
+        )
     return parsed
 
 
@@ -328,9 +335,7 @@ class ParseCliTests(TestCase):
         self.assertEqual(["data", "/test-tmp/one:ro"], parsed.shares)
 
     def test_parse_cli_with_extensions(self) -> None:
-        parsed = _parse_run(
-            ["--extension", "one", "--extension", "two", "--", "codex"]
-        )
+        parsed = _parse_run(["--extension", "one", "--extension", "two", "--", "codex"])
 
         self.assertEqual(["one", "two"], parsed.extensions)
 

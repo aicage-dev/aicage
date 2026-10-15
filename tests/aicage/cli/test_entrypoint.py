@@ -4,7 +4,12 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from aicage.cli.entrypoint import main
-from aicage.cli_types import ConfigInfoArgs, ConfigRemoveArgs, ConfigUpdateArgs, ParsedArgs
+from aicage.cli_types import (
+    ConfigInfoArgs,
+    ConfigRemoveArgs,
+    ConfigUpdateArgs,
+    ParsedArgs,
+)
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.context import ConfigContext
@@ -125,7 +130,9 @@ class EntrypointTests(TestCase):
             ),
             mock.patch("aicage.cli.entrypoint.info_project_config") as info_mock,
             mock.patch("aicage.cli.entrypoint.maybe_prompt_update") as update_mock,
-            mock.patch("aicage.cli.entrypoint.create_runtime_interaction") as interaction_mock,
+            mock.patch(
+                "aicage.cli.entrypoint.create_runtime_interaction"
+            ) as interaction_mock,
         ):
             exit_code = main([])
 
