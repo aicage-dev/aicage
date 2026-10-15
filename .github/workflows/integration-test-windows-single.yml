@@ -49,6 +49,27 @@ jobs:
       - name: Start Docker daemon
         shell: wsl-bash -u root {0}
         run: |
+          if docker -H tcp://127.0.0.1:2375 info >/dev/null 2>&1; then
+            exit 0
+          fi
+
+          if test -f /var/run/docker.pid; then
+            docker_pid="$(cat /var/run/docker.pid)"
+            if test "$(ps -p "$docker_pid" -o comm= 2>/dev/null)" = dockerd; then
+              kill "$docker_pid"
+              for _ in {1..10}; do
+                if ! kill -0 "$docker_pid" >/dev/null 2>&1; then
+                  break
+                fi
+                sleep 1
+              done
+              if kill -0 "$docker_pid" >/dev/null 2>&1; then
+                kill -9 "$docker_pid"
+              fi
+            fi
+            rm -f /var/run/docker.pid
+          fi
+
           nohup dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock \
             > /var/log/dockerd.log 2>&1 &
           for _ in {1..30}; do
