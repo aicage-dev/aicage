@@ -23,7 +23,7 @@ class ShareSupportTests(TestCase):
             project_path,
             "codex",
             _ProjectConfig(path=str(project_path), agents={}),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
             _ProjectConfig(
                 path=str(project_path),
                 agents={
@@ -45,7 +45,7 @@ class ShareSupportTests(TestCase):
     def test_normalize_shares_from_editor_returns_normalized_values(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
             project_path=Path("/repo"),
         )
 
@@ -56,7 +56,7 @@ class ShareSupportTests(TestCase):
     def test_built_in_share_values_returns_only_relevant_items(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
             project_path=Path("/project"),
         )
         with (
@@ -110,7 +110,7 @@ class ShareSupportTests(TestCase):
     def test_built_in_share_values_include_selected_extension_shares(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu", extensions=["gh"]),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
             project_path=Path("/project"),
         )
 
@@ -137,7 +137,7 @@ class ShareSupportTests(TestCase):
     ) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu", extensions=["gcloud"]),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
             project_path=Path("/project"),
         )
 
@@ -174,7 +174,7 @@ class ShareSupportTests(TestCase):
     ) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
             project_path=Path("/project"),
         )
         with (
@@ -218,7 +218,7 @@ class ShareSupportTests(TestCase):
     ) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
             project_path=Path("/project"),
         )
         with (

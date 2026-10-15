@@ -1,6 +1,6 @@
 from unittest import TestCase, mock
 
-from aicage.cli_types import ParsedArgs
+from aicage.cli_types import ConfigUpdateArgs, ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
@@ -30,7 +30,6 @@ class ConfigureRunTests(TestCase):
                 [],
                 False,
                 ["logs"],
-                None,
                 menu="none",
                 extensions=["extra"],
             ),
@@ -71,16 +70,15 @@ class ConfigureRunTests(TestCase):
         resolved = _none_interaction._NoneInteraction(mock.Mock())
         draft = _build_draft(
             AgentConfig(base="ubuntu", extensions=["gh"]),
-            ParsedArgs(
+            ConfigUpdateArgs(
                 False,
                 "",
                 "codex",
                 [],
                 False,
                 [],
-                "global",
-                "codex",
                 menu="none",
+                scope="global",
             ),
         )
         selection = mock.Mock()
@@ -112,7 +110,6 @@ class ConfigureRunTests(TestCase):
                 [],
                 False,
                 [],
-                None,
                 menu="none",
                 git=True,
             ),
@@ -142,7 +139,7 @@ class ConfigureRunTests(TestCase):
         resolved = _none_interaction._NoneInteraction(mock.Mock())
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None, menu="none", git=False),
+            ParsedArgs(False, "", "codex", [], False, [], menu="none", git=False),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"

@@ -1,3 +1,4 @@
+from aicage.cli_types import ConfigUpdateArgs
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
@@ -43,7 +44,7 @@ class _NoneInteraction:
                 apply_git_mount_defaults(context, draft.agent_cfg)
             else:
                 disable_git_mounts(draft.agent_cfg)
-        if draft.parsed is not None and draft.parsed.config_action is not None:
+        if isinstance(draft.parsed, ConfigUpdateArgs):
             apply_extension_mount_defaults(context, draft.agent_cfg)
         else:
             apply_mount_preferences(

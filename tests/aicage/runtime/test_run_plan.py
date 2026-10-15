@@ -36,7 +36,7 @@ class RunPlanTests(TestCase):
             mounts=[],
             env=[],
         )
-        parsed = ParsedArgs(False, "--cli", "codex", ["--flag"], False, [], None)
+        parsed = ParsedArgs(False, "--cli", "codex", ["--flag"], False, [])
         with (
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(
@@ -71,7 +71,7 @@ class RunPlanTests(TestCase):
             mounts=[mount],
             env=[],
         )
-        parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+        parsed = ParsedArgs(False, "", "codex", [], False, [])
         with (
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(
@@ -106,7 +106,7 @@ class RunPlanTests(TestCase):
             mounts=[mount],
             env=env,
         )
-        parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+        parsed = ParsedArgs(False, "", "codex", [], False, [])
         with (
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(
@@ -140,7 +140,7 @@ class RunPlanTests(TestCase):
             mounts=[],
             env=[EnvVar(name="EXTRA", value="1")],
         )
-        parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+        parsed = ParsedArgs(False, "", "codex", [], False, [])
         with (
             mock.patch.dict(
                 os.environ,
@@ -188,7 +188,7 @@ class RunPlanTests(TestCase):
             mounts=[],
             env=[],
         )
-        parsed = ParsedArgs(False, "", "codex", [], False, [], None)
+        parsed = ParsedArgs(False, "", "codex", [], False, [])
         with (
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(

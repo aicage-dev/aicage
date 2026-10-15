@@ -20,7 +20,7 @@ class OverviewSelectionTests(TestCase):
             Path("/repo"),
             "codex",
             _ProjectConfig(path="/repo", agents={"codex": AgentConfig(base="ubuntu")}),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
         context = ConfigContext(
             store=mock.Mock(),
@@ -70,7 +70,7 @@ class OverviewSelectionTests(TestCase):
                     "codex": AgentConfig(base="ubuntu", extensions=["zeta", "alpha"])
                 },
             ),
-            ParsedArgs(False, "", "codex", [], False, [], None),
+            ParsedArgs(False, "", "codex", [], False, []),
         )
         context = ConfigContext(
             store=mock.Mock(),
