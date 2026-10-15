@@ -3,7 +3,7 @@ from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
-from aicage.cli_types import ParsedArgs
+from aicage.cli_types import ConfigUpdateArgs, ParsedArgs
 from aicage.config.agent.models import AgentMetadata
 from aicage.config.base.models import BaseMetadata
 from aicage.config.config_store import SettingsStore
@@ -183,16 +183,15 @@ class RuntimeConfigTests(TestCase):
         store.load_global.return_value = config
         store.load_project.return_value = _ProjectConfig(path="/project", agents={})
         store.load_tree.return_value = _ProjectConfig(path="/project", agents={})
-        parsed = ParsedArgs(
+        parsed = ConfigUpdateArgs(
             dry_run=False,
             docker_args="-e GLOBAL_VAR=0",
             agent="codex",
             agent_args=[],
             docker_socket=True,
             shares=[],
-            config_action="global",
-            config_agent="codex",
             menu="none",
+            scope="global",
         )
 
         def configure_run(
@@ -353,7 +352,6 @@ class RuntimeConfigTests(TestCase):
                 agent_args=[],
                 docker_socket=False,
                 shares=[],
-                config_action=None,
                 menu="none",
             )
             with (
@@ -556,7 +554,6 @@ class RuntimeConfigTests(TestCase):
                     agent_args=[],
                     docker_socket=False,
                     shares=["data", "logs:ro"],
-                    config_action=None,
                     menu="none",
                 )
                 with (
@@ -638,7 +635,6 @@ class RuntimeConfigTests(TestCase):
                     agent_args=[],
                     docker_socket=False,
                     shares=["shared", "new"],
-                    config_action=None,
                     menu="none",
                 )
                 with (
@@ -721,7 +717,6 @@ class RuntimeConfigTests(TestCase):
                 agent_args=[],
                 docker_socket=True,
                 shares=["logs"],
-                config_action=None,
             )
 
             def interaction_side_effect(
@@ -791,7 +786,6 @@ class RuntimeConfigTests(TestCase):
                 agent_args=[],
                 docker_socket=False,
                 shares=[],
-                config_action=None,
                 menu="none",
             )
             call_order: list[str] = []
@@ -852,7 +846,6 @@ class RuntimeConfigTests(TestCase):
                 agent_args=[],
                 docker_socket=False,
                 shares=[],
-                config_action=None,
                 menu="ui",
             )
             interaction = self._interaction()

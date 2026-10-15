@@ -233,4 +233,4 @@ class ResolverTests(TestCase):
 
     @staticmethod
     def _build_parsed() -> ParsedArgs:
-        return ParsedArgs(False, "", "codex", [], False, [], None)
+        return ParsedArgs(False, "", "codex", [], False, [])

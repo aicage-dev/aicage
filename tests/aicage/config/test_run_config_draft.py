@@ -232,7 +232,6 @@ def _build_parsed(
         agent_args=[],
         docker_socket=False,
         shares=shares or [],
-        config_action=None,
         extensions=extensions or [],
         base=base,
     )

@@ -54,7 +54,7 @@ class ConfigAppTests(TestCase):
     def test_init_selects_detected_git_mounts(self) -> None:
         draft = _build_draft(
             AgentConfig(base="ubuntu", mounts=_AgentMounts(gitconfig=False)),
-            ParsedArgs(False, "", "codex", [], False, [], None, menu="ui", git=True),
+            ParsedArgs(False, "", "codex", [], False, [], menu="ui", git=True),
         )
         built_in_share = BuiltInShareValue(
             "git_support",
@@ -683,7 +683,7 @@ def _build_app(
     ):
         draft = _build_draft(
             agent_cfg or AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None, git=git),
+            ParsedArgs(False, "", "codex", [], False, [], git=git),
             project_path=Path("/test-tmp/project"),
         )
         draft.scope = scope

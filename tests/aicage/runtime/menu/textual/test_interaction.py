@@ -16,7 +16,7 @@ class ConfigureRunTests(TestCase):
         resolved = interaction.TextualInteraction(ExecutionReporter())
         draft = _build_draft(
             AgentConfig(base="ubuntu"),
-            ParsedArgs(False, "", "codex", [], False, [], None, menu="ui"),
+            ParsedArgs(False, "", "codex", [], False, [], menu="ui"),
         )
         selection = mock.Mock()
         selection.base = "ubuntu"
@@ -98,7 +98,6 @@ class EditDraftWithTextualAppTests(TestCase):
                 agent_args=[],
                 docker_socket=True,
                 shares=["logs"],
-                config_action=None,
             ),
             project_path=Path("/repo"),
         )
@@ -139,7 +138,7 @@ class EditDraftWithTextualAppTests(TestCase):
     def test__edit_draft_with_textual_app_reraises_app_error(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
-            parsed=ParsedArgs(False, "", "codex", [], False, [], None),
+            parsed=ParsedArgs(False, "", "codex", [], False, []),
         )
         app_mock = mock.Mock()
         app_mock.run.return_value = RuntimeError("boom")
@@ -160,7 +159,7 @@ class EditDraftWithTextualAppTests(TestCase):
             agent_cfg=AgentConfig(
                 base="ubuntu", docker_args="--existing", shares=["/repo/existing"]
             ),
-            parsed=ParsedArgs(False, "--new", "codex", [], True, ["logs"], None),
+            parsed=ParsedArgs(False, "--new", "codex", [], True, ["logs"]),
             project_path=Path("/repo"),
         )
         app_mock = mock.Mock()
