@@ -173,13 +173,13 @@ jobs:
       - name: Validate Windows Docker client
         shell: powershell
         run: |
-          python -c @'
+          @'
           import docker
 
           client = docker.from_env()
           client.ping()
           assert client.info()["OSType"] == "linux"
-          '@
+          '@ | python -
 
       - name: Run Windows Docker smoke test
         shell: bash
