@@ -69,11 +69,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $wslIp = (wsl -d Ubuntu-26.04 -u root -- hostname -I).Trim().Split(" ")[0]
-          if (-not $wslIp) {
-            throw "Unable to resolve the WSL Docker daemon IP address."
-          }
-          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$wslIp:2375"
+          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://127.0.0.1:2375"
 
           $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
           New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
