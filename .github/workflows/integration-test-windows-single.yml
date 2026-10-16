@@ -90,6 +90,15 @@ jobs:
           test "$(docker info --format '{{.OSType}}')" = linux
           docker buildx version
 
+      - name: Remove preinstalled Windows Docker CLI
+        shell: powershell
+        run: |
+          $dockerCli = Join-Path $env:WINDIR "System32\docker.exe"
+          if (-not (Test-Path -LiteralPath $dockerCli)) {
+            throw "Expected preinstalled Docker CLI was not found: $dockerCli"
+          }
+          Remove-Item -LiteralPath $dockerCli -Force
+
       - name: Configure Windows Docker access
         shell: powershell
         run: |
@@ -104,7 +113,6 @@ jobs:
           }
           Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$($wslIpMatch.Groups[1].Value):2375"
           Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_DISTRIBUTION=Ubuntu-26.04"
-          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_DEBUG=1"
 
           $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
           New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
@@ -127,8 +135,6 @@ jobs:
       - name: Validate Windows Docker CLI
         shell: powershell
         run: |
-          Get-Command docker -All | Format-Table -AutoSize CommandType, Source, Definition
-          where.exe docker
           docker buildx version
           docker buildx imagetools inspect --raw ghcr.io/aicage-dev/aicage:codex-ubuntu | Out-Null
 
