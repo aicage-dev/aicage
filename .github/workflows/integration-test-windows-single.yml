@@ -156,6 +156,8 @@ jobs:
 
           $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
           New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_PYTHON=$env:pythonLocation\python.exe"
+          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_SCRIPT=$env:GITHUB_WORKSPACE\scripts\docker-wsl-shim.py"
 
           $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
           $vsDevCmd = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find "Common7\Tools\VsDevCmd.bat"
@@ -175,6 +177,7 @@ jobs:
         run: |
           docker buildx version
           docker buildx imagetools inspect --raw ghcr.io/aicage-dev/aicage:codex-ubuntu | Out-Null
+          docker run --rm --mount "type=bind,src=$env:RUNNER_TEMP,dst=/host,readonly" alpine:3.22 test -d /host
 
       - name: Run Windows Docker integration tests
         shell: bash
