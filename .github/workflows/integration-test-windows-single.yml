@@ -79,102 +79,38 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
 
-      - name: Set up WSL
-        uses: Vampire/setup-wsl@4c48163d9f981914dd8caa0fc335fe19cca5bff4  # v7.2.0
+      - name: Set up Skrog
+        uses: wslkit/setup-skrog@cd2cba80924975b0c77217947c228da8aac17b1f
         with:
-          distribution: Ubuntu-26.04
-          update: "true"
-          additional-packages: |
-            docker.io
-            docker-buildx
+          version: "0.10.0"
 
-      - name: Start Docker daemon
-        shell: wsl-bash -u root {0}
-        run: |
-          if docker -H tcp://127.0.0.1:2375 info >/dev/null 2>&1; then
-            exit 0
-          fi
-
-          if test -f /var/run/docker.pid; then
-            docker_pid="$(cat /var/run/docker.pid)"
-            if test "$(ps -p "$docker_pid" -o comm= 2>/dev/null)" = dockerd; then
-              kill "$docker_pid"
-              for _ in {1..10}; do
-                if ! kill -0 "$docker_pid" >/dev/null 2>&1; then
-                  break
-                fi
-                sleep 1
-              done
-              if kill -0 "$docker_pid" >/dev/null 2>&1; then
-                kill -9 "$docker_pid"
-              fi
-            fi
-            rm -f /var/run/docker.pid
-          fi
-
-          nohup dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock \
-            > /var/log/dockerd.log 2>&1 &
-          for _ in {1..30}; do
-            if docker info >/dev/null 2>&1 && \
-              docker -H tcp://127.0.0.1:2375 info >/dev/null 2>&1; then
-              exit 0
-            fi
-            sleep 2
-          done
-          cat /var/log/dockerd.log
-          exit 1
-
-      - name: Validate Linux Docker engine
-        shell: wsl-bash -u root {0}
-        run: |
-          test "$(docker info --format '{{.OSType}}')" = linux
-          docker buildx version
-
-      - name: Remove preinstalled Windows Docker CLI
+      - name: Install and configure Skrog Docker CLI
         shell: powershell
         run: |
+          $ErrorActionPreference = "Stop"
+          skrog cli install --no-path
+          $cliStatus = skrog cli status --json | ConvertFrom-Json
+          $cliBinDir = $cliStatus.binDir
+          if (-not $cliBinDir -or -not (Test-Path -LiteralPath $cliBinDir)) {
+            throw "Skrog Docker CLI bin directory was not found: $cliBinDir"
+          }
+
           $dockerCli = Join-Path $env:WINDIR "System32\docker.exe"
           if (-not (Test-Path -LiteralPath $dockerCli)) {
             throw "Expected preinstalled Docker CLI was not found: $dockerCli"
           }
           Remove-Item -LiteralPath $dockerCli -Force
-
-      - name: Configure Windows Docker access
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $wslNetwork = & wsl.exe -d Ubuntu-26.04 -u root -- ip -4 route get 1.1.1.1
-          $wslIpMatch = [regex]::Match(
-            ($wslNetwork -join "`n"),
-            '\bsrc\s+((?:\d{1,3}\.){3}\d{1,3})\b'
-          )
-          if (-not $wslIpMatch.Success) {
-            throw "Could not determine the WSL IPv4 address: $wslNetwork"
-          }
-          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_HOST=tcp://$($wslIpMatch.Groups[1].Value):2375"
-          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_DISTRIBUTION=Ubuntu-26.04"
-
-          $shimDirectory = Join-Path $env:RUNNER_TEMP "docker-wsl-shim"
-          New-Item -ItemType Directory -Force -Path $shimDirectory | Out-Null
-          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_PYTHON=$env:pythonLocation\python.exe"
-          Add-Content -Path $env:GITHUB_ENV -Value "WSL_DOCKER_SHIM_SCRIPT=$env:GITHUB_WORKSPACE\scripts\docker-wsl-shim.py"
-
-          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
-          $vsDevCmd = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find "Common7\Tools\VsDevCmd.bat"
-          if (-not $vsDevCmd) {
-            throw "Visual C++ build tools were not found on the runner."
-          }
-          $launcher = Join-Path $env:GITHUB_WORKSPACE "scripts\docker-wsl-shim-launcher.c"
-          $output = Join-Path $shimDirectory "docker.exe"
-          cmd.exe /d /c "call `"$vsDevCmd`" -arch=x64 -host_arch=x64 >nul && cl.exe /nologo /O2 /Fe:`"$output`" `"$launcher`""
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to build the WSL Docker executable shim."
-          }
-          Add-Content -Path $env:GITHUB_PATH -Value $shimDirectory
+          Add-Content -Path $env:GITHUB_PATH -Value $cliBinDir
 
       - name: Validate Windows Docker CLI
         shell: powershell
         run: |
+          if ((docker context show) -ne "skrog") {
+            throw "Expected Docker context 'skrog'."
+          }
+          if ((docker info --format '{{.OSType}}') -ne "linux") {
+            throw "Expected a Linux Docker engine."
+          }
           docker buildx version
           docker buildx imagetools inspect --raw ghcr.io/aicage-dev/aicage:codex-ubuntu | Out-Null
           docker run --rm --mount "type=bind,src=$env:RUNNER_TEMP,dst=/host,readonly" alpine:3.22 test -d /host
@@ -189,11 +125,10 @@ jobs:
 
       - name: Collect Docker diagnostics
         if: failure()
-        shell: wsl-bash -u root {0}
+        shell: powershell
         run: |
-          docker info || true
-          df -h
-          tail -n 200 /var/log/dockerd.log || true
+          docker info
+          skrog status --json
 
       - name: Collect aicage logs
         if: failure()
