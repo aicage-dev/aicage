@@ -223,7 +223,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     api_key = os.environ.get(_API_KEY_ENV)
     if not api_key:
-        print(f"Set {_API_KEY_ENV} before running this test.", file=sys.stderr)
+        print("Set the OpenRouter API key before running this test.", file=sys.stderr)
         return 2
     aicage_path = shutil.which("aicage")
     if not aicage_path:
