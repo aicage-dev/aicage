@@ -42,7 +42,7 @@ int wmain(void) {
     swprintf_s(
         command,
         command_size,
-        L"wsl.exe -d \"%s\" -u root --exec env -u DOCKER_HOST docker %s",
+        L"wsl.exe -d %s -u root --exec env -u DOCKER_HOST docker %s",
         distribution,
         args
     );
