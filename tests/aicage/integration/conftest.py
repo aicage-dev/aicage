@@ -22,4 +22,5 @@ def _cleanup_fake_home() -> None:
     shutil.rmtree(_FAKE_HOME, ignore_errors=True)
 
 
-atexit.register(_cleanup_fake_home)
+if os.environ.get("GITHUB_ACTIONS") != "true":
+    atexit.register(_cleanup_fake_home)
