@@ -127,8 +127,24 @@ jobs:
         if: failure()
         shell: powershell
         run: |
+          docker context inspect skrog
           docker info
           skrog status --json
+          $env:PYTHONPATH = "$env:GITHUB_WORKSPACE\src"
+          @'
+          import traceback
+
+          import docker
+
+          from aicage.docker.runtime import get_active_docker_host
+
+          host = get_active_docker_host()
+          print(f"aicage Docker SDK host: {host.host}")
+          try:
+              print(docker.DockerClient(base_url=host.host, timeout=10).version())
+          except Exception:
+              traceback.print_exc()
+          '@ | python -
 
       - name: Collect aicage logs
         if: failure()
