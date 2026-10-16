@@ -73,7 +73,7 @@ def main(args: list[str]) -> int:
             distribution,
             "-u",
             "root",
-            "--",
+            "--exec",
             "env",
             "-u",
             "DOCKER_HOST",
