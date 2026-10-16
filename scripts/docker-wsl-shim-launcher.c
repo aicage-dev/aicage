@@ -1,4 +1,4 @@
-/* Launch scripts/docker-wsl-shim.py while preserving the original Docker argv. */
+/* Launch the Docker CLI in WSL while preserving the original Docker argv. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,21 +26,26 @@ static const wchar_t *skip_executable(const wchar_t *command_line) {
 }
 
 int wmain(void) {
-    const wchar_t *python = _wgetenv(L"WSL_DOCKER_SHIM_PYTHON");
-    const wchar_t *script = _wgetenv(L"WSL_DOCKER_SHIM_SCRIPT");
-    if (python == NULL || script == NULL) {
+    const wchar_t *distribution = _wgetenv(L"WSL_DOCKER_DISTRIBUTION");
+    if (distribution == NULL) {
         fputws(L"WSL Docker shim environment is not configured.\n", stderr);
         return 1;
     }
 
     const wchar_t *args = skip_executable(GetCommandLineW());
-    size_t command_size = wcslen(python) + wcslen(script) + wcslen(args) + 8;
+    size_t command_size = wcslen(distribution) + wcslen(args) + 64;
     wchar_t *command = calloc(command_size, sizeof(*command));
     if (command == NULL) {
         fputws(L"Failed to allocate WSL Docker shim command line.\n", stderr);
         return 1;
     }
-    swprintf_s(command, command_size, L"\"%s\" \"%s\" %s", python, script, args);
+    swprintf_s(
+        command,
+        command_size,
+        L"wsl.exe -d \"%s\" -u root --exec env -u DOCKER_HOST docker %s",
+        distribution,
+        args
+    );
 
     STARTUPINFOW startup_info = { 0 };
     startup_info.cb = sizeof(startup_info);
