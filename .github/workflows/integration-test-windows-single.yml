@@ -94,6 +94,10 @@ jobs:
           if (-not $cliBinDir -or -not (Test-Path -LiteralPath $cliBinDir)) {
             throw "Skrog Docker CLI bin directory was not found: $cliBinDir"
           }
+          $dockerConfig = Join-Path $env:USERPROFILE ".docker"
+          if (-not (Test-Path -LiteralPath $dockerConfig)) {
+            throw "Skrog Docker config directory was not found: $dockerConfig"
+          }
 
           $dockerCli = Join-Path $env:WINDIR "System32\docker.exe"
           if (-not (Test-Path -LiteralPath $dockerCli)) {
@@ -101,6 +105,7 @@ jobs:
           }
           Remove-Item -LiteralPath $dockerCli -Force
           Add-Content -Path $env:GITHUB_PATH -Value $cliBinDir
+          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_CONFIG=$dockerConfig"
 
       - name: Validate Windows Docker CLI
         shell: powershell
