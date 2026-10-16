@@ -66,6 +66,8 @@ def translate_args(args: list[str]) -> list[str]:
 def main(args: list[str]) -> int:
     """Invoke Docker in the configured WSL distribution."""
     distribution = os.environ["WSL_DOCKER_DISTRIBUTION"]
+    if os.environ.get("WSL_DOCKER_SHIM_DEBUG"):
+        print(f"[docker-wsl-shim] WSL Docker invoked: {args!r}", file=sys.stderr)
     result = subprocess.run(  # nosec B603 -- command and arguments are fixed by the CI workflow.
         [
             "wsl.exe",
