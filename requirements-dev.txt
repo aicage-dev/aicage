@@ -6,7 +6,7 @@ flake8>=7.4.1,<8
 mypy>=2.4.0,<3
 pyright>=1.1.414,<2
 pylint>=4.1.3,<5
-pymarkdownlnt>=0.9.40,<1
+pymarkdownlnt>=0.9.41,<1
 pytest>=9.1.1,<10
 pytest-cov>=7.1.0,<8
 pywinpty>=3.0.0,<4; platform_system == "Windows"
