@@ -1,9 +1,10 @@
 from itertools import chain
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
+from aicage.docker.runtime import get_active_docker_host
 from aicage.errors import AicageError
 from aicage.paths import container_project_path
 from aicage.runtime.docker_args.support.resolver_types import ResolvedArgs, Resolver
@@ -68,6 +69,8 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
 
 def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> None:
     for mount in mounts:
+        if _is_active_windows_docker_named_pipe_mount(mount):
+            continue
         host_path = mount.host_path.resolve()
         if host_path == host_home or host_path in host_home.parents:
             raise AicageError(
@@ -79,3 +82,15 @@ def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> Non
                 "- For multi-project setups, keep repositories under a directory such as "
                 "~/workspace and start aicage from there.",
             )
+
+
+def _is_active_windows_docker_named_pipe_mount(mount: MountSpec) -> bool:
+    normalized_host_path = str(mount.host_path).replace("/", "\\").lower()
+    if not normalized_host_path.startswith("\\\\.\\pipe\\"):
+        return False
+    docker_host = get_active_docker_host()
+    return (
+        docker_host.named_pipe_path is not None
+        and mount.host_path == docker_host.named_pipe_path
+        and mount.container_path == PurePosixPath("/var/run/docker.sock")
+    )

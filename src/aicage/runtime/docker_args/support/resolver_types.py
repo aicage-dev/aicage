@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Protocol
 
 from aicage.cli_types import ParsedArgs
@@ -11,6 +11,7 @@ from aicage.runtime.run_args import EnvVar
 class MountRequest:
     host_path: Path
     read_only: bool = False
+    container_path: PurePosixPath | None = None
 
 
 @dataclass(frozen=True)

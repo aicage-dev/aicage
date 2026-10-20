@@ -1,5 +1,5 @@
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
@@ -18,6 +18,22 @@ _MODULE = "aicage.runtime.docker_args.resolve.resolver"
 
 
 class ResolverTests(TestCase):
+    def test_validate_home_mount_safety_allows_windows_named_pipe(self) -> None:
+        pipe_path = Path(r"\\.\pipe\docker_engine")
+        with mock.patch(
+            f"{_MODULE}.get_active_docker_host",
+            return_value=mock.Mock(named_pipe_path=pipe_path),
+        ):
+            resolver._validate_home_mount_safety(
+                [
+                    MountSpec(
+                        host_path=pipe_path,
+                        container_path=PurePosixPath("/var/run/docker.sock"),
+                    )
+                ],
+                Path("/test-tmp/home"),
+            )
+
     def test_resolve_docker_args_aggregates_mounts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             home_path = Path(temp_dir) / "home"

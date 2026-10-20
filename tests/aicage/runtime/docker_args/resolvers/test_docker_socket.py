@@ -1,10 +1,11 @@
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
 from aicage.runtime.docker_args.resolvers.docker_socket import resolve
+from aicage.runtime.docker_args.support.resolver_types import MountRequest
 from aicage.runtime.env_vars import _WINDOWS_DOCKER_HOST, DOCKER_HOST
 
 _MODULE = "aicage.runtime.docker_args.resolvers.docker_socket"
@@ -22,7 +23,9 @@ class DockerSocketMountTests(TestCase):
             mock.patch(
                 f"{_MODULE}.get_active_docker_host",
                 return_value=mock.Mock(
-                    host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")
+                    host="unix:///run/docker.sock",
+                    socket_path=Path("/run/docker.sock"),
+                    named_pipe_path=None,
                 ),
             ),
         ):
@@ -41,7 +44,9 @@ class DockerSocketMountTests(TestCase):
             mock.patch(
                 f"{_MODULE}.get_active_docker_host",
                 return_value=mock.Mock(
-                    host="unix:///run/docker.sock", socket_path=Path("/run/docker.sock")
+                    host="unix:///run/docker.sock",
+                    socket_path=Path("/run/docker.sock"),
+                    named_pipe_path=None,
                 ),
             ),
         ):
@@ -61,12 +66,49 @@ class DockerSocketMountTests(TestCase):
     def test_resolve_docker_socket_mount_windows_env(self) -> None:
         agent_cfg = AgentConfig(mounts=_AgentMounts(docker=True))
         context = _build_context(agent_cfg)
-        with mock.patch(f"{_MODULE}.os.name", "nt"):
+        with (
+            mock.patch(f"{_MODULE}.os.name", "nt"),
+            mock.patch(
+                f"{_MODULE}.get_active_docker_host",
+                return_value=mock.Mock(named_pipe_path=None, socket_path=None),
+            ),
+        ):
             resolved = resolve(context, "codex", _build_parsed())
 
         self.assertEqual([], resolved.mounts)
         self.assertEqual(
             [(DOCKER_HOST, _WINDOWS_DOCKER_HOST)],
+            [(item.name, item.value) for item in resolved.env],
+        )
+
+    def test_resolve_docker_socket_mount_uses_named_pipe_context(self) -> None:
+        agent_cfg = AgentConfig(mounts=_AgentMounts(docker=True))
+        context = _build_context(agent_cfg)
+        named_pipe = Path(r"\\.\pipe\docker_engine")
+        with (
+            mock.patch(f"{_MODULE}.os.name", "nt"),
+            mock.patch(
+                f"{_MODULE}.get_active_docker_host",
+                return_value=mock.Mock(
+                    named_pipe_path=named_pipe,
+                    socket_path=None,
+                    host="npipe:////./pipe/docker_engine",
+                ),
+            ),
+        ):
+            resolved = resolve(context, "codex", _build_parsed())
+
+        self.assertEqual(
+            [
+                MountRequest(
+                    host_path=named_pipe,
+                    container_path=PurePosixPath("/var/run/docker.sock"),
+                )
+            ],
+            resolved.mounts,
+        )
+        self.assertEqual(
+            [(DOCKER_HOST, "unix:///var/run/docker.sock")],
             [(item.name, item.value) for item in resolved.env],
         )
 

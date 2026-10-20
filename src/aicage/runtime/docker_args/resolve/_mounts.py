@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from aicage.paths import container_project_path
 from aicage.runtime.docker_args.support.resolver_types import MountRequest
@@ -15,13 +15,16 @@ def map_mount_requests(requests: list[MountRequest]) -> list[MountSpec]:
 
 
 def _dedupe_exact_mount_requests(requests: list[MountRequest]) -> list[MountRequest]:
-    deduped_requests: dict[Path, MountRequest] = {}
+    deduped_requests: dict[tuple[Path, PurePosixPath | None], MountRequest] = {}
     for request in requests:
-        host_path = request.host_path.resolve()
-        if host_path in deduped_requests:
+        host_path = _host_path(request)
+        key = (host_path, request.container_path)
+        if key in deduped_requests:
             continue
-        deduped_requests[host_path] = MountRequest(
-            host_path=host_path, read_only=request.read_only
+        deduped_requests[key] = MountRequest(
+            host_path=host_path,
+            read_only=request.read_only,
+            container_path=request.container_path,
         )
     return list(deduped_requests.values())
 
@@ -29,11 +32,9 @@ def _dedupe_exact_mount_requests(requests: list[MountRequest]) -> list[MountRequ
 def _dedupe_nested_mount_requests(requests: list[MountRequest]) -> list[MountRequest]:
     selected_requests: list[MountRequest] = []
     for request in requests:
-        host_path = request.host_path.resolve()
+        host_path = _host_path(request)
         if any(
-            _is_redundant_nested_mount(
-                request, selected, host_path, selected.host_path.resolve()
-            )
+            _is_redundant_nested_mount(request, selected, host_path, _host_path(selected))
             for selected in selected_requests
         ):
             continue
@@ -44,8 +45,8 @@ def _dedupe_nested_mount_requests(requests: list[MountRequest]) -> list[MountReq
 def _build_mount_specs(requests: list[MountRequest]) -> list[MountSpec]:
     mounts: list[MountSpec] = []
     for request in requests:
-        host_path = request.host_path.resolve()
-        container_path = container_project_path(host_path)
+        host_path = _host_path(request)
+        container_path = request.container_path or container_project_path(host_path)
         mounts.append(
             MountSpec(
                 host_path=host_path,
@@ -60,10 +61,16 @@ def _sort_mount_requests(requests: list[MountRequest]) -> list[MountRequest]:
     return sorted(
         requests,
         key=lambda request: (
-            len(request.host_path.resolve().parts),
-            request.host_path.resolve().as_posix(),
+            len(_host_path(request).parts),
+            _host_path(request).as_posix(),
         ),
     )
+
+
+def _host_path(request: MountRequest) -> Path:
+    if request.container_path is not None:
+        return request.host_path
+    return request.host_path.resolve()
 
 
 def _is_redundant_nested_mount(
