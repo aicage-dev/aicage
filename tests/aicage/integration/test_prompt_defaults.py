@@ -35,8 +35,14 @@ def test_none_uses_default_mount_selection_without_saving(
         "Select mounts (comma-separated numbers) [all, default on Enter]:" not in output
     )
     gitconfig = Path(env["HOME"]) / ".gitconfig"
-    assert f"--mount type=bind,src={gitconfig},dst={gitconfig}" in output
-    assert f"--mount type=bind,src={workspace},dst={workspace}" in output
+    assert (
+        f"--mount type=bind,src={gitconfig.as_posix()},dst={gitconfig.as_posix()}"
+        in output
+    )
+    assert (
+        f"--mount type=bind,src={workspace.as_posix()},dst={workspace.as_posix()}"
+        in output
+    )
     agent_cfg = SettingsStore().load_project(project_dir).agents["codex"]
     assert agent_cfg.mounts.gitconfig is None
     assert agent_cfg.mounts.gitroot is None
