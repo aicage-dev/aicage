@@ -399,7 +399,7 @@ def setup_custom_bash_agent(target_dir: Path) -> None:
                 "    - ~/.aicage-test-dir",
                 "  files:",
                 "    - ~/.aicage-test-file",
-                "    - ~/.aicage-test-file.backup",
+                "    - ~/.aicage-test-backup-file",
                 "agent_full_name: Bash",
                 "agent_homepage: https://example.invalid",
             ]

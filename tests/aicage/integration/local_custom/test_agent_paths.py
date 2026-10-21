@@ -33,7 +33,7 @@ def test_agent_path_files_and_directories_create_and_mount(
             "-lc",
             "test -d ~/.aicage-test-dir "
             "&& test -f ~/.aicage-test-file "
-            "&& test -f ~/.aicage-test-file.backup",
+            "&& test -f ~/.aicage-test-backup-file",
         ],
         env=env,
         cwd=workspace,
