@@ -5,6 +5,7 @@ import pytest
 
 from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConfig
+from aicage.paths import container_project_path
 
 from ._helpers import require_integration, run_cli_pty, setup_workspace
 
@@ -36,11 +37,13 @@ def test_none_uses_default_mount_selection_without_saving(
     )
     gitconfig = Path(env["HOME"]) / ".gitconfig"
     assert (
-        f"--mount type=bind,src={gitconfig.as_posix()},dst={gitconfig.as_posix()}"
+        f"--mount type=bind,src={gitconfig.as_posix()},"
+        f"dst={container_project_path(gitconfig)}"
         in output
     )
     assert (
-        f"--mount type=bind,src={workspace.as_posix()},dst={workspace.as_posix()}"
+        f"--mount type=bind,src={workspace.as_posix()},"
+        f"dst={container_project_path(workspace)}"
         in output
     )
     agent_cfg = SettingsStore().load_project(project_dir).agents["codex"]
