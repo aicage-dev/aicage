@@ -1,5 +1,5 @@
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from unittest import TestCase
 
 from aicage.paths import container_project_path
@@ -9,6 +9,18 @@ from aicage.runtime.run_args import MountSpec
 
 
 class MountsTests(TestCase):
+    def test_map_mount_requests_preserves_explicit_container_path(self) -> None:
+        host_path = Path(r"\\.\pipe\docker_engine")
+        container_path = PurePosixPath("/var/run/docker.sock")
+
+        mounts = map_mount_requests(
+            [MountRequest(host_path=host_path, container_path=container_path)]
+        )
+
+        self.assertEqual(
+            [MountSpec(host_path=host_path, container_path=container_path)], mounts
+        )
+
     def test_map_mount_requests_deduplicates_nested_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root_path = Path(temp_dir).resolve()

@@ -23,6 +23,18 @@ class DockerRuntimeTests(TestCase):
 
         self.assertEqual("unix:///run/user/1000/docker.sock", host.host)
         self.assertEqual(Path("/run/user/1000/docker.sock"), host.socket_path)
+        self.assertIsNone(host.named_pipe_path)
+
+    def test_get_active_docker_host_parses_named_pipe(self) -> None:
+        with mock.patch.dict(
+            "aicage.docker.runtime.os.environ",
+            {"DOCKER_HOST": "npipe:////./pipe/docker_engine"},
+            clear=True,
+        ):
+            host = runtime.get_active_docker_host()
+
+        self.assertIsNone(host.socket_path)
+        self.assertEqual(Path(r"\\.\pipe\docker_engine"), host.named_pipe_path)
 
     def test_get_active_docker_host_reads_context(self) -> None:
         process = mock.Mock(stdout='"unix:///run/user/1000/docker.sock"\n')
