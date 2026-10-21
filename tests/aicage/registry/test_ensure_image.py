@@ -154,6 +154,44 @@ class EnsureImageTests(TestCase):
         assert plan.image_ref == run_config.selection.agent_image_ref
 
     @staticmethod
+    def test_image_setup_plan_confirms_remote_update_before_building_extensions() -> None:
+        run_config = _run_config(build_local=False, extensions=["extra"])
+        reporter = mock.Mock()
+
+        with (
+            mock.patch(
+                "aicage.registry.ensure_image.pull_decision_plan",
+                return_value=mock.Mock(action=_PullDecisionAction.CONFIRM_PULL),
+            ),
+            mock.patch(
+                "aicage.registry.ensure_image.extension_build_needed", return_value=True
+            ),
+        ):
+            plan = image_setup_plan(run_config, reporter)
+
+        assert plan.action is ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
+        assert plan.image_ref == run_config.selection.agent_image_ref
+
+    @staticmethod
+    def test_image_setup_plan_confirms_local_base_update_before_building_extensions() -> None:
+        run_config = _run_config(build_local=True, extensions=["extra"])
+        reporter = mock.Mock()
+
+        with (
+            mock.patch(
+                "aicage.registry.ensure_image.agent_build_setup_plan",
+                return_value=AgentBuildSetupAction.CONFIRM_UPDATE,
+            ),
+            mock.patch(
+                "aicage.registry.ensure_image.extension_build_needed", return_value=True
+            ),
+        ):
+            plan = image_setup_plan(run_config, reporter)
+
+        assert plan.action is ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
+        assert plan.image_ref == f"{IMAGE_REGISTRY}/{IMAGE_BASE_REPOSITORY}:ubuntu"
+
+    @staticmethod
     def test_image_setup_plan_skips_when_local_build_is_current() -> None:
         run_config = _run_config(build_local=True, extensions=[])
         reporter = mock.Mock()
