@@ -19,11 +19,9 @@ jobs:
     uses: ./.github/workflows/lint-and-test.yml
 
   integration-test:
-    if: github.event_name != 'push'
     uses: ./.github/workflows/integration-test.yml
 
   integration-test-proxy:
-    if: github.event_name != 'push'
     uses: ./.github/workflows/integration-test-proxy.yml
 
   required-checks:
