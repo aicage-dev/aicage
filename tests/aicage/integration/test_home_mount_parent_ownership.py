@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -59,8 +60,8 @@ def test_nested_mount_dedup_prefers_parent_mount(
 
     command = (
         "set -euo pipefail; "
-        'parent="$HOME/development/github"; '
-        'child="$HOME/development/github/aicage/test"; '
+        'parent="$(readlink -f "$HOME/development/github")"; '
+        'child="$parent/aicage/test"; '
         "awk '{print $5}' /proc/self/mountinfo | grep -Fx \"$parent\" >/dev/null; "
         "! awk '{print $5}' /proc/self/mountinfo | grep -Fx \"$child\" >/dev/null; "
         'printf ok > "$child/dedup-ok.txt"'
@@ -125,7 +126,7 @@ def test_workspace_path_is_usable_when_covered_by_parent_mount(
     assert (workspace / "workspace-owner.txt").read_text(encoding="utf-8") == "keep"
 
 
-def test_home_file_mount_is_direct_not_symlinked(
+def test_home_file_mount_is_accessible_with_platform_mapping(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -133,13 +134,24 @@ def test_home_file_mount_is_direct_not_symlinked(
     workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot")
     home_dir = Path(env["HOME"]).resolve()
     home_file = home_dir / ".aicage-direct-file"
-    home_file.write_text("direct\n", encoding="utf-8")
+    home_file.write_text("direct\n", encoding="utf-8", newline="\n")
+
+    mount_assertions: str = 'test ! -L "$HOME/.aicage-direct-file"; '
+    if os.name == "nt":
+        mount_assertions = (
+            'mounted_file="$AICAGE_MOUNT_HOME/.aicage-direct-file"; '
+            'test -L "$HOME/.aicage-direct-file"; '
+            'test "$(readlink "$HOME/.aicage-direct-file")" = "$mounted_file"; '
+            'test -f "$mounted_file"; '
+            'test ! -L "$mounted_file"; '
+            'mountpoint -q "$mounted_file"; '
+        )
 
     command = (
         "set -euo pipefail; "
         'test -f "$HOME/.aicage-direct-file"; '
-        'test ! -L "$HOME/.aicage-direct-file"; '
-        'test "$(cat "$HOME/.aicage-direct-file")" = "direct"'
+        + mount_assertions
+        + 'test "$(cat "$HOME/.aicage-direct-file")" = "direct"'
     )
     exit_code, output = run_cli_pty(
         [
