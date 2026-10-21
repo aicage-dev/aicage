@@ -82,5 +82,11 @@ def image_setup_plan(
             case AgentBuildSetupAction.CONFIRM_UPDATE:
                 action = ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
     if run_config.selection.extensions and extension_build_needed(run_config):
-        action = ImageSetupAction.SETUP
+        if action in (
+            ImageSetupAction.CONFIRM_UPDATE,
+            ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP,
+        ):
+            action = ImageSetupAction.CONFIRM_UPDATE_AND_DO_SETUP
+        else:
+            action = ImageSetupAction.SETUP
     return ImageSetupPlan(action=action, image_ref=image_ref)
