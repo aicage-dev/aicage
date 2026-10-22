@@ -48,6 +48,26 @@ if [[ ${#shell_scripts[@]} -gt 0 ]]; then
   shellcheck -x "${shell_scripts[@]}"
 fi
 
+echo "Validate PowerShell scripts with PowerShell"
+docker run --rm \
+  --mount "type=bind,src=$repo_root,dst=/workspace,readonly" \
+  mcr.microsoft.com/powershell:latest \
+  pwsh -NoProfile -Command '
+    $scripts = Get-ChildItem -Path /workspace -Recurse -Force -File -Filter *.ps1 |
+      Where-Object { $_.FullName -notlike "/workspace/.venv/*" }
+    foreach ($script in $scripts) {
+      $tokens = $null
+      $errors = $null
+      [System.Management.Automation.Language.Parser]::ParseFile(
+        $script.FullName, [ref]$tokens, [ref]$errors
+      ) | Out-Null
+      if ($errors.Count) {
+        $errors | Format-List | Out-String | Write-Error
+        exit 1
+      }
+    }
+  '
+
 # flake8
 flake8 .
 

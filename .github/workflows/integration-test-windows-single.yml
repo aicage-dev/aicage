@@ -83,56 +83,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
 
-      - name: Set up Skrog
-        uses: wslkit/setup-skrog@cd2cba80924975b0c77217947c228da8aac17b1f
+      - name: Set up Skrog Docker WSL
+        uses: ./.github/actions/setup-docker-wsl
         with:
-          version: "0.10.0"
-
-      - name: Install and configure Skrog Docker CLI
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          skrog cli install --no-path
-          $cliStatus = skrog cli status --json | ConvertFrom-Json
-          $cliBinDir = $cliStatus.binDir
-          if (-not $cliBinDir -or -not (Test-Path -LiteralPath $cliBinDir)) {
-            throw "Skrog Docker CLI bin directory was not found: $cliBinDir"
-          }
-          $dockerConfig = Join-Path $env:USERPROFILE ".docker"
-          if (-not (Test-Path -LiteralPath $dockerConfig)) {
-            throw "Skrog Docker config directory was not found: $dockerConfig"
-          }
-
-          $dockerCli = Join-Path $env:WINDIR "System32\docker.exe"
-          if (-not (Test-Path -LiteralPath $dockerCli)) {
-            throw "Expected preinstalled Docker CLI was not found: $dockerCli"
-          }
-          Remove-Item -LiteralPath $dockerCli -Force
-          Add-Content -Path $env:GITHUB_PATH -Value $cliBinDir
-          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_CONFIG=$dockerConfig"
-
-      - name: Validate Windows Docker CLI
-        shell: powershell
-        run: |
-          if ((docker context show) -ne "skrog") {
-            throw "Expected Docker context 'skrog'."
-          }
-          if ((docker info --format '{{.OSType}}') -ne "linux") {
-            throw "Expected a Linux Docker engine."
-          }
-          docker buildx version
-          docker buildx imagetools inspect --raw ghcr.io/aicage-dev/aicage:codex-ubuntu | Out-Null
-          docker run --rm --mount "type=bind,src=$env:RUNNER_TEMP,dst=/host,readonly" alpine:3.22 test -d /host
-
-          $dockerHost = docker context inspect skrog --format '{{.Endpoints.docker.Host}}'
-          if ($dockerHost -notmatch '^npipe:////') {
-            throw "Expected Skrog to use a named-pipe Docker endpoint, got: $dockerHost"
-          }
-          $pipePath = $dockerHost -replace '^npipe:////', '//'
-          docker run --rm `
-            --mount "type=bind,src=$pipePath,dst=/var/run/docker.sock" `
-            --env DOCKER_HOST=unix:///var/run/docker.sock `
-            docker:29-cli version --format '{{.Server.Os}}'
+          verify-docker-in-containers: "true"
 
       - name: Run Windows Docker integration tests
         shell: bash
