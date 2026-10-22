@@ -5,6 +5,7 @@ import contextlib
 import io
 import json
 import os
+import shlex
 from pathlib import Path
 
 import pytest
@@ -12,11 +13,13 @@ import pytest
 
 def main() -> None:
     """Collect pytest node IDs and write them as a GitHub Actions matrix."""
+    pytest_filter = os.environ.get("PYTEST_FILTER", "").strip()
+    command = ["--collect-only", "-q", "-m", "integration and not proxy_integration"]
+    if pytest_filter:
+        command.extend(shlex.split(pytest_filter))
     output_buffer = io.StringIO()
     with contextlib.redirect_stdout(output_buffer):
-        exit_code = pytest.main(
-            ["--collect-only", "-q", "-m", "integration and not proxy_integration"]
-        )
+        exit_code = pytest.main(command)
     if exit_code != pytest.ExitCode.OK:
         raise SystemExit(exit_code)
     output = output_buffer.getvalue()

@@ -54,29 +54,7 @@ jobs:
         name: Collect integration tests
         env:
           PYTEST_FILTER: ${{ inputs.pytest_filter }}
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          import shlex
-          import subprocess
-
-          command = [
-              "pytest",
-              "--collect-only",
-              "-q",
-              "-m",
-              "integration and not proxy_integration",
-          ]
-          extra = os.environ["PYTEST_FILTER"].strip()
-          if extra:
-              command.extend(shlex.split(extra))
-          tests = subprocess.check_output(command, text=True).splitlines()
-          node_ids = [line for line in tests if "::" in line]
-          matrix = {"include": [{"test": test} for test in node_ids]}
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
-              handle.write(f"matrix={json.dumps(matrix)}\n")
-          PY
+        run: scripts/collect-integration-test-matrix.py
 
       - name: Print integration matrix
         env:
