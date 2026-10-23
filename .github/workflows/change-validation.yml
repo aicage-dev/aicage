@@ -5,6 +5,7 @@ name: Change Validation
   push:
     branches:
       - main
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
@@ -16,12 +17,15 @@ permissions:
 
 jobs:
   lint-and-test:
+    name: Lint and Unit Tests
     uses: ./.github/workflows/lint-and-test.yml
 
   integration-test:
+    name: Integration Tests
     uses: ./.github/workflows/integration-test.yml
 
   integration-test-proxy:
+    name: Integration Proxy Tests
     uses: ./.github/workflows/integration-test-proxy.yml
 
   required-status-checks:
