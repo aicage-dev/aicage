@@ -38,13 +38,11 @@ def test_none_uses_default_mount_selection_without_saving(
     gitconfig = Path(env["HOME"]) / ".gitconfig"
     assert (
         f"--mount type=bind,src={gitconfig.as_posix()},"
-        f"dst={container_project_path(gitconfig)}"
-        in output
+        f"dst={container_project_path(gitconfig)}" in output
     )
     assert (
         f"--mount type=bind,src={workspace.as_posix()},"
-        f"dst={container_project_path(workspace)}"
-        in output
+        f"dst={container_project_path(workspace)}" in output
     )
     agent_cfg = SettingsStore().load_project(project_dir).agents["codex"]
     assert agent_cfg.mounts.gitconfig is None
