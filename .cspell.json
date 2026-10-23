@@ -58,6 +58,7 @@
     "bubblewrap",
     "buildx",
     "bwrap",
+    "certifi",
     "charmland",
     "classmethod",
     "conftest",
