@@ -10,7 +10,6 @@ permissions:
   contents: read
 
 jobs:
-
   verify-tagged-commit:
     runs-on: ubuntu-latest
     permissions:
@@ -32,6 +31,7 @@ jobs:
           fi
 
   change-validation:
+    needs: verify-tagged-commit
     uses: ./.github/workflows/change-validation.yml
     permissions:
       contents: read
@@ -39,6 +39,7 @@ jobs:
       pull-requests: write
 
   integration-test-windows:
+    needs: verify-tagged-commit
     uses: ./.github/workflows/integration-test-windows.yml
 
   publish:
