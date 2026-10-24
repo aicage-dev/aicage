@@ -33,6 +33,10 @@ jobs:
 
   change-validation:
     uses: ./.github/workflows/change-validation.yml
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
   publish:
     name: Publish to PyPI
