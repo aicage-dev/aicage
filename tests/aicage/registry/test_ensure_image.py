@@ -154,7 +154,9 @@ class EnsureImageTests(TestCase):
         assert plan.image_ref == run_config.selection.agent_image_ref
 
     @staticmethod
-    def test_image_setup_plan_confirms_remote_update_before_building_extensions() -> None:
+    def test_image_setup_plan_confirms_remote_update_before_building_extensions() -> (
+        None
+    ):
         run_config = _run_config(build_local=False, extensions=["extra"])
         reporter = mock.Mock()
 
@@ -173,7 +175,9 @@ class EnsureImageTests(TestCase):
         assert plan.image_ref == run_config.selection.agent_image_ref
 
     @staticmethod
-    def test_image_setup_plan_confirms_local_base_update_before_building_extensions() -> None:
+    def test_image_setup_plan_confirms_local_base_update_before_building_extensions() -> (
+        None
+    ):
         run_config = _run_config(build_local=True, extensions=["extra"])
         reporter = mock.Mock()
 

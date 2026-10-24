@@ -34,7 +34,9 @@ def _dedupe_nested_mount_requests(requests: list[MountRequest]) -> list[MountReq
     for request in requests:
         host_path = _host_path(request)
         if any(
-            _is_redundant_nested_mount(request, selected, host_path, _host_path(selected))
+            _is_redundant_nested_mount(
+                request, selected, host_path, _host_path(selected)
+            )
             for selected in selected_requests
         ):
             continue
