@@ -24,8 +24,8 @@ jobs:
   integration-test-proxy:
     uses: ./.github/workflows/integration-test-proxy.yml
 
-  required-checks:
-    name: Required Checks
+  required-status-checks:
+    name: "Required Status Checks" # do not change, used in ruleset "Required Status Checks"
     if: ${{ always() }}
     needs:
       - lint-and-test
@@ -37,6 +37,6 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
-          jq --exit-status --arg event_name "$GITHUB_EVENT_NAME" \
-            'all(.[]; .result == "success" or ($event_name == "push" and .result == "skipped"))' \
+          jq --exit-status \
+            'all(.[]; .result == "success" or .result == "skipped")' \
             <<< "$NEEDS"
