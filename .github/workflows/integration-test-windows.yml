@@ -52,6 +52,7 @@ jobs:
     name: Integration (${{ matrix.test }})
     runs-on: windows-latest
     needs: integration-discover
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.integration-discover.outputs.matrix) }}
@@ -96,29 +97,6 @@ jobs:
           TEST_NODE: ${{ matrix.test }}
         run: |
           pytest -m "integration and not proxy_integration" "$TEST_NODE"
-
-      - name: Collect Docker diagnostics
-        if: failure()
-        shell: powershell
-        run: |
-          docker context inspect skrog
-          docker info
-          skrog status --json
-          $env:PYTHONPATH = "$env:GITHUB_WORKSPACE\src"
-          @'
-          import traceback
-
-          import docker
-
-          from aicage.docker.runtime import get_active_docker_host
-
-          host = get_active_docker_host()
-          print(f"aicage Docker SDK host: {host.host}")
-          try:
-              print(docker.DockerClient(base_url=host.host, timeout=10).version())
-          except Exception:
-              traceback.print_exc()
-          '@ | python -
 
       - name: Collect aicage logs
         if: failure()
