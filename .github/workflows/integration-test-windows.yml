@@ -52,6 +52,7 @@ jobs:
     name: Integration (${{ matrix.test }})
     runs-on: windows-latest
     needs: integration-discover
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.integration-discover.outputs.matrix) }}
