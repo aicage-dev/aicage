@@ -37,7 +37,7 @@ jobs:
     uses: ./.github/workflows/integration-test-proxy.yml
 
   required-status-checks:
-    name: "Required Status Checks" # do not change, used in ruleset "Required Status Checks"
+    name: "Required Status Checks"  # do not change, used in ruleset "Required Status Checks"
     if: ${{ always() }}
     needs:
       - super-linter
