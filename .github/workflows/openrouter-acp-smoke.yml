@@ -81,7 +81,7 @@ jobs:
 
       - name: Set up Docker Desktop
         if: matrix.platform == 'macos'
-        uses: gh-workflow/setup-docker-desktop-macos@ba990fb265609c7d1cfe023ebdcb73ee49d907f1  # 0.0.14
+        uses: gh-workflow/setup-docker-desktop-macos@275ff92cc293a098478cb1220bd59c0579d7320f  # 0.0.15
         with:
           print_diagnostics: true
 
