@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Use file-backed secrets so credentials survive the host/container boundary.
+# The real binary lives outside PATH to avoid recursively invoking this launcher.
+export GOOSE_DISABLE_KEYRING=1
+exec /usr/local/lib/goose/goose "$@"

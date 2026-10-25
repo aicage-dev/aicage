@@ -10,6 +10,7 @@ curl \
   https://mistral.ai/vibe/install.sh |
   UV_TOOL_DIR=/opt/uv/tools \
     UV_TOOL_BIN_DIR=/usr/local/bin \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python \
     bash
 
 install -d /usr/share/licenses/vibe
