@@ -19,6 +19,8 @@ from pathlib import Path
 from time import monotonic, sleep
 from typing import Any
 
+from aicage.paths import container_project_path
+
 _API_KEY_ENV: str = "OPENROUTER_API_KEY"
 _ARTIFACT_DIR_ENV: str = "AICAGE_OPENROUTER_ARTIFACT_DIR"
 _PREFLIGHT_ONLY_OPTION: str = "--preflight-only"
@@ -29,7 +31,7 @@ _CLEANUP_RETRY_SECONDS: float = 0.25
 _FAILURE_LOG_TAIL_BYTES: int = 16_384
 _PROTOCOL_VERSION: int = 1
 _JSON_RPC_VERSION: str = "2.0"
-_CONFIG_ROOT: Path = Path(__file__).resolve().parents[1] / "doc/ai/task/39/agent-config"
+_CONFIG_ROOT: Path = Path(__file__).with_name("testdata") / "openrouter-acp"
 _MARKER_EXTENSION_SOURCE: Path = (
     Path(__file__).resolve().parents[1] / "doc/sample/custom/extensions/marker"
 )
@@ -208,7 +210,14 @@ class _AcpClient:
 
     def _terminate_process_group(self, termination_signal: signal.Signals) -> None:
         try:
-            os.killpg(self._process.pid, termination_signal)
+            if os.name == "nt":
+                subprocess.run(  # nosec B603, B607
+                    ["taskkill", "/pid", str(self._process.pid), "/t", "/f"],
+                    check=False,
+                    capture_output=True,
+                )
+            else:
+                os.killpg(self._process.pid, termination_signal)
         except ProcessLookupError:
             pass
 
@@ -339,6 +348,8 @@ def _acp_command(
             *agent.aicage_args,
         ]
     codex_acp_path = home_dir / _CODEX_ACP_DIRECTORY / "node_modules/.bin/codex-acp"
+    if os.name == "nt":
+        codex_acp_path = codex_acp_path.with_suffix(".cmd")
     if not codex_acp_path.is_file():
         raise RuntimeError("codex-acp was not installed in the fake home.")
     environment.update(
@@ -351,12 +362,20 @@ def _acp_command(
 
 
 def _write_codex_launcher(temporary_root: Path) -> Path:
-    launcher = temporary_root / "aicage-codex-openrouter"
-    contents = (
-        "#!/bin/sh\nexec aicage --menu none"
-        " --extension marker"
-        ' -e OPENROUTER_API_KEY -- codex "$@"\n'
-    )
+    if os.name == "nt":
+        launcher = temporary_root / "aicage-codex-openrouter.cmd"
+        contents = (
+            "@echo off\r\n"
+            "aicage --menu none --extension marker"
+            " -e OPENROUTER_API_KEY -- codex %*\r\n"
+        )
+    else:
+        launcher = temporary_root / "aicage-codex-openrouter"
+        contents = (
+            "#!/bin/sh\nexec aicage --menu none"
+            " --extension marker"
+            ' -e OPENROUTER_API_KEY -- codex "$@"\n'
+        )
     launcher.write_text(contents, encoding="utf-8")
     launcher.chmod(0o755)
     return launcher
@@ -597,10 +616,18 @@ def _test_environment(home_dir: Path, api_key: str) -> dict[str, str]:
             "XDG_CONFIG_HOME": str(home_dir / ".config"),
             "XDG_DATA_HOME": str(home_dir / ".local/share"),
             "XDG_STATE_HOME": str(home_dir / ".local/state"),
-            "DOCKER_CONFIG": str(home_dir / ".docker"),
             _API_KEY_ENV: api_key,
         }
     )
+    if os.name == "nt":
+        home = str(home_dir)
+        drive, path = os.path.splitdrive(home)
+        environment["USERPROFILE"] = home
+        if drive:
+            environment["HOMEDRIVE"] = drive
+            environment["HOMEPATH"] = path or "\\"
+    else:
+        environment["DOCKER_CONFIG"] = str(home_dir / ".docker")
     return environment
 
 
@@ -613,7 +640,17 @@ def _prompt_agent(client: _AcpClient, workspace: Path) -> None:
             "clientInfo": {"name": "aicage-openrouter-smoke-test", "version": "1"},
         },
     )
-    session = client.request("session/new", {"cwd": str(workspace), "mcpServers": []})
+    session = client.request(
+        "session/new",
+        {
+            # TODO: paths in ACP protocol must be translated for Windows
+            # See https://github.com/aicage/aicage/issues/124
+            "cwd": str(
+                container_project_path(workspace) if os.name == "nt" else workspace
+            ),
+            "mcpServers": [],
+        },
+    )
     session_id = session.get("sessionId")
     if not isinstance(session_id, str):
         raise RuntimeError("ACP session/new did not return a session ID.")
