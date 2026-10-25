@@ -4,3 +4,5 @@
 ^https://ampcode\.com/$
 # Is not directly reachable, sub-paths are valid
 ^https://code\.kimi\.com/kimi-code/$
+# openai.com/brand rejects with 403 Forbidden
+^https://openai.com/brand/$

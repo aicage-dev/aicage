@@ -1,12 +1,57 @@
-name: OpenRouter ACP Smoke Test
+name: Integration Tests (OpenRouter)
 
 "on":
+  workflow_call:
+    inputs:
+      include_macos:
+        description: Include macOS (very long)
+        required: false
+        default: false
+        type: boolean
+      include_windows:
+        description: Include Windows
+        required: false
+        default: true
+        type: boolean
   workflow_dispatch:
+    inputs:
+      include_macos:
+        description: Include macOS (very long)
+        required: false
+        default: false
+        type: boolean
+      include_windows:
+        description: Include Windows
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
+  prepare_matrix:
+    name: Select test runners
+    runs-on: ubuntu-latest
+    outputs:
+      runners: ${{ steps.select.outputs.runners }}
+    steps:
+      - id: select
+        env:
+          INCLUDE_MACOS: ${{ inputs.include_macos }}
+          INCLUDE_WINDOWS: ${{ inputs.include_windows }}
+        run: |
+          runners=()
+          if [[ "$INCLUDE_MACOS" == "true" ]]; then
+            runners+=(macos-26-intel)
+          fi
+          if [[ "$INCLUDE_WINDOWS" == "true" ]]; then
+            runners+=(windows-latest)
+          fi
+          runners+=(ubuntu-latest ubuntu-24.04-arm)
+          printf -v runners_json '"%s",' "${runners[@]}"
+          echo "runners=[${runners_json%,}]" >> "$GITHUB_OUTPUT"
+
   build-wheel:
     name: Build aicage wheel
     runs-on: ubuntu-latest
@@ -40,23 +85,14 @@ jobs:
           path: dist/*.whl
           if-no-files-found: error
 
-  smoke-test:
-    name: OpenRouter ACP smoke (${{ matrix.name }})
-    needs: build-wheel
+  integration-openrouter:
+    name: OpenRouter ACP tests (${{ matrix.runner }})
+    needs: [build-wheel, prepare_matrix]
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Ubuntu x64
-            runner: ubuntu-latest
-            platform: unix
-          - name: Ubuntu ARM64
-            runner: ubuntu-24.04-arm
-            platform: unix
-          - name: macOS
-            runner: macos-26-intel
-            platform: macos
+        runner: ${{ fromJSON(needs.prepare_matrix.outputs.runners) }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -75,15 +111,22 @@ jobs:
           python-version: "3.15"
 
       - name: Install wheel
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           python -m pip install dist/*.whl
 
-      - name: Set up Docker Desktop
-        if: matrix.platform == 'macos'
+      - name: Set up Docker Desktop (macOS)
+        if: contains(matrix.runner, 'macos')
         uses: gh-workflow/setup-docker-desktop-macos@275ff92cc293a098478cb1220bd59c0579d7320f  # 0.0.15
         with:
           print_diagnostics: true
+
+      - name: Set up Docker WSL (Windows)
+        if: contains(matrix.runner, 'windows')
+        uses: gh-workflow/setup-docker-wsl@9adeb9177c02180405f3b5cd13fe27561a3ce1f5  # v1.0.3
+        with:
+          verify-docker-in-containers: "true"
 
       - name: Verify Linux Docker engine
         shell: bash
