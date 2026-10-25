@@ -31,7 +31,7 @@ _COSIGN_IMAGE_NAME: str = "ghcr.io/sigstore/cosign/cosign"
 # ghcr.io/sigstore/cosign/cosign:latest
 # at the time of a release
 _COSIGN_IMAGE_DIGEST: str = (
-    "sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8"
+    "sha256:0f06154836d2de34f887a5c273506d52ca43edaa1d9e53e6510fa78a48f69c2d"
 )
 COSIGN_IMAGE_REF: str = f"{_COSIGN_IMAGE_NAME}@{_COSIGN_IMAGE_DIGEST}"
 COSIGN_OIDC_ISSUER: str = "https://token.actions.githubusercontent.com"
