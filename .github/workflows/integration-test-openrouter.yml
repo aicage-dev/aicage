@@ -48,7 +48,7 @@ jobs:
           if [[ "$INCLUDE_WINDOWS" == "true" ]]; then
             runners+=(windows-latest)
           fi
-          runners+=(ubuntu-latest ubuntu-24.04-arm)
+          runners+=(ubuntu-latest ubuntu-26.04-arm)
           printf -v runners_json '"%s",' "${runners[@]}"
           echo "runners=[${runners_json%,}]" >> "$GITHUB_OUTPUT"
 
