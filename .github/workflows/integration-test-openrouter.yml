@@ -89,6 +89,7 @@ jobs:
     name: OpenRouter ACP tests (${{ matrix.runner }})
     needs: [build-wheel, prepare_matrix]
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
