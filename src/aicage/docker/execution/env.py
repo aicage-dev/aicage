@@ -33,10 +33,7 @@ def resolve_user_ids() -> list[str]:
         )
         return env_flags
 
-    getuid = getattr(os, "getuid", None)
-    getgid = getattr(os, "getgid", None)
-    uid = getuid() if callable(getuid) else None
-    gid = getgid() if callable(getgid) else None
+    uid, gid = _resolve_host_user_ids()
     is_rootless = _is_rootless_docker()
 
     user = _resolve_host_user()
@@ -58,6 +55,18 @@ def resolve_user_ids() -> list[str]:
 
 def _resolve_host_user() -> str:
     return os.environ.get("USERNAME") or os.environ.get("USER") or "aicage"
+
+
+def _resolve_host_user_ids() -> tuple[int | None, int | None]:
+    return _resolve_host_user_id("getuid"), _resolve_host_user_id("getgid")
+
+
+def _resolve_host_user_id(method_name: str) -> int | None:
+    method = vars(os).get(method_name)
+    if not callable(method):
+        return None
+    value = method()
+    return value if isinstance(value, int) else None
 
 
 def _resolve_host_home() -> Path:
