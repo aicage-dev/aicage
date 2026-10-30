@@ -373,7 +373,8 @@ class ConfigAppTests(TestCase):
             _call_work_async(app, "_add_share")
 
         self.assertEqual(
-            [CustomShareValue("/test-tmp/project/logs")], app._state.custom_shares
+            [CustomShareValue(str((Path.cwd() / "logs").resolve()))],
+            app._state.custom_shares,
         )
         apply_shell_width_mock.assert_called_once_with()
         refresh_mock.assert_called_once_with()
@@ -601,7 +602,8 @@ class ConfigAppTests(TestCase):
             _call_work_async(app, "_edit_custom_share", "/test-tmp/project/logs")
 
         self.assertEqual(
-            [CustomShareValue("/test-tmp/project/data")], app._state.custom_shares
+            [CustomShareValue(str((Path.cwd() / "data").resolve()))],
+            app._state.custom_shares,
         )
         apply_shell_width_mock.assert_called_once_with()
         refresh_mock.assert_called_once_with()
@@ -684,7 +686,7 @@ def _build_app(
         draft = _build_draft(
             agent_cfg or AgentConfig(base="ubuntu"),
             ParsedArgs(False, "", "codex", [], False, [], git=git),
-            project_path=Path("/test-tmp/project"),
+            project_path=Path.cwd(),
         )
         draft.scope = scope
         draft.scope_config_exists = {scope: scope_config_exists}

@@ -11,14 +11,13 @@ from aicage.runtime.run_args import EnvVar
 
 class ProxyTests(TestCase):
     def test_proxy_env_vars_from_host_uses_only_uppercase(self) -> None:
-        with mock.patch.dict(
-            os.environ,
+        with mock.patch(
+            "aicage._proxy.os.environ",
             {
                 "HTTP_PROXY": "http://proxy-http:8080",
                 "HTTPS_PROXY": "http://proxy-https:8080",
                 "http_proxy": "http://ignored:8080",
             },
-            clear=True,
         ):
             result = proxy_env_vars_from_host()
 

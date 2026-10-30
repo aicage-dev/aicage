@@ -73,15 +73,16 @@ class BaseLoaderTests(TestCase):
         self.assertEqual(["amd64", "arm64"], bases["debian"].architectures)
 
     def test_load_builtin_bases_raises_when_directory_missing(self) -> None:
+        missing_dir = Path("/test-tmp/missing")
         with mock.patch(
             "aicage.config.base.loader._builtin_bases_dir",
-            return_value=Path("/test-tmp/missing"),
+            return_value=missing_dir,
         ):
             with self.assertRaises(ConfigError) as raised:
                 loader._load_builtin_bases()
 
         self.assertEqual(
-            "Built-in base directory '/test-tmp/missing' is missing.",
+            f"Built-in base directory '{missing_dir}' is missing.",
             str(raised.exception),
         )
 

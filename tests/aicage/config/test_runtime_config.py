@@ -27,7 +27,7 @@ from aicage.runtime.run_args import EnvVar, MountSpec
 class RuntimeConfigTests(TestCase):
     def test_load_run_config_resolves_file_backed_inherited_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            root_path = Path(tmp_dir)
+            root_path = Path(tmp_dir).resolve()
             project_path = root_path / "workspace" / "project"
             project_path.mkdir(parents=True)
             with (
@@ -325,9 +325,9 @@ class RuntimeConfigTests(TestCase):
 
     def test_load_run_config_does_not_persist_config_for_none_menu(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            project_path = Path(tmp_dir) / "project"
+            project_path = Path(tmp_dir).resolve() / "project"
             project_path.mkdir()
-            projects_dir = Path(tmp_dir) / "configs"
+            projects_dir = Path(tmp_dir).resolve() / "configs"
             projects_dir_patch = mock.patch(
                 "aicage.config.config_store.PROJECTS_DIR", projects_dir
             )
@@ -403,7 +403,7 @@ class RuntimeConfigTests(TestCase):
 
     def test_load_run_config_defaults_base_when_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            project_path = Path(tmp_dir) / "project"
+            project_path = Path(tmp_dir).resolve() / "project"
             project_path.mkdir()
 
             store = SettingsStore()
@@ -446,7 +446,7 @@ class RuntimeConfigTests(TestCase):
         self,
     ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            project_path = Path(tmp_dir) / "project"
+            project_path = Path(tmp_dir).resolve() / "project"
             project_path.mkdir()
 
             store = SettingsStore()
@@ -534,8 +534,8 @@ class RuntimeConfigTests(TestCase):
 
     def test_load_run_config_does_not_persist_share_mounts_for_none_menu(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            projects_dir = Path(tmp_dir) / "configs"
-            project_path = Path(tmp_dir) / "project"
+            projects_dir = Path(tmp_dir).resolve() / "configs"
+            project_path = Path(tmp_dir).resolve() / "project"
             project_path.mkdir()
 
             with mock.patch("aicage.config.config_store.PROJECTS_DIR", projects_dir):
@@ -609,8 +609,8 @@ class RuntimeConfigTests(TestCase):
         self,
     ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            projects_dir = Path(tmp_dir) / "configs"
-            project_path = Path(tmp_dir) / "project"
+            projects_dir = Path(tmp_dir).resolve() / "configs"
+            project_path = Path(tmp_dir).resolve() / "project"
             project_path.mkdir()
 
             with mock.patch("aicage.config.config_store.PROJECTS_DIR", projects_dir):
