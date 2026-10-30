@@ -119,14 +119,13 @@ class GitSupportTests(TestCase):
     def test__git_support_prompt_items(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
-        git_items = [
-            (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig")
-        ]
+        git_config = Path("/test-tmp/gitconfig")
+        git_items = [(MOUNT_GITCONFIG_KEY, f"Git config (name/email): {git_config}")]
 
         with (
             mock.patch(
                 f"{_MODULE}.resolve_git_config_path",
-                return_value=Path("/test-tmp/gitconfig"),
+                return_value=git_config,
             ),
             mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),

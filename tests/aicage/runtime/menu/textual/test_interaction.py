@@ -99,7 +99,7 @@ class EditDraftWithTextualAppTests(TestCase):
                 docker_socket=True,
                 shares=["logs"],
             ),
-            project_path=Path("/repo"),
+            project_path=Path.cwd(),
         )
         context = _build_context()
         app_result = ConfigSelectionResult(
@@ -129,7 +129,7 @@ class EditDraftWithTextualAppTests(TestCase):
         self.assertEqual("repo:ubuntu", result.selection.image_ref)
         self.assertEqual("--new", result.project_docker_args)
         self.assertEqual("--new", draft.agent_cfg.docker_args)
-        self.assertEqual(["/repo/logs"], draft.agent_cfg.shares)
+        self.assertEqual([str((Path.cwd() / "logs").resolve())], draft.agent_cfg.shares)
         self.assertTrue(draft.agent_cfg.mounts.docker)
         self.assertEqual("", parsed.docker_args)
         self.assertEqual([], parsed.shares)
@@ -139,6 +139,7 @@ class EditDraftWithTextualAppTests(TestCase):
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
+            project_path=Path.cwd(),
         )
         app_mock = mock.Mock()
         app_mock.run.return_value = RuntimeError("boom")
@@ -160,7 +161,7 @@ class EditDraftWithTextualAppTests(TestCase):
                 base="ubuntu", docker_args="--existing", shares=["/repo/existing"]
             ),
             parsed=ParsedArgs(False, "--new", "codex", [], True, ["logs"]),
-            project_path=Path("/repo"),
+            project_path=Path.cwd(),
         )
         app_mock = mock.Mock()
         app_mock.run.return_value = None
