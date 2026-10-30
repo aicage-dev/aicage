@@ -18,8 +18,6 @@ ARG AICAGE_INSTALL_DISTRO
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    AICAGE_UID=1000 \
-    AICAGE_GID=1000 \
     NPM_CONFIG_PREFIX=/usr/local \
     PIPX_HOME=/opt/pipx \
     PIPX_BIN_DIR=/opt/pipx/bin \
