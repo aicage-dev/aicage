@@ -7,7 +7,7 @@ from aicage.config.project_config import AgentConfig
 from aicage.docker.runtime import get_active_docker_host
 from aicage.paths import HOST_DOCKER_SOCKET_PATH
 from aicage.runtime.docker_args.support.resolver_types import MountRequest, ResolvedArgs
-from aicage.runtime.env_vars import _WINDOWS_DOCKER_HOST, DOCKER_HOST
+from aicage.runtime.env_vars import DOCKER_HOST
 from aicage.runtime.run_args import EnvVar
 
 _CONTAINER_DOCKER_SOCKET_PATH = PurePosixPath("/var/run/docker.sock")
@@ -26,19 +26,18 @@ def resolve(
     if not docker_socket_enabled:
         return ResolvedArgs()
 
-    docker_host = get_active_docker_host()
-    if docker_host.named_pipe_path is not None:
+    if os.name == "nt":
+        # The Docker client reaches a Windows engine through a named pipe, but
+        # Linux containers run by that engine can mount its Unix socket directly.
         mounts = [
             MountRequest(
-                host_path=docker_host.named_pipe_path,
+                host_path=HOST_DOCKER_SOCKET_PATH,
                 container_path=_CONTAINER_DOCKER_SOCKET_PATH,
             )
         ]
         env = [EnvVar(name=DOCKER_HOST, value=_CONTAINER_DOCKER_HOST)]
-    elif os.name == "nt":
-        mounts = []
-        env = [EnvVar(name=DOCKER_HOST, value=_WINDOWS_DOCKER_HOST)]
     else:
+        docker_host = get_active_docker_host()
         mounts = (
             [MountRequest(host_path=docker_host.socket_path)]
             if docker_host.socket_path is not None
