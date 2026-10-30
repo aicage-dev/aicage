@@ -48,7 +48,7 @@ class ConfigStoreTests(TestCase):
                 store = SettingsStore()
                 path = store.tree_config_path(Path("/project"))
 
-        expected = hashlib.sha256(b"/project").hexdigest()
+        expected = hashlib.sha256(str(Path("/project")).encode("utf-8")).hexdigest()
         self.assertEqual(trees_dir / f"{expected}.yml", path)
 
     def test_load_project_returns_empty_config(self) -> None:

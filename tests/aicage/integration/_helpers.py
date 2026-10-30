@@ -46,7 +46,7 @@ def run_cli_pty(
             env,
             str(cwd),
         )
-        chunks: list[str] = []
+        win_output_chunks: list[str] = []
 
         def _read_output() -> None:
             while True:
@@ -56,7 +56,7 @@ def run_cli_pty(
                     break
                 if not chunk:
                     break
-                chunks.append(chunk)
+                win_output_chunks.append(chunk)
 
         reader = threading.Thread(target=_read_output, daemon=True)
         reader.start()
@@ -67,7 +67,7 @@ def run_cli_pty(
         exit_status = process.exitstatus
         if exit_status is None:
             exit_status = process.wait()
-        return cast(int, exit_status), "".join(chunks)
+        return cast(int, exit_status), "".join(win_output_chunks)
 
     assert pty is not None
     master_fd, slave_fd = pty.openpty()
@@ -85,7 +85,7 @@ def run_cli_pty(
     if input_data:
         os.write(master_fd, input_data.encode())
 
-    chunks: list[bytes] = []
+    posix_output_chunks: list[bytes] = []
     while True:
         read_ready, _, _ = select.select([master_fd], [], [], 0.2)
         if master_fd in read_ready:
@@ -94,7 +94,7 @@ def run_cli_pty(
             except OSError:
                 data = b""
             if data:
-                chunks.append(data)
+                posix_output_chunks.append(data)
             elif process.poll() is not None:
                 break
         elif process.poll() is not None:
@@ -102,7 +102,7 @@ def run_cli_pty(
 
     process.wait()
     os.close(master_fd)
-    output = b"".join(chunks).decode(errors="replace")
+    output = b"".join(posix_output_chunks).decode(errors="replace")
     return process.returncode, output
 
 
