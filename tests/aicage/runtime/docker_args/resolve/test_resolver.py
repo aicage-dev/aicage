@@ -36,12 +36,13 @@ class ResolverTests(TestCase):
 
     def test_resolve_docker_args_aggregates_mounts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            home_path = Path(temp_dir) / "home"
-            project_path = Path(temp_dir) / "project"
+            temp_path = Path(temp_dir).resolve()
+            home_path = temp_path / "home"
+            project_path = temp_path / "project"
             home_path.mkdir()
             project_path.mkdir()
             git_config = home_path / ".gitconfig"
-            docker_sock = Path(temp_dir) / "docker.sock"
+            docker_sock = temp_path / "docker.sock"
 
             project_cfg, context = self._build_context(project_path)
             parsed = self._build_parsed()
@@ -131,7 +132,7 @@ class ResolverTests(TestCase):
 
     def test_resolve_docker_args_uses_host_path_for_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            home_path = Path(temp_dir) / "home"
+            home_path = Path(temp_dir).resolve() / "home"
             project_path = home_path / "project"
             home_path.mkdir()
             project_path.mkdir()

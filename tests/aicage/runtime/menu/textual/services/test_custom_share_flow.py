@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import TestCase
 
 from aicage.cli_types import ParsedArgs
@@ -19,7 +20,10 @@ class CustomShareFlowTests(TestCase):
         added = custom_share_flow.add_custom_share(state, draft, "/test-tmp/logs")
 
         self.assertTrue(added)
-        self.assertEqual([CustomShareValue("/test-tmp/logs")], state.custom_shares)
+        self.assertEqual(
+            [CustomShareValue(str(Path("/test-tmp/logs").resolve()))],
+            state.custom_shares,
+        )
 
     def test_update_custom_share_replaces_existing_value(self) -> None:
         state = OverviewState(None, [], [CustomShareValue("/test-tmp/logs")], False)
@@ -35,4 +39,7 @@ class CustomShareFlowTests(TestCase):
         )
 
         self.assertTrue(updated)
-        self.assertEqual([CustomShareValue("/test-tmp/cache")], state.custom_shares)
+        self.assertEqual(
+            [CustomShareValue(str(Path("/test-tmp/cache").resolve()))],
+            state.custom_shares,
+        )

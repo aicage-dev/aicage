@@ -18,7 +18,7 @@ class ShareSupportTests(TestCase):
     def test_built_in_share_values_allows_enabling_inherited_disabled_extension(
         self,
     ) -> None:
-        project_path = Path("/project")
+        project_path = Path.cwd()
         draft = _create_run_config_draft(
             project_path,
             "codex",
@@ -46,18 +46,18 @@ class ShareSupportTests(TestCase):
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
-            project_path=Path("/repo"),
+            project_path=Path.cwd(),
         )
 
         values = _share_support.normalize_shares_from_editor(draft, ["logs:ro"])
 
-        self.assertEqual(["/repo/logs:ro"], values)
+        self.assertEqual([f"{Path.cwd() / 'logs'}:ro"], values)
 
     def test_built_in_share_values_returns_only_relevant_items(self) -> None:
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
-            project_path=Path("/project"),
+            project_path=Path.cwd(),
         )
         with (
             mock.patch(
@@ -96,12 +96,12 @@ class ShareSupportTests(TestCase):
                     "git_support",
                     "gitconfig",
                     "Git config",
-                    "/test-tmp/gitconfig",
+                    str(Path("/test-tmp/gitconfig")),
                     None,
                     True,
                 ),
                 BuiltInShareValue(
-                    "git_support", "gitroot", "Git root", "/repo", None, True
+                    "git_support", "gitroot", "Git root", str(Path("/repo")), None, True
                 ),
             ],
             values,
@@ -111,7 +111,7 @@ class ShareSupportTests(TestCase):
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu", extensions=["gh"]),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
-            project_path=Path("/project"),
+            project_path=Path.cwd(),
         )
 
         values = _share_support.built_in_share_values(
@@ -138,7 +138,7 @@ class ShareSupportTests(TestCase):
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu", extensions=["gcloud"]),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
-            project_path=Path("/project"),
+            project_path=Path.cwd(),
         )
 
         values = _share_support.built_in_share_values(
@@ -175,7 +175,7 @@ class ShareSupportTests(TestCase):
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
-            project_path=Path("/project"),
+            project_path=Path.cwd(),
         )
         with (
             mock.patch(
@@ -209,7 +209,9 @@ class ShareSupportTests(TestCase):
             )
 
         self.assertIn(
-            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/ssh", None, True),
+            BuiltInShareValue(
+                "git_support", "ssh", "SSH", str(Path("/test-tmp/ssh")), None, True
+            ),
             values,
         )
 
@@ -219,7 +221,7 @@ class ShareSupportTests(TestCase):
         draft = _build_draft(
             agent_cfg=AgentConfig(base="ubuntu"),
             parsed=ParsedArgs(False, "", "codex", [], False, []),
-            project_path=Path("/project"),
+            project_path=Path.cwd(),
         )
         with (
             mock.patch(
@@ -254,7 +256,12 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                "git_support", "gnupg", "GnuPG", "/test-tmp/gnupg", None, True
+                "git_support",
+                "gnupg",
+                "GnuPG",
+                str(Path("/test-tmp/gnupg")),
+                None,
+                True,
             ),
             values,
         )
