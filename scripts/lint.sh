@@ -36,7 +36,7 @@ else
 fi
 
 # Shellcheck
-mapfile -t shell_scripts < <(find . -type f -name '*.sh' -not -path './.venv/*' | sort)
+mapfile -t shell_scripts < <(find . -type f -name '*.sh' -not -path './.venv*/*' | sort)
 
 if [[ ${#shell_scripts[@]} -gt 0 ]]; then
   echo "Validate shell scripts with bash -n"
@@ -54,7 +54,7 @@ docker run --rm \
   mcr.microsoft.com/powershell:latest \
   pwsh -NoProfile -Command '
     $scripts = Get-ChildItem -Path /workspace -Recurse -Force -File -Filter *.ps1 |
-      Where-Object { $_.FullName -notlike "/workspace/.venv/*" }
+      Where-Object { $_.FullName -notlike "/workspace/.venv*/*" }
     foreach ($script in $scripts) {
       $tokens = $null
       $errors = $null
@@ -72,7 +72,7 @@ docker run --rm \
 flake8 .
 
 # pylint (Python)
-PYTHONPATH=src pylint --ignore=.venv .
+PYTHONPATH=src pylint --ignore=.venv* .
 
 # bandit
 bandit --quiet -c .bandit.yml -r src scripts 2>/dev/null
