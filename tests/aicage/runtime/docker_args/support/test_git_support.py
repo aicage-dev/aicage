@@ -120,9 +120,7 @@ class GitSupportTests(TestCase):
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
         git_config = Path("/test-tmp/gitconfig")
-        git_items = [
-            (MOUNT_GITCONFIG_KEY, f"Git config (name/email): {git_config}")
-        ]
+        git_items = [(MOUNT_GITCONFIG_KEY, f"Git config (name/email): {git_config}")]
 
         with (
             mock.patch(

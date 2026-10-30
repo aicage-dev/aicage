@@ -179,9 +179,7 @@ class ExecutionScreenTests(TestCase):
         with mock.patch.object(
             screen, "query_one", side_effect=[status, log_path, build_info, log]
         ):
-            screen.show_phase_failed(
-                "build", "Build failed", build_log
-            )
+            screen.show_phase_failed("build", "Build failed", build_log)
 
         status.update.assert_called_once_with("Build failed")
         log_path.update.assert_called_once_with(str(build_log))
