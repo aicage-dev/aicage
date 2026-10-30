@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-10-30
+
+### Fixed
+
+- On Windows, `--docker` now mounts `/run/docker.sock` instead of the Windows named pipe.
+
 ## [1.6.0] - 2026-10-25
 
 ### Added
