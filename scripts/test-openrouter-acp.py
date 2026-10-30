@@ -17,7 +17,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic, sleep
-from typing import Any, Protocol, cast
+from typing import Any
 
 from aicage.paths import container_project_path
 
@@ -37,10 +37,6 @@ _MARKER_EXTENSION_SOURCE: Path = (
 )
 _CODEX_ACP_PACKAGE: str = "@agentclientprotocol/codex-acp"
 _CODEX_ACP_DIRECTORY: str = ".codex-acp"
-
-
-class _ProcessGroupOs(Protocol):
-    def killpg(self, process_group_id: int, signal_number: int) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -221,8 +217,7 @@ class _AcpClient:
                     capture_output=True,
                 )
             else:
-                posix_os = cast(_ProcessGroupOs, os)
-                posix_os.killpg(self._process.pid, termination_signal)
+                os.kill(-self._process.pid, termination_signal)
         except ProcessLookupError:
             pass
 
