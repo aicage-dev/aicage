@@ -153,6 +153,7 @@
     "pyml",
     "pypa",
     "pypi",
+    "pyproject",
     "pyrightconfig",
     "pytest",
     "pytestmark",
