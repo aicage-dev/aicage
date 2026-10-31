@@ -95,5 +95,5 @@ I'm not sure if this is interesting enough to users to have a full page about it
 But it should be documented somehow with reference to the [aicage/acp-wsl](https://github.com/aicage/acp-wsl) repo. That
 repo is the better place for a thorough documentation. I would not over-explain this in docs for Aicage.
 
-Also the user-facing docs for ACP config and config examples on Windows should be updated. The config examples should
+Also, the user-facing docs for ACP config and config examples on Windows should be updated. The config examples should
 already show the new `--acp-wsl` parameter for Windows.
