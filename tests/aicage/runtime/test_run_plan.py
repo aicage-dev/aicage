@@ -142,14 +142,13 @@ class RunPlanTests(TestCase):
         )
         parsed = ParsedArgs(False, "", "codex", [], False, [])
         with (
-            mock.patch.dict(
-                os.environ,
+            mock.patch(
+                "aicage._proxy.os.environ",
                 {
                     "HTTP_PROXY": "http://proxy-http:8080",
                     "HTTPS_PROXY": "http://proxy-https:8080",
                     "http_proxy": "http://ignored:8080",
                 },
-                clear=True,
             ),
             mock.patch(
                 "aicage.runtime.run_plan.resolve_host_timezone", return_value=None

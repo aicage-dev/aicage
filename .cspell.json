@@ -60,6 +60,7 @@
     "bwrap",
     "certifi",
     "charmland",
+    "choco",
     "classmethod",
     "conftest",
     "contextlib",

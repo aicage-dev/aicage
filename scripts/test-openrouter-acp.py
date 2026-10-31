@@ -106,7 +106,7 @@ class _AcpClient:
         try:
             self._process.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            self._terminate_process_group(signal.SIGKILL)
+            self._terminate_process_group(getattr(signal, "SIGKILL", signal.SIGTERM))
             self._process.wait()
 
     def stderr(self) -> str:
@@ -217,7 +217,7 @@ class _AcpClient:
                     capture_output=True,
                 )
             else:
-                os.killpg(self._process.pid, termination_signal)
+                os.kill(-self._process.pid, termination_signal)
         except ProcessLookupError:
             pass
 

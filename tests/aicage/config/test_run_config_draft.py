@@ -82,8 +82,11 @@ class RunConfigDraftTests(TestCase):
         if parsed is None:
             self.fail("Expected parsed args to be available.")
 
-        self.assertEqual(["/repo/new"], new_shares)
-        self.assertEqual(["/repo/existing", "/repo/new"], parsed.shares)
+        self.assertEqual([str(Path("/repo/new").resolve())], new_shares)
+        self.assertEqual(
+            [str(Path("/repo/existing").resolve()), str(Path("/repo/new").resolve())],
+            parsed.shares,
+        )
         self.assertEqual(["/repo/existing"], draft.agent_cfg.shares)
 
     def test_persist_shares_updates_config(self) -> None:
@@ -96,7 +99,10 @@ class RunConfigDraftTests(TestCase):
         new_shares = draft.merge_shares()
         draft.persist_shares(new_shares)
 
-        self.assertEqual(["/repo/existing", "/repo/new:ro"], draft.agent_cfg.shares)
+        self.assertEqual(
+            ["/repo/existing", f"{Path('/repo/new').resolve()}:ro"],
+            draft.agent_cfg.shares,
+        )
 
     def test_prefill_for_overview_applies_cli_values(self) -> None:
         draft = _build_draft(
@@ -119,7 +125,10 @@ class RunConfigDraftTests(TestCase):
         draft.prefill_for_overview()
 
         self.assertEqual("--new", draft.agent_cfg.docker_args)
-        self.assertEqual(["/repo/logs", "/repo/existing"], draft.agent_cfg.shares)
+        self.assertEqual(
+            [str(Path("/repo/logs").resolve()), str(Path("/repo/existing").resolve())],
+            draft.agent_cfg.shares,
+        )
         self.assertTrue(draft.agent_cfg.mounts.docker)
         self.assertEqual(["one", "two"], draft.agent_cfg.extensions)
         self.assertIsNone(draft.agent_cfg.image_ref)

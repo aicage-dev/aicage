@@ -10,7 +10,7 @@ from aicage.runtime.mounts.shares import merge_share_values, resolve_share_specs
 class ShareMountsTests(TestCase):
     def test_merge_share_values_merges_cli_over_existing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cwd = Path(tmp_dir)
+            cwd = Path(tmp_dir).resolve()
             existing = [f"{cwd / 'shared'}:ro", str(cwd / "existing")]
             cli = ["shared", "new"]
 
@@ -24,7 +24,7 @@ class ShareMountsTests(TestCase):
 
     def test_merge_share_values_deduplicates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cwd = Path(tmp_dir)
+            cwd = Path(tmp_dir).resolve()
             cli = ["data", "data:ro"]
 
             merged, new_shares = merge_share_values(cli, [], cwd)
