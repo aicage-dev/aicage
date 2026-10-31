@@ -83,10 +83,10 @@ Use your agent in your IDE while Aicage runs it in a Docker container.
 
 Add the configuration for your IDE, plugin and agent from these example configuration files:
 
-| IDE       | Plugin                                                                                     | Linux / macOS                                                  | Windows                                                                              |
-|-----------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| IDE       | Plugin                                                                                     | Linux / macOS                                                                | Windows                                                                              |
+|-----------|--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | VS Code   | [ACP Client](https://marketplace.visualstudio.com/items?itemName=formulahendry.acp-client) | [~/.config/Code/User/settings.json](config/ide-plugins/VScode/settings.json) | [%APPDATA%\Code\User\settings.json](config/ide-plugins/VScode/settings.windows.json) |
-| JetBrains | [AI Assistant](https://www.jetbrains.com/help/ai-assistant/activate-agents.html)           | [~/.jetbrains/acp.json](config/ide-plugins/JetBrains/acp.json)    | [%USERPROFILE%\.jetbrains\acp.json](config/ide-plugins/JetBrains/acp.windows.json)   |
+| JetBrains | [AI Assistant](https://www.jetbrains.com/help/ai-assistant/activate-agents.html)           | [~/.jetbrains/acp.json](config/ide-plugins/JetBrains/acp.json)               | [%USERPROFILE%\.jetbrains\acp.json](config/ide-plugins/JetBrains/acp.windows.json)   |
 
 1. Install the IDE plugin
 2. Configuration
