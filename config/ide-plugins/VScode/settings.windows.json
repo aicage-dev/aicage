@@ -30,13 +30,7 @@
     },
     "Vibe (Aicage)": {
       "command": "aicage",
-      "args": [
-        "--acp-wsl",
-        "-e",
-        "AICAGE_ENTRYPOINT_CMD=vibe-acp",
-        "--",
-        "vibe"
-      ]
+      "args": ["--acp-wsl", "-e", "AICAGE_ENTRYPOINT_CMD=vibe-acp", "--", "vibe"]
     },
     "Amp (Aicage)": {
       "command": "amp-acp",
