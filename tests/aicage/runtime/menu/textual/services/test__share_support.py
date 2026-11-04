@@ -81,8 +81,8 @@ class ShareSupportTests(TestCase):
                 return_value=False,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
-                return_value=Path("/test-tmp/ssh"),
+                "aicage.runtime.menu.textual.services._share_support.resolve_ssh_agent_socket",
+                return_value=Path("/test-tmp/agent.sock"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
@@ -199,10 +199,9 @@ class ShareSupportTests(TestCase):
                 return_value=False,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
-                return_value=Path("/test-tmp/ssh"),
+                "aicage.runtime.menu.textual.services._share_support.resolve_ssh_agent_socket",
+                return_value=Path("/test-tmp/agent.sock"),
             ),
-            mock.patch("pathlib.Path.exists", return_value=True),
         ):
             values = _share_support.built_in_share_values(
                 draft, _build_context().extensions
@@ -210,7 +209,12 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                "git_support", "ssh", "SSH", str(Path("/test-tmp/ssh")), None, True
+                "git_support",
+                "ssh",
+                "SSH agent",
+                str(Path("/test-tmp/agent.sock")),
+                None,
+                True,
             ),
             values,
         )

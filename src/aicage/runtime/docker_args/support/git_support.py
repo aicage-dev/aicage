@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -77,8 +78,21 @@ def resolve_gpg_home() -> Path | None:
     return fallback if fallback.exists() else None
 
 
-def resolve_ssh_dir() -> Path:
-    return HOST_SSH_DIR
+def resolve_ssh_agent_socket() -> Path | None:
+    socket_path = os.environ.get("SSH_AUTH_SOCK")
+    if socket_path:
+        return Path(socket_path)
+    if os.name == "nt":
+        return Path(r"\\.\pipe\openssh-ssh-agent")
+    return None
+
+
+def resolve_ssh_support_files() -> list[Path]:
+    return [
+        path
+        for path in (HOST_SSH_DIR / "config", HOST_SSH_DIR / "known_hosts")
+        if path.is_file()
+    ]
 
 
 def uses_ssh_remotes(project_path: Path) -> bool:
@@ -124,13 +138,13 @@ def _git_support_prompt_items(
     )
 
     if ssh_needed and mounts_cfg.ssh is None:
-        ssh_dir = resolve_ssh_dir()
-        if ssh_dir.exists():
+        ssh_agent_socket = resolve_ssh_agent_socket()
+        if ssh_agent_socket:
             git_items.append(
                 _GitSupportPromptItem(
                     MOUNT_SSH_KEY,
-                    "SSH keys (for Git SSH/signing)",
-                    ssh_dir,
+                    "SSH agent (for Git SSH/signing)",
+                    ssh_agent_socket,
                 )
             )
 

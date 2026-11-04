@@ -14,7 +14,7 @@ from aicage.runtime.docker_args.support.git_support import (
     resolve_git_config_path,
     resolve_git_root,
     resolve_gpg_home,
-    resolve_ssh_dir,
+    resolve_ssh_agent_socket,
     uses_ssh_remotes,
 )
 from aicage.runtime.docker_args.support.signing import (
@@ -92,14 +92,14 @@ def built_in_share_values(
         project_path
     )
     if ssh_needed:
-        ssh_dir = resolve_ssh_dir()
-        if ssh_dir.exists():
+        ssh_agent_socket = resolve_ssh_agent_socket()
+        if ssh_agent_socket:
             built_in_shares.append(
                 BuiltInShareValue(
                     source="git_support",
                     key=MOUNT_SSH_KEY,
                     label=git_support_label(MOUNT_SSH_KEY),
-                    path=str(ssh_dir),
+                    path=str(ssh_agent_socket),
                     persisted=mounts_cfg.ssh,
                     enabled=_built_in_share_enabled(mounts_cfg.ssh),
                     inherited=_is_inherited_mount(

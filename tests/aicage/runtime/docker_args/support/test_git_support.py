@@ -85,11 +85,36 @@ class GitSupportTests(TestCase):
                 path = git_support.resolve_gpg_home()
         self.assertIsNone(path)
 
-    def test_resolve_ssh_dir_uses_home(self) -> None:
-        ssh_dir = Path("/home/user") / HOST_SSH_DIR.name
-        with mock.patch(f"{_MODULE}.HOST_SSH_DIR", ssh_dir):
-            path = git_support.resolve_ssh_dir()
-        self.assertEqual(ssh_dir, path)
+    def test_resolve_ssh_agent_socket_reads_environment(self) -> None:
+        socket_path = "/test-tmp/agent.sock"
+        with mock.patch.dict("os.environ", {"SSH_AUTH_SOCK": socket_path}, clear=True):
+            path = git_support.resolve_ssh_agent_socket()
+        self.assertEqual(Path(socket_path), path)
+
+    def test_resolve_ssh_agent_socket_handles_missing_environment(self) -> None:
+        with mock.patch.dict("os.environ", {}, clear=True):
+            path = git_support.resolve_ssh_agent_socket()
+        self.assertIsNone(path)
+
+    def test_resolve_ssh_agent_socket_uses_windows_agent_pipe(self) -> None:
+        with (
+            mock.patch(f"{_MODULE}.os.name", "nt"),
+            mock.patch.dict("os.environ", {}, clear=True),
+        ):
+            path = git_support.resolve_ssh_agent_socket()
+        self.assertEqual(r"\\.\pipe\openssh-ssh-agent", str(path))
+
+    def test_resolve_ssh_support_files_returns_existing_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            ssh_dir = Path(tmp_dir) / HOST_SSH_DIR.name
+            ssh_dir.mkdir()
+            config = ssh_dir / "config"
+            config.touch()
+            known_hosts = ssh_dir / "known_hosts"
+            known_hosts.touch()
+            with mock.patch(f"{_MODULE}.HOST_SSH_DIR", ssh_dir):
+                paths = git_support.resolve_ssh_support_files()
+        self.assertEqual([config, known_hosts], paths)
 
     def test_uses_ssh_remotes_detects_scp_style_url(self) -> None:
         with mock.patch(
@@ -229,15 +254,18 @@ class GitSupportTests(TestCase):
         project_path = Path("/repo")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ssh_dir = Path(tmp_dir) / "ssh"
-            ssh_dir.mkdir()
+            ssh_agent_socket = Path(tmp_dir) / "agent.sock"
+            ssh_agent_socket.touch()
 
             with (
                 mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=None),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
                 mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
-                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
+                mock.patch(
+                    f"{_MODULE}.resolve_ssh_agent_socket",
+                    return_value=ssh_agent_socket,
+                ),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -250,8 +278,8 @@ class GitSupportTests(TestCase):
         project_path = Path("/repo")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ssh_dir = Path(tmp_dir) / "ssh"
-            ssh_dir.mkdir()
+            ssh_agent_socket = Path(tmp_dir) / "agent.sock"
+            ssh_agent_socket.touch()
             gpg_home = Path(tmp_dir) / "gnupg"
             gpg_home.mkdir()
 
@@ -261,7 +289,10 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
                 mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
-                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
+                mock.patch(
+                    f"{_MODULE}.resolve_ssh_agent_socket",
+                    return_value=ssh_agent_socket,
+                ),
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
