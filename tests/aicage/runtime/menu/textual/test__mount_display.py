@@ -2,7 +2,11 @@ from unittest import TestCase
 
 from textual.widgets.selection_list import Selection
 
-from aicage.config.project_config import MOUNT_GITCONFIG_KEY, MOUNT_SSH_KEY
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+)
 from aicage.runtime.menu.textual import _mount_display
 from aicage.runtime.menu.textual._models import BuiltInShareValue, CustomShareValue
 
@@ -22,6 +26,11 @@ class MountDisplayTests(TestCase):
         value = _mount_display.git_support_config_label(MOUNT_SSH_KEY)
 
         self.assertEqual("SSH agent (for SSH access)", value)
+
+    def test_git_support_config_label_describes_gnupg_agent(self) -> None:
+        value = _mount_display.git_support_config_label(MOUNT_GNUPG_KEY)
+
+        self.assertEqual("GnuPG agent (for Git commit signing)", value)
 
     def test_extension_label_returns_prefixed_label(self) -> None:
         value = _mount_display.extension_label("gh")

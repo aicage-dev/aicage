@@ -76,6 +76,6 @@ Used under `agents.<agent>` in the project config.
 | `mounts`           | map    | Optional | Host resource mount preferences.                         |
 | `mounts.gitconfig` | bool   | Optional | Mount the host Git config file.                          |
 | `mounts.gitroot`   | bool   | Optional | Mount the detected Git repository root.                  |
-| `mounts.gnupg`     | bool   | Optional | Mount the host GnuPG home for Git signing.               |
+| `mounts.gnupg`     | bool   | Optional | Mount the host GnuPG agent for Git signing.              |
 | `mounts.ssh`       | bool   | Optional | Mount the host SSH agent for Git SSH access and signing. |
 | `mounts.docker`    | bool   | Optional | Mount `/run/docker.sock` into the container.             |
