@@ -89,6 +89,43 @@ class GitSupportTests(TestCase):
                 path = git_support.resolve_gpg_home()
         self.assertIsNone(path)
 
+    def test_resolve_gpg_agent_extra_socket_parses_output(self) -> None:
+        socket_path = Path("/test-tmp/S.gpg-agent.extra")
+        with mock.patch(
+            f"{_MODULE}.capture_stdout",
+            return_value=f"{socket_path}\n",
+        ):
+            path = git_support.resolve_gpg_agent_extra_socket()
+        self.assertEqual(socket_path, path)
+
+    def test_resolve_gpg_public_files_returns_default_and_configured_files(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            gpg_home = Path(tmp_dir) / "gnupg"
+            gpg_home.mkdir()
+            (gpg_home / "pubring.kbx").touch()
+            (gpg_home / "trustdb.gpg").touch()
+            custom_keyring = gpg_home / "custom.kbx"
+            custom_keyring.touch()
+            gpg_conf = gpg_home / "gpg.conf"
+            gpg_conf.write_text(
+                "keyring custom.kbx\ntrustdb-name missing-trustdb.gpg\n",
+                encoding="utf-8",
+            )
+
+            paths = git_support.resolve_gpg_public_files(gpg_home)
+
+        self.assertEqual(
+            [
+                gpg_conf,
+                gpg_home / "pubring.kbx",
+                gpg_home / "trustdb.gpg",
+                custom_keyring,
+            ],
+            paths,
+        )
+
     def test__git_support_prompt_items(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
@@ -117,15 +154,15 @@ class GitSupportTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             git_config = Path(tmp_dir) / ".gitconfig"
             git_config.write_text("user.name = tester", encoding="utf-8")
-            gpg_home = Path(tmp_dir) / "gnupg"
-            gpg_home.mkdir()
-
             with (
                 mock.patch(
                     f"{_MODULE}.resolve_git_config_path", return_value=git_config
                 ),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
-                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
+                mock.patch(
+                    f"{_MODULE}.resolve_gpg_agent_extra_socket",
+                    return_value=Path(tmp_dir) / "S.gpg-agent.extra",
+                ),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
                 mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
@@ -143,8 +180,6 @@ class GitSupportTests(TestCase):
         git_root = Path("/repo/root")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            gpg_home = Path(tmp_dir) / "gnupg"
-            gpg_home.mkdir()
             git_config = Path(tmp_dir) / ".gitconfig"
             git_config.write_text("user.name = tester", encoding="utf-8")
 
@@ -153,7 +188,10 @@ class GitSupportTests(TestCase):
                     f"{_MODULE}.resolve_git_config_path", return_value=git_config
                 ),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
-                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
+                mock.patch(
+                    f"{_MODULE}.resolve_gpg_agent_extra_socket",
+                    return_value=Path(tmp_dir) / "S.gpg-agent.extra",
+                ),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value=None),
                 mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
@@ -226,16 +264,16 @@ class GitSupportTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             ssh_agent_socket = Path(tmp_dir) / "agent.sock"
             ssh_agent_socket.touch()
-            gpg_home = Path(tmp_dir) / "gnupg"
-            gpg_home.mkdir()
-
             with (
                 mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=None),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
                 mock.patch(f"{_MODULE}.has_ssh_support", return_value=True),
-                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
+                mock.patch(
+                    f"{_MODULE}.resolve_gpg_agent_extra_socket",
+                    return_value=Path(tmp_dir) / "S.gpg-agent.extra",
+                ),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
