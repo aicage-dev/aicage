@@ -9,12 +9,10 @@ from aicage.config.project_config import (
     MOUNT_SSH_KEY,
 )
 from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
+from aicage.runtime._ssh_agent import _has_ssh_support
 
 from ._exec import capture_stdout
 from .signing import is_commit_signing_enabled, resolve_signing_format
-
-_REMOTE_WITH_URL_FIELD_COUNT: int = 2
-_REMOTE_URL_INDEX: int = 1
 
 
 @dataclass(frozen=True)
@@ -77,22 +75,8 @@ def resolve_gpg_home() -> Path | None:
     return fallback if fallback.exists() else None
 
 
-def resolve_ssh_dir() -> Path:
-    return HOST_SSH_DIR
-
-
-def uses_ssh_remotes(project_path: Path) -> bool:
-    stdout = capture_stdout(["git", "remote", "-v"], cwd=project_path)
-    if not stdout:
-        return False
-    for line in stdout.splitlines():
-        fields = line.split()
-        if len(fields) < _REMOTE_WITH_URL_FIELD_COUNT:
-            continue
-        remote_url = fields[_REMOTE_URL_INDEX]
-        if remote_url.startswith("ssh://") or "@" in remote_url:
-            return True
-    return False
+def has_ssh_support() -> bool:
+    return _has_ssh_support()
 
 
 def _git_support_prompt_items(
@@ -119,20 +103,15 @@ def _git_support_prompt_items(
 
     signing_enabled = is_commit_signing_enabled(project_path)
     signing_format = resolve_signing_format(project_path) if signing_enabled else None
-    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(
-        project_path
-    )
 
-    if ssh_needed and mounts_cfg.ssh is None:
-        ssh_dir = resolve_ssh_dir()
-        if ssh_dir.exists():
-            git_items.append(
-                _GitSupportPromptItem(
-                    MOUNT_SSH_KEY,
-                    "SSH keys (for Git SSH/signing)",
-                    ssh_dir,
-                )
+    if has_ssh_support() and mounts_cfg.ssh is None:
+        git_items.append(
+            _GitSupportPromptItem(
+                MOUNT_SSH_KEY,
+                "SSH agent",
+                HOST_SSH_DIR,
             )
+        )
 
     needs_gnupg = signing_enabled and signing_format != "ssh"
     if needs_gnupg and mounts_cfg.gnupg is None:
