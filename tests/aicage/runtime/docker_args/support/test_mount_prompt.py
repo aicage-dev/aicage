@@ -22,7 +22,7 @@ class MountPromptTests(TestCase):
         git_items = [
             (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
             (MOUNT_GITROOT_KEY, "Git root (repository access): /test-tmp/root"),
-            (MOUNT_GNUPG_KEY, "GnuPG keys (for Git signing): /test-tmp/gnupg"),
+            (MOUNT_GNUPG_KEY, "GnuPG agent (for Git signing): /test-tmp/S.gpg-agent.extra"),
         ]
 
         with (

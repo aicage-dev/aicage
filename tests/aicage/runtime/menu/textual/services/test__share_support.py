@@ -241,10 +241,9 @@ class ShareSupportTests(TestCase):
                 return_value=False,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.resolve_gpg_home",
-                return_value=Path("/test-tmp/gnupg"),
+                "aicage.runtime.menu.textual.services._share_support.resolve_gpg_agent_extra_socket",
+                return_value=Path("/test-tmp/S.gpg-agent.extra"),
             ),
-            mock.patch("pathlib.Path.exists", return_value=True),
         ):
             values = _share_support.built_in_share_values(
                 draft, _build_context().extensions
@@ -254,8 +253,8 @@ class ShareSupportTests(TestCase):
             BuiltInShareValue(
                 "git_support",
                 "gnupg",
-                "GnuPG",
-                str(Path("/test-tmp/gnupg")),
+                "GnuPG agent",
+                str(Path("/test-tmp/S.gpg-agent.extra")),
                 None,
                 True,
             ),

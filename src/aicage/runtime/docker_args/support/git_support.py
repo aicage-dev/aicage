@@ -75,6 +75,56 @@ def resolve_gpg_home() -> Path | None:
     return fallback if fallback.exists() else None
 
 
+def resolve_gpg_agent_extra_socket() -> Path | None:
+    stdout = capture_stdout(["gpgconf", "--list-dirs", "agent-extra-socket"])
+    if not stdout:
+        return None
+    path = stdout.strip()
+    return Path(path).expanduser() if path else None
+
+
+def resolve_gpg_public_files(gpg_home: Path) -> list[Path]:
+    paths = [
+        path
+        for path in (
+            gpg_home / "gpg.conf",
+            gpg_home / "pubring.kbx",
+            gpg_home / "pubring.gpg",
+            gpg_home / "trustdb.gpg",
+            gpg_home / "tofu.db",
+        )
+        if path.is_file()
+    ]
+    gpg_conf = gpg_home / "gpg.conf"
+    if gpg_conf.is_file():
+        paths.extend(_configured_gpg_public_files(gpg_conf, gpg_home))
+    return list(dict.fromkeys(paths))
+
+
+def _configured_gpg_public_files(gpg_conf: Path, gpg_home: Path) -> list[Path]:
+    paths: list[Path] = []
+    for line in gpg_conf.read_text(encoding="utf-8").splitlines():
+        value = _gpg_config_public_file_value(line)
+        if value is None:
+            continue
+        path = Path(value).expanduser()
+        if not path.is_absolute():
+            path = gpg_home / path
+        if path.is_file():
+            paths.append(path)
+    return paths
+
+
+def _gpg_config_public_file_value(line: str) -> str | None:
+    value = line.strip()
+    if not value or value.startswith("#"):
+        return None
+    option, separator, path = value.partition(" ")
+    if option not in {"keyring", "trustdb-name"} or not separator:
+        return None
+    return path.strip() or None
+
+
 def has_ssh_support() -> bool:
     return _has_ssh_support()
 
@@ -115,13 +165,13 @@ def _git_support_prompt_items(
 
     needs_gnupg = signing_enabled and signing_format != "ssh"
     if needs_gnupg and mounts_cfg.gnupg is None:
-        gpg_home = resolve_gpg_home()
-        if gpg_home and gpg_home.exists():
+        gpg_agent_socket = resolve_gpg_agent_extra_socket()
+        if gpg_agent_socket:
             git_items.append(
                 _GitSupportPromptItem(
                     MOUNT_GNUPG_KEY,
-                    "GnuPG keys (for Git signing)",
-                    gpg_home,
+                    "GnuPG agent (for Git signing)",
+                    gpg_agent_socket,
                 )
             )
     return [(item.key, f"{item.label}: {item.path}") for item in git_items]
