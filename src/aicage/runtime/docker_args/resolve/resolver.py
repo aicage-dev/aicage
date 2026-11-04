@@ -20,7 +20,6 @@ from ..resolvers import (
     gpg,
     project,
     shares,
-    ssh_keys,
 )
 from ._mounts import map_mount_requests
 
@@ -62,7 +61,6 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
         acp_wsl.resolve,
         git_config.resolve,
         gpg.resolve,
-        ssh_keys.resolve,
         git_root.resolve,
         docker_socket.resolve,
         shares.resolve,

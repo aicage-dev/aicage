@@ -130,9 +130,10 @@ def setup_workspace(
     agent_name: str,
     *,
     docker_args: str | None = None,
+    workspace_path: Path | None = None,
 ) -> tuple[Path, dict[str, str]]:
     home_dir = Path.home().resolve()
-    workspace = tmp_path / "workspace"
+    workspace = workspace_path or tmp_path / "workspace"
     workspace.mkdir()
     workspace = workspace.resolve()
     monkeypatch.chdir(workspace)

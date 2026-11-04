@@ -77,12 +77,8 @@ class ShareSupportTests(TestCase):
                 return_value=None,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes",
+                "aicage.runtime.menu.textual.services._share_support.has_ssh_support",
                 return_value=False,
-            ),
-            mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
-                return_value=Path("/test-tmp/ssh"),
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
@@ -195,14 +191,9 @@ class ShareSupportTests(TestCase):
                 return_value="ssh",
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes",
-                return_value=False,
+                "aicage.runtime.menu.textual.services._share_support.has_ssh_support",
+                return_value=True,
             ),
-            mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.resolve_ssh_dir",
-                return_value=Path("/test-tmp/ssh"),
-            ),
-            mock.patch("pathlib.Path.exists", return_value=True),
         ):
             values = _share_support.built_in_share_values(
                 draft, _build_context().extensions
@@ -210,7 +201,12 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                "git_support", "ssh", "SSH", str(Path("/test-tmp/ssh")), None, True
+                "git_support",
+                "ssh",
+                "SSH agent",
+                "SSH agent",
+                None,
+                True,
             ),
             values,
         )
@@ -241,7 +237,7 @@ class ShareSupportTests(TestCase):
                 return_value="openpgp",
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.uses_ssh_remotes",
+                "aicage.runtime.menu.textual.services._share_support.has_ssh_support",
                 return_value=False,
             ),
             mock.patch(

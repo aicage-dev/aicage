@@ -9,13 +9,17 @@ from aicage.config.project_config import (
     MOUNT_SSH_KEY,
     _AgentMounts,
 )
-from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
+from aicage.paths import HOST_GNUPG_DIR
 from aicage.runtime.docker_args.support import git_support
 
 _MODULE = "aicage.runtime.docker_args.support.git_support"
 
 
 class GitSupportTests(TestCase):
+    def test_has_ssh_support(self) -> None:
+        with mock.patch(f"{_MODULE}._has_ssh_support", return_value=True):
+            self.assertTrue(git_support.has_ssh_support())
+
     def test_resolve_git_config_path_parses_first_file(self) -> None:
         output = "file:/home/user/.gitconfig user.name=Name\nfile:/test-tmp/other key=value\n"
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
@@ -85,37 +89,6 @@ class GitSupportTests(TestCase):
                 path = git_support.resolve_gpg_home()
         self.assertIsNone(path)
 
-    def test_resolve_ssh_dir_uses_home(self) -> None:
-        ssh_dir = Path("/home/user") / HOST_SSH_DIR.name
-        with mock.patch(f"{_MODULE}.HOST_SSH_DIR", ssh_dir):
-            path = git_support.resolve_ssh_dir()
-        self.assertEqual(ssh_dir, path)
-
-    def test_uses_ssh_remotes_detects_scp_style_url(self) -> None:
-        with mock.patch(
-            f"{_MODULE}.capture_stdout",
-            return_value="origin git@github.com:aicage/aicage.git (fetch)\n",
-        ):
-            self.assertTrue(git_support.uses_ssh_remotes(Path("/repo")))
-
-    def test_uses_ssh_remotes_detects_ssh_scheme_url(self) -> None:
-        with mock.patch(
-            f"{_MODULE}.capture_stdout",
-            return_value="origin ssh://git@github.com/aicage/aicage.git (fetch)\n",
-        ):
-            self.assertTrue(git_support.uses_ssh_remotes(Path("/repo")))
-
-    def test_uses_ssh_remotes_skips_https_url(self) -> None:
-        with mock.patch(
-            f"{_MODULE}.capture_stdout",
-            return_value="origin https://github.com/aicage/aicage.git (fetch)\n",
-        ):
-            self.assertFalse(git_support.uses_ssh_remotes(Path("/repo")))
-
-    def test_uses_ssh_remotes_handles_empty_output(self) -> None:
-        with mock.patch(f"{_MODULE}.capture_stdout", return_value=""):
-            self.assertFalse(git_support.uses_ssh_remotes(Path("/repo")))
-
     def test__git_support_prompt_items(self) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
@@ -129,7 +102,7 @@ class GitSupportTests(TestCase):
             ),
             mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
-            mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
+            mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
             items = git_support._git_support_prompt_items(project_path, mounts_cfg)
@@ -155,7 +128,7 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
-                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
+                mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -183,7 +156,7 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value=None),
-                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
+                mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -197,7 +170,7 @@ class GitSupportTests(TestCase):
             mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=None),
             mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
             mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
-            mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=False),
+            mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
         ):
             items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -224,20 +197,21 @@ class GitSupportTests(TestCase):
         mount_prefs = prompt_items_mock.call_args.args[1]
         self.assertIsNone(mount_prefs.gitconfig)
 
-    def test__git_support_prompt_items_include_ssh_for_ssh_remotes(self) -> None:
+    def test__git_support_prompt_items_include_ssh_when_host_support_is_available(
+        self,
+    ) -> None:
         mounts_cfg = _AgentMounts()
         project_path = Path("/repo")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ssh_dir = Path(tmp_dir) / "ssh"
-            ssh_dir.mkdir()
+            ssh_agent_socket = Path(tmp_dir) / "agent.sock"
+            ssh_agent_socket.touch()
 
             with (
                 mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=None),
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=False),
-                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
-                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
+                mock.patch(f"{_MODULE}.has_ssh_support", return_value=True),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -250,8 +224,8 @@ class GitSupportTests(TestCase):
         project_path = Path("/repo")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ssh_dir = Path(tmp_dir) / "ssh"
-            ssh_dir.mkdir()
+            ssh_agent_socket = Path(tmp_dir) / "agent.sock"
+            ssh_agent_socket.touch()
             gpg_home = Path(tmp_dir) / "gnupg"
             gpg_home.mkdir()
 
@@ -260,8 +234,7 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
                 mock.patch(f"{_MODULE}.is_commit_signing_enabled", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_signing_format", return_value="gpg"),
-                mock.patch(f"{_MODULE}.uses_ssh_remotes", return_value=True),
-                mock.patch(f"{_MODULE}.resolve_ssh_dir", return_value=ssh_dir),
+                mock.patch(f"{_MODULE}.has_ssh_support", return_value=True),
                 mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)

@@ -1,5 +1,6 @@
 import io
 import tempfile
+from contextlib import nullcontext
 from pathlib import Path
 from unittest import TestCase, mock
 
@@ -159,8 +160,8 @@ class EntrypointTests(TestCase):
                 "aicage.cli.entrypoint.load_run_config", return_value=run_config
             ),
             mock.patch(
-                "aicage.cli.entrypoint.build_run_args",
-                return_value=_build_run_args("repo:tag", "", []),
+                "aicage.cli.entrypoint.prepare_run_args",
+                return_value=nullcontext(_build_run_args("repo:tag", "", [])),
             ),
             mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
             mock.patch("aicage.cli.entrypoint.run_container") as run_container_mock,
@@ -256,7 +257,8 @@ class EntrypointTests(TestCase):
                     "aicage.cli.entrypoint.load_run_config", return_value=run_config
                 ),
                 mock.patch(
-                    "aicage.cli.entrypoint.build_run_args", return_value=run_args
+                    "aicage.cli.entrypoint.prepare_run_args",
+                    return_value=nullcontext(run_args),
                 ),
                 mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
                 mock.patch("aicage.cli.entrypoint.run_container") as run_mock,
@@ -298,7 +300,8 @@ class EntrypointTests(TestCase):
                     "aicage.cli.entrypoint.load_run_config", return_value=run_config
                 ),
                 mock.patch(
-                    "aicage.cli.entrypoint.build_run_args", return_value=run_args
+                    "aicage.cli.entrypoint.prepare_run_args",
+                    return_value=nullcontext(run_args),
                 ),
                 mock.patch("aicage.cli.entrypoint.prepare_image") as prepare_image_mock,
                 mock.patch("aicage.cli.entrypoint.run_container"),
