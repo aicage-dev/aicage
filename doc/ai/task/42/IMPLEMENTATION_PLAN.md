@@ -152,8 +152,8 @@ After the design gate succeeds, add a narrow private platform-keyring abstractio
 - recreated or rebooted sidecars reload every required key before target startup;
 - noninteractive use never prompts and produces a clear missing-keyring-secret error.
 
-Keep GnuPG's agent and pinentry lifecycle inside its sidecar. Define its interactive and noninteractive behaviour as part of
-the image command contract before implementation.
+Keep GnuPG's agent and pinentry lifecycle inside its sidecar. Define its interactive and noninteractive behaviour as
+part of the image command contract before implementation.
 
 For passphrase-protected GnuPG secret keys that must be usable noninteractively, use the same platform-keyring pattern:
 store the passphrase by the relevant secret-key or subkey fingerprint, retrieve it only transiently, and provide it to a
