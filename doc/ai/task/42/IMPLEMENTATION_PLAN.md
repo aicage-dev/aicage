@@ -33,6 +33,36 @@ by KWallet. A temporary item was stored, retrieved by a fresh client process, de
 the user-session service. The default collection was unlocked and exposes the standard `Locked`, `Lock`, and
 `Unlock` API.
 
+### Windows validation (2026-11-05)
+
+Validated on this Windows host: use Windows Credential Manager's native `CredWriteW`, `CredReadW`, and
+`CredDeleteW` APIs with `CRED_TYPE_GENERIC` credentials as the Windows platform-keyring API. A temporary generic
+credential was written, read back by a fresh PowerShell process through `CredReadW`, deleted, and confirmed absent.
+The validation command used the built-in `cmdkey` only to create/delete the temporary item; it is not an Aicage
+runtime dependency. Aicage must call the native APIs itself under the invoking user's token.
+
+Use a stable, namespaced target name such as `aicage/ssh/passphrase/<SSH-SHA256-fingerprint>` or
+`aicage/gpg/passphrase/<GPG-subkey-fingerprint>`, with `CRED_PERSIST_LOCAL_MACHINE`. Generic credentials hold
+application-defined secret data and persist across later logons of the same user on the same machine. They are not
+an application-isolated store: another process running as that user can access them, which is the normal Windows
+Credential Manager security boundary.
+
+Unlike Secret Service, Credential Manager has no separate locked-store or unlock-prompt state for a normal
+interactive user token. `CredReadW` is noninteractive, so the same-user noninteractive reload path can retrieve a
+stored passphrase without a prompt. Treat `ERROR_NOT_FOUND`, `ERROR_NO_SUCH_LOGON_SESSION` (including a token with
+no associated credential set), and other native API failures as clear failures before target-container startup.
+
+The current Aicage environment has no `keyring` package. Python `keyring`'s `WinVaultKeyring` backend can use
+Credential Manager but adds a `pywin32`/`pywin32-ctypes` dependency and its automatic backend selection may be
+affected by configuration. Prefer a narrow direct `ctypes` wrapper around the three Credential Manager APIs, or
+explicitly select and verify that backend; do not silently fall back to a file or other configured backend.
+
+The Windows keyring can store the passphrases for both SSH and GnuPG keys, but it does not solve agent-loading
+semantics. `ssh-add` needs a controlled askpass-helper/file-descriptor design rather than assuming it accepts a
+passphrase directly on stdin. GnuPG can accept a passphrase via a loopback pinentry file descriptor for a focused
+operation, but preloading `gpg-agent` has separate keygrip, pinentry, and cache rules; define and test that sidecar
+command contract without placing a passphrase in arguments or environment variables.
+
 Implementation must treat a missing session bus/service, D-Bus access denial, a locked collection/item, a missing
 secret, or an operation that would require an unlock prompt as a clear noninteractive failure before target-container
 startup. The validation client (`secret-tool`) is not an Aicage runtime dependency; select a Python client that uses
