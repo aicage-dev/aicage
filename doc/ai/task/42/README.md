@@ -109,7 +109,10 @@ Global and tree shared-configuration edits must perform the same terminal SSH se
 though they do not start a target agent container.
 
 The GnuPG sidecar owns its GnuPG agent lifecycle and pinentry behavior. Its noninteractive behavior must likewise never
-prompt. The socket volumes never contain private keys or passphrases.
+prompt. For passphrase-protected GnuPG secret keys that must be used noninteractively, Aicage stores the passphrase in
+the platform keyring by the relevant secret-key or subkey fingerprint and passes it only transiently, via stdin, to a
+one-time sidecar operation. This complements rather than replaces the sidecar's interactive pinentry, smartcard, cache,
+and key-selection behavior. The socket volumes never contain private keys or passphrases.
 
 ## Implementation areas
 
