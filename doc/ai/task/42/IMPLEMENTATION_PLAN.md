@@ -171,6 +171,12 @@ After the design gate succeeds, add a narrow private platform-keyring abstractio
 Keep GnuPG's agent and pinentry lifecycle inside its sidecar. Define its interactive and noninteractive behaviour as
 part of the image command contract before implementation.
 
+For passphrase-protected GnuPG secret keys that must be usable noninteractively, use the same platform-keyring pattern:
+store the passphrase by the relevant secret-key or subkey fingerprint, retrieve it only transiently, and provide it to a
+one-time sidecar operation through stdin. The target container must never receive the passphrase or private-key files.
+This does not replace the sidecar's interactive pinentry, smartcard, cache, or key-selection behaviour; that command
+contract still needs to define those cases.
+
 ## Commit 5: `aicage` integration and platform coverage
 
 Extend the existing SSH and GnuPG integration suites and Windows workflow to cover:
