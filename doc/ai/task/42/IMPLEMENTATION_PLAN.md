@@ -17,6 +17,22 @@ The private-key restriction applies to target/agent containers, not to the narro
 direct host-agent forwarding is unavailable, a credential sidecar may receive only the host private-key material it
 needs, read-only; it must expose only its agent socket to target containers.
 
+## Design gate: sidecar runtime identity
+
+Do not leave the credential sidecars running as the image default user merely because the image currently defaults to
+root. On Unix, the sidecar must run with the effective target-container UID/GID (normally the invoking host user's
+numeric identity), so the sockets it creates in the named volume are usable by the target container without broadening
+socket permissions. Resolve this consistently with Aicage's existing target-container identity logic. Windows and
+rootless Docker need an explicit, tested mapping because the current target-container identity may legitimately be
+root in those environments.
+
+Keep the utility image UID-agnostic and set the runtime user when Aicage creates the sidecar; do not bake a fixed UID
+or ownership into the image. Test socket ownership and connection as the target-container user for both protocols.
+
+`aicage-image-util:agent-version` also currently runs with its image-default user. Audit its invocation separately:
+it is a short-lived, read-only version-script runner rather than a credential sidecar, so do not change it under this
+task without confirming its required file ownership and execution behavior.
+
 ## Design gate: native keyring behaviour
 
 Before implementing automated encrypted SSH-key loading, validate the intended operating-system keyring API on Linux
