@@ -25,6 +25,24 @@ Windows, and macOS.
 `aicage` does not currently use a keyring client. The intended design is for Aicage itself to call the platform keyring
 service under the invoking user's account; it must not require a separate credential tool.
 
+### General requirements
+
+Store passphrases by public-key fingerprint. Use a stable, namespaced credential name, for example
+`aicage/ssh/passphrase/<SSH-SHA256-fingerprint>` or `aicage/gpg/passphrase/<GPG-subkey-fingerprint>`.
+
+A noninteractive run must fail before target-container startup if the secret is unavailable in the platform store,
+inaccessible, locked, or would require a prompt. If validation succeeds, an interactive configuration run obtains the
+passphrase once and stores it through the native keyring API. A later run retrieves the raw secret only transiently,
+then hands it to a one-time sidecar loading command through stdin. It must not occur in command arguments, target
+environment, sidecar configuration, labels, logs, or socket volumes. No design can avoid brief plaintext process
+memory when a passphrase must be supplied to `ssh-add`.
+
+The platform keyring can store passphrases for both SSH and GnuPG keys, but it does not solve agent-loading semantics.
+`ssh-add` needs a controlled askpass-helper/file-descriptor design rather than assuming it accepts a passphrase
+directly on stdin. GnuPG can accept a passphrase via a loopback pinentry file descriptor for a focused operation, but
+preloading `gpg-agent` has separate keygrip, pinentry, and cache rules; define and test that sidecar command contract
+without placing a passphrase in arguments or environment variables.
+
 ### Linux validation (2026-11-05)
 
 Validated on Nobara Linux 44 / KDE Plasma: use the freedesktop.org Secret Service API
@@ -39,8 +57,7 @@ startup. The validation client (`secret-tool`) is not an Aicage runtime dependen
 the same Secret Service API.
 
 Validate that an Aicage-created item can be created, retrieved from a fresh Aicage process, and deleted. Check locked
-store and denied-access behaviour. macOS specifically needs an acceptable approval experience for the Python CLI
-process. Do not assume a client is authorized merely because it runs as the logged-in user.
+store and denied-access behaviour.
 
 ### Windows validation (2026-11-05)
 
@@ -48,13 +65,10 @@ Validated on this Windows host: use Windows Credential Manager's native `CredWri
 `CredDeleteW` APIs with `CRED_TYPE_GENERIC` credentials as the Windows platform-keyring API. A temporary generic
 credential was written, read back by a fresh PowerShell process through `CredReadW`, deleted, and confirmed absent.
 The validation command used the built-in `cmdkey` only to create/delete the temporary item; it is not an Aicage
-runtime dependency. Aicage must call the native APIs itself under the invoking user's token.
-
-Use a stable, namespaced target name such as `aicage/ssh/passphrase/<SSH-SHA256-fingerprint>` or
-`aicage/gpg/passphrase/<GPG-subkey-fingerprint>`, with `CRED_PERSIST_LOCAL_MACHINE`. Generic credentials hold
-application-defined secret data and persist across later logons of the same user on the same machine. They are not
-an application-isolated store: another process running as that user can access them, which is the normal Windows
-Credential Manager security boundary.
+runtime dependency. Aicage must call the native APIs itself under the invoking user's token. Use
+`CRED_PERSIST_LOCAL_MACHINE`; generic credentials hold application-defined secret data and persist across later
+logons of the same user on the same machine. They are not an application-isolated store: another process running as
+that user can access them, which is the normal Windows Credential Manager security boundary.
 
 Unlike Secret Service, Credential Manager has no separate locked-store or unlock-prompt state for a normal
 interactive user token. `CredReadW` is noninteractive, so the same-user noninteractive reload path can retrieve a
@@ -66,19 +80,12 @@ Credential Manager but adds a `pywin32`/`pywin32-ctypes` dependency and its auto
 affected by configuration. Prefer a narrow direct `ctypes` wrapper around the three Credential Manager APIs, or
 explicitly select and verify that backend; do not silently fall back to a file or other configured backend.
 
-The Windows keyring can store the passphrases for both SSH and GnuPG keys, but it does not solve agent-loading
-semantics. `ssh-add` needs a controlled askpass-helper/file-descriptor design rather than assuming it accepts a
-passphrase directly on stdin. GnuPG can accept a passphrase via a loopback pinentry file descriptor for a focused
-operation, but preloading `gpg-agent` has separate keygrip, pinentry, and cache rules; define and test that sidecar
-command contract without placing a passphrase in arguments or environment variables.
+### macOS validation (pending)
 
-Store passphrases by public-key fingerprint. A noninteractive run must fail before target-container startup if the
-secret is missing, locked, inaccessible, or would cause a prompt.
-
-If validation succeeds, an interactive configuration run obtains the passphrase once and stores it through the native
-keyring API. A later run retrieves the raw secret only transiently, then hands it to a one-time sidecar loading command
-through stdin. It must not occur in command arguments, target environment, sidecar configuration, labels, logs, or
-socket volumes. No design can avoid brief plaintext process memory when a passphrase must be supplied to `ssh-add`.
+Validate the native macOS Keychain API through the Python client selected for Aicage. Confirm that an Aicage-created
+item can be created, retrieved from a fresh Aicage process, and deleted; check missing-secret and denied-access
+behaviour. The Python CLI must have an acceptable approval experience. Do not assume a client is authorized merely
+because it runs as the logged-in user.
 
 ## Commit 1: `aicage-image-util` credential image
 
