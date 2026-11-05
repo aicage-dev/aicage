@@ -33,6 +33,15 @@ by KWallet. A temporary item was stored, retrieved by a fresh client process, de
 the user-session service. The default collection was unlocked and exposes the standard `Locked`, `Lock`, and
 `Unlock` API.
 
+Implementation must treat a missing session bus/service, D-Bus access denial, a locked collection/item, a missing
+secret, or an operation that would require an unlock prompt as a clear noninteractive failure before target-container
+startup. The validation client (`secret-tool`) is not an Aicage runtime dependency; select a Python client that uses
+the same Secret Service API.
+
+Validate that an Aicage-created item can be created, retrieved from a fresh Aicage process, and deleted. Check locked
+store and denied-access behaviour. macOS specifically needs an acceptable approval experience for the Python CLI
+process. Do not assume a client is authorized merely because it runs as the logged-in user.
+
 ### Windows validation (2026-11-05)
 
 Validated on this Windows host: use Windows Credential Manager's native `CredWriteW`, `CredReadW`, and
@@ -62,15 +71,6 @@ semantics. `ssh-add` needs a controlled askpass-helper/file-descriptor design ra
 passphrase directly on stdin. GnuPG can accept a passphrase via a loopback pinentry file descriptor for a focused
 operation, but preloading `gpg-agent` has separate keygrip, pinentry, and cache rules; define and test that sidecar
 command contract without placing a passphrase in arguments or environment variables.
-
-Implementation must treat a missing session bus/service, D-Bus access denial, a locked collection/item, a missing
-secret, or an operation that would require an unlock prompt as a clear noninteractive failure before target-container
-startup. The validation client (`secret-tool`) is not an Aicage runtime dependency; select a Python client that uses
-the same Secret Service API.
-
-Validate that an Aicage-created item can be created, retrieved from a fresh Aicage process, and deleted. Check locked
-store and denied-access behaviour. macOS specifically needs an acceptable approval experience for the Python CLI
-process. Do not assume a client is authorized merely because it runs as the logged-in user.
 
 Store passphrases by public-key fingerprint. A noninteractive run must fail before target-container startup if the
 secret is missing, locked, inaccessible, or would cause a prompt.
