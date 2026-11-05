@@ -13,6 +13,10 @@ The sidecars are global Docker singleton resources, not project resources:
 Both have `org.aicage.resource=credential-agent`, a protocol label, and a helper image/protocol version label.
 Socket volumes persist across ordinary Aicage exits and are never mounted with host credential directories.
 
+The private-key restriction applies to target/agent containers, not to the narrowly scoped credential sidecars. When
+direct host-agent forwarding is unavailable, a credential sidecar may receive only the host private-key material it
+needs, read-only; it must expose only its agent socket to target containers.
+
 ## Design gate: native keyring behaviour
 
 Before implementing automated encrypted SSH-key loading, validate the intended operating-system keyring API on Linux,
@@ -20,6 +24,19 @@ Windows, and macOS.
 
 `aicage` does not currently use a keyring client. The intended design is for Aicage itself to call the platform keyring
 service under the invoking user's account; it must not require a separate credential tool.
+
+### Linux validation (2026-11-05)
+
+Validated on Nobara Linux 44 / KDE Plasma: use the freedesktop.org Secret Service API
+(`org.freedesktop.secrets`) as the Linux platform-keyring API. On this host it is provided by KDE `ksecretd`, backed
+by KWallet. A temporary item was stored, retrieved by a fresh client process, deleted, and confirmed absent using
+the user-session service. The default collection was unlocked and exposes the standard `Locked`, `Lock`, and
+`Unlock` API.
+
+Implementation must treat a missing session bus/service, D-Bus access denial, a locked collection/item, a missing
+secret, or an operation that would require an unlock prompt as a clear noninteractive failure before target-container
+startup. The validation client (`secret-tool`) is not an Aicage runtime dependency; select a Python client that uses
+the same Secret Service API.
 
 Validate that an Aicage-created item can be created, retrieved from a fresh Aicage process, and deleted. Check locked
 store and denied-access behaviour. macOS specifically needs an acceptable approval experience for the Python CLI
