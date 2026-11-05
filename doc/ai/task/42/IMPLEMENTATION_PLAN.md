@@ -19,8 +19,8 @@ needs, read-only; it must expose only its agent socket to target containers.
 
 ## Design gate: native keyring behaviour
 
-Before implementing automated encrypted SSH-key loading, validate the intended operating-system keyring API on Linux,
-Windows, and macOS.
+Before implementing automated encrypted SSH-key loading, validate the intended operating-system keyring API on Linux
+and Windows. macOS remains unvalidated locally; see its platform note below.
 
 `aicage` does not currently use a keyring client. The intended design is for Aicage itself to call the platform keyring
 service under the invoking user's account; it must not require a separate credential tool.
@@ -80,12 +80,17 @@ Credential Manager but adds a `pywin32`/`pywin32-ctypes` dependency and its auto
 affected by configuration. Prefer a narrow direct `ctypes` wrapper around the three Credential Manager APIs, or
 explicitly select and verify that backend; do not silently fall back to a file or other configured backend.
 
-### macOS validation (pending)
+### macOS platform note (unvalidated)
 
-Validate the native macOS Keychain API through the Python client selected for Aicage. Confirm that an Aicage-created
-item can be created, retrieved from a fresh Aicage process, and deleted; check missing-secret and denied-access
-behaviour. The Python CLI must have an acceptable approval experience. Do not assume a client is authorized merely
-because it runs as the logged-in user.
+No macOS hardware is available for local validation, and macOS support is currently limited to basic CI coverage that
+may itself need repair. Do not block implementation on a pre-implementation macOS keyring test. Implement the native
+Keychain path with the same noninteractive guarantees as the other platforms, then use GitHub macOS CI after
+implementation to expose compatibility issues. This is a known best-effort risk, not evidence that Keychain behaves
+like the Linux Secret Service.
+
+When macOS validation becomes feasible, confirm that an Aicage-created item can be created, retrieved from a fresh
+Aicage process, and deleted; check missing-secret and denied-access behaviour. The Python CLI must have an acceptable
+approval experience. Do not assume a client is authorized merely because it runs as the logged-in user.
 
 ## Commit 1: `aicage-image-util` credential image
 
