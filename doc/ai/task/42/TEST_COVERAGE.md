@@ -47,6 +47,9 @@ They currently cover:
   numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
 - Socket-volume isolation: tests assert that the shared socket volume has no regular files after use. Client GnuPG
   state is deliberately kept in its separate home rather than being written to that volume.
+- GnuPG client isolation: after signing, both the simulated target and independent verifier homes have no files in
+  `private-keys-v1.d` and no secret keys reported by `gpg --list-secret-keys`. GnuPG may create that otherwise empty
+  directory even for a public-only home.
 
 This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
 
@@ -54,8 +57,8 @@ This is live image coverage, not a mock suite. It does not use a real host crede
 
 Add the following focused image-contract tests:
 
-- Assert that the client containers and socket volume contain no private keyring, secret-key directory, or passphrase
-  material. Allow only expected socket and directory artifacts in the volume.
+- Strengthen the filesystem scan for private-key or passphrase artifacts beyond the current socket-volume regular-file
+  and GnuPG-client-secret-key assertions. A completed container test cannot inspect transient process memory.
 - Define and test protected GnuPG loading for incorrect and absent passphrases without interactive pinentry.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
