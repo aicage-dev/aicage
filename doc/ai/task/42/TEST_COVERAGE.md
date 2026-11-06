@@ -28,6 +28,8 @@ arm64 builders. It currently covers:
   sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
 - GnuPG client signing: a separate container signs through the shared socket volume with an unprotected synthetic
   signing key, and a third container verifies that signature using only the public key.
+- Protected GnuPG client signing: the sidecar receives the generated key's passphrase on stdin, then a separate
+  client signs through the shared socket volume and a public-key-only third container verifies the signature.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID.
 - Socket-volume isolation: tests assert that the socket volume has no regular files after use.
@@ -42,9 +44,6 @@ Add the following focused image-contract tests:
   empty until the caller reloads the identities.
 - Authenticate from a separate client container through the socket volume against an ephemeral SSH server whose
   `authorized_keys` contains only the generated public key. The client must not receive a private-key mount.
-- Load a protected GnuPG key and sign from a separate client container through the shared socket volume. Verify that
-  signature from a third container which has only the public key. The current cross-container signing proof uses an
-  unprotected key; signing inside the sidecar is not sufficient.
 - Verify absent/incorrect GnuPG passphrase behavior without interactive pinentry.
 - Assert that the client containers and socket volume contain no private keyring, secret-key directory, or passphrase
   material. Allow only expected socket and directory artifacts in the volume.
