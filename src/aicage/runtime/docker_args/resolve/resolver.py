@@ -17,7 +17,6 @@ from ..resolvers import (
     docker_socket,
     git_config,
     git_root,
-    gpg,
     project,
     shares,
 )
@@ -60,7 +59,6 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
         agent_config.resolve,
         acp_wsl.resolve,
         git_config.resolve,
-        gpg.resolve,
         git_root.resolve,
         docker_socket.resolve,
         shares.resolve,

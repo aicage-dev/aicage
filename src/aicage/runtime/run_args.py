@@ -9,6 +9,13 @@ class MountSpec:
     read_only: bool = False
 
 
+@dataclass
+class VolumeMountSpec:
+    volume_name: str
+    container_path: PurePosixPath
+    read_only: bool = False
+
+
 @dataclass(frozen=True)
 class EnvVar:
     name: str
@@ -21,7 +28,7 @@ class DockerRunArgs:
     merged_docker_args: str
     agent_args: list[str]
     env: list[EnvVar] = field(default_factory=list)
-    mounts: list[MountSpec] = field(default_factory=list)
+    mounts: list[MountSpec | VolumeMountSpec] = field(default_factory=list)
 
 
 def _merge_docker_args(*args: str) -> str:

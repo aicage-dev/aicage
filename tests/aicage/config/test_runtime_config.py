@@ -171,11 +171,13 @@ class RuntimeConfigTests(TestCase):
                 return_value=self._get_agents(),
             ),
             mock.patch("aicage.config.runtime_config.load_extensions", return_value={}),
+            mock.patch("aicage.config.runtime_config.ensure_ssh_setup") as setup_mock,
         ):
             configure_inherited_config("global", "codex", interaction)
 
         interaction.configure_run.assert_called_once()
         store.save_global.assert_called_once_with(config)
+        setup_mock.assert_called_once_with(mock.ANY, "codex", interaction.reporter)
 
     def test_configure_inherited_config_prefills_cli_values(self) -> None:
         store = mock.Mock()

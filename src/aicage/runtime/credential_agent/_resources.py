@@ -4,7 +4,7 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 import portalocker
 from docker.client import DockerClient
@@ -37,6 +37,7 @@ class _CredentialResource:
     volume_name: str
     socket_directory: PurePosixPath
     socket_path: PurePosixPath
+    credential_directory: PurePosixPath
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,7 @@ _RESOURCES: dict[_CredentialProtocol, _CredentialResource] = {
         volume_name="aicage-ssh-agent-socket",
         socket_directory=PurePosixPath("/run/aicage-credential-agent"),
         socket_path=PurePosixPath("/run/aicage-credential-agent/ssh-agent.sock"),
+        credential_directory=PurePosixPath("/credential/ssh"),
     ),
     _CredentialProtocol.GPG: _CredentialResource(
         protocol=_CredentialProtocol.GPG,
@@ -60,6 +62,7 @@ _RESOURCES: dict[_CredentialProtocol, _CredentialResource] = {
         volume_name="aicage-gpg-agent-socket",
         socket_directory=PurePosixPath("/run/aicage-credential-agent"),
         socket_path=PurePosixPath("/run/aicage-credential-agent/S.gpg-agent"),
+        credential_directory=PurePosixPath("/credential/gnupg"),
     ),
 }
 
@@ -73,8 +76,10 @@ def _ensure_resources(
     image_ref: str,
     image_id: str,
     user: str,
+    credential_paths: dict[_CredentialProtocol, Path] | None = None,
 ) -> list[_CredentialResource]:
     requested = _resources(protocols)
+    resolved_credential_paths = credential_paths or {}
     if not requested:
         return []
     image = _ImageSpec(image_ref=image_ref, image_id=image_id, user=user)
@@ -84,7 +89,10 @@ def _ensure_resources(
             volume = _ensure_volume(client, resource)
             _prepare_volume(client, resource, volume, image)
             container = _find_container(client, resource)
-            if container is None or _requires_replacement(container, resource, image.image_id):
+            credential_path = resolved_credential_paths.get(resource.protocol)
+            if container is None or _requires_replacement(
+                container, resource, image.image_id, credential_path
+            ):
                 if container is not None:
                     container.remove(force=True)
                 container = _create_container(
@@ -92,6 +100,7 @@ def _ensure_resources(
                     resource,
                     volume,
                     image,
+                    credential_path,
                 )
             elif _is_stopped(container):
                 container.start()
@@ -126,6 +135,7 @@ def _requires_replacement(
     container: Container,
     resource: _CredentialResource,
     image_id: str,
+    credential_path: Path | None,
 ) -> bool:
     if not _is_owned(container, resource):
         raise DockerError(
@@ -136,6 +146,8 @@ def _requires_replacement(
         return True
     if labels.get(_IMAGE_ID_LABEL) != image_id:
         return True
+    if _credential_mount_path(container, resource) != credential_path:
+        return True
     return _is_unhealthy(container)
 
 
@@ -144,7 +156,19 @@ def _create_container(
     resource: _CredentialResource,
     volume: Volume,
     image: _ImageSpec,
+    credential_path: Path | None,
 ) -> Container:
+    volumes = {
+        volume.name: {
+            "bind": resource.socket_directory.as_posix(),
+            "mode": "rw",
+        }
+    }
+    if credential_path is not None:
+        volumes[str(credential_path)] = {
+            "bind": resource.credential_directory.as_posix(),
+            "mode": "ro",
+        }
     return client.containers.run(
         image.image_ref,
         [resource.protocol.value, "serve"],
@@ -152,12 +176,7 @@ def _create_container(
         name=resource.container_name,
         user=image.user,
         labels=_labels(resource, image_id=image.image_id),
-        volumes={
-            volume.name: {
-                "bind": resource.socket_directory.as_posix(),
-                "mode": "rw",
-            }
-        },
+        volumes=volumes,
     )
 
 
@@ -260,6 +279,24 @@ def _state_for(container: Container) -> dict[str, object]:
     attrs = getattr(container, "attrs", {})
     state = attrs.get("State", {}) if isinstance(attrs, dict) else {}
     return state if isinstance(state, dict) else {}
+
+
+def _credential_mount_path(
+    container: Container,
+    resource: _CredentialResource,
+) -> Path | None:
+    attrs = getattr(container, "attrs", {})
+    mounts = attrs.get("Mounts", []) if isinstance(attrs, dict) else []
+    if not isinstance(mounts, list):
+        return None
+    for mount in mounts:
+        if not isinstance(mount, dict):
+            continue
+        if mount.get("Destination") != resource.credential_directory.as_posix():
+            continue
+        source = mount.get("Source")
+        return Path(source) if isinstance(source, str) else None
+    return None
 
 
 @contextmanager
