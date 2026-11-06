@@ -20,12 +20,18 @@ arm64 builders. It currently covers:
 - GnuPG sidecar startup and readiness: a second container runs `gpg ready` through the shared named volume.
 - Encrypted SSH key loading: the test generates an encrypted Ed25519 key, mounts it read-only into the sidecar,
   supplies the passphrase on stdin, and uses `ssh-add -l` from another container through the socket volume.
+- SSH client signing: a separate client with only the generated public key creates an agent-backed signature through
+  the read-only socket volume, and another container verifies it against an allowed-signers file.
 - Unencrypted SSH key loading: the test loads a generated unencrypted Ed25519 key and lists it through the socket
   volume from a separate container.
 - SSH failure behavior: incorrect and absent passphrases fail without hanging; the absent-passphrase test has a
   five-second timeout.
+- SSH sidecar recreation: two identities load into one agent; replacing the sidecar while retaining its socket volume
+  produces an empty agent, and an explicit reload restores an identity.
 - Encrypted GnuPG key loading: the test creates a protected synthetic GnuPG key, mounts its home read-only into the
   sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
+- GnuPG failure behavior: an incorrect passphrase is rejected during `gpg load`, and absent stdin fails without
+  hanging; the absent-passphrase test has a five-second timeout.
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
@@ -42,11 +48,8 @@ This is live image coverage, not a mock suite. It does not use a real host crede
 
 Add the following focused image-contract tests:
 
-- Load multiple SSH identities; recreate the sidecar while retaining its volume; then verify that the new agent is
-  empty until the caller reloads the identities.
 - Authenticate from a separate client container through the socket volume against an ephemeral SSH server whose
   `authorized_keys` contains only the generated public key. The client must not receive a private-key mount.
-- Verify absent/incorrect GnuPG passphrase behavior without interactive pinentry.
 - Assert that the client containers and socket volume contain no private keyring, secret-key directory, or passphrase
   material. Allow only expected socket and directory artifacts in the volume.
 - Exercise startup and readiness as a supplied non-root UID:GID, including a recreated sidecar using the same named
