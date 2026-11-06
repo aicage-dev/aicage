@@ -20,8 +20,14 @@ arm64 builders. It currently covers:
 - GnuPG sidecar startup and readiness: a second container runs `gpg ready` through the shared named volume.
 - Encrypted SSH key loading: the test generates an encrypted Ed25519 key, mounts it read-only into the sidecar,
   supplies the passphrase on stdin, and uses `ssh-add -l` from another container through the socket volume.
+- Unencrypted SSH key loading: the test loads a generated unencrypted Ed25519 key and lists it through the socket
+  volume from a separate container.
+- SSH failure behavior: incorrect and absent passphrases fail without hanging; the absent-passphrase test has a
+  five-second timeout.
 - Encrypted GnuPG key loading: the test creates a protected synthetic GnuPG key, mounts its home read-only into the
   sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
+- GnuPG client signing: a separate container signs through the shared socket volume with an unprotected synthetic
+  signing key, and a third container verifies that signature using only the public key.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID.
 - Socket-volume isolation: tests assert that the socket volume has no regular files after use.
@@ -32,16 +38,14 @@ This is live image coverage, not a mock suite. It does not use a real host crede
 
 Add the following focused image-contract tests:
 
-- Load an unencrypted SSH key, and verify that an absent or incorrect SSH passphrase fails without prompting or
-  hanging.
 - Load multiple SSH identities; recreate the sidecar while retaining its volume; then verify that the new agent is
   empty until the caller reloads the identities.
 - Authenticate from a separate client container through the socket volume against an ephemeral SSH server whose
   `authorized_keys` contains only the generated public key. The client must not receive a private-key mount.
 - Load a protected GnuPG key and sign from a separate client container through the shared socket volume. Verify that
-  signature from a third container which has only the public key. This is the missing proof of the exported GnuPG
-  socket contract; signing inside the sidecar is not sufficient.
-- Verify unprotected GnuPG key loading plus absent/incorrect passphrase behavior without interactive pinentry.
+  signature from a third container which has only the public key. The current cross-container signing proof uses an
+  unprotected key; signing inside the sidecar is not sufficient.
+- Verify absent/incorrect GnuPG passphrase behavior without interactive pinentry.
 - Assert that the client containers and socket volume contain no private keyring, secret-key directory, or passphrase
   material. Allow only expected socket and directory artifacts in the volume.
 - Exercise startup and readiness as a supplied non-root UID:GID, including a recreated sidecar using the same named
