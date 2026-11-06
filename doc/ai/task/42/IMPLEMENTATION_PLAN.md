@@ -54,6 +54,10 @@ absence of credential data in the socket volume.
 
 ## Commit 2: `aicage` credential-image and Docker resource foundation
 
+**Status: complete.** The private credential-agent runtime package now owns shared credential-image setup, labelled
+singleton resource inspection and replacement, volume retention, socket readiness, volume ownership preparation, and
+the global creation lock. Protocol selection and host credential mounts remain deferred to Commit 3.
+
 Add a private credential-agent runtime package responsible for:
 
 - the credential image reference, following existing fork/repository configuration conventions;
