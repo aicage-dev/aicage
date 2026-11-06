@@ -13,8 +13,11 @@ Both repositories should test cross-container SSH and GnuPG use. They exercise d
 
 ## Current `aicage-image-util` coverage
 
-`images/credential-agent/test.sh` is a live Docker test executed by the credential-image workflow on Linux amd64 and
-arm64 builders. It currently covers:
+`images/credential-agent/test.bats` and its direct GnuPG client-signing companion in
+`images/credential-agent/test.sh` are live Docker tests executed by the credential-image workflow on Linux amd64 and
+arm64 builders. The Bats cases isolate the independent scenarios; protected and unprotected GnuPG client signing
+remains a direct Bash case because its stdin/agent interaction is not compatible with Bats' captured test process.
+They currently cover:
 
 - SSH sidecar startup and readiness: a second container runs `ssh ready` through the shared named volume.
 - GnuPG sidecar startup and readiness: a second container runs `gpg ready` through the shared named volume.
@@ -36,8 +39,10 @@ arm64 builders. It currently covers:
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
-- Protected GnuPG client signing: the sidecar receives the generated key's passphrase on stdin, then a separate
-  client signs through the shared socket volume and a public-key-only third container verifies the signature.
+- Protected GnuPG client signing: `gpg load` seeds both the normal sidecar-local cache and the GnuPG restricted cache
+  used by extra-socket clients. A separate public-key-only client then signs through the restricted socket volume and
+  a third container verifies the signature. The expected restricted-socket `Forbidden` key-listing diagnostic does
+  not prevent signing and is not a test failure.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
 - Socket-volume isolation: tests assert that the shared socket volume has no regular files after use. Client GnuPG
