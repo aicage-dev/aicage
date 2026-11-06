@@ -73,6 +73,14 @@ concurrent creation. Ensuring SSH and GnuPG in the same run must resolve/update 
 
 ## Commit 3: `aicage` forwarding selection and sidecar lifecycle
 
+**Status: complete.** The public credential-agent forwarding coordinator now selects a reachable Unix agent socket
+for direct forwarding and otherwise uses the persistent sidecar (always on Windows). It adds protocol-specific named
+volume mounts and environments to `DockerRunArgs`, preserves SSH/GnuPG public support mounts, mounts credential homes
+read-only only in sidecars, uses the target-container runtime UID/GID for sidecars, and removes the Windows OpenSSH
+service-management path and direct GnuPG resolver. Global and tree configuration saves ensure required SSH sidecars.
+Unit tests cover direct and fallback selection, Windows named-pipe avoidance, SSH/GnuPG target mount arguments,
+credential-sidecar mounts, resource replacement and lock errors, and target identity mapping.
+
 Replace the current separate SSH and GnuPG forwarding paths with one protocol-aware coordinator:
 
 - Unix: retain direct forwarding when a host agent socket is reachable and bind-mountable; select a sidecar otherwise.
