@@ -41,7 +41,7 @@ arm64 builders. It currently covers:
 - Protected GnuPG client signing: the sidecar receives the generated key's passphrase on stdin, then a separate
   client signs through the shared socket volume and a public-key-only third container verifies the signature.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
-  numeric UID:GID.
+  numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
 - Socket-volume isolation: tests assert that the shared socket volume has no regular files after use. Client GnuPG
   state is deliberately kept in its separate home rather than being written to that volume.
 
@@ -53,8 +53,6 @@ Add the following focused image-contract tests:
 
 - Assert that the client containers and socket volume contain no private keyring, secret-key directory, or passphrase
   material. Allow only expected socket and directory artifacts in the volume.
-- Exercise startup and readiness as a supplied non-root UID:GID, including a recreated sidecar using the same named
-  volume.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
