@@ -13,11 +13,8 @@ Both repositories should test cross-container SSH and GnuPG use. They exercise d
 
 ## Current `aicage-image-util` coverage
 
-`images/credential-agent/test.bats` and its direct GnuPG client-signing companion in
-`images/credential-agent/test.sh` are live Docker tests executed by the credential-image workflow on Linux amd64 and
-arm64 builders. The Bats cases isolate the independent scenarios; protected and unprotected GnuPG client signing
-remains a direct Bash case because its stdin/agent interaction is not compatible with Bats' captured test process.
-They currently cover:
+`images/credential-agent/test.bats` is a live Docker suite executed by the credential-image workflow on Linux amd64
+and arm64 builders. It currently covers:
 
 - SSH sidecar startup and readiness: a second container runs `ssh ready` through the shared named volume.
 - GnuPG sidecar startup and readiness: a second container runs `gpg ready` through the shared named volume.
@@ -36,6 +33,8 @@ They currently cover:
   produces an empty agent, and an explicit reload restores an identity.
 - Encrypted GnuPG key loading: the test creates a protected synthetic GnuPG key, mounts its home read-only into the
   sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
+- GnuPG missing-passphrase behavior: a protected `gpg load` with closed stdin fails within five seconds, without an
+  interactive pinentry or data written to the socket volume.
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
@@ -59,7 +58,8 @@ Add the following focused image-contract tests:
 
 - Strengthen the filesystem scan for private-key or passphrase artifacts beyond the current socket-volume regular-file
   and GnuPG-client-secret-key assertions. A completed container test cannot inspect transient process memory.
-- Define and test protected GnuPG loading for incorrect and absent passphrases without interactive pinentry.
+- Define whether protected `gpg load` must validate an incorrect passphrase. `PRESET_PASSPHRASE` seeds an agent cache
+  but does not itself validate it; validation would need a deliberately scoped signing/decryption operation.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
