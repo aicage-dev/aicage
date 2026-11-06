@@ -32,7 +32,8 @@ and arm64 builders. It currently covers:
 - SSH sidecar recreation: two identities load into one agent; replacing the sidecar while retaining its socket volume
   produces an empty agent, and an explicit reload restores an identity.
 - Encrypted GnuPG key loading: the test creates a protected synthetic GnuPG key, mounts its home read-only into the
-  sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
+  sidecar, and supplies the passphrase on stdin. An incorrect passphrase is accepted by `gpg load` but the subsequent
+  signing operation fails; loading the correct passphrase then permits signing inside the sidecar.
 - GnuPG missing-passphrase behavior: a protected `gpg load` with closed stdin fails within five seconds, without an
   interactive pinentry or data written to the socket volume.
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
@@ -56,10 +57,7 @@ This is live image coverage, not a mock suite. It does not use a real host crede
 
 ## Required `aicage-image-util` coverage
 
-Define whether protected `gpg load` must validate an incorrect passphrase. `PRESET_PASSPHRASE` seeds an agent cache
-  but does not itself validate it; validation would need a deliberately scoped signing/decryption operation.
-
-A completed container test cannot inspect transient process memory.
+None currently identified. A completed container test cannot inspect transient process memory.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
