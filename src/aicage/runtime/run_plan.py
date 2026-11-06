@@ -25,9 +25,7 @@ def _build_run_args(config: RunConfig, parsed: ParsedArgs) -> DockerRunArgs:
 
 
 @contextmanager
-def prepare_run_args(
-    config: RunConfig, parsed: ParsedArgs
-) -> Iterator[DockerRunArgs]:
+def prepare_run_args(config: RunConfig, parsed: ParsedArgs) -> Iterator[DockerRunArgs]:
     run_args = _build_run_args(config, parsed)
     agent_config = config.context.project_cfg.agents.get(config.agent, AgentConfig())
     with _ssh_forwarding(agent_config.mounts.ssh is True) as (mounts, env):

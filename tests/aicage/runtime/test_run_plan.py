@@ -11,7 +11,11 @@ from aicage.config.project_config import AgentConfig, _AgentMounts, _ProjectConf
 from aicage.config.runtime_config import RunConfig
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.run_args import DockerRunArgs, EnvVar
-from aicage.runtime.run_plan import _build_run_args, _host_timezone_env, prepare_run_args
+from aicage.runtime.run_plan import (
+    _build_run_args,
+    _host_timezone_env,
+    prepare_run_args,
+)
 
 
 class RunPlanTests(TestCase):
@@ -260,11 +264,7 @@ class RunPlanTests(TestCase):
                 store=mock.Mock(),
                 project_cfg=_ProjectConfig(
                     path=str(project_path),
-                    agents={
-                        "codex": AgentConfig(
-                            mounts=_AgentMounts(ssh=ssh_enabled)
-                        )
-                    },
+                    agents={"codex": AgentConfig(mounts=_AgentMounts(ssh=ssh_enabled))},
                 ),
                 agents=self._get_agents(),
                 bases=self._get_bases(),

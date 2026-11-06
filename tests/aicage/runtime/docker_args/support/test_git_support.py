@@ -98,7 +98,9 @@ class GitSupportTests(TestCase):
             path = git_support.resolve_gpg_agent_extra_socket()
         self.assertEqual(socket_path, path)
 
-    def test_resolve_gpg_public_files_returns_default_and_configured_files(self) -> None:
+    def test_resolve_gpg_public_files_returns_default_and_configured_files(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             gpg_home = Path(tmp_dir) / "gnupg"
             gpg_home.mkdir()
@@ -115,7 +117,12 @@ class GitSupportTests(TestCase):
             paths = git_support.resolve_gpg_public_files(gpg_home)
 
         self.assertEqual(
-            [gpg_conf, gpg_home / "pubring.kbx", gpg_home / "trustdb.gpg", custom_keyring],
+            [
+                gpg_conf,
+                gpg_home / "pubring.kbx",
+                gpg_home / "trustdb.gpg",
+                custom_keyring,
+            ],
             paths,
         )
 

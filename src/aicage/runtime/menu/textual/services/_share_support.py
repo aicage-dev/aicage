@@ -97,9 +97,7 @@ def built_in_share_values(
                 path="SSH agent",
                 persisted=mounts_cfg.ssh,
                 enabled=_built_in_share_enabled(mounts_cfg.ssh),
-                inherited=_is_inherited_mount(
-                    local_mounts.ssh, inherited_mounts.ssh
-                ),
+                inherited=_is_inherited_mount(local_mounts.ssh, inherited_mounts.ssh),
             )
         )
 

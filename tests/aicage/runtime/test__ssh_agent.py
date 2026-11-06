@@ -21,9 +21,7 @@ class SshAgentTests(TestCase):
             config_dir = ssh_dir / "config.d"
             config_dir.mkdir()
             included = config_dir / "work"
-            included.write_text(
-                f"IdentityFile {external_key}\n", encoding="utf-8"
-            )
+            included.write_text(f"IdentityFile {external_key}\n", encoding="utf-8")
             (ssh_dir / "config").write_text(
                 f"Include config.d/*\nIdentityFile {default_key}\n",
                 encoding="utf-8",
@@ -49,7 +47,9 @@ class SshAgentTests(TestCase):
         )
 
     def test_has_ssh_support_uses_keys_without_an_agent(self) -> None:
-        with mock.patch(f"{_MODULE}._resolve_ssh_key_files", return_value=[Path("key")]):
+        with mock.patch(
+            f"{_MODULE}._resolve_ssh_key_files", return_value=[Path("key")]
+        ):
             self.assertTrue(_ssh_agent._has_ssh_support())
 
     def test_has_ssh_support_uses_agent_without_keys(self) -> None:
@@ -78,7 +78,9 @@ class SshAgentTests(TestCase):
                 "IdentityFile /missing\n",
                 encoding="utf-8",
             )
-            with mock.patch(f"{_MODULE}._resolve_ssh_config_files", return_value=[config]):
+            with mock.patch(
+                f"{_MODULE}._resolve_ssh_config_files", return_value=[config]
+            ):
                 paths = _ssh_agent._configured_private_key_files()
 
         self.assertEqual([private_key], paths)
@@ -91,7 +93,10 @@ class SshAgentTests(TestCase):
         with (
             mock.patch(f"{_MODULE}._connect_agent", return_value=connection),
             mock.patch(f"{_MODULE}._resolve_ssh_key_files", return_value=[Path("key")]),
-            mock.patch(f"{_MODULE}._resolve_ssh_support_files", return_value=[config, public_key]),
+            mock.patch(
+                f"{_MODULE}._resolve_ssh_support_files",
+                return_value=[config, public_key],
+            ),
             mock.patch(f"{_MODULE}._add_keys", return_value=[Path("key")]),
             mock.patch(f"{_MODULE}._remove_keys") as remove_keys_mock,
         ):
@@ -141,7 +146,9 @@ class SshAgentTests(TestCase):
     def test_connect_agent_falls_back_to_temporary_unix_agent(self) -> None:
         connection = _ssh_agent._AgentConnection(Path("/test-tmp/new.sock"), {}, True)
         with (
-            mock.patch(f"{_MODULE}._resolve_ssh_agent_socket", return_value=Path("old.sock")),
+            mock.patch(
+                f"{_MODULE}._resolve_ssh_agent_socket", return_value=Path("old.sock")
+            ),
             mock.patch(f"{_MODULE}._agent_is_reachable", return_value=False),
             mock.patch(f"{_MODULE}._start_unix_agent", return_value=connection),
             mock.patch(f"{_MODULE}.os.name", "posix"),
@@ -160,9 +167,13 @@ class SshAgentTests(TestCase):
             self.assertIsNone(_ssh_agent._start_unix_agent())
             connection = _ssh_agent._start_unix_agent()
 
-        self.assertEqual(Path("/test-tmp/agent.sock"), connection.socket if connection else None)
+        self.assertEqual(
+            Path("/test-tmp/agent.sock"), connection.socket if connection else None
+        )
 
-    def test_start_windows_agent_returns_named_pipe_after_starting_service(self) -> None:
+    def test_start_windows_agent_returns_named_pipe_after_starting_service(
+        self,
+    ) -> None:
         socket = Path(r"\\.\pipe\openssh-ssh-agent")
         with (
             mock.patch(f"{_MODULE}.subprocess.run") as run_mock,
@@ -175,7 +186,9 @@ class SshAgentTests(TestCase):
         run_mock.assert_called_once()
 
     def test_add_keys_tracks_only_successful_additions_and_remove_keys(self) -> None:
-        successful: subprocess.CompletedProcess[bytes] = subprocess.CompletedProcess([], 0)
+        successful: subprocess.CompletedProcess[bytes] = subprocess.CompletedProcess(
+            [], 0
+        )
         failed: subprocess.CompletedProcess[bytes] = subprocess.CompletedProcess([], 1)
         first = Path("/test-tmp/first")
         second = Path("/test-tmp/second")
