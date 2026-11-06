@@ -44,22 +44,22 @@ and arm64 builders. It currently covers:
   not prevent signing and is not a test failure.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
-- Socket-volume isolation: tests assert that the shared socket volume has no regular files after use. Client GnuPG
-  state is deliberately kept in its separate home rather than being written to that volume.
+- Socket-volume isolation: tests assert that every shared-volume entry is a Unix socket; it cannot contain files,
+  directories, symlinks, or other artifacts. Client GnuPG state is deliberately kept in its separate home rather than
+  being written to that volume.
 - GnuPG client isolation: after signing, both the simulated target and independent verifier homes have no files in
-  `private-keys-v1.d` and no secret keys reported by `gpg --list-secret-keys`. GnuPG may create that otherwise empty
-  directory even for a public-only home.
+  `private-keys-v1.d`, no legacy `secring.gpg`, and no secret keys reported by `gpg --list-secret-keys`. The protected
+  key case also scans all client-home regular files for the supplied passphrase. GnuPG may create an otherwise empty
+  `private-keys-v1.d` directory even for a public-only home.
 
 This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
 
 ## Required `aicage-image-util` coverage
 
-Add the following focused image-contract tests:
-
-- Strengthen the filesystem scan for private-key or passphrase artifacts beyond the current socket-volume regular-file
-  and GnuPG-client-secret-key assertions. A completed container test cannot inspect transient process memory.
-- Define whether protected `gpg load` must validate an incorrect passphrase. `PRESET_PASSPHRASE` seeds an agent cache
+Define whether protected `gpg load` must validate an incorrect passphrase. `PRESET_PASSPHRASE` seeds an agent cache
   but does not itself validate it; validation would need a deliberately scoped signing/decryption operation.
+
+A completed container test cannot inspect transient process memory.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
