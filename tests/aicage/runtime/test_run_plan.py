@@ -204,7 +204,7 @@ class RunPlanTests(TestCase):
 
         self.assertEqual([EnvVar(name="TZ", value="Europe/Zurich")], run_args.env)
 
-    def test_prepare_run_args_adds_ssh_forwarding(self) -> None:
+    def test_prepare_run_args_adds_credential_forwarding(self) -> None:
         run_args = DockerRunArgs("image", "", [])
         mount = mock.Mock()
         env = EnvVar(name="SSH_AUTH_SOCK", value="/run/aicage-ssh-agent.sock")
@@ -215,18 +215,20 @@ class RunPlanTests(TestCase):
                 "aicage.runtime.run_plan._build_run_args", return_value=run_args
             ),
             mock.patch(
-                "aicage.runtime.run_plan._ssh_forwarding",
+                "aicage.runtime.run_plan._credential_forwarding",
                 return_value=nullcontext(([mount], [env])),
             ) as forwarding_mock,
         ):
-            with prepare_run_args(config, parsed) as result:
+            with prepare_run_args(config, parsed, mock.Mock()) as result:
                 self.assertIs(run_args, result)
                 self.assertEqual([mount], result.mounts)
                 self.assertEqual([env], result.env)
 
-        forwarding_mock.assert_called_once_with(True)
+        forwarding_mock.assert_called_once_with(config.context, config.agent, mock.ANY)
 
-    def test_prepare_run_args_skips_ssh_forwarding(self) -> None:
+    def test_prepare_run_args_uses_credential_forwarding_when_ssh_is_disabled(
+        self,
+    ) -> None:
         run_args = DockerRunArgs("image", "", [])
         config = self._run_config(ssh_enabled=False)
         parsed = ParsedArgs(False, "", "codex", [], False, [])
@@ -235,14 +237,14 @@ class RunPlanTests(TestCase):
                 "aicage.runtime.run_plan._build_run_args", return_value=run_args
             ),
             mock.patch(
-                "aicage.runtime.run_plan._ssh_forwarding",
+                "aicage.runtime.run_plan._credential_forwarding",
                 return_value=nullcontext(([], [])),
             ) as forwarding_mock,
         ):
-            with prepare_run_args(config, parsed) as result:
+            with prepare_run_args(config, parsed, mock.Mock()) as result:
                 self.assertIs(run_args, result)
 
-        forwarding_mock.assert_called_once_with(False)
+        forwarding_mock.assert_called_once_with(config.context, config.agent, mock.ANY)
 
     def test_host_timezone_env_uses_existing_tz_env(self) -> None:
         with mock.patch.dict(os.environ, {"TZ": "Europe/Zurich"}, clear=True):
@@ -264,11 +266,7 @@ class RunPlanTests(TestCase):
                 store=mock.Mock(),
                 project_cfg=_ProjectConfig(
                     path=str(project_path),
-                    agents={
-                        "codex": AgentConfig(
-                            mounts=_AgentMounts(ssh=ssh_enabled)
-                        )
-                    },
+                    agents={"codex": AgentConfig(mounts=_AgentMounts(ssh=ssh_enabled))},
                 ),
                 agents=self._get_agents(),
                 bases=self._get_bases(),
