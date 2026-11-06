@@ -26,13 +26,15 @@ arm64 builders. It currently covers:
   five-second timeout.
 - Encrypted GnuPG key loading: the test creates a protected synthetic GnuPG key, mounts its home read-only into the
   sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
-- GnuPG client signing: a separate container signs through the shared socket volume with an unprotected synthetic
-  signing key, and a third container verifies that signature using only the public key.
+- GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
+  shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
+  public key.
 - Protected GnuPG client signing: the sidecar receives the generated key's passphrase on stdin, then a separate
   client signs through the shared socket volume and a public-key-only third container verifies the signature.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID.
-- Socket-volume isolation: tests assert that the socket volume has no regular files after use.
+- Socket-volume isolation: tests assert that the shared socket volume has no regular files after use. Client GnuPG
+  state is deliberately kept in its separate home rather than being written to that volume.
 
 This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
 
