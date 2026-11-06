@@ -1,5 +1,8 @@
 # Task 42: Cross-platform SSH and GnuPG forwarding with persistent utility sidecars
 
+See [test coverage](TEST_COVERAGE.md) for the current evidence and the division of test responsibilities between
+`aicage-image-util` and `aicage`.
+
 ## Problem
 
 The SSH and GnuPG refactors replaced mounting host credential homes directly into agent containers with agent-socket

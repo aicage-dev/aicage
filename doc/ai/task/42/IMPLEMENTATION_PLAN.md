@@ -18,8 +18,22 @@ direct host-agent forwarding is unavailable, a credential sidecar may receive on
 needs, read-only; it must expose only its agent socket to target containers.
 
 See [design gates](DESIGN_GATES.md) before implementing the corresponding work.
+See [test coverage](TEST_COVERAGE.md) for the current evidence and required test ownership by repository.
 
 ## Commit 1: `aicage-image-util` credential image
+
+**Status: complete.** Completed in `aicage-image-util` commit `d113eb1` and the current working tree:
+
+- separate Alpine `credential-agent` image, dispatcher, SSH/GnuPG sidecar startup and readiness;
+- socket-volume cross-container readiness tests;
+- independent variant/architecture build and multi-architecture publish workflow, attestations, signing, cleanup, and
+  purpose-qualified version and stable tags;
+- symmetric `images/agent-version` and `images/credential-agent` layout;
+- explicit SSH and GnuPG key-loading command contracts, with passphrases received only through standard input;
+- encrypted SSH and GnuPG credential-loading tests, including non-root sidecar ownership and signing through the GnuPG
+  sidecar;
+- socket-volume isolation tests confirming it contains no regular credential files; and
+- development documentation for purpose-qualified version tags.
 
 Keep the Node-based `agent-version` image and tag unchanged. Add a distinct Alpine-based
 `ghcr.io/aicage/aicage-image-util:credential-agent` image with only OpenSSH client tools, GnuPG, and sidecar scripts.
@@ -41,6 +55,10 @@ absence of credential data in the socket volume.
 
 ## Commit 2: `aicage` credential-image and Docker resource foundation
 
+**Status: complete.** The private credential-agent runtime package now owns shared credential-image setup, labelled
+singleton resource inspection and replacement, volume retention, socket readiness, volume ownership preparation, and
+the global creation lock. Protocol selection and host credential mounts remain deferred to Commit 3.
+
 Add a private credential-agent runtime package responsible for:
 
 - the credential image reference, following existing fork/repository configuration conventions;
@@ -54,6 +72,14 @@ Unit-test ownership inspection, missing/stopped/unhealthy/obsolete replacement, 
 concurrent creation. Ensuring SSH and GnuPG in the same run must resolve/update the credential image only once.
 
 ## Commit 3: `aicage` forwarding selection and sidecar lifecycle
+
+**Status: complete.** The public credential-agent forwarding coordinator now selects a reachable Unix agent socket
+for direct forwarding and otherwise uses the persistent sidecar (always on Windows). It adds protocol-specific named
+volume mounts and environments to `DockerRunArgs`, preserves SSH/GnuPG public support mounts, mounts credential homes
+read-only only in sidecars, uses the target-container runtime UID/GID for sidecars, and removes the Windows OpenSSH
+service-management path and direct GnuPG resolver. Global and tree configuration saves ensure required SSH sidecars.
+Unit tests cover direct and fallback selection, Windows named-pipe avoidance, SSH/GnuPG target mount arguments,
+credential-sidecar mounts, resource replacement and lock errors, and target identity mapping.
 
 Replace the current separate SSH and GnuPG forwarding paths with one protocol-aware coordinator:
 
