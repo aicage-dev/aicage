@@ -18,6 +18,7 @@ direct host-agent forwarding is unavailable, a credential sidecar may receive on
 needs, read-only; it must expose only its agent socket to target containers.
 
 See [design gates](DESIGN_GATES.md) before implementing the corresponding work.
+See [test coverage](TEST_COVERAGE.md) for the current evidence and required test ownership by repository.
 
 ## Commit 1: `aicage-image-util` credential image
 
