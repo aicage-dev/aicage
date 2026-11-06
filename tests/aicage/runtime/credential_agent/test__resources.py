@@ -1,10 +1,12 @@
 from contextlib import AbstractContextManager
+from pathlib import Path
 from unittest import TestCase, mock
 
+import portalocker
 from docker.errors import DockerException, NotFound
 
 from aicage.docker.errors import DockerError
-from aicage.runtime._credential_agent import _resources
+from aicage.runtime.credential_agent import _resources
 
 
 class CredentialAgentResourcesTests(TestCase):
@@ -62,7 +64,10 @@ class CredentialAgentResourcesTests(TestCase):
     def test__ensure_resources_replaces_unhealthy_or_obsolete_sidecar(self) -> None:
         cases: tuple[tuple[dict[str, str], dict[str, object]], ...] = (
             (self._labels, {"Status": "running", "Health": {"Status": "unhealthy"}}),
-            ({**self._labels, "org.aicage.credential-agent.image-id": "old"}, {"Status": "running"}),
+            (
+                {**self._labels, "org.aicage.credential-agent.image-id": "old"},
+                {"Status": "running"},
+            ),
         )
         for labels, state in cases:
             with self.subTest(labels=labels, state=state):
@@ -71,7 +76,11 @@ class CredentialAgentResourcesTests(TestCase):
                 container = self._container(labels=labels, state=state)
                 client.volumes.get.return_value = volume
                 client.containers.get.return_value = container
-                client.containers.run.side_effect = [None, self._container(status="running"), None]
+                client.containers.run.side_effect = [
+                    None,
+                    self._container(status="running"),
+                    None,
+                ]
 
                 with self._client(client):
                     _resources._ensure_resources(
@@ -93,17 +102,99 @@ class CredentialAgentResourcesTests(TestCase):
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
 
+    def test__ensure_resources_rejects_unowned_sidecar(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        client.volumes.get.return_value = volume
+        client.containers.get.return_value = self._container(labels={})
+
+        with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
+            _resources._ensure_resources(
+                [self._ssh], "image:tag", "image-id", "1000:1000"
+            )
+
+    def test__ensure_resources_replaces_stale_resource_version(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        labels = {**self._labels, "org.aicage.credential-agent.version": "old"}
+        container = self._container(labels=labels, status="running")
+        client.volumes.get.return_value = volume
+        client.containers.get.return_value = container
+        client.containers.run.side_effect = [
+            None,
+            self._container(status="running"),
+            None,
+        ]
+
+        with self._client(client):
+            _resources._ensure_resources(
+                [self._ssh], "image:tag", "image-id", "1000:1000"
+            )
+
+        container.remove.assert_called_once_with(force=True)
+
+    def test__ensure_resources_mounts_credentials_only_in_sidecar(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        credentials = Path("/test-tmp/.ssh")
+        client.volumes.get.return_value = volume
+        client.containers.get.side_effect = NotFound("missing")
+        client.containers.run.side_effect = [
+            None,
+            self._container(status="running"),
+            None,
+        ]
+
+        with self._client(client):
+            _resources._ensure_resources(
+                [self._ssh],
+                "image:tag",
+                "image-id",
+                "1000:1000",
+                {self._ssh: credentials},
+            )
+
+        sidecar_call = client.containers.run.call_args_list[1]
+        self.assertEqual(
+            {
+                volume.name: {
+                    "bind": "/run/aicage-credential-agent",
+                    "mode": "rw",
+                },
+                str(credentials): {"bind": "/credential/ssh", "mode": "ro"},
+            },
+            sidecar_call.kwargs["volumes"],
+        )
+
     def test__ensure_resources_reports_readiness_failure(self) -> None:
         client = mock.Mock()
         volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
         client.volumes.get.return_value = volume
         client.containers.get.side_effect = NotFound("missing")
-        client.containers.run.side_effect = [None, self._container(status="running"), DockerException("not ready")]
+        client.containers.run.side_effect = [
+            None,
+            self._container(status="running"),
+            DockerException("not ready"),
+        ]
 
-        with self._client(client), self.assertRaisesRegex(DockerError, "did not become ready"):
+        with (
+            self._client(client),
+            self.assertRaisesRegex(DockerError, "did not become ready"),
+        ):
             _resources._ensure_resources(
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
+
+    def test_resource_lock_translates_contention_error(self) -> None:
+        with (
+            mock.patch(
+                "aicage.runtime.credential_agent._resources.portalocker.Lock",
+                side_effect=portalocker.exceptions.LockException,
+            ),
+            self.assertRaisesRegex(DockerError, "Failed to lock"),
+        ):
+            with _resources._resource_lock():
+                pass
 
     def test__resources_deduplicates_protocols(self) -> None:
         resources = _resources._resources(
@@ -114,7 +205,7 @@ class CredentialAgentResourcesTests(TestCase):
 
     def _client(self, client: mock.Mock) -> AbstractContextManager[object]:
         return mock.patch(
-            "aicage.runtime._credential_agent._resources.get_docker_client",
+            "aicage.runtime.credential_agent._resources.get_docker_client",
             return_value=client,
         )
 

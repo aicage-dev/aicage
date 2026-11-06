@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
-from aicage.runtime._credential_agent import _sidecars
-from aicage.runtime._credential_agent._resources import _CredentialProtocol
+from aicage.runtime.credential_agent import _sidecars
+from aicage.runtime.credential_agent._resources import _CredentialProtocol
 
 
 class CredentialAgentSidecarsTests(TestCase):
@@ -10,11 +10,11 @@ class CredentialAgentSidecarsTests(TestCase):
         resources = [mock.Mock()]
         with (
             mock.patch(
-                "aicage.runtime._credential_agent._sidecars.ensure_credential_image",
+                "aicage.runtime.credential_agent._sidecars.ensure_credential_image",
                 return_value=("image:tag", "image-id"),
             ) as image_mock,
             mock.patch(
-                "aicage.runtime._credential_agent._sidecars._ensure_resources",
+                "aicage.runtime.credential_agent._sidecars._ensure_resources",
                 return_value=resources,
             ) as resources_mock,
         ):
@@ -36,7 +36,7 @@ class CredentialAgentSidecarsTests(TestCase):
     def test__ensure_sidecars_skips_image_without_protocols(self) -> None:
         reporter = mock.Mock()
         with mock.patch(
-            "aicage.runtime._credential_agent._sidecars.ensure_credential_image"
+            "aicage.runtime.credential_agent._sidecars.ensure_credential_image"
         ) as image_mock:
             actual = _sidecars._ensure_sidecars([], "1000:1000", reporter)
 

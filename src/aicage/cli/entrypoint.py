@@ -49,7 +49,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return exit_code
             logger.info("Resolved run config for agent %s", run_config.agent)
             prepare_image(run_config, interaction)
-            with prepare_run_args(config=run_config, parsed=parsed) as run_args:
+            with prepare_run_args(
+                config=run_config,
+                parsed=parsed,
+                reporter=interaction.reporter,
+            ) as run_args:
                 if parsed.dry_run:
                     print_run_command(run_args)
                     logger.info("Dry-run docker command printed.")

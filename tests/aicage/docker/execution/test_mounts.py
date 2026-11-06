@@ -1,7 +1,11 @@
 from pathlib import Path, PurePosixPath
 from unittest import TestCase
 
-from aicage.docker.execution.mounts import _format_mount_value, append_mount
+from aicage.docker.execution.mounts import (
+    _format_mount_value,
+    append_mount,
+    append_volume_mount,
+)
 
 
 class MountsTests(TestCase):
@@ -31,5 +35,23 @@ class MountsTests(TestCase):
         )
         self.assertEqual(
             ["docker", "run", "--mount", "type=bind,src=/host,dst=/container,readonly"],
+            cmd,
+        )
+
+    def test_append_volume_mount_adds_args(self) -> None:
+        cmd: list[str] = ["docker", "run"]
+        append_volume_mount(
+            cmd,
+            "aicage-ssh-agent-socket",
+            PurePosixPath("/run/aicage-credential-agent"),
+            read_only=True,
+        )
+        self.assertEqual(
+            [
+                "docker",
+                "run",
+                "--mount",
+                "type=volume,src=aicage-ssh-agent-socket,dst=/run/aicage-credential-agent,readonly",
+            ],
             cmd,
         )

@@ -64,7 +64,6 @@ class ResolverTests(TestCase):
                     ),
                 ) as git_mock,
                 mock.patch(f"{_MODULE}.git_root.resolve", return_value=ResolvedArgs()),
-                mock.patch(f"{_MODULE}.gpg.resolve", return_value=ResolvedArgs()),
                 mock.patch(
                     f"{_MODULE}.docker_socket.resolve",
                     return_value=ResolvedArgs(
@@ -119,7 +118,6 @@ class ResolverTests(TestCase):
             mock.patch(f"{_MODULE}.agent_config.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.git_config.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.git_root.resolve", return_value=ResolvedArgs()),
-            mock.patch(f"{_MODULE}.gpg.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.shares.resolve", return_value=ResolvedArgs()),
             mock.patch(f"{_MODULE}.Path.home", return_value=Path("/test-tmp/home")),
@@ -152,7 +150,6 @@ class ResolverTests(TestCase):
                     f"{_MODULE}.git_config.resolve", return_value=ResolvedArgs()
                 ),
                 mock.patch(f"{_MODULE}.git_root.resolve", return_value=ResolvedArgs()),
-                mock.patch(f"{_MODULE}.gpg.resolve", return_value=ResolvedArgs()),
                 mock.patch(
                     f"{_MODULE}.docker_socket.resolve", return_value=ResolvedArgs()
                 ),
