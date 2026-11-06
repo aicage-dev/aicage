@@ -18,6 +18,7 @@ arm64 builders. It currently covers:
 
 - SSH sidecar startup and readiness: a second container runs `ssh ready` through the shared named volume.
 - GnuPG sidecar startup and readiness: a second container runs `gpg ready` through the shared named volume.
+- Dispatcher errors: empty and unsupported SSH/GnuPG commands fail rather than starting an unintended mode.
 - Encrypted SSH key loading: the test generates an encrypted Ed25519 key, mounts it read-only into the sidecar,
   supplies the passphrase on stdin, and uses `ssh-add -l` from another container through the socket volume.
 - SSH client signing: a separate client with only the generated public key creates an agent-backed signature through
@@ -54,7 +55,6 @@ Add the following focused image-contract tests:
   material. Allow only expected socket and directory artifacts in the volume.
 - Exercise startup and readiness as a supplied non-root UID:GID, including a recreated sidecar using the same named
   volume.
-- Cover dispatcher usage errors and unsupported commands.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
