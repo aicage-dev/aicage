@@ -33,8 +33,6 @@ arm64 builders. It currently covers:
   produces an empty agent, and an explicit reload restores an identity.
 - Encrypted GnuPG key loading: the test creates a protected synthetic GnuPG key, mounts its home read-only into the
   sidecar, supplies the passphrase on stdin, and signs inside the sidecar.
-- GnuPG failure behavior: an incorrect passphrase is rejected during `gpg load`, and absent stdin fails without
-  hanging; the absent-passphrase test has a five-second timeout.
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
@@ -53,6 +51,7 @@ Add the following focused image-contract tests:
 
 - Assert that the client containers and socket volume contain no private keyring, secret-key directory, or passphrase
   material. Allow only expected socket and directory artifacts in the volume.
+- Define and test protected GnuPG loading for incorrect and absent passphrases without interactive pinentry.
 
 The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
