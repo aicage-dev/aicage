@@ -160,7 +160,9 @@ def _gpg_forwarding() -> tuple[list[MountSpec], list[EnvVar], bool, Path | None]
         return [], [], False, None
     container_home = container_project_path(gpg_home)
     support_mounts = [
-        MountSpec(host_path=path, container_path=container_project_path(path), read_only=True)
+        MountSpec(
+            host_path=path, container_path=container_project_path(path), read_only=True
+        )
         for path in resolve_gpg_public_files(gpg_home)
     ]
     socket = _direct_gpg_socket()

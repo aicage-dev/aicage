@@ -64,7 +64,10 @@ class CredentialAgentResourcesTests(TestCase):
     def test__ensure_resources_replaces_unhealthy_or_obsolete_sidecar(self) -> None:
         cases: tuple[tuple[dict[str, str], dict[str, object]], ...] = (
             (self._labels, {"Status": "running", "Health": {"Status": "unhealthy"}}),
-            ({**self._labels, "org.aicage.credential-agent.image-id": "old"}, {"Status": "running"}),
+            (
+                {**self._labels, "org.aicage.credential-agent.image-id": "old"},
+                {"Status": "running"},
+            ),
         )
         for labels, state in cases:
             with self.subTest(labels=labels, state=state):
@@ -73,7 +76,11 @@ class CredentialAgentResourcesTests(TestCase):
                 container = self._container(labels=labels, state=state)
                 client.volumes.get.return_value = volume
                 client.containers.get.return_value = container
-                client.containers.run.side_effect = [None, self._container(status="running"), None]
+                client.containers.run.side_effect = [
+                    None,
+                    self._container(status="running"),
+                    None,
+                ]
 
                 with self._client(client):
                     _resources._ensure_resources(
@@ -113,7 +120,11 @@ class CredentialAgentResourcesTests(TestCase):
         container = self._container(labels=labels, status="running")
         client.volumes.get.return_value = volume
         client.containers.get.return_value = container
-        client.containers.run.side_effect = [None, self._container(status="running"), None]
+        client.containers.run.side_effect = [
+            None,
+            self._container(status="running"),
+            None,
+        ]
 
         with self._client(client):
             _resources._ensure_resources(
@@ -128,7 +139,11 @@ class CredentialAgentResourcesTests(TestCase):
         credentials = Path("/test-tmp/.ssh")
         client.volumes.get.return_value = volume
         client.containers.get.side_effect = NotFound("missing")
-        client.containers.run.side_effect = [None, self._container(status="running"), None]
+        client.containers.run.side_effect = [
+            None,
+            self._container(status="running"),
+            None,
+        ]
 
         with self._client(client):
             _resources._ensure_resources(
@@ -156,18 +171,28 @@ class CredentialAgentResourcesTests(TestCase):
         volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
         client.volumes.get.return_value = volume
         client.containers.get.side_effect = NotFound("missing")
-        client.containers.run.side_effect = [None, self._container(status="running"), DockerException("not ready")]
+        client.containers.run.side_effect = [
+            None,
+            self._container(status="running"),
+            DockerException("not ready"),
+        ]
 
-        with self._client(client), self.assertRaisesRegex(DockerError, "did not become ready"):
+        with (
+            self._client(client),
+            self.assertRaisesRegex(DockerError, "did not become ready"),
+        ):
             _resources._ensure_resources(
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
 
     def test_resource_lock_translates_contention_error(self) -> None:
-        with mock.patch(
-            "aicage.runtime.credential_agent._resources.portalocker.Lock",
-            side_effect=portalocker.exceptions.LockException,
-        ), self.assertRaisesRegex(DockerError, "Failed to lock"):
+        with (
+            mock.patch(
+                "aicage.runtime.credential_agent._resources.portalocker.Lock",
+                side_effect=portalocker.exceptions.LockException,
+            ),
+            self.assertRaisesRegex(DockerError, "Failed to lock"),
+        ):
             with _resources._resource_lock():
                 pass
 

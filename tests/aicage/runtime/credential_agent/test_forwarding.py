@@ -11,7 +11,9 @@ class CredentialAgentForwardingTests(TestCase):
         context = self._context(ssh=True)
         ssh_home = Path("/test-tmp/.ssh")
         with (
-            mock.patch.object(forwarding, "_ssh_forwarding", return_value=([], [], True)),
+            mock.patch.object(
+                forwarding, "_ssh_forwarding", return_value=([], [], True)
+            ),
             mock.patch.object(forwarding, "HOST_SSH_DIR", ssh_home),
             mock.patch.object(Path, "is_dir", return_value=True),
             mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
@@ -31,25 +33,41 @@ class CredentialAgentForwardingTests(TestCase):
         context = self._context(ssh=True)
         with (
             mock.patch.object(forwarding, "_direct_ssh_socket", return_value=socket),
-            mock.patch.object(forwarding, "_resolve_ssh_support_files", return_value=[public_key]),
+            mock.patch.object(
+                forwarding, "_resolve_ssh_support_files", return_value=[public_key]
+            ),
             mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
         ):
             with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
                 self.assertEqual(
                     [
-                        MountSpec(socket, PurePosixPath("/run/aicage-credential-agent/ssh-agent.sock")),
-                        MountSpec(public_key, PurePosixPath("/test-tmp/id_ed25519.pub"), True),
+                        MountSpec(
+                            socket,
+                            PurePosixPath(
+                                "/run/aicage-credential-agent/ssh-agent.sock"
+                            ),
+                        ),
+                        MountSpec(
+                            public_key, PurePosixPath("/test-tmp/id_ed25519.pub"), True
+                        ),
                     ],
                     mounts,
                 )
                 self.assertEqual(
-                    [EnvVar("SSH_AUTH_SOCK", "/run/aicage-credential-agent/ssh-agent.sock")],
+                    [
+                        EnvVar(
+                            "SSH_AUTH_SOCK",
+                            "/run/aicage-credential-agent/ssh-agent.sock",
+                        )
+                    ],
                     env,
                 )
 
         ensure_mock.assert_called_once_with([], mock.ANY, mock.ANY, {})
 
-    def test_forwarding_uses_ssh_sidecar_on_windows_without_a_named_pipe_mount(self) -> None:
+    def test_forwarding_uses_ssh_sidecar_on_windows_without_a_named_pipe_mount(
+        self,
+    ) -> None:
         resource = _resources._resources([_resources._CredentialProtocol.SSH])[0]
         ssh_home = Path("/test-tmp/.ssh")
         context = self._context(ssh=True)
@@ -57,9 +75,17 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding.os, "name", "nt"),
             mock.patch.object(forwarding, "HOST_SSH_DIR", ssh_home),
             mock.patch.object(Path, "is_dir", return_value=True),
-            mock.patch.object(forwarding, "_resolve_ssh_key_files", return_value=[ssh_home / "id_ed25519"]),
-            mock.patch.object(forwarding, "_resolve_ssh_support_files", return_value=[]),
-            mock.patch.object(forwarding, "_ensure_sidecars", return_value=[resource]) as ensure_mock,
+            mock.patch.object(
+                forwarding,
+                "_resolve_ssh_key_files",
+                return_value=[ssh_home / "id_ed25519"],
+            ),
+            mock.patch.object(
+                forwarding, "_resolve_ssh_support_files", return_value=[]
+            ),
+            mock.patch.object(
+                forwarding, "_ensure_sidecars", return_value=[resource]
+            ) as ensure_mock,
         ):
             with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
                 self.assertEqual(
@@ -73,7 +99,12 @@ class CredentialAgentForwardingTests(TestCase):
                     mounts,
                 )
                 self.assertEqual(
-                    [EnvVar("SSH_AUTH_SOCK", "/run/aicage-credential-agent/ssh-agent.sock")],
+                    [
+                        EnvVar(
+                            "SSH_AUTH_SOCK",
+                            "/run/aicage-credential-agent/ssh-agent.sock",
+                        )
+                    ],
                     env,
                 )
 
@@ -90,18 +121,34 @@ class CredentialAgentForwardingTests(TestCase):
         public_keyring = gpg_home / "pubring.kbx"
         context = self._context(gnupg=True)
         with (
-            mock.patch.object(forwarding, "is_commit_signing_enabled", return_value=True),
-            mock.patch.object(forwarding, "resolve_signing_format", return_value="openpgp"),
+            mock.patch.object(
+                forwarding, "is_commit_signing_enabled", return_value=True
+            ),
+            mock.patch.object(
+                forwarding, "resolve_signing_format", return_value="openpgp"
+            ),
             mock.patch.object(forwarding, "resolve_gpg_home", return_value=gpg_home),
-            mock.patch.object(forwarding, "resolve_gpg_public_files", return_value=[public_keyring]),
+            mock.patch.object(
+                forwarding, "resolve_gpg_public_files", return_value=[public_keyring]
+            ),
             mock.patch.object(forwarding, "_direct_gpg_socket", return_value=None),
-            mock.patch.object(forwarding, "_ensure_sidecars", return_value=[resource]) as ensure_mock,
+            mock.patch.object(
+                forwarding, "_ensure_sidecars", return_value=[resource]
+            ) as ensure_mock,
         ):
             with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
                 self.assertEqual(
                     [
-                        MountSpec(public_keyring, PurePosixPath("/test-tmp/gnupg/pubring.kbx"), True),
-                        VolumeMountSpec("aicage-gpg-agent-socket", PurePosixPath("/test-tmp/gnupg"), True),
+                        MountSpec(
+                            public_keyring,
+                            PurePosixPath("/test-tmp/gnupg/pubring.kbx"),
+                            True,
+                        ),
+                        VolumeMountSpec(
+                            "aicage-gpg-agent-socket",
+                            PurePosixPath("/test-tmp/gnupg"),
+                            True,
+                        ),
                     ],
                     mounts,
                 )
@@ -120,10 +167,16 @@ class CredentialAgentForwardingTests(TestCase):
         public_keyring = gpg_home / "pubring.kbx"
         context = self._context(gnupg=True)
         with (
-            mock.patch.object(forwarding, "is_commit_signing_enabled", return_value=True),
-            mock.patch.object(forwarding, "resolve_signing_format", return_value="openpgp"),
+            mock.patch.object(
+                forwarding, "is_commit_signing_enabled", return_value=True
+            ),
+            mock.patch.object(
+                forwarding, "resolve_signing_format", return_value="openpgp"
+            ),
             mock.patch.object(forwarding, "resolve_gpg_home", return_value=gpg_home),
-            mock.patch.object(forwarding, "resolve_gpg_public_files", return_value=[public_keyring]),
+            mock.patch.object(
+                forwarding, "resolve_gpg_public_files", return_value=[public_keyring]
+            ),
             mock.patch.object(forwarding, "_direct_gpg_socket", return_value=socket),
             mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
         ):
@@ -131,7 +184,11 @@ class CredentialAgentForwardingTests(TestCase):
                 self.assertEqual(
                     [
                         MountSpec(socket, PurePosixPath("/test-tmp/gnupg/S.gpg-agent")),
-                        MountSpec(public_keyring, PurePosixPath("/test-tmp/gnupg/pubring.kbx"), True),
+                        MountSpec(
+                            public_keyring,
+                            PurePosixPath("/test-tmp/gnupg/pubring.kbx"),
+                            True,
+                        ),
                     ],
                     mounts,
                 )

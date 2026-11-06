@@ -46,18 +46,25 @@ class SshAgentTests(TestCase):
         )
 
     def test_has_ssh_support_uses_keys_or_an_agent_socket(self) -> None:
-        with mock.patch(f"{_MODULE}._resolve_ssh_key_files", return_value=[Path("key")]):
+        with mock.patch(
+            f"{_MODULE}._resolve_ssh_key_files", return_value=[Path("key")]
+        ):
             self.assertTrue(_ssh_agent._has_ssh_support())
         with (
             mock.patch(f"{_MODULE}._resolve_ssh_key_files", return_value=[]),
-            mock.patch(f"{_MODULE}._resolve_ssh_agent_socket", return_value=Path("agent.sock")),
+            mock.patch(
+                f"{_MODULE}._resolve_ssh_agent_socket", return_value=Path("agent.sock")
+            ),
         ):
             self.assertTrue(_ssh_agent._has_ssh_support())
 
     def test_agent_is_reachable_accepts_populated_or_empty_agent(self) -> None:
         for code in (0, 1):
-            with self.subTest(code=code), mock.patch(
-                f"{_MODULE}.subprocess.run",
-                return_value=subprocess.CompletedProcess([], code),
+            with (
+                self.subTest(code=code),
+                mock.patch(
+                    f"{_MODULE}.subprocess.run",
+                    return_value=subprocess.CompletedProcess([], code),
+                ),
             ):
                 self.assertTrue(_ssh_agent._agent_is_reachable({}))

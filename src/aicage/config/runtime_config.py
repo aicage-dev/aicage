@@ -193,7 +193,9 @@ def _configure_scope(
                 scope,
                 draft.project_cfg,
             )
-            ensure_ssh_setup(context, scope_context.agent, scope_context.interaction.reporter)
+            ensure_ssh_setup(
+                context, scope_context.agent, scope_context.interaction.reporter
+            )
             return
         current_source = draft
         current_parsed = None

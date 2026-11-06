@@ -87,7 +87,9 @@ def test_ssh_agent_is_available_in_container(
 class _SshKeys:
     def __init__(self, private_paths: list[Path]) -> None:
         self.private_paths = private_paths
-        self.public_paths = [path.with_name(f"{path.name}.pub") for path in private_paths]
+        self.public_paths = [
+            path.with_name(f"{path.name}.pub") for path in private_paths
+        ]
         self.public_keys = [
             " ".join(path.read_text(encoding="utf-8").split()[:2])
             for path in self.public_paths

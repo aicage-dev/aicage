@@ -26,7 +26,9 @@ def ensure_credential_image(reporter: OperationReporter) -> tuple[str, str]:
             _pull(image_ref, repository, local_digest, reporter)
     image_id = get_local_image_id(image_ref)
     if image_id is None:
-        raise DockerError(f"Credential-agent image is unavailable after setup: {image_ref}.")
+        raise DockerError(
+            f"Credential-agent image is unavailable after setup: {image_ref}."
+        )
     return image_ref, image_id
 
 

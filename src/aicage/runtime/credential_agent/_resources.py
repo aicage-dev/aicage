@@ -117,7 +117,9 @@ def _ensure_volume(client: DockerClient, resource: _CredentialResource) -> Volum
             labels=_labels(resource, image_id=None),
         )
     if not _is_owned(volume, resource):
-        raise DockerError(f"Credential socket volume '{resource.volume_name}' is not owned by aicage.")
+        raise DockerError(
+            f"Credential socket volume '{resource.volume_name}' is not owned by aicage."
+        )
     return volume
 
 
@@ -262,7 +264,11 @@ def _labels(resource: _CredentialResource, image_id: str | None) -> dict[str, st
 def _labels_for(resource: Container | Volume) -> dict[str, str]:
     labels = getattr(resource, "labels", None)
     if isinstance(labels, dict):
-        return {key: value for key, value in labels.items() if isinstance(key, str) and isinstance(value, str)}
+        return {
+            key: value
+            for key, value in labels.items()
+            if isinstance(key, str) and isinstance(value, str)
+        }
     attrs = getattr(resource, "attrs", {})
     if not isinstance(attrs, dict):
         return {}
@@ -272,7 +278,11 @@ def _labels_for(resource: Container | Volume) -> dict[str, str]:
         labels = config.get("Labels", {}) if isinstance(config, dict) else {}
     if not isinstance(labels, dict):
         return {}
-    return {key: value for key, value in labels.items() if isinstance(key, str) and isinstance(value, str)}
+    return {
+        key: value
+        for key, value in labels.items()
+        if isinstance(key, str) and isinstance(value, str)
+    }
 
 
 def _state_for(container: Container) -> dict[str, object]:
