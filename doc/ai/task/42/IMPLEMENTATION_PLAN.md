@@ -21,6 +21,20 @@ See [design gates](DESIGN_GATES.md) before implementing the corresponding work.
 
 ## Commit 1: `aicage-image-util` credential image
 
+**Status: in progress.** Completed in `aicage-image-util` commit `d113eb1`:
+
+- separate Alpine `credential-agent` image, dispatcher, SSH/GnuPG sidecar startup and readiness;
+- socket-volume cross-container readiness tests;
+- independent variant/architecture build and multi-architecture publish workflow, attestations, signing, cleanup, and
+  purpose-qualified version and stable tags;
+- symmetric `images/agent-version` and `images/credential-agent` layout.
+
+Still required before marking this commit complete:
+
+- explicit SSH key-loading command contract and credential-loading tests for both protocols;
+- test that the socket volume contains no credential material;
+- update development documentation for purpose-qualified version tags.
+
 Keep the Node-based `agent-version` image and tag unchanged. Add a distinct Alpine-based
 `ghcr.io/aicage/aicage-image-util:credential-agent` image with only OpenSSH client tools, GnuPG, and sidecar scripts.
 
