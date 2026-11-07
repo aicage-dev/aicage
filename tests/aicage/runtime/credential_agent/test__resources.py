@@ -7,12 +7,15 @@ from docker.errors import DockerException, NotFound
 
 from aicage.docker.errors import DockerError
 from aicage.runtime.credential_agent import _resources
+from aicage.runtime.credential_agent._resource_lifecycle import _resource_lock
+from aicage.runtime.credential_agent._resource_models import _CredentialProtocol
+from aicage.runtime.credential_agent._resource_models import _resources as _resource_definitions
 
 
 class CredentialAgentResourcesTests(TestCase):
     def setUp(self) -> None:
-        self._ssh = _resources._CredentialProtocol.SSH
-        self._resource = _resources._resources([self._ssh])[0]
+        self._ssh = _CredentialProtocol.SSH
+        self._resource = _resource_definitions([self._ssh])[0]
         self._labels = {
             "org.aicage.resource": "credential-agent",
             "org.aicage.credential-agent.protocol": "ssh",
@@ -30,9 +33,7 @@ class CredentialAgentResourcesTests(TestCase):
         client.containers.run.side_effect = [None, container, None]
 
         with self._client(client):
-            resources = _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
+            resources = _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
         self.assertEqual([self._resource], resources)
         client.volumes.create.assert_called_once_with(
@@ -53,9 +54,7 @@ class CredentialAgentResourcesTests(TestCase):
         client.containers.get.return_value = container
 
         with self._client(client):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
+            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
         container.start.assert_called_once()
         container.remove.assert_not_called()
@@ -83,9 +82,7 @@ class CredentialAgentResourcesTests(TestCase):
                 ]
 
                 with self._client(client):
-                    _resources._ensure_resources(
-                        [self._ssh], "image:tag", "image-id", "1000:1000"
-                    )
+                    _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
                 container.remove.assert_called_once_with(force=True)
                 client.volumes.create.assert_not_called()
@@ -98,9 +95,7 @@ class CredentialAgentResourcesTests(TestCase):
         )
 
         with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
+            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
     def test__ensure_resources_rejects_unowned_sidecar(self) -> None:
         client = mock.Mock()
@@ -109,9 +104,7 @@ class CredentialAgentResourcesTests(TestCase):
         client.containers.get.return_value = self._container(labels={})
 
         with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
+            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
     def test__ensure_resources_replaces_stale_resource_version(self) -> None:
         client = mock.Mock()
@@ -127,9 +120,7 @@ class CredentialAgentResourcesTests(TestCase):
         ]
 
         with self._client(client):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
+            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
         container.remove.assert_called_once_with(force=True)
 
@@ -181,25 +172,21 @@ class CredentialAgentResourcesTests(TestCase):
             self._client(client),
             self.assertRaisesRegex(DockerError, "did not become ready"),
         ):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
+            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "1000:1000")
 
     def test_resource_lock_translates_contention_error(self) -> None:
         with (
             mock.patch(
-                "aicage.runtime.credential_agent._resources.portalocker.Lock",
+                "aicage.runtime.credential_agent._resource_lifecycle.portalocker.Lock",
                 side_effect=portalocker.exceptions.LockException,
             ),
             self.assertRaisesRegex(DockerError, "Failed to lock"),
         ):
-            with _resources._resource_lock():
+            with _resource_lock():
                 pass
 
     def test__resources_deduplicates_protocols(self) -> None:
-        resources = _resources._resources(
-            [_resources._CredentialProtocol.SSH, _resources._CredentialProtocol.SSH]
-        )
+        resources = _resource_definitions([_CredentialProtocol.SSH, _CredentialProtocol.SSH])
 
         self.assertEqual(1, len(resources))
 
