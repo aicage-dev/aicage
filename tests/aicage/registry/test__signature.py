@@ -188,7 +188,7 @@ class SignatureVerificationTests(TestCase):
     ) -> None:
         image_ref = "ghcr.io/aicage/aicage-image-util@sha256:abc"
         annotations = {
-            "org.opencontainers.image.source": "https://github.com/aicage/aicage-image-util",
+            "org.opencontainers.image.source": "https://github.com/aicage-dev/aicage-image-util",
             "org.opencontainers.image.title": "aicage-image-util",
         }
         with mock.patch(
