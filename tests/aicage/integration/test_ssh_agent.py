@@ -1,6 +1,7 @@
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import tempfile
 from collections.abc import Iterator
@@ -80,6 +81,14 @@ def test_ssh_agent_is_available_in_container(
                 )
 
             assert exit_code == 0, output
+        except Exception:
+            # TEST-WIP(Task 42): retain Aicage logs for the CI failure artifact.
+            aicage_home = home / ".aicage"
+            if aicage_home.is_dir():
+                shutil.copytree(
+                    aicage_home, temp_root / f"failed-{root.name}" / ".aicage"
+                )
+            raise
         finally:
             monkeypatch.chdir(initial_cwd)
 
