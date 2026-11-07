@@ -13,6 +13,7 @@ class ResourceSshTests(TestCase):
     def test_load_ssh_key_streams_passphrase_to_sidecar(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         stream = mock.Mock()
+        stream.recv.return_value = b""
         client = mock.Mock()
         client.api.exec_create.return_value = {"Id": "exec-id"}
         client.api.exec_start.return_value = stream
@@ -44,14 +45,16 @@ class ResourceSshTests(TestCase):
         resource = _resources([_CredentialProtocol.SSH])[0]
         client = mock.Mock()
         client.api.exec_create.return_value = {"Id": "exec-id"}
-        client.api.exec_start.return_value = mock.Mock()
+        stream = mock.Mock()
+        stream.recv.side_effect = [b"key rejected", b""]
+        client.api.exec_start.return_value = stream
         client.api.exec_inspect.return_value = {"ExitCode": 1}
         with (
             mock.patch.object(_resource_ssh, "get_docker_client", return_value=client),
             mock.patch.object(
                 _resource_ssh, "_find_container", return_value=mock.Mock()
             ),
-            self.assertRaisesRegex(DockerError, "Failed to load"),
+            self.assertRaisesRegex(DockerError, "Failed to load.*key rejected"),
         ):
             _resource_ssh._load_ssh_key(
                 resource, PurePosixPath("/credential/ssh/id_ed25519"), ""
