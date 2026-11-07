@@ -110,6 +110,13 @@ jobs:
             ForEach-Object {
               Copy-Item -Recurse -Force $_.FullName $artifactDirectory
             }
+          $testTempRoot = Join-Path $env:GITHUB_WORKSPACE ".aicage-test-tmp"
+          if (Test-Path $testTempRoot) {
+            Get-ChildItem -Path $testTempRoot -Recurse -Directory -Filter ".aicage" |
+              ForEach-Object {
+                Copy-Item -Recurse -Force $_.FullName $artifactDirectory
+              }
+          }
 
       - name: Upload aicage logs
         if: failure()
