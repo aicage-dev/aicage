@@ -99,6 +99,7 @@ def load_run_config(
     mounts, env = resolve_docker_args(context, agent, parsed)
     if parsed is None or parsed.menu != "none":
         store.save_project(project_path, draft.project_cfg)
+        ensure_ssh_setup(context, agent, interaction.reporter, interactive=True)
 
     return RunConfig(
         project_path=project_path,
@@ -194,7 +195,10 @@ def _configure_scope(
                 draft.project_cfg,
             )
             ensure_ssh_setup(
-                context, scope_context.agent, scope_context.interaction.reporter
+                context,
+                scope_context.agent,
+                scope_context.interaction.reporter,
+                interactive=current_parsed is None or current_parsed.menu != "none",
             )
             return
         current_source = draft

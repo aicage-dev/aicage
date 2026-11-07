@@ -143,11 +143,17 @@ class RuntimeConfigTests(TestCase):
                         "aicage.config.runtime_config.load_agents",
                         return_value=self._get_agents(),
                     ),
+                    mock.patch(
+                        "aicage.config.runtime_config.ensure_ssh_setup"
+                    ) as setup_mock,
                 ):
                     run_config = load_run_config("codex", interaction)
 
         assert run_config is not None
         self.assertEqual("--global --tree --project", run_config.project_docker_args)
+        setup_mock.assert_called_once_with(
+            mock.ANY, "codex", interaction.reporter, interactive=True
+        )
 
     def test_configure_inherited_config_saves_global_without_running_image_setup(
         self,
@@ -177,7 +183,9 @@ class RuntimeConfigTests(TestCase):
 
         interaction.configure_run.assert_called_once()
         store.save_global.assert_called_once_with(config)
-        setup_mock.assert_called_once_with(mock.ANY, "codex", interaction.reporter)
+        setup_mock.assert_called_once_with(
+            mock.ANY, "codex", interaction.reporter, interactive=True
+        )
 
     def test_configure_inherited_config_prefills_cli_values(self) -> None:
         store = mock.Mock()

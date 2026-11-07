@@ -6,7 +6,8 @@ from pathlib import Path
 from aicage.registry.credential_image import ensure_credential_image
 from aicage.reporting import OperationReporter
 
-from ._resources import _CredentialProtocol, _CredentialResource, _ensure_resources
+from ._resource_models import _CredentialProtocol, _CredentialResource
+from ._resources import _ensure_resources
 
 
 def _ensure_sidecars(

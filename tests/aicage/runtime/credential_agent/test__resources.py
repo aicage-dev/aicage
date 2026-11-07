@@ -7,12 +7,19 @@ from docker.errors import DockerException, NotFound
 
 from aicage.docker.errors import DockerError
 from aicage.runtime.credential_agent import _resources
+from aicage.runtime.credential_agent._resource_lifecycle import _resource_lock
+from aicage.runtime.credential_agent._resource_models import (
+    _CredentialProtocol,
+)
+from aicage.runtime.credential_agent._resource_models import (
+    _resources as _resource_definitions,
+)
 
 
 class CredentialAgentResourcesTests(TestCase):
     def setUp(self) -> None:
-        self._ssh = _resources._CredentialProtocol.SSH
-        self._resource = _resources._resources([self._ssh])[0]
+        self._ssh = _CredentialProtocol.SSH
+        self._resource = _resource_definitions([self._ssh])[0]
         self._labels = {
             "org.aicage.resource": "credential-agent",
             "org.aicage.credential-agent.protocol": "ssh",
@@ -188,17 +195,17 @@ class CredentialAgentResourcesTests(TestCase):
     def test_resource_lock_translates_contention_error(self) -> None:
         with (
             mock.patch(
-                "aicage.runtime.credential_agent._resources.portalocker.Lock",
+                "aicage.runtime.credential_agent._resource_lifecycle.portalocker.Lock",
                 side_effect=portalocker.exceptions.LockException,
             ),
             self.assertRaisesRegex(DockerError, "Failed to lock"),
         ):
-            with _resources._resource_lock():
+            with _resource_lock():
                 pass
 
     def test__resources_deduplicates_protocols(self) -> None:
-        resources = _resources._resources(
-            [_resources._CredentialProtocol.SSH, _resources._CredentialProtocol.SSH]
+        resources = _resource_definitions(
+            [_CredentialProtocol.SSH, _CredentialProtocol.SSH]
         )
 
         self.assertEqual(1, len(resources))
