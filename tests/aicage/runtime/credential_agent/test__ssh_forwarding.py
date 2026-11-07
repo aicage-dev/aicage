@@ -16,6 +16,14 @@ class SshForwardingTests(TestCase):
         ):
             self.assertEqual(([], [], False), _ssh_forwarding._ssh_forwarding())
 
+    def test_ssh_forwarding_uses_a_sidecar_for_ssh_keys_or_home(self) -> None:
+        with (
+            mock.patch.object(_ssh_forwarding, "_direct_ssh_socket", return_value=None),
+            mock.patch.object(_ssh_forwarding, "_resolve_ssh_key_files", return_value=[Path("/test-tmp/id_ed25519")]),
+            mock.patch.object(_ssh_forwarding, "_resolve_ssh_support_files", return_value=[]),
+        ):
+            self.assertEqual(([], [], True), _ssh_forwarding._ssh_forwarding())
+
     def test_direct_ssh_socket_requires_a_reachable_unix_socket(self) -> None:
         socket = mock.Mock(spec=Path)
         socket.is_socket.return_value = True
@@ -27,6 +35,10 @@ class SshForwardingTests(TestCase):
 
     def test_direct_ssh_socket_rejects_missing_or_unreachable_sockets(self) -> None:
         with mock.patch.object(_ssh_forwarding, "_resolve_ssh_agent_socket", return_value=None):
+            self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
+
+    def test_direct_ssh_socket_is_unavailable_on_windows(self) -> None:
+        with mock.patch.object(_ssh_forwarding.os, "name", "nt"):
             self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
 
         socket = mock.Mock(spec=Path)
@@ -130,6 +142,28 @@ class SshForwardingTests(TestCase):
 
         set_mock.assert_called_once_with("aicage/ssh/passphrase/SHA256:key", "secret")
 
+    def test_ssh_passphrase_rejects_an_empty_interactive_secret(self) -> None:
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "_ssh_key_is_encrypted", return_value=True),
+            mock.patch.object(_ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"),
+            mock.patch.object(_ssh_forwarding, "get_secret", side_effect=_ssh_forwarding.SecretNotFoundError()),
+            mock.patch.object(_ssh_forwarding.sys.stdin, "isatty", return_value=True),
+            mock.patch.object(_ssh_forwarding, "getpass", return_value=""),
+            self.assertRaisesRegex(RuntimeError, "No passphrase was supplied"),
+        ):
+            _ssh_forwarding._ssh_passphrase(key, interactive=True)
+
+    def test_ssh_passphrase_translates_keyring_errors(self) -> None:
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "_ssh_key_is_encrypted", return_value=True),
+            mock.patch.object(_ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"),
+            mock.patch.object(_ssh_forwarding, "get_secret", side_effect=_ssh_forwarding.KeyringError()),
+            self.assertRaisesRegex(RuntimeError, "Cannot access the platform keyring"),
+        ):
+            _ssh_forwarding._ssh_passphrase(key, interactive=False)
+
     def test_ssh_key_helpers_interpret_command_results(self) -> None:
         key = Path("/test-tmp/id_ed25519")
         with (
@@ -150,3 +184,16 @@ class SshForwardingTests(TestCase):
             self.assertRaisesRegex(RuntimeError, "ssh-keygen is required"),
         ):
             _ssh_forwarding._ssh_keygen()
+
+    def test_ssh_keygen_returns_the_absolute_host_tool_path(self) -> None:
+        with mock.patch.object(_ssh_forwarding, "_SSH_KEYGEN", "/usr/bin/ssh-keygen"):
+            self.assertEqual("/usr/bin/ssh-keygen", _ssh_forwarding._ssh_keygen())
+
+    def test_ssh_key_fingerprint_rejects_invalid_command_output(self) -> None:
+        key = Path("/test-tmp/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "_ssh_keygen", return_value="/usr/bin/ssh-keygen"),
+            mock.patch.object(_ssh_forwarding.subprocess, "run", return_value=mock.Mock(returncode=1, stdout="")),
+            self.assertRaisesRegex(RuntimeError, "Cannot determine the fingerprint"),
+        ):
+            _ssh_forwarding._ssh_key_fingerprint(key)
