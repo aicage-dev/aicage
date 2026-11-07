@@ -10,16 +10,26 @@ from ..._run_config_fixtures import build_run_config as _build_run_config
 
 class CommonBuildTests(TestCase):
     def test_build_context_dir(self) -> None:
-        run_config = _build_run_config(local_definition_dir=Path("/test-tmp/build/agents/claude"))
+        run_config = _build_run_config(
+            local_definition_dir=Path("/test-tmp/build/agents/claude")
+        )
 
-        context_dir = _common.build_context_dir(run_config, Path("/test-tmp/build/Dockerfile"))
+        context_dir = _common.build_context_dir(
+            run_config, Path("/test-tmp/build/Dockerfile")
+        )
 
         self.assertEqual(Path("/test-tmp/build"), context_dir)
 
-    def test_build_context_dir_uses_the_agent_definition_parent_for_external_definitions(self) -> None:
-        run_config = _build_run_config(local_definition_dir=Path("/test-tmp/agents/claude"))
+    def test_build_context_dir_uses_the_agent_definition_parent_for_external_definitions(
+        self,
+    ) -> None:
+        run_config = _build_run_config(
+            local_definition_dir=Path("/test-tmp/agents/claude")
+        )
 
-        context_dir = _common.build_context_dir(run_config, Path("/test-tmp/build/Dockerfile"))
+        context_dir = _common.build_context_dir(
+            run_config, Path("/test-tmp/build/Dockerfile")
+        )
 
         self.assertEqual(Path("/test-tmp"), context_dir)
 
@@ -40,7 +50,9 @@ class CommonBuildTests(TestCase):
             ) as popen_mock,
             mock.patch("aicage.docker.build._common.register_process") as register_mock,
         ):
-            returncode = _common.run_build_command(["docker", "build"], log_handle, reporter)
+            returncode = _common.run_build_command(
+                ["docker", "build"], log_handle, reporter
+            )
 
         self.assertEqual(0, returncode)
         popen_mock.assert_called_once_with(
@@ -60,7 +72,10 @@ class CommonBuildTests(TestCase):
         popen_context.__exit__ = mock.Mock(return_value=None)
 
         with (
-            mock.patch("aicage.docker.build._common.subprocess.Popen", return_value=popen_context),
+            mock.patch(
+                "aicage.docker.build._common.subprocess.Popen",
+                return_value=popen_context,
+            ),
             self.assertRaisesRegex(RuntimeError, "did not provide stdout"),
         ):
             _common.run_build_command(["docker", "build"], mock.Mock(), mock.Mock())

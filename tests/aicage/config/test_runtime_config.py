@@ -143,7 +143,9 @@ class RuntimeConfigTests(TestCase):
                         "aicage.config.runtime_config.load_agents",
                         return_value=self._get_agents(),
                     ),
-                    mock.patch("aicage.config.runtime_config.ensure_ssh_setup") as setup_mock,
+                    mock.patch(
+                        "aicage.config.runtime_config.ensure_ssh_setup"
+                    ) as setup_mock,
                 ):
                     run_config = load_run_config("codex", interaction)
 

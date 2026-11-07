@@ -16,7 +16,9 @@ class RunCommandTests(TestCase):
             agent_args=["--flag"],
         )
         with (
-            mock.patch("aicage.docker.run._assemble_docker_run", return_value=["docker", "run"]),
+            mock.patch(
+                "aicage.docker.run._assemble_docker_run", return_value=["docker", "run"]
+            ),
             mock.patch("aicage.docker.execution.cli.run_docker_command") as run_mock,
             mock.patch(
                 "aicage.docker.run.get_local_repo_digest_for_repo",
@@ -56,7 +58,9 @@ class RunCommandTests(TestCase):
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(
                 "aicage.docker.run.subprocess.run",
-                return_value=subprocess.CompletedProcess([], 0, stdout="1.2.3\n", stderr=""),
+                return_value=subprocess.CompletedProcess(
+                    [], 0, stdout="1.2.3\n", stderr=""
+                ),
             ),
         ):
             result = run.run_builder_version_check(
@@ -72,7 +76,9 @@ class RunCommandTests(TestCase):
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(
                 "aicage.docker.run.subprocess.run",
-                return_value=subprocess.CompletedProcess([], 2, stdout="partial", stderr="failed"),
+                return_value=subprocess.CompletedProcess(
+                    [], 2, stdout="partial", stderr="failed"
+                ),
             ),
         ):
             result = run.run_builder_version_check(

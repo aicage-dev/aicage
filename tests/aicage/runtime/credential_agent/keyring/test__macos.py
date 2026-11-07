@@ -1,13 +1,19 @@
 from unittest import TestCase, mock
 
 from aicage.runtime.credential_agent.keyring._macos import _MacOSKeychain
-from aicage.runtime.credential_agent.keyring.errors import KeyringError, SecretNotFoundError
+from aicage.runtime.credential_agent.keyring.errors import (
+    KeyringError,
+    SecretNotFoundError,
+)
 
 
 class MacOSKeychainTests(TestCase):
     def test_init_loads_security_framework(self) -> None:
         security = mock.Mock()
-        with mock.patch("aicage.runtime.credential_agent.keyring._macos.ctypes.CDLL", return_value=security):
+        with mock.patch(
+            "aicage.runtime.credential_agent.keyring._macos.ctypes.CDLL",
+            return_value=security,
+        ):
             keychain = _MacOSKeychain()
 
         self.assertIs(security, keychain._security)
@@ -15,7 +21,9 @@ class MacOSKeychainTests(TestCase):
     def test_get_raises_for_a_missing_secret(self) -> None:
         keychain = object.__new__(_MacOSKeychain)
         keychain._security = mock.Mock()
-        keychain._security.SecKeychainFindGenericPassword.return_value = keychain._NOT_FOUND
+        keychain._security.SecKeychainFindGenericPassword.return_value = (
+            keychain._NOT_FOUND
+        )
 
         with self.assertRaisesRegex(SecretNotFoundError, "No stored passphrase"):
             keychain.get("name")
@@ -33,7 +41,10 @@ class MacOSKeychainTests(TestCase):
         keychain = object.__new__(_MacOSKeychain)
         keychain._security = mock.Mock()
         keychain._security.SecKeychainAddGenericPassword.return_value = 0
-        with mock.patch.object(keychain, "get", return_value="old"), mock.patch.object(keychain, "_delete") as delete:
+        with (
+            mock.patch.object(keychain, "get", return_value="old"),
+            mock.patch.object(keychain, "_delete") as delete,
+        ):
             keychain.set("name", "secret")
 
         delete.assert_called_once_with("name")
@@ -52,7 +63,10 @@ class MacOSKeychainTests(TestCase):
         keychain = object.__new__(_MacOSKeychain)
         keychain._security = mock.Mock()
         keychain._security.SecKeychainFindGenericPassword.return_value = 0
-        with mock.patch("aicage.runtime.credential_agent.keyring._macos.ctypes.string_at", return_value=b"secret"):
+        with mock.patch(
+            "aicage.runtime.credential_agent.keyring._macos.ctypes.string_at",
+            return_value=b"secret",
+        ):
             self.assertEqual("secret", keychain.get("name"))
 
         keychain._security.SecKeychainItemFreeContent.assert_called_once()
@@ -77,7 +91,9 @@ class MacOSKeychainTests(TestCase):
     def test_delete_ignores_a_missing_item(self) -> None:
         keychain = object.__new__(_MacOSKeychain)
         keychain._security = mock.Mock()
-        keychain._security.SecKeychainFindGenericPassword.return_value = keychain._NOT_FOUND
+        keychain._security.SecKeychainFindGenericPassword.return_value = (
+            keychain._NOT_FOUND
+        )
 
         keychain._delete("name")
 

@@ -10,7 +10,9 @@ class _MacOSKeychain(_Keyring):
     _NOT_FOUND = -25300
 
     def __init__(self) -> None:
-        self._security = ctypes.CDLL("/System/Library/Frameworks/Security.framework/Security")
+        self._security = ctypes.CDLL(
+            "/System/Library/Frameworks/Security.framework/Security"
+        )
 
     def get(self, name: str) -> str:
         password_length = ctypes.c_uint32()

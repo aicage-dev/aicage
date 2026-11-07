@@ -37,20 +37,34 @@ class _WindowsCredentialManager(_Keyring):
             ctypes.POINTER(ctypes.POINTER(self._Credential)),
         ]
         self._api.CredReadW.restype = wintypes.BOOL
-        self._api.CredWriteW.argtypes = [ctypes.POINTER(self._Credential), wintypes.DWORD]
+        self._api.CredWriteW.argtypes = [
+            ctypes.POINTER(self._Credential),
+            wintypes.DWORD,
+        ]
         self._api.CredWriteW.restype = wintypes.BOOL
         self._api.CredFree.argtypes = [ctypes.c_void_p]
-        self._api.CredDeleteW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD]
+        self._api.CredDeleteW.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+        ]
 
     def get(self, name: str) -> str:
         credential = ctypes.POINTER(self._Credential)()
-        if not self._api.CredReadW(name, self._TYPE_GENERIC, 0, ctypes.byref(credential)):
+        if not self._api.CredReadW(
+            name, self._TYPE_GENERIC, 0, ctypes.byref(credential)
+        ):
             error = ctypes.get_last_error()  # type: ignore[attr-defined]
             if error == self._NOT_FOUND:
                 raise SecretNotFoundError("No stored passphrase is available.")
-            raise KeyringError(f"Credential Manager failed to read the passphrase ({error}).")
+            raise KeyringError(
+                f"Credential Manager failed to read the passphrase ({error})."
+            )
         try:
-            raw = ctypes.string_at(credential.contents.CredentialBlob, credential.contents.CredentialBlobSize)
+            raw = ctypes.string_at(
+                credential.contents.CredentialBlob,
+                credential.contents.CredentialBlobSize,
+            )
             return raw.decode("utf-8")
         finally:
             self._api.CredFree(credential)
@@ -66,4 +80,6 @@ class _WindowsCredentialManager(_Keyring):
         )
         if not self._api.CredWriteW(ctypes.byref(credential), 0):
             error = ctypes.get_last_error()  # type: ignore[attr-defined]
-            raise KeyringError(f"Credential Manager failed to store the passphrase ({error}).")
+            raise KeyringError(
+                f"Credential Manager failed to store the passphrase ({error})."
+            )

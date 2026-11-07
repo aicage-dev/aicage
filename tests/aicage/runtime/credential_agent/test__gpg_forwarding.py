@@ -15,8 +15,12 @@ class GpgForwardingTests(TestCase):
         context.project_cfg.path = "/test-tmp/project"
         context.project_cfg.agents = {"codex": mock.Mock(mounts=mock.Mock(gnupg=True))}
         with (
-            mock.patch.object(_gpg_forwarding, "is_commit_signing_enabled", return_value=True),
-            mock.patch.object(_gpg_forwarding, "resolve_signing_format", return_value="openpgp"),
+            mock.patch.object(
+                _gpg_forwarding, "is_commit_signing_enabled", return_value=True
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "resolve_signing_format", return_value="openpgp"
+            ),
         ):
             self.assertTrue(_gpg_forwarding._gpg_enabled(context, "codex"))
 
@@ -24,9 +28,15 @@ class GpgForwardingTests(TestCase):
         socket = mock.Mock(spec=Path)
         socket.is_socket.return_value = True
         with (
-            mock.patch.object(_gpg_forwarding, "resolve_gpg_agent_extra_socket", return_value=socket),
-            mock.patch.object(_gpg_forwarding, "_GPG_CONNECT_AGENT", "/usr/bin/gpg-connect-agent"),
-            mock.patch.object(_gpg_forwarding.subprocess, "run", return_value=mock.Mock(returncode=0)),
+            mock.patch.object(
+                _gpg_forwarding, "resolve_gpg_agent_extra_socket", return_value=socket
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "_GPG_CONNECT_AGENT", "/usr/bin/gpg-connect-agent"
+            ),
+            mock.patch.object(
+                _gpg_forwarding.subprocess, "run", return_value=mock.Mock(returncode=0)
+            ),
         ):
             self.assertIs(socket, _gpg_forwarding._direct_gpg_socket())
 
@@ -34,7 +44,9 @@ class GpgForwardingTests(TestCase):
         home = Path("/test-tmp/gnupg")
         with (
             mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=home),
-            mock.patch.object(_gpg_forwarding, "resolve_gpg_public_files", return_value=[]),
+            mock.patch.object(
+                _gpg_forwarding, "resolve_gpg_public_files", return_value=[]
+            ),
             mock.patch.object(_gpg_forwarding, "_direct_gpg_socket", return_value=None),
         ):
             _mounts, _env, sidecar, actual_home = _gpg_forwarding._gpg_forwarding()
@@ -45,7 +57,9 @@ class GpgForwardingTests(TestCase):
     def test_direct_gpg_socket_rejects_windows_and_missing_sockets(self) -> None:
         with mock.patch.object(_gpg_forwarding.os, "name", "nt"):
             self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
-        with mock.patch.object(_gpg_forwarding, "resolve_gpg_agent_extra_socket", return_value=None):
+        with mock.patch.object(
+            _gpg_forwarding, "resolve_gpg_agent_extra_socket", return_value=None
+        ):
             self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
 
     def test_gpg_forwarding_uses_direct_socket_and_public_files(self) -> None:
@@ -54,14 +68,22 @@ class GpgForwardingTests(TestCase):
         public_keyring = home / "pubring.kbx"
         with (
             mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=home),
-            mock.patch.object(_gpg_forwarding, "resolve_gpg_public_files", return_value=[public_keyring]),
-            mock.patch.object(_gpg_forwarding, "_direct_gpg_socket", return_value=socket),
+            mock.patch.object(
+                _gpg_forwarding,
+                "resolve_gpg_public_files",
+                return_value=[public_keyring],
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "_direct_gpg_socket", return_value=socket
+            ),
         ):
             mounts, env, sidecar, actual_home = _gpg_forwarding._gpg_forwarding()
         self.assertEqual(
             [
                 MountSpec(socket, PurePosixPath("/test-tmp/gnupg/S.gpg-agent")),
-                MountSpec(public_keyring, PurePosixPath("/test-tmp/gnupg/pubring.kbx"), True),
+                MountSpec(
+                    public_keyring, PurePosixPath("/test-tmp/gnupg/pubring.kbx"), True
+                ),
             ],
             mounts,
         )

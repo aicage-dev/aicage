@@ -51,7 +51,9 @@ def forwarding(
             if gpg_home is not None:
                 credential_paths[_CredentialProtocol.GPG] = gpg_home
 
-    resources = _ensure_sidecars(protocols, resolve_container_user(), reporter, credential_paths)
+    resources = _ensure_sidecars(
+        protocols, resolve_container_user(), reporter, credential_paths
+    )
     for resource in resources:
         _append_sidecar_target_args(resource, mounts, env)
     _reload_ssh_keys(resources, interactive=False)

@@ -15,8 +15,12 @@ class _SecretService(_Keyring):
         except ImportError as exc:  # pragma: no cover - packaging/platform failure.
             raise KeyringError("Secret Service support is unavailable.") from exc
         try:
-            self._collection = secretstorage.get_default_collection(secretstorage.dbus_init())
-        except Exception as exc:  # Secret Service library has backend-specific exceptions.
+            self._collection = secretstorage.get_default_collection(
+                secretstorage.dbus_init()
+            )
+        except (
+            Exception
+        ) as exc:  # Secret Service library has backend-specific exceptions.
             raise KeyringError("Cannot access the user Secret Service.") from exc
 
     def get(self, name: str) -> str:
@@ -32,8 +36,12 @@ class _SecretService(_Keyring):
             return item.get_secret().decode("utf-8")
         except KeyringError:
             raise
-        except Exception as exc:  # Secret Service library has backend-specific exceptions.
-            raise KeyringError("Cannot retrieve the passphrase from Secret Service.") from exc
+        except (
+            Exception
+        ) as exc:  # Secret Service library has backend-specific exceptions.
+            raise KeyringError(
+                "Cannot retrieve the passphrase from Secret Service."
+            ) from exc
 
     def set(self, name: str, secret: str) -> None:
         try:
@@ -47,5 +55,9 @@ class _SecretService(_Keyring):
             )
         except KeyringError:
             raise
-        except Exception as exc:  # Secret Service library has backend-specific exceptions.
-            raise KeyringError("Cannot store the passphrase in Secret Service.") from exc
+        except (
+            Exception
+        ) as exc:  # Secret Service library has backend-specific exceptions.
+            raise KeyringError(
+                "Cannot store the passphrase in Secret Service."
+            ) from exc

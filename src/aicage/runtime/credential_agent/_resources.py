@@ -15,7 +15,12 @@ from ._resource_lifecycle import (
     _requires_replacement,
     _resource_lock,
 )
-from ._resource_models import _CredentialProtocol, _CredentialResource, _ImageSpec, _resources
+from ._resource_models import (
+    _CredentialProtocol,
+    _CredentialResource,
+    _ImageSpec,
+    _resources,
+)
 
 
 def _ensure_resources(
@@ -37,10 +42,14 @@ def _ensure_resources(
             _prepare_volume(client, resource, volume, image)
             container = _find_container(client, resource)
             credential_path = credential_paths.get(resource.protocol)
-            if container is None or _requires_replacement(container, resource, image.image_id, credential_path):
+            if container is None or _requires_replacement(
+                container, resource, image.image_id, credential_path
+            ):
                 if container is not None:
                     container.remove(force=True)
-                container = _create_container(client, resource, volume, image, credential_path)
+                container = _create_container(
+                    client, resource, volume, image, credential_path
+                )
             elif _is_stopped(container):
                 container.start()
             _ensure_ready(client, resource, volume, image.image_ref)

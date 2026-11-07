@@ -8,7 +8,9 @@ class KeyringTests(TestCase):
         windows = mock.Mock()
         with (
             mock.patch.object(keyring.os, "name", "nt"),
-            mock.patch.object(keyring, "_WindowsCredentialManager", return_value=windows),
+            mock.patch.object(
+                keyring, "_WindowsCredentialManager", return_value=windows
+            ),
         ):
             self.assertIs(windows, keyring._keyring())
         macos = mock.Mock()
@@ -33,4 +35,6 @@ class KeyringTests(TestCase):
         with mock.patch.object(keyring, "_keyring", return_value=backend):
             keyring.set_secret("aicage/ssh/passphrase/SHA256:key", "secret")
 
-        backend.set.assert_called_once_with("aicage/ssh/passphrase/SHA256:key", "secret")
+        backend.set.assert_called_once_with(
+            "aicage/ssh/passphrase/SHA256:key", "secret"
+        )

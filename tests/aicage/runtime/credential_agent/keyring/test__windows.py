@@ -2,7 +2,10 @@ import ctypes
 from unittest import TestCase, mock
 
 from aicage.runtime.credential_agent.keyring._windows import _WindowsCredentialManager
-from aicage.runtime.credential_agent.keyring.errors import KeyringError, SecretNotFoundError
+from aicage.runtime.credential_agent.keyring.errors import (
+    KeyringError,
+    SecretNotFoundError,
+)
 
 
 class WindowsCredentialManagerTests(TestCase):
@@ -57,10 +60,14 @@ class WindowsCredentialManagerTests(TestCase):
         credential.contents.CredentialBlobSize = 6
         with (
             mock.patch(
-                "aicage.runtime.credential_agent.keyring._windows.ctypes.POINTER", return_value=lambda: credential
+                "aicage.runtime.credential_agent.keyring._windows.ctypes.POINTER",
+                return_value=lambda: credential,
             ),
             mock.patch("aicage.runtime.credential_agent.keyring._windows.ctypes.byref"),
-            mock.patch("aicage.runtime.credential_agent.keyring._windows.ctypes.string_at", return_value=b"secret"),
+            mock.patch(
+                "aicage.runtime.credential_agent.keyring._windows.ctypes.string_at",
+                return_value=b"secret",
+            ),
         ):
             self.assertEqual("secret", manager.get("name"))
 

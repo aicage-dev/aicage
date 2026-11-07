@@ -35,7 +35,9 @@ class CredentialAgentSidecarsTests(TestCase):
 
     def test__ensure_sidecars_skips_image_without_protocols(self) -> None:
         reporter = mock.Mock()
-        with mock.patch("aicage.runtime.credential_agent._sidecars.ensure_credential_image") as image_mock:
+        with mock.patch(
+            "aicage.runtime.credential_agent._sidecars.ensure_credential_image"
+        ) as image_mock:
             actual = _sidecars._ensure_sidecars([], "1000:1000", reporter)
 
         self.assertEqual([], actual)
