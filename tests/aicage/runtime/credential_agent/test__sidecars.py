@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from aicage.runtime.credential_agent import _sidecars
-from aicage.runtime.credential_agent._resources import _CredentialProtocol
+from aicage.runtime.credential_agent._resource_models import _CredentialProtocol
 
 
 class CredentialAgentSidecarsTests(TestCase):

@@ -4,6 +4,7 @@
   "ignorePaths": ["**/.git/**"],
   "words": [
     "AICAGE",
+    "Advapi",
     "Aicage",
     "Analyse",
     "Auggie",
@@ -80,6 +81,7 @@
     "cuda",
     "dataclasses",
     "datatypes",
+    "dbus",
     "dedup",
     "dedupe",
     "distros",
