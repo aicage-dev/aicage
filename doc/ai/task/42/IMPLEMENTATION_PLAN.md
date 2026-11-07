@@ -97,6 +97,20 @@ setup when SSH sharing is enabled.
 
 ## Commit 4: `aicage` SSH passphrase and reload lifecycle
 
+**Status: complete.** Implemented in `aicage` commits `04c24bae` and `d5669737`.
+
+The private `credential_agent.keyring` package uses an explicit public facade (`keyring.py`) and errors module; its
+empty package initializer intentionally exports nothing. It provides native macOS Keychain and Windows Credential
+Manager implementations plus Linux Secret Service support. SSH passphrases are namespaced by the SHA-256 fingerprint
+reported by the host `ssh-keygen`. Configuration saves perform interactive setup; target-run reload is noninteractive
+and fails before target startup if an encrypted key has no accessible stored passphrase. The reloaded key is passed to
+the sidecar only through the existing stdin-based loading operation.
+
+The forwarding and resource implementation was split into focused private modules for lifecycle, resource models, SSH
+resource loading, SSH forwarding, and GnuPG forwarding. Unit tests cover the platform keyring backends and SSH
+forwarding branches. The targeted suites for `_ssh_forwarding.py`, `_secret_service.py`, `_windows.py`, and
+`_macos.py` have 100% line coverage.
+
 After the design gate succeeds, add a narrow private platform-keyring abstraction and SSH setup flow:
 
 - unencrypted keys load into the sidecar directly;
@@ -115,6 +129,9 @@ This does not replace the sidecar's interactive pinentry, smartcard, cache, or k
 contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
+
+**Status: pending.** Unit coverage is complete for the current credential-agent orchestration, but the live Docker and
+platform cases below still need to be implemented and run on their relevant CI hosts.
 
 Extend the existing SSH and GnuPG integration suites and Windows workflow to cover:
 
