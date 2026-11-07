@@ -64,7 +64,7 @@ def _append_gpg_target_args(
 ) -> None:
     gpg_env = next(item for item in env if item.name == _GNUPGHOME)
     mounts.append(
-        VolumeMountSpec(resource.volume_name, PurePosixPath(gpg_env.value), True)
+        VolumeMountSpec(resource.volume_name, PurePosixPath(gpg_env.value))
     )
 
 

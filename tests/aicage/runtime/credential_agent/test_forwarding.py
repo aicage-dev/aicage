@@ -111,7 +111,7 @@ class CredentialAgentForwardingTests(TestCase):
                 self.assertEqual(
                     [
                         VolumeMountSpec(
-                            resource.volume_name, PurePosixPath("/test-tmp/gnupg"), True
+                            resource.volume_name, PurePosixPath("/test-tmp/gnupg")
                         )
                     ],
                     mounts,
