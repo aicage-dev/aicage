@@ -4,7 +4,7 @@ from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
 from aicage.docker import run
-from aicage.runtime.run_args import DockerRunArgs, EnvVar, MountSpec
+from aicage.runtime.run_args import DockerRunArgs, EnvVar, MountSpec, VolumeMountSpec
 
 
 class RunCommandTests(TestCase):
@@ -168,6 +168,28 @@ class RunCommandTests(TestCase):
         container_mount = PurePosixPath("/opt/one").as_posix()
         self.assertIn(f"type=bind,src={host_mount},dst={container_mount},readonly", cmd)
         self.assertNotIn("AICAGE_AGENT_CONFIG_PATH", " ".join(cmd))
+
+    def test_assemble_includes_a_volume_mount(self) -> None:
+        with mock.patch("aicage.docker.run.resolve_user_ids", return_value=[]):
+            cmd = run._assemble_docker_run(
+                DockerRunArgs(
+                    image_ref="ghcr.io/aicage/aicage:codex-ubuntu",
+                    merged_docker_args="",
+                    agent_args=[],
+                    mounts=[
+                        VolumeMountSpec(
+                            volume_name="aicage-credential-agent-ssh",
+                            container_path=PurePosixPath("/run/credentials"),
+                            read_only=True,
+                        )
+                    ],
+                )
+            )
+
+        self.assertIn(
+            "type=volume,src=aicage-credential-agent-ssh,dst=/run/credentials,readonly",
+            cmd,
+        )
 
     def test_assemble_uses_interactive_tty_when_stdin_is_tty(self) -> None:
         with (
