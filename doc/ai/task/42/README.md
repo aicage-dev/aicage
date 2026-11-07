@@ -3,6 +3,15 @@
 See [test coverage](TEST_COVERAGE.md) for the current evidence and the division of test responsibilities between
 `aicage-image-util` and `aicage`.
 
+## Current implementation status
+
+Commits 1 through 4 are complete. `aicage-image-util` provides the published `credential-agent` helper image, and
+`aicage` selects direct Unix forwarding where possible, otherwise manages the persistent SSH/GnuPG sidecars. SSH
+sidecar setup and encrypted-key reload use the platform keyring on Linux, Windows, and macOS.
+
+The remaining work is Commit 5: live Aicage integration and platform-matrix coverage. In particular, the existing
+unit tests do not replace a real Linux fallback, Windows Docker Desktop/WSL, sidecar restart, or GnuPG signing test.
+
 ## Problem
 
 The SSH and GnuPG refactors replaced mounting host credential homes directly into agent containers with agent-socket
