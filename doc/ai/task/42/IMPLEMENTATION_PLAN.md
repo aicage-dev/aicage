@@ -7,8 +7,8 @@ Implement persistent SSH and GnuPG credential sidecars in `aicage` and a dedicat
 
 The sidecars are global Docker singleton resources, not project resources:
 
-- SSH: container `aicage-ssh-agent`, volume `aicage-ssh-agent-socket`
-- GnuPG: container `aicage-gpg-agent`, volume `aicage-gpg-agent-socket`
+- SSH: container `aicage-credential-agent-ssh`, volume `aicage-credential-agent-ssh-socket`
+- GnuPG: container `aicage-credential-agent-gpg`, volume `aicage-credential-agent-gpg-socket`
 
 Both have `org.aicage.resource=credential-agent`, a protocol label, and a helper image/protocol version label.
 Socket volumes persist across ordinary Aicage exits and are never mounted with host credential directories.
@@ -41,13 +41,13 @@ Keep the Node-based `agent-version` image and tag unchanged. Add a distinct Alpi
 Provide one dispatcher:
 
 ```text
-aicage-credential-agent ssh
-aicage-credential-agent gpg
+credential-agent ssh
+credential-agent gpg
 ```
 
 The SSH mode starts `ssh-agent` on the volume-backed socket and exposes a readiness command plus explicit key loading.
-The GnuPG mode starts `gpg-agent` with credential material only in the sidecar and exposes its restricted/extra socket
-through the named volume, plus a readiness command. Both modes must be noninteractive when invoked noninteractively.
+The GnuPG mode starts `gpg-agent` with credential material only in the sidecar and relays its normal socket into the
+named volume, plus a readiness command. Both modes must be noninteractive when invoked noninteractively.
 
 Update the image workflow to build, test, attest, sign, publish, and retain both multi-architecture tags independently.
 Add container-level tests covering startup, readiness, socket use from another container through a named volume, and the
@@ -74,7 +74,8 @@ concurrent creation. Ensuring SSH and GnuPG in the same run must resolve/update 
 ## Commit 3: `aicage` forwarding selection and sidecar lifecycle
 
 **Status: complete.** The public credential-agent forwarding coordinator now selects a reachable Unix agent socket
-for direct forwarding and otherwise uses the persistent sidecar (always on Windows). It adds protocol-specific named
+for direct GnuPG forwarding and otherwise uses the persistent sidecar (always on Windows). SSH always uses its
+persistent sidecar. It adds protocol-specific named
 volume mounts and environments to `DockerRunArgs`, preserves SSH/GnuPG public support mounts, mounts credential homes
 read-only only in sidecars, uses the target-container runtime UID/GID for sidecars, and removes the Windows OpenSSH
 service-management path and direct GnuPG resolver. Global and tree configuration saves ensure required SSH sidecars.
@@ -83,7 +84,8 @@ credential-sidecar mounts, resource replacement and lock errors, and target iden
 
 Replace the current separate SSH and GnuPG forwarding paths with one protocol-aware coordinator:
 
-- Unix: retain direct forwarding when a host agent socket is reachable and bind-mountable; select a sidecar otherwise.
+- Unix: always use the SSH sidecar. Retain direct GnuPG forwarding when its host agent socket is reachable and
+  bind-mountable; select the GnuPG sidecar otherwise.
 - Windows: always select the sidecar; never start or modify the Windows OpenSSH service and never mount a Windows named
   pipe.
 - Ensure the required image once, then volume and singleton sidecar for each selected protocol, and verify its socket
@@ -96,6 +98,20 @@ Move SSH setup out of the target-run-only path so global and tree configuration 
 setup when SSH sharing is enabled.
 
 ## Commit 4: `aicage` SSH passphrase and reload lifecycle
+
+**Status: complete.** Implemented in `aicage` commits `04c24bae` and `d5669737`.
+
+The private `credential_agent.keyring` package uses an explicit public facade (`keyring.py`) and errors module; its
+empty package initializer intentionally exports nothing. It provides native macOS Keychain and Windows Credential
+Manager implementations plus Linux Secret Service support. SSH passphrases are namespaced by the SHA-256 fingerprint
+reported by the host `ssh-keygen`. Configuration saves perform interactive setup; target-run reload is noninteractive
+and fails before target startup if an encrypted key has no accessible stored passphrase. The reloaded key is passed to
+the sidecar only through the existing stdin-based loading operation.
+
+The forwarding and resource implementation was split into focused private modules for lifecycle, resource models, SSH
+resource loading, SSH forwarding, and GnuPG forwarding. Unit tests cover the platform keyring backends and SSH
+forwarding branches. The targeted suites for `_ssh_forwarding.py`, `_secret_service.py`, `_windows.py`, and
+`_macos.py` have 100% line coverage.
 
 After the design gate succeeds, add a narrow private platform-keyring abstraction and SSH setup flow:
 
@@ -116,14 +132,18 @@ contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
 
-Extend the existing SSH and GnuPG integration suites and Windows workflow to cover:
+**Status: complete.** The live Docker matrix covers SSH sidecar forwarding and GnuPG signing. Linux covers
+both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG path. The
+host-key discovery and mount defaults are independent of Git configuration, so Git signing is not required to use a
+forwarded GnuPG agent. The SSH test verifies agent-backed signing, verification, isolated SSH authentication,
+target private-key-path absence,
+and restart/reload. The GnuPG tests verify signing, target `GNUPGHOME` private-key-file isolation, and sidecar
+restart/reload. Protected-key integration tests use real encrypted fixtures, sidecars, and client socket volumes while
+controlling the platform-keyring boundary: SSH covers interactive setup, noninteractive reload after restart, and the
+missing-secret error; GnuPG covers passphrase retrieval, public-only client signing, reload after restart, and the
+missing-secret error. Native-keyring backend behavior remains covered by the platform-specific unit suites.
 
-- Unix direct forwarding when usable;
-- Unix fallback to each sidecar when direct forwarding cannot be established;
-- Windows Docker Desktop/WSL socket-volume forwarding without a Windows named-pipe mount or Windows OpenSSH service;
-- GnuPG signing through the volume-backed socket without target private-key mounts;
-- stopping/removing either sidecar and recreating it on the next relevant run while keeping its volume;
-- first encrypted SSH-key setup, post-reboot reload, and the noninteractive missing-passphrase error.
+The temporary credential-focused CI matrix filter has been removed; normal non-proxy integration discovery is restored.
 
 ## Documentation
 
