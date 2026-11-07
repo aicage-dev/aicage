@@ -43,7 +43,9 @@ class SignatureVerificationTests(TestCase):
             )
         self.assertEqual("ghcr.io/aicage/aicage@sha256:abc", digest_ref)
         cosign_mock.assert_called_once_with("ghcr.io/aicage/aicage@sha256:abc")
-        annotation_mock.assert_called_once_with("ghcr.io/aicage/aicage@sha256:abc")
+        annotation_mock.assert_called_once_with(
+            "ghcr.io/aicage/aicage@sha256:abc", expected_image_ref=image_ref
+        )
 
     def test_resolve_verified_digest_raises_on_invalid_signature(self) -> None:
         image_ref = "ghcr.io/aicage/aicage:agent"
@@ -196,6 +198,22 @@ class SignatureVerificationTests(TestCase):
             return_value=annotations,
         ):
             _signature._verify_manifest_annotations(image_ref)
+
+    def test__verify_manifest_annotations_accepts_credential_agent_annotations(
+        self,
+    ) -> None:
+        annotations = {
+            "org.opencontainers.image.source": constants.IMAGE_UTIL_SOURCE_URL,
+            "org.opencontainers.image.title": "aicage-image-util credential agent",
+        }
+        with mock.patch(
+            "aicage.registry._signature._manifest_annotations",
+            return_value=annotations,
+        ):
+            _signature._verify_manifest_annotations(
+                "ghcr.io/aicage-dev/aicage-image-util@sha256:abc",
+                expected_image_ref=constants.CREDENTIAL_AGENT_IMAGE,
+            )
 
     def test__verify_manifest_annotations_raises_when_expected_annotation_mismatches(
         self,
