@@ -7,8 +7,8 @@ end-to-end Aicage coverage.
 Both repositories should test cross-container SSH and GnuPG use. They exercise different contracts:
 
 - `aicage-image-util` proves the credential-agent image with synthetic credentials, Docker containers, and named
-  volumes. It must be independent of a real user's keys, host agent, keyring, or project configuration.
-- `aicage` proves that its configuration, host inspection, keyring integration, Docker resource manager, and target
+  volumes. It must be independent of a real user's keys, host credential service, or project configuration.
+- `aicage` proves that its configuration, host inspection, Docker resource manager, and target
   container mount layout select and invoke that image correctly on supported hosts.
 
 ## Current `aicage-image-util` coverage
@@ -39,10 +39,9 @@ and arm64 builders. It currently covers:
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
-- Protected GnuPG client signing: `gpg load` seeds both the normal sidecar-local cache and the GnuPG restricted cache
-  used by extra-socket clients. A separate public-key-only client then signs through the restricted socket volume and
-  a third container verifies the signature. The expected restricted-socket `Forbidden` key-listing diagnostic does
-  not prevent signing and is not a test failure.
+- Protected GnuPG client signing: `gpg load` seeds the sidecar-local agent cache. A separate public-key-only client
+  signs through a named-volume relay to the sidecar's normal GnuPG-agent socket, and a third container verifies the
+  signature.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
 - Socket-volume isolation: tests assert that every shared-volume entry is a Unix socket; it cannot contain files,
@@ -53,41 +52,63 @@ and arm64 builders. It currently covers:
   key case also scans all client-home regular files for the supplied passphrase. GnuPG may create an otherwise empty
   `private-keys-v1.d` directory even for a public-only home.
 
-This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
+This is live image coverage, not a mock suite. It does not use a real host credential directory.
+
+## Current `aicage` unit coverage
+
+The `aicage` unit suite covers credential-image selection, singleton sidecar/volume lifecycle, direct-versus-sidecar
+forwarding, target mount arguments, SSH key discovery and reload. Relevant
+test modules include:
+
+- `tests/aicage/runtime/credential_agent/test__resource_lifecycle.py` for labelled singleton resources, replacement,
+  locks, retained volumes, and readiness;
+- `test__ssh_forwarding.py` and `test__gpg_forwarding.py` for forwarding selection and target arguments;
+- configuration tests for interactive setup and noninteractive warning-and-continue behavior.
 
 ## Required `aicage-image-util` coverage
 
 None currently identified. A completed container test cannot inspect transient process memory.
 
-The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
-named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
+The image repository does not need to test host SSH configuration discovery, Windows named pipes, or Aicage
+configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
 
+The unit and integration items in this section are complete for the implemented SSH and sidecar lifecycle
+behavior.
+
 ### Unit tests
 
-- Resource inspection, ownership rejection, creation, stopped/unhealthy/obsolete replacement, retained volumes,
+- Resource inspection, ownership rejection, creation, stopped/obsolete replacement, retained volumes,
   readiness failures, lock contention, and one shared image resolution for both protocols.
-- Protocol selection: usable Unix host socket selects direct forwarding; unusable socket selects a sidecar; Windows
-  always selects a sidecar and never requests a Windows named-pipe mount.
+- Protocol selection: Linux SSH forwards a prepared host socket when usable and otherwise selects a sidecar; GnuPG uses
+  direct Unix forwarding when usable and a sidecar otherwise; Windows always selects sidecars and never requests a
+  Windows named-pipe mount.
 - `DockerRunArgs` volume mounts and protocol environment for each selection, with no target private-key mounts.
 - SSH/GnuPG host support files retained read-only in the target container.
-- Keyring lookup/store, passphrase fingerprint mapping, reload, and clear noninteractive missing-secret errors.
+- Protected-key sidecar-cache checks and noninteractive warning-and-continue behavior.
 
 ### Integration and platform tests
 
-- Linux direct SSH and GnuPG forwarding remains functional when the host socket is bind-mountable.
-- Linux fallback sidecars provide SSH authentication and GnuPG signing from an actual Aicage target container.
-- Windows Docker Desktop/WSL target containers use only socket volumes; they do not mount
-  `\\.\pipe\openssh-ssh-agent` or alter/start the Windows OpenSSH service.
-- A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key mounts.
-- Stop or remove either singleton sidecar, retain its volume, then confirm the next relevant Aicage run recreates and
-  reloads it.
-- Terminal configuration, global configuration, and tree configuration all perform required SSH setup when sharing is
-  enabled.
-- First encrypted-key setup, post-reboot sidecar reload, and noninteractive missing-keyring-secret failure behave as
-  specified.
-- Run the platform-specific cases on the Aicage CI matrix, where native host and target-image behavior is available.
+Completed live coverage:
+
+- `--git`, `--ssh`, and `--gpg` override an explicitly disabled saved project mount setting in no-menu runs. The Git
+  case also retains coverage for its automatic discovery default.
+- Linux direct SSH and GnuPG forwarding remain functional when host sockets are bind-mountable; forced fallback
+  sidecars are also covered.
+- Windows Docker Desktop/WSL covers the required sidecar-only GnuPG path and SSH sidecar identity availability.
+- A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key files in
+  its temporary GnuPG home.
+- SSH sidecar identities and public support files are available in the target, while configured private-key paths are
+  absent; the fixture lives outside target-mounted checkout paths. The target signs and verifies a message through the
+  sidecar socket, then authenticates to an isolated SSHD through that socket.
+- Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
+- Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second message without
+  private-key files in the target GnuPG home.
+- Protected SSH and GnuPG keys are loaded through interactive setup. A noninteractive run does not prompt and starts
+  without a protected identity that is unavailable.
+- The temporary credential-focused CI matrix filter has been removed, so CI again discovers the normal non-proxy
+  integration suite.
 
 ## Scope boundary
 
@@ -95,5 +116,5 @@ An image test may reproduce the generic target-container shape using only synthe
 That overlap is intentional. It detects regressions in the helper image before Aicage orchestration is involved.
 
 An Aicage integration test must not assume the helper-image tests make its host-specific behavior safe. It remains
-responsible for mount selection, user identity mapping, credential discovery, keyring interaction, resource
+responsible for mount selection, user identity mapping, credential discovery, resource
 orchestration, and platform restrictions.
