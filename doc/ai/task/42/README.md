@@ -3,11 +3,26 @@
 See [test coverage](TEST_COVERAGE.md) for the current evidence and the division of test responsibilities between
 `aicage-image-util` and `aicage`.
 
+## Current implementation status
+
+Commits 1 through 4 are complete. `aicage-image-util` provides the published `credential-agent` helper image, and
+`aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. SSH and
+GnuPG encrypted-key reload use the platform keyring on Linux, Windows, and macOS.
+
+Commit 5 is complete. The CI matrix proves SSH sidecar forwarding and GnuPG signing on Linux and Windows:
+Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required sidecar-only path. SSH and
+GnuPG sidecars are restarted and reloaded successfully, and target credential homes remain private-key-free.
+SSH and GnuPG sharing is discovered from available host keys, independently of Git configuration; Git signing is one
+consumer of the forwarded agents, not an activation requirement.
+Protected SSH and GnuPG lifecycle tests use real encrypted fixtures, sidecars, socket volumes, and target clients while
+controlling the platform-keyring boundary. Native-keyring backends retain their platform-specific unit coverage.
+The integration matrix again uses normal non-proxy test discovery rather than a temporary credential-only filter.
+
 ## Problem
 
 The SSH and GnuPG refactors replaced mounting host credential homes directly into agent containers with agent-socket
-forwarding. Direct forwarding remains the preferred Unix path because the agents expose Unix-domain sockets that Docker
-can bind mount.
+forwarding. SSH always uses Aicage's sidecar. Direct GnuPG forwarding remains the preferred Unix path because a host
+agent socket can be bind mounted without exposing private keys.
 
 It does not work for a native Windows host running Linux containers through Docker Desktop:
 
@@ -22,11 +37,10 @@ It does not work for a native Windows host running Linux containers through Dock
 
 ## Desired design
 
-Use sidecars only when direct host-agent forwarding is unavailable. Windows always uses two persistent,
-aicage-managed sidecars and two persistent Docker volumes. Unix hosts retain direct forwarding when Aicage can use and
-mount a host agent socket; they use the relevant sidecar only when that path cannot be established. Both sidecars use
-one dedicated `aicage-image-util:credential-agent` image, invoked explicitly in an SSH or GnuPG mode. This uses the
-existing image release, signature, and update lifecycle without adding a helper image per protocol.
+SSH always uses a persistent, aicage-managed sidecar and socket volume on every platform. GnuPG uses a sidecar when
+direct host-agent forwarding is unavailable; Windows always uses the GnuPG sidecar. Both sidecars use one dedicated
+`aicage-image-util:credential-agent` image, invoked explicitly in an SSH or GnuPG mode. This uses the existing image
+release, signature, and update lifecycle without adding a helper image per protocol.
 
 ```text
 host ~/.ssh  (mounted only into utility sidecar)
@@ -43,7 +57,7 @@ host GNUPGHOME  (mounted only into utility sidecar)
        v
 aicage-image-util:credential-agent gpg sidecar
        |
-       | GnuPG Unix socket in a persistent named volume
+       | normal GnuPG-agent Unix socket relayed into a persistent named volume
        v
 one or more aicage agent containers
 ```
@@ -57,8 +71,8 @@ files. They never receive private-key files.
 
 Use separate stable names and aicage ownership labels, for example:
 
-- SSH container: `aicage-ssh-agent`; volume: `aicage-ssh-agent-socket`
-- GnuPG container: `aicage-gpg-agent`; volume: `aicage-gpg-agent-socket`
+- SSH container: `aicage-credential-agent-ssh`; volume: `aicage-credential-agent-ssh-socket`
+- GnuPG container: `aicage-credential-agent-gpg`; volume: `aicage-credential-agent-gpg-socket`
 - labels: `org.aicage.resource=credential-agent`, a protocol label, and a helper-image/protocol version label
 
 They intentionally survive ordinary aicage exits. When a run requires either sidecar, aicage should:
@@ -85,8 +99,8 @@ previous aicage versions mounted directly.
 `aicage-image-util:agent-version` is currently a Node-based general-purpose image (about 98 MB content size / 375 MB
 Docker disk usage locally). Build a separate, small `aicage-image-util:credential-agent` tag with only an Alpine base,
 OpenSSH client tools, GnuPG, and its sidecar scripts. Keep `agent-version` unchanged so credential forwarding does not
-pull Node and Python. The credential image has one small dispatcher invoked as `aicage-credential-agent ssh` or
-`aicage-credential-agent gpg`; each mode runs its own focused script and readiness check.
+pull Node and Python. The credential image has one small dispatcher invoked as `credential-agent ssh` or
+`credential-agent gpg`; each mode runs its own focused script and readiness check.
 
 One credential-image digest check covers both sidecars, so enabling both protocols does not add a second helper-image
 update request. Do not add this helper to `aicage-image-base` unless a later design need proves it necessary. Target
@@ -129,8 +143,8 @@ and key-selection behavior. The socket volumes never contain private keys or pas
 
 ### `aicage`
 
-- Prefer direct host-agent forwarding on Unix. Select the SSH or GnuPG sidecar when direct forwarding is unavailable,
-  and always select sidecars on Windows.
+- Always select the SSH sidecar. Prefer direct GnuPG forwarding on Unix and select the GnuPG sidecar when direct
+  forwarding is unavailable; Windows always selects the GnuPG sidecar.
 - Add a Docker resource manager for the labelled SSH and GnuPG singleton volumes and sidecars.
 - Reuse the established helper-image digest, signature verification, pull, and old-digest cleanup code once for the
   shared credential image.
@@ -146,8 +160,8 @@ and key-selection behavior. The socket volumes never contain private keys or pas
 - Unit tests for resource inspection, creation, replacement, lock behavior, and protocol-specific socket mount
   arguments.
 - Utility-image tests for SSH and GnuPG mode startup, readiness, and credential-loading behavior.
-- Linux integration tests: retain direct SSH/GnuPG agent forwarding when usable; fall back to a sidecar when direct
-  forwarding cannot be established.
+- Linux integration tests: SSH signing uses the volume-backed sidecar socket; direct GnuPG forwarding remains
+  functional when the host socket is bind-mountable.
 - Windows integration test: Docker Desktop/WSL target container sees the same identities through the volume-backed
   socket; it must not mount a Windows named pipe or require the Windows OpenSSH service.
 - GnuPG integration tests: target container signs through the volume-backed GnuPG agent on Linux and Windows without
