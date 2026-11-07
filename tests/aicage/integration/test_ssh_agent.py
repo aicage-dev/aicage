@@ -27,9 +27,9 @@ def test_ssh_agent_is_available_in_container(
     temp_root = Path(__file__).resolve().parents[3] / ".aicage-test-tmp"
     temp_root.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(dir=temp_root) as temp_dir:
+        root = Path(temp_dir)
+        home = root / "home"
         try:
-            root = Path(temp_dir)
-            home = root / "home"
             home.mkdir()
             monkeypatch.setenv("HOME", str(home))
             workspace, env = setup_workspace(
