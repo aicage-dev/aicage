@@ -31,7 +31,7 @@ def test_ssh_agent_is_available_in_container(
         home = root / "home"
         try:
             home.mkdir()
-            monkeypatch.setenv("HOME", str(home))
+            _set_home(monkeypatch, home)
             workspace, env = setup_workspace(
                 monkeypatch,
                 tmp_path,
@@ -48,6 +48,12 @@ def test_ssh_agent_is_available_in_container(
             _enable_ssh_mount(workspace)
 
             with _ssh_agent(root / "agent.sock") as agent_env:
+                subprocess.run(
+                    ["ssh-add", *(str(key) for key in keys.private_paths)],
+                    check=True,
+                    capture_output=True,
+                    env={**os.environ, **agent_env},
+                )
                 env.update(agent_env)
                 command = " && ".join(
                     [
@@ -132,6 +138,17 @@ def _enable_ssh_mount(workspace: Path) -> None:
     project_cfg = store.load_project(workspace)
     project_cfg.agents["copilot"].mounts.ssh = True
     store.save_project(workspace, project_cfg)
+
+
+def _set_home(monkeypatch: pytest.MonkeyPatch, home: Path) -> None:
+    home_str = str(home)
+    monkeypatch.setenv("HOME", home_str)
+    if os.name == "nt":
+        drive, tail = os.path.splitdrive(home_str)
+        monkeypatch.setenv("USERPROFILE", home_str)
+        if drive:
+            monkeypatch.setenv("HOMEDRIVE", drive)
+            monkeypatch.setenv("HOMEPATH", tail or "\\")
 
 
 @contextmanager

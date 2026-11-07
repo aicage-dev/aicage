@@ -77,7 +77,7 @@ def _gpg_home(tmp_path: Path) -> Iterator[tuple[dict[str, str], str]]:
     gpg_home.mkdir(mode=0o700)
     gpg_env = {"GNUPGHOME": str(gpg_home)}
     command_env = {**os.environ, **gpg_env}
-    subprocess.run(
+    result = subprocess.run(
         [
             "gpg",
             "--batch",
@@ -91,10 +91,17 @@ def _gpg_home(tmp_path: Path) -> Iterator[tuple[dict[str, str], str]]:
             "sign",
             "1d",
         ],
-        check=True,
+        check=False,
         capture_output=True,
+        text=True,
         env=command_env,
     )
+    if result.returncode != 0:
+        raise AssertionError(
+            "GnuPG key generation failed:\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
     try:
         yield gpg_env, _gpg_fingerprint(command_env)
     finally:
