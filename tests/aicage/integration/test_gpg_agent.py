@@ -1,6 +1,5 @@
 import os
 import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -9,7 +8,12 @@ from aicage.config.config_store import SettingsStore
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.docker.execution.env import resolve_container_user
 
-from ._helpers import require_integration, run_cli_pty, setup_workspace
+from ._helpers import (
+    require_integration,
+    run_cli_pty,
+    setup_workspace,
+    temporary_test_root,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -21,8 +25,7 @@ def test_gpg_agent_signs_commit_in_container(
     initial_cwd = Path.cwd()
     temp_root = Path(__file__).resolve().parents[3] / ".aicage-test-tmp"
     temp_root.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=temp_root) as temp_dir:
-        root = Path(temp_dir)
+    with temporary_test_root(temp_root) as root:
         home = root / "home"
         try:
             home.mkdir()

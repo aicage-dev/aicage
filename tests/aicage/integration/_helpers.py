@@ -3,12 +3,13 @@ import select
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import import_module
 from pathlib import Path
-from shutil import copytree
+from shutil import copytree, rmtree
 from typing import Any, cast
 
 import pytest
@@ -122,6 +123,18 @@ def require_proxy_integration() -> None:
         pytest.skip(
             "Set AICAGE_RUN_PROXY_INTEGRATION=1 to run proxy integration tests."
         )
+
+
+@contextmanager
+def temporary_test_root(parent: Path) -> Iterator[Path]:
+    root = Path(tempfile.mkdtemp(dir=parent))
+    try:
+        yield root
+    finally:
+        # Docker Desktop can keep Windows bind mounts open after the target exits.
+        # The ignored parent is removed with the CI workspace.
+        if os.name != "nt":
+            rmtree(root)
 
 
 def setup_workspace(

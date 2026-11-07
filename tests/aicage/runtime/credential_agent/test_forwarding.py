@@ -7,7 +7,7 @@ from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
     _resources,
 )
-from aicage.runtime.run_args import EnvVar, VolumeMountSpec
+from aicage.runtime.run_args import EnvVar, MountSpec, VolumeMountSpec
 
 
 class CredentialAgentForwardingTests(TestCase):
@@ -70,7 +70,9 @@ class CredentialAgentForwardingTests(TestCase):
             ),
             mock.patch.object(forwarding, "HOST_SSH_DIR", ssh_home),
             mock.patch.object(Path, "is_dir", return_value=True),
-            mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
+            mock.patch.object(
+                forwarding, "_ensure_sidecars"
+            ) as ensure_mock,
             mock.patch.object(forwarding, "_reload_ssh_keys"),
         ):
             forwarding.ensure_ssh_setup(context, "codex", mock.Mock(), interactive=True)
@@ -90,13 +92,20 @@ class CredentialAgentForwardingTests(TestCase):
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
         }
         gpg_home = Path("/test-tmp/gnupg")
+        public_keyring = gpg_home / "pubring.kbx"
         with (
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(
                 forwarding,
                 "_gpg_forwarding",
                 return_value=(
-                    [],
+                    [
+                        MountSpec(
+                            public_keyring,
+                            PurePosixPath("/test-tmp/gnupg/pubring.kbx"),
+                            True,
+                        )
+                    ],
                     [EnvVar("GNUPGHOME", "/test-tmp/gnupg")],
                     True,
                     gpg_home,
@@ -112,7 +121,12 @@ class CredentialAgentForwardingTests(TestCase):
                     [
                         VolumeMountSpec(
                             resource.volume_name, PurePosixPath("/test-tmp/gnupg")
-                        )
+                        ),
+                        MountSpec(
+                            public_keyring,
+                            PurePosixPath("/test-tmp/gnupg/pubring.kbx"),
+                            True,
+                        ),
                     ],
                     mounts,
                 )

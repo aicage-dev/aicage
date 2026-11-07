@@ -3,7 +3,6 @@ import re
 import shlex
 import shutil
 import subprocess
-import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,7 +12,12 @@ import pytest
 from aicage.config.config_store import SettingsStore
 from aicage.paths import container_project_path
 
-from ._helpers import require_integration, run_cli_pty, setup_workspace
+from ._helpers import (
+    require_integration,
+    run_cli_pty,
+    setup_workspace,
+    temporary_test_root,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -26,8 +30,7 @@ def test_ssh_agent_is_available_in_container(
     initial_cwd = Path.cwd()
     temp_root = Path(__file__).resolve().parents[3] / ".aicage-test-tmp"
     temp_root.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=temp_root) as temp_dir:
-        root = Path(temp_dir)
+    with temporary_test_root(temp_root) as root:
         home = root / "home"
         try:
             home.mkdir()
