@@ -39,10 +39,9 @@ and arm64 builders. It currently covers:
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
-- Protected GnuPG client signing: `gpg load` seeds both the normal sidecar-local cache and the GnuPG restricted cache
-  used by extra-socket clients. A separate public-key-only client then signs through the restricted socket volume and
-  a third container verifies the signature. The expected restricted-socket `Forbidden` key-listing diagnostic does
-  not prevent signing and is not a test failure.
+- Protected GnuPG client signing: `gpg load` seeds the sidecar-local agent cache. A separate public-key-only client
+  signs through a named-volume relay to the sidecar's normal GnuPG-agent socket, and a third container verifies the
+  signature.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
 - Socket-volume isolation: tests assert that every shared-volume entry is a Unix socket; it cannot contain files,
@@ -55,6 +54,23 @@ and arm64 builders. It currently covers:
 
 This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
 
+## Current `aicage` unit coverage
+
+The `aicage` unit suite covers credential-image selection, singleton sidecar/volume lifecycle, direct-versus-sidecar
+forwarding, target mount arguments, SSH key discovery and reload, and the platform keyring implementations. Relevant
+test modules include:
+
+- `tests/aicage/runtime/credential_agent/test__resource_lifecycle.py` for labelled singleton resources, replacement,
+  locks, retained volumes, and readiness;
+- `test__ssh_forwarding.py` and `test__gpg_forwarding.py` for forwarding selection and target arguments;
+- `keyring/test__secret_service.py`, `keyring/test__windows.py`, and `keyring/test__macos.py` for native-store success
+  and failure behavior; and
+- configuration tests for interactive setup and noninteractive reload behavior.
+
+On 2026-11-07, `pytest --cov=src --cov-report=term-missing` completed with 1002 passed, 42 skipped, and 94% total
+line coverage. The four implemented platform/SSH modules named in the Commit 4 status have 100% targeted line
+coverage. This is unit evidence only; the required integration cases remain pending.
+
 ## Required `aicage-image-util` coverage
 
 None currently identified. A completed container test cannot inspect transient process memory.
@@ -64,30 +80,42 @@ named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
 
+The unit and integration items in this section are complete for the implemented SSH/keyring and sidecar lifecycle
+behavior.
+
 ### Unit tests
 
 - Resource inspection, ownership rejection, creation, stopped/unhealthy/obsolete replacement, retained volumes,
   readiness failures, lock contention, and one shared image resolution for both protocols.
-- Protocol selection: usable Unix host socket selects direct forwarding; unusable socket selects a sidecar; Windows
-  always selects a sidecar and never requests a Windows named-pipe mount.
+- Protocol selection: SSH always selects a sidecar; GnuPG uses direct Unix forwarding when usable and a sidecar
+  otherwise; Windows always selects sidecars and never requests a Windows named-pipe mount.
 - `DockerRunArgs` volume mounts and protocol environment for each selection, with no target private-key mounts.
 - SSH/GnuPG host support files retained read-only in the target container.
 - Keyring lookup/store, passphrase fingerprint mapping, reload, and clear noninteractive missing-secret errors.
 
 ### Integration and platform tests
 
-- Linux direct SSH and GnuPG forwarding remains functional when the host socket is bind-mountable.
-- Linux fallback sidecars provide SSH authentication and GnuPG signing from an actual Aicage target container.
-- Windows Docker Desktop/WSL target containers use only socket volumes; they do not mount
-  `\\.\pipe\openssh-ssh-agent` or alter/start the Windows OpenSSH service.
-- A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key mounts.
-- Stop or remove either singleton sidecar, retain its volume, then confirm the next relevant Aicage run recreates and
-  reloads it.
-- Terminal configuration, global configuration, and tree configuration all perform required SSH setup when sharing is
-  enabled.
-- First encrypted-key setup, post-reboot sidecar reload, and noninteractive missing-keyring-secret failure behave as
-  specified.
-- Run the platform-specific cases on the Aicage CI matrix, where native host and target-image behavior is available.
+Completed live coverage:
+
+- Linux direct GnuPG forwarding remains functional when the host socket is bind-mountable; forced fallback-sidecar
+  GnuPG signing is also covered.
+- Windows Docker Desktop/WSL covers the required sidecar-only GnuPG path and SSH sidecar identity availability.
+- A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key files in
+  its temporary GnuPG home.
+- SSH sidecar identities and public support files are available in the target, while configured private-key paths are
+  absent; the fixture lives outside target-mounted checkout paths. The target signs and verifies a message through the
+  sidecar socket, then authenticates to an isolated SSHD through that socket.
+- Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
+- Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second message without
+  private-key files in the target GnuPG home.
+- Protected SSH setup stores an encrypted key's passphrase through a controlled keyring boundary, loads the real key
+  into the sidecar, reloads it after a stopped-sidecar restart, and fails before target startup when the secret is
+  absent.
+- Protected GnuPG setup retrieves a controlled-keyring passphrase, loads a real protected signing key, and lets a
+  public-only client sign over the sidecar socket both before and after sidecar restart. It also fails before target
+  startup when the secret is absent.
+- The temporary credential-focused CI matrix filter has been removed, so CI again discovers the normal non-proxy
+  integration suite.
 
 ## Scope boundary
 
