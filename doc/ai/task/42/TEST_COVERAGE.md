@@ -55,6 +55,23 @@ and arm64 builders. It currently covers:
 
 This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
 
+## Current `aicage` unit coverage
+
+The `aicage` unit suite covers credential-image selection, singleton sidecar/volume lifecycle, direct-versus-sidecar
+forwarding, target mount arguments, SSH key discovery and reload, and the platform keyring implementations. Relevant
+test modules include:
+
+- `tests/aicage/runtime/credential_agent/test__resource_lifecycle.py` for labelled singleton resources, replacement,
+  locks, retained volumes, and readiness;
+- `test__ssh_forwarding.py` and `test__gpg_forwarding.py` for forwarding selection and target arguments;
+- `keyring/test__secret_service.py`, `keyring/test__windows.py`, and `keyring/test__macos.py` for native-store success
+  and failure behavior; and
+- configuration tests for interactive setup and noninteractive reload behavior.
+
+On 2026-11-07, `pytest --cov=src --cov-report=term-missing` completed with 1002 passed, 42 skipped, and 94% total
+line coverage. The four implemented platform/SSH modules named in the Commit 4 status have 100% targeted line
+coverage. This is unit evidence only; the required integration cases remain pending.
+
 ## Required `aicage-image-util` coverage
 
 None currently identified. A completed container test cannot inspect transient process memory.
@@ -63,6 +80,9 @@ The image repository does not need to test host SSH configuration discovery, a r
 named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
+
+The unit-test items in this section are complete for the implemented SSH/keyring and sidecar lifecycle behavior. The
+integration and platform items remain pending Commit 5 work.
 
 ### Unit tests
 
