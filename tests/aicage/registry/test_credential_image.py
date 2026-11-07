@@ -1,7 +1,11 @@
 from unittest import TestCase, mock
 
-from aicage.constants import CREDENTIAL_AGENT_IMAGE
+from aicage import constants
 from aicage.registry import credential_image
+
+_CREDENTIAL_AGENT_REPOSITORY = (
+    f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_UTIL_REPOSITORY}"
+)
 
 
 class CredentialImageTests(TestCase):
@@ -26,13 +30,15 @@ class CredentialImageTests(TestCase):
         ):
             image = credential_image.ensure_credential_image(reporter)
 
-        self.assertEqual((CREDENTIAL_AGENT_IMAGE, "image-id"), image)
-        verify_mock.assert_called_once_with(CREDENTIAL_AGENT_IMAGE, reporter=reporter)
+        self.assertEqual((constants.CREDENTIAL_AGENT_IMAGE, "image-id"), image)
+        verify_mock.assert_called_once_with(
+            constants.CREDENTIAL_AGENT_IMAGE, reporter=reporter
+        )
         pull_mock.assert_called_once()
         cleanup_mock.assert_called_once_with(
-            "ghcr.io/aicage-dev/aicage-image-util",
+            _CREDENTIAL_AGENT_REPOSITORY,
             None,
-            CREDENTIAL_AGENT_IMAGE,
+            constants.CREDENTIAL_AGENT_IMAGE,
         )
 
     def test_ensure_credential_image_skips_current_image(self) -> None:
@@ -81,10 +87,12 @@ class CredentialImageTests(TestCase):
         ):
             credential_image.ensure_credential_image(reporter)
 
-        verify_mock.assert_called_once_with(CREDENTIAL_AGENT_IMAGE, reporter=reporter)
+        verify_mock.assert_called_once_with(
+            constants.CREDENTIAL_AGENT_IMAGE, reporter=reporter
+        )
         pull_mock.assert_called_once()
         cleanup_mock.assert_called_once_with(
-            "ghcr.io/aicage-dev/aicage-image-util",
+            _CREDENTIAL_AGENT_REPOSITORY,
             "sha256:old",
-            CREDENTIAL_AGENT_IMAGE,
+            constants.CREDENTIAL_AGENT_IMAGE,
         )
