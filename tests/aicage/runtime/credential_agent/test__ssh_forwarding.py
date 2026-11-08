@@ -1,0 +1,224 @@
+from pathlib import Path, PurePosixPath
+from unittest import TestCase, mock
+
+from aicage.docker.errors import DockerError
+from aicage.runtime.credential_agent import _ssh_forwarding
+from aicage.runtime.credential_agent._resource_models import (
+    _CredentialProtocol,
+    _resources,
+)
+from aicage.runtime.run_args import EnvVar, MountSpec, VolumeMountSpec
+
+
+class SshForwardingTests(TestCase):
+    def test_ssh_forwarding_skips_sidecar_without_keys_or_ssh_home(self) -> None:
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_support_files", return_value=[]
+            ),
+            mock.patch.object(Path, "is_dir", return_value=False),
+        ):
+            self.assertEqual(([], [], False), _ssh_forwarding._ssh_forwarding())
+
+    def test_ssh_forwarding_uses_a_sidecar_for_ssh_keys_or_home(self) -> None:
+        with (
+            mock.patch.object(
+                _ssh_forwarding,
+                "_resolve_ssh_key_files",
+                return_value=[Path("/test-tmp/id_ed25519")],
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_support_files", return_value=[]
+            ),
+        ):
+            self.assertEqual(([], [], True), _ssh_forwarding._ssh_forwarding())
+
+    def test_append_ssh_target_args_adds_socket_volume_and_environment(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        mounts: list[MountSpec] = []
+        env: list[EnvVar] = []
+        _ssh_forwarding._append_ssh_target_args(resource, mounts, env)
+        self.assertEqual(
+            [
+                VolumeMountSpec(
+                    resource.volume_name,
+                    PurePosixPath("/run/credential-agent"),
+                    True,
+                )
+            ],
+            mounts,
+        )
+        self.assertEqual(
+            [EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")],
+            env,
+        )
+
+    def test_reload_ssh_keys_loads_missing_key_with_an_empty_passphrase(
+        self,
+    ) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
+            mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
+        load_mock.assert_called_once_with(
+            resource,
+            resource.credential_directory / "id_ed25519",
+            "",
+            PurePosixPath("/test-tmp/.ssh/id_ed25519"),
+        )
+
+    def test_reload_ssh_keys_prompts_only_after_empty_passphrase_load_fails(
+        self,
+    ) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_load_ssh_key",
+                side_effect=DockerError("passphrase required"),
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_load_ssh_key_interactively"
+            ) as prompt_mock,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=True)
+
+        prompt_mock.assert_called_once_with(
+            resource,
+            resource.credential_directory / "id_ed25519",
+            PurePosixPath("/test-tmp/.ssh/id_ed25519"),
+        )
+
+    def test_reload_ssh_keys_removes_stale_and_keeps_loaded_identities(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        current_identity = "ssh-ed25519 AAAA current"
+        stale_identity = "ssh-ed25519 AAAA stale"
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:current"
+            ),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_list_ssh_identities",
+                return_value=[current_identity, stale_identity],
+            ),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_ssh_identity_fingerprint",
+                side_effect=["SHA256:current", "SHA256:stale"],
+            ),
+            mock.patch.object(_ssh_forwarding, "_remove_ssh_identity") as remove_mock,
+            mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
+
+        remove_mock.assert_called_once_with(resource, stale_identity)
+        load_mock.assert_not_called()
+
+    def test_reload_ssh_keys_skips_missing_and_rejects_external_resources(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
+
+        ssh_resource = _resources([_CredentialProtocol.SSH])[0]
+        with (
+            mock.patch.object(
+                _ssh_forwarding,
+                "_resolve_ssh_key_files",
+                return_value=[Path("/outside/key")],
+            ),
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", Path("/test-tmp/.ssh")),
+            self.assertRaisesRegex(RuntimeError, "outside"),
+        ):
+            _ssh_forwarding._reload_ssh_keys([ssh_resource], interactive=False)
+
+    def test_ssh_key_fingerprint_interprets_command_results(self) -> None:
+        key = Path("/test-tmp/id_ed25519")
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_keygen", return_value="/usr/bin/ssh-keygen"
+            ),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout="256 SHA256:key comment"),
+            ),
+            mock.patch.object(Path, "is_file", return_value=False),
+        ):
+            self.assertEqual("SHA256:key", _ssh_forwarding._ssh_key_fingerprint(key))
+
+    def test_ssh_identity_fingerprint_interprets_sidecar_public_key(self) -> None:
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_keygen", return_value="/usr/bin/ssh-keygen"
+            ),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout="256 SHA256:key comment"),
+            ) as run_mock,
+        ):
+            fingerprint = _ssh_forwarding._ssh_identity_fingerprint(
+                "ssh-ed25519 AAAA key"
+            )
+
+        self.assertEqual("SHA256:key", fingerprint)
+        run_mock.assert_called_once_with(
+            ["/usr/bin/ssh-keygen", "-lf", "-", "-E", "sha256"],
+            input="ssh-ed25519 AAAA key\n",
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_ssh_keygen_requires_the_host_tool(self) -> None:
+        with (
+            mock.patch.object(_ssh_forwarding, "_SSH_KEYGEN", None),
+            self.assertRaisesRegex(RuntimeError, "ssh-keygen is required"),
+        ):
+            _ssh_forwarding._ssh_keygen()
+
+    def test_ssh_keygen_returns_the_absolute_host_tool_path(self) -> None:
+        with mock.patch.object(_ssh_forwarding, "_SSH_KEYGEN", "/usr/bin/ssh-keygen"):
+            self.assertEqual("/usr/bin/ssh-keygen", _ssh_forwarding._ssh_keygen())
+
+    def test_ssh_key_fingerprint_rejects_invalid_command_output(self) -> None:
+        key = Path("/test-tmp/id_ed25519")
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_keygen", return_value="/usr/bin/ssh-keygen"
+            ),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=1, stdout=""),
+            ),
+            self.assertRaisesRegex(RuntimeError, "Cannot determine the fingerprint"),
+        ):
+            _ssh_forwarding._ssh_key_fingerprint(key)

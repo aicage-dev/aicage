@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from aicage.cli_types import ConfigUpdateArgs
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
@@ -62,6 +64,8 @@ class _NoneInteraction:
                 _select_all_mounts,
                 _always_confirm,
             )
+        if isinstance(draft.parsed, ConfigUpdateArgs):
+            context.project_cfg.agents[agent] = draft.effective_agent_cfg
         return ConfigSelectionResult(
             selection=selection,
             project_docker_args=draft.existing_project_docker_args,
@@ -89,6 +93,9 @@ class _NoneInteraction:
             update_approved=update_approved,
             reporter=self.reporter,
         )
+
+    def execute_operation(self, operation: Callable[[OperationReporter], None]) -> None:
+        operation(self.reporter)
 
 
 class _NonInteractiveSelectionInteraction:
