@@ -7,8 +7,8 @@ Implement persistent SSH and GnuPG credential sidecars in `aicage` and a dedicat
 
 The sidecars are global Docker singleton resources, not project resources:
 
-- SSH: container `aicage-ssh-agent`, volume `aicage-ssh-agent-socket`
-- GnuPG: container `aicage-gpg-agent`, volume `aicage-gpg-agent-socket`
+- SSH: container `aicage-credential-agent-ssh`, volume `aicage-credential-agent-ssh-socket`
+- GnuPG: container `aicage-credential-agent-gpg`, volume `aicage-credential-agent-gpg-socket`
 
 Both have `org.aicage.resource=credential-agent`, a protocol label, and a helper image/protocol version label.
 Socket volumes persist across ordinary Aicage exits and are never mounted with host credential directories.
@@ -41,8 +41,8 @@ Keep the Node-based `agent-version` image and tag unchanged. Add a distinct Alpi
 Provide one dispatcher:
 
 ```text
-aicage-credential-agent ssh
-aicage-credential-agent gpg
+credential-agent ssh
+credential-agent gpg
 ```
 
 The SSH mode starts `ssh-agent` on the volume-backed socket and exposes a readiness command plus explicit key loading.
@@ -74,7 +74,8 @@ concurrent creation. Ensuring SSH and GnuPG in the same run must resolve/update 
 ## Commit 3: `aicage` forwarding selection and sidecar lifecycle
 
 **Status: complete.** The public credential-agent forwarding coordinator now selects a reachable Unix agent socket
-for direct forwarding and otherwise uses the persistent sidecar (always on Windows). It adds protocol-specific named
+for direct GnuPG forwarding and otherwise uses the persistent sidecar (always on Windows). SSH always uses its
+persistent sidecar. It adds protocol-specific named
 volume mounts and environments to `DockerRunArgs`, preserves SSH/GnuPG public support mounts, mounts credential homes
 read-only only in sidecars, uses the target-container runtime UID/GID for sidecars, and removes the Windows OpenSSH
 service-management path and direct GnuPG resolver. Global and tree configuration saves ensure required SSH sidecars.
@@ -83,7 +84,8 @@ credential-sidecar mounts, resource replacement and lock errors, and target iden
 
 Replace the current separate SSH and GnuPG forwarding paths with one protocol-aware coordinator:
 
-- Unix: retain direct forwarding when a host agent socket is reachable and bind-mountable; select a sidecar otherwise.
+- Unix: always use the SSH sidecar. Retain direct GnuPG forwarding when its host agent socket is reachable and
+  bind-mountable; select the GnuPG sidecar otherwise.
 - Windows: always select the sidecar; never start or modify the Windows OpenSSH service and never mount a Windows named
   pipe.
 - Ensure the required image once, then volume and singleton sidecar for each selected protocol, and verify its socket
@@ -135,8 +137,8 @@ platform cases below still need to be implemented and run on their relevant CI h
 
 Extend the existing SSH and GnuPG integration suites and Windows workflow to cover:
 
-- Unix direct forwarding when usable;
-- Unix fallback to each sidecar when direct forwarding cannot be established;
+- SSH sidecar forwarding on Unix and Windows;
+- Unix direct GnuPG forwarding when usable, with GnuPG sidecar fallback;
 - Windows Docker Desktop/WSL socket-volume forwarding without a Windows named-pipe mount or Windows OpenSSH service;
 - GnuPG signing through the volume-backed socket without target private-key mounts;
 - stopping/removing either sidecar and recreating it on the next relevant run while keeping its volume;
