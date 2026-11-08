@@ -1,10 +1,50 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.docker.execution.env import resolve_user_ids
+from aicage.docker.execution.env import (
+    resolve_container_user,
+    resolve_host_user_id,
+    resolve_user_ids,
+)
 
 
 class EnvTests(TestCase):
+    def test_resolve_host_user_id_returns_a_supported_os_value(self) -> None:
+        with mock.patch("aicage.docker.execution.env.os.getuid", return_value=1000):
+            user_id = resolve_host_user_id("getuid")
+
+        self.assertEqual(1000, user_id)
+
+    def test_resolve_host_user_id_returns_none_when_unavailable(self) -> None:
+        with mock.patch.dict(
+            "aicage.docker.execution.env.os.__dict__", {"getuid": None}
+        ):
+            user_id = resolve_host_user_id("getuid")
+
+        self.assertIsNone(user_id)
+
+    def test_resolve_container_user_uses_target_identity_rules(self) -> None:
+        with (
+            mock.patch("aicage.docker.execution.env.os.name", "posix"),
+            mock.patch(
+                "aicage.docker.execution.env._resolve_host_user_ids",
+                return_value=(1000, 1001),
+            ),
+            mock.patch(
+                "aicage.docker.execution.env._is_rootless_docker",
+                return_value=False,
+            ),
+        ):
+            self.assertEqual("1000:1001", resolve_container_user())
+        with (
+            mock.patch("aicage.docker.execution.env.os.name", "nt"),
+            mock.patch(
+                "aicage.docker.execution.env._is_rootless_docker",
+                return_value=False,
+            ),
+        ):
+            self.assertEqual("0:0", resolve_container_user())
+
     def test_resolve_user_ids_handles_missing(self) -> None:
         with (
             mock.patch("aicage.docker.execution.env.os.getuid", None, create=True),

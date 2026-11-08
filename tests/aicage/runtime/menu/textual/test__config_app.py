@@ -17,6 +17,7 @@ from aicage.runtime.menu.textual._models import (
     ShareEditorResult,
     SharesValues,
 )
+from aicage.runtime.menu.textual.services.execution_reporting import ExecutionReporter
 from aicage.runtime.menu.textual.views.overview.view import Overview
 
 from .._test_support import _build_context, _build_draft
@@ -75,7 +76,7 @@ class ConfigAppTests(TestCase):
                 return_value=SharesValues([], [built_in_share]),
             ),
         ):
-            app = _config_app.ConfigApp(draft, _build_context())
+            app = _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())
 
         self.assertEqual(False, app._state.built_in_shares[0].persisted)
         self.assertTrue(app._state.built_in_shares[0].enabled)
@@ -137,7 +138,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     "git_support",
                     "ssh",
-                    "SSH directory (for Git remote access and signing)",
+                    "SSH agent",
                     None,
                     None,
                     True,
@@ -157,7 +158,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     "git_support",
                     "ssh",
-                    "(Auto) SSH directory (for Git remote access and signing)",
+                    "(Auto) SSH agent",
                     None,
                     None,
                     True,
@@ -690,4 +691,4 @@ def _build_app(
         )
         draft.scope = scope
         draft.scope_config_exists = {scope: scope_config_exists}
-        return _config_app.ConfigApp(draft, _build_context())
+        return _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())
