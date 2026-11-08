@@ -92,7 +92,7 @@ def parse_cli(argv: Sequence[str]) -> CliArgs:
     parser.add_argument(
         _GIT_OPTION,
         choices=["on", "off"],
-        help="Enable or disable Git support mounts.",
+        help="Enable or disable Git configuration and repository mounts.",
     )
     parser.add_argument(
         _CONFIG_OPTION,
@@ -154,7 +154,7 @@ def parse_cli(argv: Sequence[str]) -> CliArgs:
             "  --docker         Mount /run/docker.sock into the container.\n"
             "  --acp-wsl        Translate ACP paths between Windows and WSL.\n"
             "  --base <id>      Select the agent base image.\n"
-            "  --git [on|off]   Enable or disable Git support mounts (default: on).\n"
+            "  --git [on|off]   Enable or disable Git configuration and repository mounts (default: on).\n"
             "  --share <path>   Mount a host path into the container. Repeatable.\n"
             "  --extension <id> Select an extension. Repeatable.\n"
             "  --config [<command>] Inspect or change saved configuration; see usage above.\n"
