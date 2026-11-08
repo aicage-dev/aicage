@@ -35,6 +35,8 @@ class RuntimeInteraction(Protocol):
         self, run_config: RunConfig, update_approved: bool
     ) -> None: ...
 
+    def execute_credential_image_setup(self) -> None: ...
+
 
 def create_runtime_interaction(menu: MenuMode) -> RuntimeInteraction:
     if menu == "none":

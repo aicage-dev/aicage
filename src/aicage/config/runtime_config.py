@@ -21,6 +21,8 @@ from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft, _create_run_config_draft
 from aicage.registry.errors import RegistryError
+from aicage.reporting import ConsoleOperationReporter
+from aicage.runtime.credential_agent.forwarding import ensure_credentials
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
 from aicage.runtime.menu.interaction import RuntimeInteraction
 from aicage.runtime.menu.scope_change import ConfigScopeChange
@@ -191,6 +193,17 @@ def _configure_scope(
                 scope_context.directory_path,
                 scope,
                 draft.project_cfg,
+            )
+            agent_cfg = context.project_cfg.agents.get(scope_context.agent)
+            if agent_cfg is not None and (
+                agent_cfg.mounts.ssh is True or agent_cfg.mounts.gnupg is True
+            ):
+                scope_context.interaction.execute_credential_image_setup()
+            ensure_credentials(
+                context,
+                scope_context.agent,
+                ConsoleOperationReporter(),
+                interactive=current_parsed is None or current_parsed.menu != "none",
             )
             return
         current_source = draft

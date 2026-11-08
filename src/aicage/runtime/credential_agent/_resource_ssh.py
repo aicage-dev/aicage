@@ -1,0 +1,200 @@
+"""SSH key loading through a credential sidecar."""
+
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import PurePosixPath
+from typing import TextIO
+
+from docker.client import DockerClient
+from docker.errors import DockerException
+
+from aicage.docker.errors import DockerError
+from aicage.docker.execution.cli import run_docker_command
+from aicage.docker.execution.client import get_docker_client
+
+from ._resource_lifecycle import _find_container
+from ._resource_models import _CredentialResource
+
+_EXEC_COMPLETION_TIMEOUT_SECONDS = 10
+_EXEC_COMPLETION_POLL_SECONDS = 0.05
+
+
+def _load_ssh_key(
+    resource: _CredentialResource,
+    key_path: PurePosixPath,
+    passphrase: str,
+    target_path: PurePosixPath | None = None,
+) -> None:
+    """Load one key through the sidecar's stdin-only image contract."""
+    client = get_docker_client()
+    container = _find_container(client, resource)
+    if container is None:
+        raise DockerError(
+            f"Credential sidecar '{resource.container_name}' is unavailable."
+        )
+    try:
+        created = client.api.exec_create(
+            container.id,
+            [
+                "credential-agent",
+                "ssh",
+                "load",
+                key_path.as_posix(),
+                (target_path or key_path).as_posix(),
+            ],
+            stdin=True,
+        )
+        execution_id = created["Id"]
+        stream = client.api.exec_start(execution_id, socket=True)
+        try:
+            _write_exec_input(stream, passphrase.encode("utf-8") + b"\n")
+        finally:
+            _close_exec_stream(stream)
+        result = _wait_for_exec_completion(client, execution_id)
+    except (DockerException, OSError, KeyError) as exc:
+        raise DockerError(
+            f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
+        ) from exc
+    if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
+        )
+
+
+def _load_ssh_key_interactively(
+    resource: _CredentialResource,
+    key_path: PurePosixPath,
+    target_path: PurePosixPath | None = None,
+) -> None:
+    with _terminal_streams() as (stdin, stdout):
+        result = run_docker_command(
+            [
+                "docker",
+                "exec",
+                "-it",
+                resource.container_name,
+                "credential-agent",
+                "ssh",
+                "load-interactive",
+                key_path.as_posix(),
+                (target_path or key_path).as_posix(),
+            ],
+            check=False,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stdout,
+        )
+    if result.returncode != 0:
+        raise DockerError(
+            f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
+        )
+
+
+@contextmanager
+def _terminal_streams() -> Iterator[tuple[TextIO, TextIO]]:
+    try:
+        with (
+            open("/dev/tty", encoding="utf-8") as stdin,
+            open("/dev/tty", "w", encoding="utf-8") as stdout,
+        ):
+            yield stdin, stdout
+    except OSError as exc:
+        raise DockerError("Cannot attach SSH passphrase entry to the terminal.") from exc
+
+
+def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
+    client = get_docker_client()
+    container = _find_container(client, resource)
+    if container is None:
+        raise DockerError(
+            f"Credential sidecar '{resource.container_name}' is unavailable."
+        )
+    try:
+        created = client.api.exec_create(
+            container.id,
+            ["credential-agent", "ssh", "list"],
+        )
+        execution_id = created["Id"]
+        output = client.api.exec_start(execution_id)
+        result = _wait_for_exec_completion(client, execution_id)
+    except (DockerException, KeyError) as exc:
+        raise DockerError(
+            f"Failed to list SSH identities in credential sidecar '{resource.container_name}'."
+        ) from exc
+    if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Failed to list SSH identities in credential sidecar '{resource.container_name}'."
+        )
+    return [line for line in output.decode("utf-8").splitlines() if line]
+
+
+def _remove_ssh_identity(resource: _CredentialResource, identity: str) -> None:
+    client = get_docker_client()
+    container = _find_container(client, resource)
+    if container is None:
+        raise DockerError(
+            f"Credential sidecar '{resource.container_name}' is unavailable."
+        )
+    try:
+        created = client.api.exec_create(
+            container.id,
+            ["credential-agent", "ssh", "remove"],
+            stdin=True,
+        )
+        execution_id = created["Id"]
+        stream = client.api.exec_start(execution_id, socket=True)
+        try:
+            _write_exec_input(stream, identity.encode("utf-8") + b"\n")
+        finally:
+            _close_exec_stream(stream)
+        result = _wait_for_exec_completion(client, execution_id)
+    except (DockerException, OSError, KeyError) as exc:
+        raise DockerError(
+            f"Failed to remove an SSH identity from credential sidecar '{resource.container_name}'."
+        ) from exc
+    if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Failed to remove an SSH identity from credential sidecar '{resource.container_name}'."
+        )
+
+
+def _write_exec_input(stream: object, content: bytes) -> None:
+    for socket in (stream, getattr(stream, "_sock", None)):
+        sendall = getattr(socket, "sendall", None)
+        if callable(sendall):
+            sendall(content)
+            return
+    write = getattr(stream, "write", None)
+    writable = getattr(stream, "writable", None)
+    if not callable(write) or (callable(writable) and not writable()):
+        raise OSError("Docker exec stream does not support stdin.")
+    remaining = content
+    while remaining:
+        written = write(remaining)
+        if written is None:
+            return
+        if not isinstance(written, int) or written <= 0:
+            raise OSError("Docker exec stream rejected stdin.")
+        remaining = remaining[written:]
+
+
+def _close_exec_stream(stream: object) -> None:
+    response = getattr(stream, "_response", None)
+    response_close = getattr(response, "close", None)
+    if callable(response_close):
+        response_close()
+    close = getattr(stream, "close", None)
+    if callable(close):
+        close()
+
+
+def _wait_for_exec_completion(client: DockerClient, execution_id: str) -> dict[str, object]:
+    deadline = time.monotonic() + _EXEC_COMPLETION_TIMEOUT_SECONDS
+    while True:
+        result = client.api.exec_inspect(execution_id)
+        if not result.get("Running") and result.get("ExitCode") is not None:
+            return result
+        if time.monotonic() >= deadline:
+            return result
+        time.sleep(_EXEC_COMPLETION_POLL_SECONDS)

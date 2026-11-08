@@ -9,7 +9,7 @@ from aicage.errors import AicageError
 from aicage.paths import container_project_path
 from aicage.runtime.docker_args.support.resolver_types import ResolvedArgs, Resolver
 from aicage.runtime.env_vars import _AICAGE_WORKSPACE
-from aicage.runtime.run_args import EnvVar, MountSpec
+from aicage.runtime.run_args import BindMountSpec, EnvVar
 
 from ..resolvers import (
     acp_wsl,
@@ -17,10 +17,8 @@ from ..resolvers import (
     docker_socket,
     git_config,
     git_root,
-    gpg,
     project,
     shares,
-    ssh_keys,
 )
 from ._mounts import map_mount_requests
 
@@ -29,7 +27,7 @@ def resolve_docker_args(
     context: ConfigContext,
     agent: str,
     parsed: ParsedArgs | None,
-) -> tuple[list[MountSpec], list[EnvVar]]:
+) -> tuple[list[BindMountSpec], list[EnvVar]]:
     context.project_cfg.agents.setdefault(agent, AgentConfig())
     project_path = Path(context.project_cfg.path).resolve()
     resolved = [
@@ -61,15 +59,13 @@ def _resolver_sequence() -> tuple[Resolver, ...]:
         agent_config.resolve,
         acp_wsl.resolve,
         git_config.resolve,
-        gpg.resolve,
-        ssh_keys.resolve,
         git_root.resolve,
         docker_socket.resolve,
         shares.resolve,
     )
 
 
-def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> None:
+def _validate_home_mount_safety(mounts: list[BindMountSpec], host_home: Path) -> None:
     for mount in mounts:
         if _is_active_windows_docker_named_pipe_mount(mount):
             continue
@@ -86,7 +82,7 @@ def _validate_home_mount_safety(mounts: list[MountSpec], host_home: Path) -> Non
             )
 
 
-def _is_active_windows_docker_named_pipe_mount(mount: MountSpec) -> bool:
+def _is_active_windows_docker_named_pipe_mount(mount: BindMountSpec) -> bool:
     normalized_host_path = str(mount.host_path).replace("/", "\\").lower()
     if not normalized_host_path.startswith("\\\\.\\pipe\\"):
         return False
