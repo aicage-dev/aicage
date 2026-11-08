@@ -2,6 +2,7 @@ from aicage.cli_types import ConfigUpdateArgs
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.registry.credential_image import ensure_credential_image
 from aicage.registry.ensure_image import ensure_image
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
@@ -9,6 +10,10 @@ from aicage.registry.image_selection.interaction import (
 )
 from aicage.registry.image_selection.selection import select_agent_image
 from aicage.reporting import OperationReporter
+from aicage.runtime.credential_agent.forwarding import (
+    ensure_gpg_setup,
+    ensure_ssh_setup,
+)
 from aicage.runtime.docker_args.mount_preferences import (
     apply_extension_mount_defaults,
     apply_git_mount_defaults,
@@ -62,6 +67,10 @@ class _NoneInteraction:
                 _select_all_mounts,
                 _always_confirm,
             )
+        if isinstance(draft.parsed, ConfigUpdateArgs):
+            context.project_cfg.agents[agent] = draft.effective_agent_cfg
+            ensure_ssh_setup(context, agent, self.reporter, interactive=False)
+            ensure_gpg_setup(context, agent, self.reporter, interactive=False)
         return ConfigSelectionResult(
             selection=selection,
             project_docker_args=draft.existing_project_docker_args,
@@ -89,6 +98,9 @@ class _NoneInteraction:
             update_approved=update_approved,
             reporter=self.reporter,
         )
+
+    def execute_credential_image_setup(self) -> None:
+        ensure_credential_image(self.reporter)
 
 
 class _NonInteractiveSelectionInteraction:

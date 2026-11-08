@@ -4,7 +4,19 @@ from pathlib import Path, PurePosixPath
 
 @dataclass
 class MountSpec:
+    pass
+
+
+@dataclass
+class BindMountSpec(MountSpec):
     host_path: Path
+    container_path: PurePosixPath
+    read_only: bool = False
+
+
+@dataclass
+class VolumeMountSpec(MountSpec):
+    volume_name: str
     container_path: PurePosixPath
     read_only: bool = False
 

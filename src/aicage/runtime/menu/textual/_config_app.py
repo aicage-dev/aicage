@@ -30,6 +30,7 @@ from ._state import OverviewState
 from ._textual_app import TextualApp
 from .services.base_support import base_metadata_for_draft, ensure_base_default
 from .services.custom_share_flow import add_custom_share, update_custom_share
+from .services.execution_reporting import ExecutionReporter
 from .services.host_access import apply_host_access
 from .services.host_access_flow import confirm_and_apply_host_access
 from .services.summary import extras_values, shares_values
@@ -50,17 +51,25 @@ _GIT_MOUNT_KEYS: tuple[str, ...] = (
 )
 
 
-class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
+class ConfigApp(
+    TextualApp[ConfigSelectionResult | ConfigScopeChange | BaseException | None]
+):
     BINDINGS = [
         Binding("enter", "accept", "OK"),
         Binding("escape", "cancel", "Cancel"),
         *TextualApp.BINDINGS,
     ]
 
-    def __init__(self, draft: RunConfigDraft, context: ConfigContext) -> None:
+    def __init__(
+        self,
+        draft: RunConfigDraft,
+        context: ConfigContext,
+        reporter: ExecutionReporter,
+    ) -> None:
         super().__init__(draft.scope_title)
         self._draft = draft
         self._config_context = context
+        self._reporter = reporter
         self._apply_git_cli_preference()
         self._mark_new_config_auto_git_mounts_pending()
         self._state = self._initial_state()
@@ -243,7 +252,9 @@ class ConfigApp(TextualApp[ConfigSelectionResult | ConfigScopeChange | None]):
             overview.refresh_scope(self._draft.scope)
             self._focus_last_section()
 
-    def _finish(self, result: ConfigSelectionResult | ConfigScopeChange | None) -> None:
+    def _finish(
+        self, result: ConfigSelectionResult | ConfigScopeChange | BaseException | None
+    ) -> None:
         self.exit(result)
 
     def _focus_last_section(self) -> None:

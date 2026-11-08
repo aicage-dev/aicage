@@ -17,6 +17,17 @@ class NoneInteractionTests(TestCase):
 
         self.assertEqual("_NoneInteraction", resolved.__class__.__name__)
 
+    def test_execute_credential_image_setup(self) -> None:
+        reporter = mock.Mock()
+        resolved = _none_interaction._NoneInteraction(reporter)
+
+        with mock.patch(
+            "aicage.runtime.menu._none_interaction.ensure_credential_image"
+        ) as ensure_mock:
+            resolved.execute_credential_image_setup()
+
+        ensure_mock.assert_called_once_with(reporter)
+
 
 class ConfigureRunTests(TestCase):
     def test_configure_run(self) -> None:
@@ -93,11 +104,24 @@ class ConfigureRunTests(TestCase):
             mock.patch(
                 "aicage.runtime.menu._none_interaction.apply_mount_preferences"
             ) as mount_mock,
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.ensure_ssh_setup"
+            ) as ssh_setup_mock,
+            mock.patch(
+                "aicage.runtime.menu._none_interaction.ensure_gpg_setup"
+            ) as gpg_setup_mock,
         ):
-            resolved.configure_run(draft, _build_context(), "codex")
+            context = _build_context()
+            resolved.configure_run(draft, context, "codex")
 
         mount_mock.assert_not_called()
         self.assertEqual({"gh": True}, draft.agent_cfg.extension_mounts)
+        ssh_setup_mock.assert_called_once_with(
+            context, "codex", resolved.reporter, interactive=False
+        )
+        gpg_setup_mock.assert_called_once_with(
+            context, "codex", resolved.reporter, interactive=False
+        )
 
     def test_configure_run_applies_git_mount_defaults_for_run(self) -> None:
         resolved = _none_interaction._NoneInteraction(mock.Mock())
@@ -156,9 +180,7 @@ class ConfigureRunTests(TestCase):
                 return_value=selection,
             ) as select_mock,
             mock.patch.object(draft, "apply_selection"),
-            mock.patch(
-                "aicage.runtime.menu._none_interaction.apply_mount_preferences"
-            ),
+            mock.patch("aicage.runtime.menu._none_interaction.apply_mount_preferences"),
         ):
             resolved.configure_run(draft, context, "codex")
 

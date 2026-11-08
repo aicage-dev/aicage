@@ -3,6 +3,7 @@ from copy import deepcopy
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.registry.credential_image import ensure_credential_image
 from aicage.reporting import OperationReporter
 from aicage.runtime._confirm import prompt_update_aicage
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
@@ -29,7 +30,7 @@ class TextualInteraction:
         agent: str,
     ) -> ConfigSelectionResult | ConfigScopeChange:
         del agent  # Textual reads agent from draft.agent.
-        return _edit_draft_with_textual_app(draft, context)
+        return _edit_draft_with_textual_app(draft, context, self._reporter)
 
     def confirm_aicage_update(
         self,
@@ -53,15 +54,30 @@ class TextualInteraction:
         if isinstance(result, BaseException):
             raise result
 
+    def execute_credential_image_setup(self) -> None:
+        result = ExecutionApp(
+            None,
+            False,
+            self._reporter,
+            operation=_ensure_credential_image,
+        ).run(inline=True)
+        if isinstance(result, BaseException):
+            raise result
+
+
+def _ensure_credential_image(reporter: OperationReporter) -> None:
+    ensure_credential_image(reporter)
+
 
 def _edit_draft_with_textual_app(
     draft: RunConfigDraft,
     context: ConfigContext,
+    reporter: ExecutionReporter,
 ) -> ConfigSelectionResult | ConfigScopeChange:
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()
-    result = ConfigApp(draft, context).run(inline=True)
+    result = ConfigApp(draft, context, reporter).run(inline=True)
     if result is None:
         draft.project_cfg.path = original_project_cfg.path
         draft.project_cfg.agents = original_project_cfg.agents

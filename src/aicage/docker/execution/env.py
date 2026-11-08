@@ -53,6 +53,15 @@ def resolve_user_ids() -> list[str]:
     return env_flags
 
 
+def resolve_container_user() -> str:
+    if os.name == "nt" or _is_rootless_docker():
+        return "0:0"
+    uid, gid = _resolve_host_user_ids()
+    if uid is None or gid is None:
+        return "0:0"
+    return f"{uid}:{gid}"
+
+
 def _resolve_host_user() -> str:
     return os.environ.get("USERNAME") or os.environ.get("USER") or "aicage"
 
