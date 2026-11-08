@@ -18,6 +18,7 @@ from aicage.runtime.menu.textual._models import (
     ShareEditorResult,
     SharesValues,
 )
+from aicage.runtime.menu.textual.services.execution_reporting import ExecutionReporter
 from aicage.runtime.menu.textual.views.overview.view import Overview
 
 from .._test_support import _build_context, _build_draft
@@ -30,8 +31,8 @@ class ConfigAppTests(TestCase):
 
         self.assertFalse(app._draft.agent_cfg.mounts.gitconfig)
         self.assertFalse(app._draft.agent_cfg.mounts.gitroot)
-        self.assertFalse(app._draft.agent_cfg.mounts.gnupg)
-        self.assertFalse(app._draft.agent_cfg.mounts.ssh)
+        self.assertIsNone(app._draft.agent_cfg.mounts.gnupg)
+        self.assertIsNone(app._draft.agent_cfg.mounts.ssh)
 
     def test_command_palette_is_disabled(self) -> None:
         self.assertFalse(_config_app.ConfigApp.ENABLE_COMMAND_PALETTE)
@@ -76,7 +77,7 @@ class ConfigAppTests(TestCase):
                 return_value=SharesValues([], [built_in_share]),
             ),
         ):
-            app = _config_app.ConfigApp(draft, _build_context())
+            app = _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())
 
         self.assertEqual(False, app._state.built_in_shares[0].persisted)
         self.assertTrue(app._state.built_in_shares[0].enabled)
@@ -99,46 +100,53 @@ class ConfigAppTests(TestCase):
         app = _build_app(scope="global", scope_config_exists=False)
 
         self.assertEqual(
-            {"gitconfig", "gitroot", "gnupg", "ssh"},
+            {"gitconfig", "gitroot"},
             app._draft.pending_git_mounts,
         )
+        self.assertEqual(
+            {"gnupg", "ssh"},
+            app._draft.pending_ssh_gnupg_mounts,
+        )
 
-    def test_on_overview_git_support_changed_saves_value_and_marks_new_access_pending(
+    def test_on_overview_host_access_changed_saves_value_and_marks_new_access_pending(
         self,
     ) -> None:
         app = _build_app(scope="global")
 
-        app.on_overview_git_support_changed(
-            Overview.GitSupportChanged("gitconfig", True)
+        app.on_overview_host_access_changed(
+            Overview.HostAccessChanged(BuiltInShareSource.GIT_SUPPORT, "gitconfig", True)
         )
 
         self.assertTrue(app._draft.agent_cfg.mounts.gitconfig)
         self.assertEqual({"gitconfig"}, app._draft.pending_git_mounts)
 
-    def test_on_overview_git_support_changed_marks_auto_value_pending(self) -> None:
+    def test_on_overview_host_access_changed_marks_auto_value_pending(self) -> None:
         app = _build_app(scope="global")
         app._draft.agent_cfg.mounts.gitconfig = False
 
-        app.on_overview_git_support_changed(
-            Overview.GitSupportChanged("gitconfig", None)
+        app.on_overview_host_access_changed(
+            Overview.HostAccessChanged(BuiltInShareSource.GIT_SUPPORT, "gitconfig", None)
         )
 
         self.assertIsNone(app._draft.agent_cfg.mounts.gitconfig)
         self.assertEqual({"gitconfig"}, app._draft.pending_git_mounts)
 
-    def test__pending_git_support_shares_uses_pathless_values(self) -> None:
+    def test__pending_git_shares_uses_pathless_values(self) -> None:
         app = _build_app(scope="global")
         app._draft.agent_cfg.mounts.ssh = True
-        app._draft.pending_git_mounts.add("ssh")
+        app._draft.pending_ssh_gnupg_mounts.add("ssh")
 
-        shares = app._pending_git_support_shares()
+        shares = app._pending_mount_shares(
+            BuiltInShareSource.SSH_GNUPG, ("ssh", "gnupg"), app._draft.pending_ssh_gnupg_mounts,
+            _config_app.ssh_gnupg_config_label,
+        )
 
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
+                    BuiltInShareSource.SSH_GNUPG,
                     "ssh",
-                    "SSH directory (for Git remote access and signing)",
+                    "SSH agent",
                     None,
                     None,
                     True,
@@ -147,18 +155,21 @@ class ConfigAppTests(TestCase):
             shares,
         )
 
-    def test__pending_git_support_shares_labels_auto_values(self) -> None:
+    def test__pending_git_shares_labels_auto_values(self) -> None:
         app = _build_app(scope="global")
-        app._draft.pending_git_mounts.add("ssh")
+        app._draft.pending_ssh_gnupg_mounts.add("ssh")
 
-        shares = app._pending_git_support_shares()
+        shares = app._pending_mount_shares(
+            BuiltInShareSource.SSH_GNUPG, ("ssh", "gnupg"), app._draft.pending_ssh_gnupg_mounts,
+            _config_app.ssh_gnupg_config_label,
+        )
 
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
+                    BuiltInShareSource.SSH_GNUPG,
                     "ssh",
-                    "(Auto) SSH directory (for Git remote access and signing)",
+                    "(Auto) SSH agent",
                     None,
                     None,
                     True,
@@ -384,12 +395,7 @@ class ConfigAppTests(TestCase):
         self,
     ) -> None:
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT,
-            "gitconfig",
-            "Git config",
-            "/test-tmp/gitconfig",
-            None,
-            True,
+            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", None, True
         )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()
@@ -414,7 +420,8 @@ class ConfigAppTests(TestCase):
                                 "docker", "Docker socket", None, None, True
                             )
                         ],
-                        git_support_shares=[built_in_share],
+                        git_shares=[built_in_share],
+                        ssh_gnupg_shares=[],
                         extension_shares=[],
                     )
                 ),
@@ -456,7 +463,8 @@ class ConfigAppTests(TestCase):
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[],
-                        git_support_shares=[auto_git_mount],
+                        git_shares=[auto_git_mount],
+                        ssh_gnupg_shares=[],
                         extension_shares=[],
                     )
                 ),
@@ -490,7 +498,8 @@ class ConfigAppTests(TestCase):
                                 "docker", "Docker socket", None, None, False
                             )
                         ],
-                        git_support_shares=[],
+                        git_shares=[],
+                        ssh_gnupg_shares=[],
                         extension_shares=[],
                     )
                 ),
@@ -505,12 +514,7 @@ class ConfigAppTests(TestCase):
         self,
     ) -> None:
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT,
-            "gitconfig",
-            "Git config",
-            "/test-tmp/gitconfig",
-            None,
-            True,
+            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", None, True
         )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()
@@ -558,7 +562,8 @@ class ConfigAppTests(TestCase):
                 new=mock.AsyncMock(
                     return_value=HostAccessConfirmValues(
                         docker_options=[],
-                        git_support_shares=[],
+                        git_shares=[],
+                        ssh_gnupg_shares=[],
                         extension_shares=[extension_share],
                     )
                 ),
@@ -701,4 +706,4 @@ def _build_app(
         )
         draft.scope = scope
         draft.scope_config_exists = {scope: scope_config_exists}
-        return _config_app.ConfigApp(draft, _build_context())
+        return _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())

@@ -1,26 +1,21 @@
 from unittest import TestCase, mock
 
-from aicage.runtime.menu.textual._models import (
-    BuiltInShareSource,
-    BuiltInShareValue,
-    CustomShareValue,
-)
+from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
 from aicage.runtime.menu.textual._state import OverviewState
 from aicage.runtime.menu.textual.views.overview import _shares
 
 
 class SharesOverviewTests(TestCase):
-    def test_is_git_support_button_identifies_git_support_button(self) -> None:
-        self.assertTrue(_shares.is_git_support_button("git_mount_ssh"))
-        self.assertFalse(_shares.is_git_support_button("add_share"))
+    def test_host_access_button_key_identifies_host_access_button(self) -> None:
+        self.assertEqual(
+            (BuiltInShareSource.GIT_SUPPORT, "gitconfig"), _shares.host_access_button_key("git_mount_gitconfig")
+        )
+        self.assertEqual((BuiltInShareSource.SSH_GNUPG, "ssh"), _shares.host_access_button_key("ssh_gnupg_mount_ssh"))
 
-    def test_git_support_key_returns_mount_key(self) -> None:
-        self.assertEqual("ssh", _shares.git_support_key("git_mount_ssh"))
-
-    def test_next_git_support_value_cycles_auto_on_off(self) -> None:
-        self.assertTrue(_shares.next_git_support_value(None))
-        self.assertFalse(_shares.next_git_support_value(True))
-        self.assertIsNone(_shares.next_git_support_value(False))
+    def test_next_mount_value_cycles_auto_on_off(self) -> None:
+        self.assertTrue(_shares.next_mount_value(None))
+        self.assertFalse(_shares.next_mount_value(True))
+        self.assertIsNone(_shares.next_mount_value(False))
 
     def test_share_widgets_builds_widgets(self) -> None:
         widgets = _shares.share_widgets(OverviewState(None, [], [], False))
@@ -43,16 +38,7 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    True,
-                )
-            ],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
             [CustomShareValue("/test-tmp/logs")],
             False,
         )
@@ -101,16 +87,7 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    True,
-                )
-            ],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
             [CustomShareValue("/test-tmp/logs")],
             False,
         )
@@ -119,71 +96,26 @@ class SharesOverviewTests(TestCase):
 
         selection_list.add_options.assert_called_once_with(
             [
-                ("SSH: /test-tmp/.ssh", "builtin:git_support:ssh", True),
+                ("SSH: /test-tmp/.ssh", "builtin:ssh_gnupg:ssh", True),
                 ("   : /test-tmp/logs", "custom:/test-tmp/logs", True),
             ]
         )
 
     def test_merge_built_in_shares_preserves_current_enabled_state(self) -> None:
         values = _shares.merge_built_in_shares(
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    False,
-                )
-            ],
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    True,
-                )
-            ],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, False)],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
         )
 
         self.assertEqual(
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    True,
-                )
-            ],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
             values,
         )
 
     def test_merge_built_in_shares_preserves_pending_confirmation(self) -> None:
         values = _shares.merge_built_in_shares(
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "gnupg",
-                    "GnuPG",
-                    "/test-tmp/gnupg",
-                    True,
-                    True,
-                )
-            ],
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "gnupg",
-                    "GnuPG",
-                    "/test-tmp/gnupg",
-                    None,
-                    True,
-                )
-            ],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "gnupg", "GnuPG", "/test-tmp/gnupg", True, True)],
+            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "gnupg", "GnuPG", "/test-tmp/gnupg", None, True)],
         )
 
         self.assertIsNone(values[0].persisted)

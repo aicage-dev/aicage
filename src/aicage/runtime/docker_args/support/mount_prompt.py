@@ -7,6 +7,7 @@ from aicage.config.project_config import AgentConfig
 from aicage.runtime.mounts.shares import ShareSpec, resolve_share_specs
 
 from .git_support import _git_support_prompt_items
+from .ssh_gnupg import _ssh_gnupg_prompt_items
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class _MountPromptItem:
 @dataclass(frozen=True)
 class _MountSelectionRequest:
     git_items: list[_MountPromptItem]
+    ssh_gnupg_items: list[_MountPromptItem]
     extension_items: list[_MountPromptItem]
 
 
@@ -27,6 +29,7 @@ MountSelectionPrompt = Callable[[_MountSelectionRequest], list[str]]
 @dataclass(frozen=True)
 class _MountPromptPrefs:
     git_mounts: set[str]
+    ssh_gnupg_mounts: set[str]
     extension_mounts: dict[str, bool]
 
 
@@ -38,9 +41,11 @@ def resolve_mount_prompt_prefs(
 ) -> _MountPromptPrefs | None:
     git_items = [
         _MountPromptItem(key, description)
-        for key, description in _git_support_prompt_items(
-            project_path, agent_cfg.mounts
-        )
+        for key, description in _git_support_prompt_items(project_path, agent_cfg.mounts)
+    ]
+    ssh_gnupg_items = [
+        _MountPromptItem(key, description)
+        for key, description in _ssh_gnupg_prompt_items(agent_cfg.mounts)
     ]
     extension_items = _extension_mount_prompt_items(
         project_path,
@@ -48,18 +53,32 @@ def resolve_mount_prompt_prefs(
         agent_cfg.extension_mounts,
         available_extensions,
     )
-    if not git_items and not extension_items:
+    if not git_items and not ssh_gnupg_items and not extension_items:
         return None
 
-    selected = set(select_mounts(_MountSelectionRequest(git_items, extension_items)))
+    selected = set(
+        select_mounts(
+            _MountSelectionRequest(git_items, ssh_gnupg_items, extension_items)
+        )
+    )
     return _MountPromptPrefs(
         git_mounts={item.key for item in git_items if item.key in selected},
-        extension_mounts={item.key: item.key in selected for item in extension_items},
+        ssh_gnupg_mounts={item.key for item in ssh_gnupg_items if item.key in selected},
+        extension_mounts={
+            item.key: item.key in selected for item in extension_items
+        },
     )
 
 
 def select_all_mounts(request: _MountSelectionRequest) -> list[str]:
-    return [item.key for item in [*request.git_items, *request.extension_items]]
+    return [
+        item.key
+        for item in [
+            *request.git_items,
+            *request.ssh_gnupg_items,
+            *request.extension_items,
+        ]
+    ]
 
 
 def _extension_mount_prompt_items(

@@ -20,6 +20,7 @@ from .support.mount_prompt import (
     extension_mount_defaults,
     resolve_mount_prompt_prefs,
 )
+from .support.ssh_gnupg import ssh_gnupg_mount_defaults
 
 _ConfirmPreference: TypeAlias = Callable[[], bool]
 
@@ -65,12 +66,15 @@ def apply_git_mount_defaults(context: ConfigContext, agent_cfg: AgentConfig) -> 
         setattr(agent_cfg.mounts, key, True)
 
 
+def apply_ssh_gnupg_mount_defaults(agent_cfg: AgentConfig) -> None:
+    for key in ssh_gnupg_mount_defaults(agent_cfg.mounts):
+        setattr(agent_cfg.mounts, key, True)
+
+
 def disable_git_mounts(agent_cfg: AgentConfig) -> None:
     for key in (
         MOUNT_GITCONFIG_KEY,
         MOUNT_GITROOT_KEY,
-        MOUNT_GNUPG_KEY,
-        MOUNT_SSH_KEY,
     ):
         setattr(agent_cfg.mounts, key, False)
 
@@ -89,11 +93,16 @@ def _apply_git_and_extension_mount_preferences(
     for key in (
         MOUNT_GITCONFIG_KEY,
         MOUNT_GITROOT_KEY,
-        MOUNT_GNUPG_KEY,
-        MOUNT_SSH_KEY,
     ):
         if getattr(agent_cfg.mounts, key) is None:
             setattr(agent_cfg.mounts, key, key in mount_prompt_prefs.git_mounts)
+    for key in (MOUNT_GNUPG_KEY, MOUNT_SSH_KEY):
+        if getattr(agent_cfg.mounts, key) is None:
+            setattr(
+                agent_cfg.mounts,
+                key,
+                key in mount_prompt_prefs.ssh_gnupg_mounts,
+            )
     agent_cfg.extension_mounts.update(mount_prompt_prefs.extension_mounts)
 
 

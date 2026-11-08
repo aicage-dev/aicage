@@ -1,3 +1,5 @@
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from textual.containers import Horizontal, Vertical
@@ -5,22 +7,35 @@ from textual.widgets import Button, SelectionList, Static
 from textual.widgets.selection_list import Selection
 
 from ..._ids import built_in_identity
-from ..._models import BuiltInShareValue, CustomShareValue
+from ..._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
 from ..._mount_display import (
     git_support_config_label,
     mount_selection_rows,
     overview_mount_list_items,
+    ssh_gnupg_config_label,
 )
 from ..._state import OverviewState
 from ._selection_list import _OverviewSelectionList
 
-_GIT_MOUNT_KEYS: tuple[str, ...] = ("gitconfig", "gitroot", "gnupg", "ssh")
-_GIT_SUPPORT_BUTTON_PREFIX = "git_mount_"
+_GIT_MOUNT_KEYS: tuple[str, ...] = ("gitconfig", "gitroot")
+_SSH_GNUPG_MOUNT_KEYS: tuple[str, ...] = ("ssh", "gnupg")
+_GIT_BUTTON_PREFIX = "git_mount_"
+_SSH_GNUPG_BUTTON_PREFIX = "ssh_gnupg_mount_"
+
+
+@dataclass(frozen=True)
+class _MountSection:
+    title: str
+    keys: tuple[str, ...]
+    values: dict[str, bool | None]
+    button_id: Callable[[str], str]
+    label: Callable[[str], str]
+    section_id: str
 
 
 def share_widgets(
     state: OverviewState,
-    include_git_support: bool = False,
+    include_host_access: bool = False,
 ) -> list[Horizontal | SelectionList | Vertical]:
     return [
         Horizontal(
@@ -28,7 +43,7 @@ def share_widgets(
             Button("+", id="add_share", variant="default"),
             id="shares_overview_header",
         ),
-        *(_git_support_widgets(state) if include_git_support else []),
+        *(_host_access_widgets(state) if include_host_access else []),
         _OverviewSelectionList(
             *_share_selection_items(state.built_in_shares, state.custom_shares),
             id="shares_overview_list",
@@ -40,13 +55,13 @@ def share_widgets(
 def refresh_shares(
     container: Any,
     state: OverviewState,
-    include_git_support: bool = False,
+    include_host_access: bool = False,
 ) -> None:
     overview = container.query_one("#shares_overview", Vertical)
     if (
         not state.built_in_shares
         and not state.custom_shares
-        and not include_git_support
+        and not include_host_access
     ):
         overview.display = False
         return
@@ -57,10 +72,14 @@ def refresh_shares(
     selection_list.add_options(
         _share_selection_items(state.built_in_shares, state.custom_shares)
     )
-    if include_git_support:
+    if include_host_access:
         for key in _GIT_MOUNT_KEYS:
-            container.query_one(f"#{_git_support_button_id(key)}", Button).label = (
-                _git_support_value_label(state.git_support_values.get(key))
+            container.query_one(f"#{_git_button_id(key)}", Button).label = (
+                _mount_value_label(state.git_values.get(key))
+            )
+        for key in _SSH_GNUPG_MOUNT_KEYS:
+            container.query_one(f"#{_ssh_gnupg_button_id(key)}", Button).label = (
+                _mount_value_label(state.ssh_gnupg_values.get(key))
             )
 
 
@@ -108,15 +127,23 @@ def current_custom_shares(state: OverviewState) -> list[CustomShareValue]:
     return list(state.custom_shares)
 
 
-def is_git_support_button(button_id: str | None) -> bool:
-    return button_id is not None and button_id.startswith(_GIT_SUPPORT_BUTTON_PREFIX)
+def host_access_button_key(
+    button_id: str | None,
+) -> tuple[BuiltInShareSource, str] | None:
+    if button_id is None:
+        return None
+    if button_id.startswith(_GIT_BUTTON_PREFIX):
+        return BuiltInShareSource.GIT_SUPPORT, button_id.removeprefix(
+            _GIT_BUTTON_PREFIX
+        )
+    if button_id.startswith(_SSH_GNUPG_BUTTON_PREFIX):
+        return BuiltInShareSource.SSH_GNUPG, button_id.removeprefix(
+            _SSH_GNUPG_BUTTON_PREFIX
+        )
+    return None
 
 
-def git_support_key(button_id: str) -> str:
-    return button_id.removeprefix(_GIT_SUPPORT_BUTTON_PREFIX)
-
-
-def next_git_support_value(value: bool | None) -> bool | None:
+def next_mount_value(value: bool | None) -> bool | None:
     if value is None:
         return True
     if value:
@@ -124,31 +151,53 @@ def next_git_support_value(value: bool | None) -> bool | None:
     return None
 
 
-def _git_support_widgets(state: OverviewState) -> list[Vertical]:
+def _host_access_widgets(state: OverviewState) -> list[Vertical]:
     return [
+        _mount_widgets(
+            _MountSection(
+                "Git", _GIT_MOUNT_KEYS, state.git_values, _git_button_id,
+                git_support_config_label, "git_support",
+            )
+        ),
+        _mount_widgets(
+            _MountSection(
+                "SSH and GnuPG", _SSH_GNUPG_MOUNT_KEYS, state.ssh_gnupg_values,
+                _ssh_gnupg_button_id, ssh_gnupg_config_label, "ssh_gnupg",
+            )
+        ),
+    ]
+
+
+def _mount_widgets(section: _MountSection) -> Vertical:
+    return Vertical(
+        Static(section.title, classes="host_access_title"),
         Vertical(
             *[
                 Horizontal(
                     Button(
-                        _git_support_value_label(state.git_support_values.get(key)),
-                        id=_git_support_button_id(key),
-                        classes="git_support_control",
+                        _mount_value_label(section.values.get(key)),
+                        id=section.button_id(key),
+                        classes="host_access_control",
                     ),
-                    Static(git_support_config_label(key), classes="git_support_label"),
-                    classes="git_support_row",
+                    Static(section.label(key), classes="host_access_label"),
+                    classes="host_access_row",
                 )
-                for key in _GIT_MOUNT_KEYS
+                for key in section.keys
             ],
-            id="git_support_overview",
-        )
-    ]
+            id=f"{section.section_id}_overview",
+        ),
+    )
 
 
-def _git_support_button_id(key: str) -> str:
-    return f"{_GIT_SUPPORT_BUTTON_PREFIX}{key}"
+def _git_button_id(key: str) -> str:
+    return f"{_GIT_BUTTON_PREFIX}{key}"
 
 
-def _git_support_value_label(value: bool | None) -> str:
+def _ssh_gnupg_button_id(key: str) -> str:
+    return f"{_SSH_GNUPG_BUTTON_PREFIX}{key}"
+
+
+def _mount_value_label(value: bool | None) -> str:
     if value is None:
         return "Auto"
     if value:

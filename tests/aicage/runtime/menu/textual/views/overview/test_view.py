@@ -7,11 +7,7 @@ from textual.widgets import Button, SelectionList, Static
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
-from aicage.runtime.menu.textual._models import (
-    BuiltInShareSource,
-    BuiltInShareValue,
-    CustomShareValue,
-)
+from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
 from aicage.runtime.menu.textual._state import OverviewState
 from aicage.runtime.menu.textual.views.overview._selection_list import (
     _OverviewSelectionList,
@@ -115,19 +111,19 @@ class OverviewTests(TestCase):
             post_message_mock.call_args.args[0], Overview.AcceptRequested
         )
 
-    def test_on_button_pressed_cycles_git_support_value(self) -> None:
-        state = OverviewState(None, [], [], False, git_support_values={"ssh": None})
+    def test_on_button_pressed_cycles_ssh_gnupg_value(self) -> None:
+        state = OverviewState(None, [], [], False, ssh_gnupg_values={"ssh": None})
         overview = Overview("codex", "/test-tmp/project", state, scope="global")
         event = mock.Mock()
-        event.button.id = "git_mount_ssh"
+        event.button.id = "ssh_gnupg_mount_ssh"
 
         with mock.patch.object(overview, "post_message") as post_message_mock:
             overview.on_button_pressed(event)
 
-        self.assertTrue(state.git_support_values["ssh"])
+        self.assertTrue(state.ssh_gnupg_values["ssh"])
         self.assertEqual("On\u00a0\u00a0", event.button.label)
         self.assertIsInstance(
-            post_message_mock.call_args.args[0], Overview.GitSupportChanged
+            post_message_mock.call_args.args[0], Overview.HostAccessChanged
         )
 
     def test_on_selection_list_selected_changed_updates_built_in_shares(self) -> None:
@@ -135,12 +131,7 @@ class OverviewTests(TestCase):
             None,
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    True,
+                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 )
             ],
             [],
@@ -338,12 +329,7 @@ class OverviewTests(TestCase):
             shares_values.return_value = mock.Mock(
                 built_in_shares=[
                     BuiltInShareValue(
-                        BuiltInShareSource.GIT_SUPPORT,
-                        "ssh",
-                        "SSH",
-                        "/test-tmp/.ssh",
-                        None,
-                        True,
+                        BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
                     )
                 ]
             )
@@ -371,8 +357,10 @@ class OverviewTests(TestCase):
         extras_button = mock.Mock()
         git_support_buttons = {
             f"#git_mount_{key}": mock.Mock()
-            for key in ("gitconfig", "gitroot", "gnupg", "ssh")
+            for key in ("gitconfig", "gitroot")
         }
+        git_support_buttons["#ssh_gnupg_mount_ssh"] = mock.Mock()
+        git_support_buttons["#ssh_gnupg_mount_gnupg"] = mock.Mock()
         shares_overview = mock.Mock()
         shares_overview.display = True
         shares_title = mock.Mock()
@@ -418,18 +406,20 @@ class OverviewTests(TestCase):
             shares_values.return_value = mock.Mock(
                 built_in_shares=[
                     BuiltInShareValue(
-                        BuiltInShareSource.GIT_SUPPORT,
-                        "ssh",
-                        "SSH",
-                        "/test-tmp/.ssh",
-                        None,
-                        True,
+                        BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
                     )
                 ]
             )
             overview.refresh_from(draft, _build_context())
 
-        self.assertEqual([], overview._state.built_in_shares)
+        self.assertEqual(
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                )
+            ],
+            overview._state.built_in_shares,
+        )
 
     def test_apply_shell_width_sets_fixed_width(self) -> None:
         overview = Overview(
@@ -439,12 +429,7 @@ class OverviewTests(TestCase):
                 None,
                 [
                     BuiltInShareValue(
-                        BuiltInShareSource.GIT_SUPPORT,
-                        "ssh",
-                        "SSH",
-                        "/test-tmp/.ssh",
-                        None,
-                        True,
+                        BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
                     )
                 ],
                 [CustomShareValue("/test-tmp/logs")],
@@ -512,12 +497,7 @@ class OverviewTests(TestCase):
                 None,
                 [
                     BuiltInShareValue(
-                        BuiltInShareSource.GIT_SUPPORT,
-                        "ssh",
-                        "SSH",
-                        "/test-tmp/.ssh",
-                        None,
-                        False,
+                        BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, False
                     )
                 ],
                 [],
@@ -525,7 +505,7 @@ class OverviewTests(TestCase):
             ),
         )
         selection_list = mock.Mock(spec=SelectionList)
-        selection_list.selected = ["builtin:git_support:ssh"]
+        selection_list.selected = ["builtin:ssh_gnupg:ssh"]
 
         with mock.patch.object(overview, "query_one", return_value=selection_list):
             values = overview.current_built_in_shares()

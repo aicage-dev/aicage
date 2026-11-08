@@ -21,7 +21,7 @@ from aicage.registry.errors import RegistryError
 from aicage.registry.image_selection.models import ImageSelection
 from aicage.runtime.menu.interaction import create_runtime_interaction
 from aicage.runtime.menu.scope_change import ConfigScopeChange
-from aicage.runtime.run_args import EnvVar, MountSpec
+from aicage.runtime.run_args import BindMountSpec, EnvVar
 
 
 class RuntimeConfigTests(TestCase):
@@ -176,6 +176,7 @@ class RuntimeConfigTests(TestCase):
 
         interaction.configure_run.assert_called_once()
         store.save_global.assert_called_once_with(config)
+        interaction.execute_operation.assert_not_called()
 
     def test_configure_inherited_config_prefills_cli_values(self) -> None:
         store = mock.Mock()
@@ -286,7 +287,7 @@ class RuntimeConfigTests(TestCase):
                 return SettingsStore()
 
             mounts = [
-                MountSpec(
+                BindMountSpec(
                     host_path=Path("/test-tmp/host"),
                     container_path=PurePosixPath("/test-tmp/container"),
                 )

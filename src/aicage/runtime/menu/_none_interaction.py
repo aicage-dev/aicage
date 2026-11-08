@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from aicage.cli_types import ConfigUpdateArgs
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
@@ -13,6 +15,7 @@ from aicage.runtime.docker_args.mount_preferences import (
     apply_extension_mount_defaults,
     apply_git_mount_defaults,
     apply_mount_preferences,
+    apply_ssh_gnupg_mount_defaults,
     disable_git_mounts,
 )
 from aicage.runtime.docker_args.support.mount_prompt import select_all_mounts
@@ -53,6 +56,7 @@ class _NoneInteraction:
                 apply_git_mount_defaults(context, draft.agent_cfg)
             else:
                 disable_git_mounts(draft.agent_cfg)
+        apply_ssh_gnupg_mount_defaults(draft.agent_cfg)
         if isinstance(draft.parsed, ConfigUpdateArgs):
             apply_extension_mount_defaults(context, draft.agent_cfg)
         else:
@@ -63,6 +67,8 @@ class _NoneInteraction:
                 select_all_mounts,
                 _always_confirm,
             )
+        if isinstance(draft.parsed, ConfigUpdateArgs):
+            context.project_cfg.agents[agent] = draft.effective_agent_cfg
         return ConfigSelectionResult(
             selection=selection,
             project_docker_args=draft.existing_project_docker_args,
@@ -90,6 +96,9 @@ class _NoneInteraction:
             update_approved=update_approved,
             reporter=self.reporter,
         )
+
+    def execute_operation(self, operation: Callable[[OperationReporter], None]) -> None:
+        operation(self.reporter)
 
 
 class _NonInteractiveSelectionInteraction:

@@ -412,7 +412,7 @@ class ParseCliTests(TestCase):
         self.assertIn("[--extension <id>]...", output)
         self.assertIn("--base <id>      Select the agent base image.", output)
         self.assertIn(
-            "--git [on|off]   Enable or disable Git support mounts (default: on).",
+            "--git [on|off]   Enable or disable Git configuration and repository mounts (default: on).",
             output,
         )
         self.assertNotIn("simple", output)
