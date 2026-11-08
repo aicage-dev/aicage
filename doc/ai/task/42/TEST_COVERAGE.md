@@ -88,15 +88,15 @@ integration and platform items remain pending Commit 5 work.
 
 - Resource inspection, ownership rejection, creation, stopped/unhealthy/obsolete replacement, retained volumes,
   readiness failures, lock contention, and one shared image resolution for both protocols.
-- Protocol selection: usable Unix host socket selects direct forwarding; unusable socket selects a sidecar; Windows
-  always selects a sidecar and never requests a Windows named-pipe mount.
+- Protocol selection: SSH always selects a sidecar; GnuPG uses direct Unix forwarding when usable and a sidecar
+  otherwise; Windows always selects sidecars and never requests a Windows named-pipe mount.
 - `DockerRunArgs` volume mounts and protocol environment for each selection, with no target private-key mounts.
 - SSH/GnuPG host support files retained read-only in the target container.
 - Keyring lookup/store, passphrase fingerprint mapping, reload, and clear noninteractive missing-secret errors.
 
 ### Integration and platform tests
 
-- Linux direct SSH and GnuPG forwarding remains functional when the host socket is bind-mountable.
+- Linux direct GnuPG forwarding remains functional when the host socket is bind-mountable; SSH uses its sidecar.
 - Linux fallback sidecars provide SSH authentication and GnuPG signing from an actual Aicage target container.
 - Windows Docker Desktop/WSL target containers use only socket volumes; they do not mount
   `\\.\pipe\openssh-ssh-agent` or alter/start the Windows OpenSSH service.
