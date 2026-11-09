@@ -132,7 +132,7 @@ contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
 
-**Status: in progress.** The live Docker matrix covers SSH sidecar forwarding and GnuPG commit signing. Linux covers
+**Status: complete.** The live Docker matrix covers SSH sidecar forwarding and GnuPG commit signing. Linux covers
 both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG path. The
 SSH test verifies agent-backed signing, verification, isolated SSH authentication, target private-key-path absence,
 and restart/reload. The GnuPG tests verify signing, target `GNUPGHOME` private-key-file isolation, and sidecar
@@ -141,10 +141,7 @@ controlling the platform-keyring boundary: SSH covers interactive setup, noninte
 missing-secret error; GnuPG covers passphrase retrieval, public-only client signing, reload after restart, and the
 missing-secret error. Native-keyring backend behavior remains covered by the platform-specific unit suites.
 
-The remaining cases below are required before this commit is complete. Keep the current temporary credential-focused
-CI matrix only while the broader integration failures are being diagnosed, then remove it and restore normal discovery.
-
-Remove the temporary Task 42 integration-matrix filter and restore the full non-proxy integration suite.
+The temporary credential-focused CI matrix filter has been removed; normal non-proxy integration discovery is restored.
 
 ## Documentation
 

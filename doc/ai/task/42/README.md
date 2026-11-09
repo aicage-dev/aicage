@@ -9,12 +9,12 @@ Commits 1 through 4 are complete. `aicage-image-util` provides the published `cr
 `aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. SSH and
 GnuPG encrypted-key reload use the platform keyring on Linux, Windows, and macOS.
 
-Commit 5 is in progress. The CI matrix proves SSH sidecar forwarding and GnuPG commit signing on Linux and Windows:
+Commit 5 is complete. The CI matrix proves SSH sidecar forwarding and GnuPG commit signing on Linux and Windows:
 Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required sidecar-only path. SSH and
 GnuPG sidecars are restarted and reloaded successfully, and target credential homes remain private-key-free.
 Protected SSH and GnuPG lifecycle tests use real encrypted fixtures, sidecars, socket volumes, and target clients while
 controlling the platform-keyring boundary. Native-keyring backends retain their platform-specific unit coverage.
-Restoration of the full integration matrix remains outstanding.
+The integration matrix again uses normal non-proxy test discovery rather than a temporary credential-only filter.
 
 ## Problem
 
