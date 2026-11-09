@@ -1,7 +1,5 @@
 """GnuPG key loading through a credential sidecar."""
 
-from pathlib import PurePosixPath
-
 from docker.client import DockerClient
 from docker.errors import DockerException
 from docker.models.containers import Container
@@ -9,7 +7,7 @@ from docker.models.containers import Container
 from aicage.docker.errors import DockerError
 from aicage.docker.execution.client import get_docker_client
 
-from ._resource_lifecycle import _credential_mount_path, _find_container
+from ._resource_lifecycle import _find_container
 from ._resource_models import _CredentialResource
 from ._resource_ssh import (
     _close_exec_stream,
@@ -17,127 +15,18 @@ from ._resource_ssh import (
     _write_exec_input,
 )
 
-_GPG_AGENT_HOME = (PurePosixPath("/") / "tmp" / "credential-agent").as_posix()
-_GPG_FINGERPRINT_FIELD = 9
-
 
 def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bool:
     """Return whether the sidecar's secret key requires a passphrase."""
     client = get_docker_client()
     container = _sidecar_container(client, resource)
-    try:
-        output = _run_gpg_command(
-            client,
-            container,
-            ["credential-agent", "gpg", "protected", fingerprint],
-            fingerprint,
-        )
-    except DockerError as exc:
-        credential_path = _credential_mount_path(container, resource)
-        raise DockerError(
-            f"{exc}\nCredential home mount: {credential_path}"
-        ) from exc
-    return output.strip() == "protected"
-
-
-def _gpg_secret_key_fingerprints(
-    resource: _CredentialResource, signing_key: str | None
-) -> list[str]:
-    """Return the first primary secret-key fingerprint from the sidecar."""
-    command = [
-        "gpg",
-        "--batch",
-        "--with-colons",
-        "--homedir",
-        _GPG_AGENT_HOME,
-        "--list-secret-keys",
-    ]
-    if signing_key and signing_key.strip():
-        command.append(signing_key.strip())
-    client = get_docker_client()
-    container = _sidecar_container(client, resource)
-    output = _run_gpg_command(client, container, command, signing_key or "secret keys")
-    return _primary_gpg_fingerprints(output)
-
-
-def _gpg_keygrips(
-    client: DockerClient, container: Container, fingerprint: str
-) -> list[str]:
     output = _run_gpg_command(
         client,
         container,
-        [
-            "gpg",
-            "--batch",
-            "--with-colons",
-            "--with-keygrip",
-            "--homedir",
-            _GPG_AGENT_HOME,
-            "--list-keys",
-        ],
+        ["credential-agent", "gpg", "protected", fingerprint],
         fingerprint,
     )
-    keygrips: list[str] = []
-    primary_fingerprint_pending = False
-    selected_primary_key = False
-    for line in output.splitlines():
-        fields = line.split(":")
-        record_type = fields[0]
-        if record_type == "pub":
-            primary_fingerprint_pending = True
-            selected_primary_key = False
-        elif record_type == "fpr" and primary_fingerprint_pending:
-            selected_primary_key = (
-                len(fields) > _GPG_FINGERPRINT_FIELD
-                and fields[_GPG_FINGERPRINT_FIELD] == fingerprint
-            )
-            primary_fingerprint_pending = False
-        elif (
-            record_type == "grp"
-            and selected_primary_key
-            and len(fields) > _GPG_FINGERPRINT_FIELD
-        ):
-            keygrips.append(fields[_GPG_FINGERPRINT_FIELD])
-    return keygrips
-
-
-def _primary_gpg_fingerprints(output: str) -> list[str]:
-    fingerprints: list[str] = []
-    secret_key_pending = False
-    for line in output.splitlines():
-        fields = line.split(":")
-        record_type = fields[0]
-        if record_type == "sec":
-            secret_key_pending = True
-            continue
-        if (
-            record_type == "fpr"
-            and secret_key_pending
-            and len(fields) > _GPG_FINGERPRINT_FIELD
-        ):
-            fingerprints.append(fields[_GPG_FINGERPRINT_FIELD])
-            secret_key_pending = False
-            continue
-        if record_type in {"sec", "ssb"}:
-            secret_key_pending = False
-    return fingerprints[:1]
-
-
-def _gpg_key_info(
-    client: DockerClient, container: Container, keygrip: str
-) -> str:
-    return _run_gpg_command(
-        client,
-        container,
-        [
-            "gpg-connect-agent",
-            "--raw-socket",
-            f"{_GPG_AGENT_HOME}/S.gpg-agent",
-            f"KEYINFO {keygrip}",
-            "/bye",
-        ],
-        keygrip,
-    )
+    return output.strip() == "protected"
 
 
 def _run_gpg_command(
