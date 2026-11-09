@@ -132,9 +132,11 @@ contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
 
-**Status: complete.** The live Docker matrix covers SSH sidecar forwarding and GnuPG commit signing. Linux covers
+**Status: complete.** The live Docker matrix covers SSH sidecar forwarding and GnuPG signing. Linux covers
 both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG path. The
-SSH test verifies agent-backed signing, verification, isolated SSH authentication, target private-key-path absence,
+host-key discovery and mount defaults are independent of Git configuration, so Git signing is not required to use a
+forwarded GnuPG agent. The SSH test verifies agent-backed signing, verification, isolated SSH authentication,
+target private-key-path absence,
 and restart/reload. The GnuPG tests verify signing, target `GNUPGHOME` private-key-file isolation, and sidecar
 restart/reload. Protected-key integration tests use real encrypted fixtures, sidecars, and client socket volumes while
 controlling the platform-keyring boundary: SSH covers interactive setup, noninteractive reload after restart, and the
