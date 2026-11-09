@@ -106,7 +106,7 @@ Completed live coverage:
   absent; the fixture lives outside target-mounted checkout paths. The target signs and verifies a message through the
   sidecar socket, then authenticates to an isolated SSHD through that socket.
 - Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
-- Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second commit without
+- Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second message without
   private-key files in the target GnuPG home.
 - Protected SSH setup stores an encrypted key's passphrase through a controlled keyring boundary, loads the real key
   into the sidecar, reloads it after a stopped-sidecar restart, and fails before target startup when the secret is
