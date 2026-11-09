@@ -1,5 +1,7 @@
 """GnuPG key loading through a credential sidecar."""
 
+from pathlib import PurePosixPath
+
 from docker.client import DockerClient
 from docker.errors import DockerException
 from docker.models.containers import Container
@@ -15,28 +17,81 @@ from ._resource_ssh import (
     _write_exec_input,
 )
 
+_GPG_AGENT_HOME = (PurePosixPath("/") / "tmp" / "credential-agent").as_posix()
+_GPG_FINGERPRINT_FIELD = 9
+
 
 def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bool:
     """Return whether the sidecar's secret key requires a passphrase."""
     client = get_docker_client()
     container = _sidecar_container(client, resource)
+    keygrips = _gpg_keygrips(client, container, fingerprint)
+    return any(
+        _gpg_key_info(client, container, keygrip).split()[7] == "P"
+        for keygrip in keygrips
+    )
+
+
+def _gpg_keygrips(
+    client: DockerClient, container: Container, fingerprint: str
+) -> list[str]:
+    output = _run_gpg_command(
+        client,
+        container,
+        [
+            "gpg",
+            "--batch",
+            "--with-colons",
+            "--with-keygrip",
+            "--homedir",
+            _GPG_AGENT_HOME,
+            "--list-secret-keys",
+            fingerprint,
+        ],
+        fingerprint,
+    )
+    return [
+        fields[_GPG_FINGERPRINT_FIELD]
+        for line in output.splitlines()
+        if (fields := line.split(":"))[0] == "grp"
+        and len(fields) > _GPG_FINGERPRINT_FIELD
+    ]
+
+
+def _gpg_key_info(
+    client: DockerClient, container: Container, keygrip: str
+) -> str:
+    return _run_gpg_command(
+        client,
+        container,
+        [
+            "gpg-connect-agent",
+            "--raw-socket",
+            f"{_GPG_AGENT_HOME}/S.gpg-agent",
+            f"KEYINFO {keygrip}",
+            "/bye",
+        ],
+        keygrip,
+    )
+
+
+def _run_gpg_command(
+    client: DockerClient, container: Container, command: list[str], identifier: str
+) -> str:
     try:
-        created = client.api.exec_create(
-            container.id,
-            ["credential-agent", "gpg", "protected", fingerprint],
-        )
+        created = client.api.exec_create(container.id, command)
         execution_id = created["Id"]
         output = client.api.exec_start(execution_id)
         result = client.api.exec_inspect(execution_id)
     except (DockerException, KeyError) as exc:
         raise DockerError(
-            f"Failed to inspect GnuPG key '{fingerprint}' in the credential sidecar."
+            f"Failed to inspect GnuPG key '{identifier}' in the credential sidecar."
         ) from exc
     if result.get("ExitCode") != 0:
         raise DockerError(
-            f"Failed to inspect GnuPG key '{fingerprint}' in the credential sidecar."
+            f"Failed to inspect GnuPG key '{identifier}' in the credential sidecar."
         )
-    return output.decode("utf-8").strip() == "protected"
+    return output.decode("utf-8")
 
 
 def _load_gpg_key(

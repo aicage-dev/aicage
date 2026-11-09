@@ -37,7 +37,7 @@ def _assert_gpg_agent_signs_commit(
 ) -> None:
     require_integration()
     initial_cwd = Path.cwd()
-    temp_root = Path(__file__).resolve().parents[3] / ".aicage-test-tmp"
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
     temp_root.mkdir(exist_ok=True)
     with temporary_test_root(temp_root) as root:
         home = root / "home"
@@ -72,8 +72,8 @@ def _assert_gpg_agent_signs_commit(
                     (
                         "git add signed.txt && git commit -S -m signed "
                         "&& git verify-commit HEAD "
-                        "&& ! gpg --batch --with-colons --list-secret-keys "
-                        "| grep -qE '^(sec|ssb):'"
+                        "&& ! find \"$GNUPGHOME/private-keys-v1.d\" -type f "
+                        "-print -quit 2>/dev/null | grep -q ."
                     ),
                 ],
                 env=env,

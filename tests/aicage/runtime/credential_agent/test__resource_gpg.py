@@ -12,8 +12,11 @@ class ResourceGpgTests(TestCase):
     def test_gpg_key_is_protected_reads_the_sidecar_result(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         client = mock.Mock()
-        client.api.exec_create.return_value = {"Id": "exec-id"}
-        client.api.exec_start.return_value = b"protected\n"
+        client.api.exec_create.side_effect = [{"Id": "keygrips"}, {"Id": "keyinfo"}]
+        client.api.exec_start.side_effect = [
+            b"grp:::::::::KEYGRIP:\n",
+            b"S KEYINFO KEYGRIP D - - - P - - -\nOK\n",
+        ]
         client.api.exec_inspect.return_value = {"ExitCode": 0}
         container = mock.Mock()
         with (
@@ -22,9 +25,32 @@ class ResourceGpgTests(TestCase):
         ):
             self.assertTrue(_resource_gpg._gpg_key_is_protected(resource, "FINGERPRINT"))
 
-        client.api.exec_create.assert_called_once_with(
-            container.id,
-            ["credential-agent", "gpg", "protected", "FINGERPRINT"],
+        client.api.exec_create.assert_has_calls(
+            [
+                mock.call(
+                    container.id,
+                    [
+                        "gpg",
+                        "--batch",
+                        "--with-colons",
+                        "--with-keygrip",
+                        "--homedir",
+                        "/tmp/credential-agent",
+                        "--list-secret-keys",
+                        "FINGERPRINT",
+                    ],
+                ),
+                mock.call(
+                    container.id,
+                    [
+                        "gpg-connect-agent",
+                        "--raw-socket",
+                        "/tmp/credential-agent/S.gpg-agent",
+                        "KEYINFO KEYGRIP",
+                        "/bye",
+                    ],
+                ),
+            ]
         )
 
     def test_gpg_key_is_protected_rejects_a_failed_exec(self) -> None:
