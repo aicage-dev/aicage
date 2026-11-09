@@ -32,6 +32,26 @@ def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bo
     )
 
 
+def _gpg_secret_key_fingerprints(
+    resource: _CredentialResource, signing_key: str | None
+) -> list[str]:
+    """Return the first primary secret-key fingerprint from the sidecar."""
+    command = [
+        "gpg",
+        "--batch",
+        "--with-colons",
+        "--homedir",
+        _GPG_AGENT_HOME,
+        "--list-secret-keys",
+    ]
+    if signing_key and signing_key.strip():
+        command.append(signing_key.strip())
+    client = get_docker_client()
+    container = _sidecar_container(client, resource)
+    output = _run_gpg_command(client, container, command, signing_key or "secret keys")
+    return _primary_gpg_fingerprints(output)
+
+
 def _gpg_keygrips(
     client: DockerClient, container: Container, fingerprint: str
 ) -> list[str]:
@@ -56,6 +76,28 @@ def _gpg_keygrips(
         if (fields := line.split(":"))[0] == "grp"
         and len(fields) > _GPG_FINGERPRINT_FIELD
     ]
+
+
+def _primary_gpg_fingerprints(output: str) -> list[str]:
+    fingerprints: list[str] = []
+    secret_key_pending = False
+    for line in output.splitlines():
+        fields = line.split(":")
+        record_type = fields[0]
+        if record_type == "sec":
+            secret_key_pending = True
+            continue
+        if (
+            record_type == "fpr"
+            and secret_key_pending
+            and len(fields) > _GPG_FINGERPRINT_FIELD
+        ):
+            fingerprints.append(fields[_GPG_FINGERPRINT_FIELD])
+            secret_key_pending = False
+            continue
+        if record_type in {"sec", "ssb"}:
+            secret_key_pending = False
+    return fingerprints[:1]
 
 
 def _gpg_key_info(
