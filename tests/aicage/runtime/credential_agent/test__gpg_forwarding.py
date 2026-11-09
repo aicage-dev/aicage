@@ -163,3 +163,100 @@ class GpgForwardingTests(TestCase):
         self.assertEqual([EnvVar("GNUPGHOME", "/test-tmp/gnupg")], plan.target_env)
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(home, plan.credential_home)
+
+    def test_reload_gpg_keys_loads_a_protected_signing_key(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_secret_key_fingerprints",
+                return_value=["FINGERPRINT"],
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_key_is_protected", return_value=True
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_passphrase", return_value="secret"
+            ) as passphrase_mock,
+            mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
+        ):
+            _gpg_forwarding._reload_gpg_keys(
+                [resource], Path("/project"), Path("/gnupg"), interactive=False
+            )
+
+        passphrase_mock.assert_called_once_with("FINGERPRINT", interactive=False)
+        load_mock.assert_called_once_with(resource, "FINGERPRINT", "secret")
+
+    def test_reload_gpg_keys_skips_an_unprotected_key(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_secret_key_fingerprints",
+                return_value=["FINGERPRINT"],
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_key_is_protected", return_value=False
+            ),
+            mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
+        ):
+            _gpg_forwarding._reload_gpg_keys(
+                [resource], Path("/project"), Path("/gnupg"), interactive=False
+            )
+
+        load_mock.assert_not_called()
+
+    def test_primary_gpg_fingerprints_selects_the_first_secret_key(self) -> None:
+        output = "\n".join(
+            [
+                "sec:u:255:22:::::::scSC::::::",
+                "fpr:::::::::PRIMARY:",
+                "ssb:u:255:22:::::::s::::::",
+                "fpr:::::::::SUBKEY:",
+                "sec:u:255:22:::::::scSC::::::",
+                "fpr:::::::::SECOND:",
+            ]
+        )
+
+        self.assertEqual(["PRIMARY"], _gpg_forwarding._primary_gpg_fingerprints(output))
+
+    def test_gpg_passphrase_uses_the_stored_keyring_secret(self) -> None:
+        with mock.patch.object(
+            _gpg_forwarding, "get_secret", return_value="secret"
+        ) as get_mock:
+            actual = _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=False)
+
+        self.assertEqual("secret", actual)
+        get_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT")
+
+    def test_gpg_passphrase_requires_interactive_setup_for_a_missing_secret(self) -> None:
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "get_secret",
+                side_effect=_gpg_forwarding.SecretNotFoundError(),
+            ),
+            mock.patch.object(_gpg_forwarding.sys.stdin, "isatty", return_value=False),
+            self.assertRaisesRegex(RuntimeError, "Open the terminal configuration UI"),
+        ):
+            _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=False)
+
+    def test_gpg_passphrase_stores_an_interactive_secret(self) -> None:
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "get_secret",
+                side_effect=_gpg_forwarding.SecretNotFoundError(),
+            ),
+            mock.patch.object(_gpg_forwarding.sys.stdin, "isatty", return_value=True),
+            mock.patch.object(_gpg_forwarding, "getpass", return_value="secret"),
+            mock.patch.object(_gpg_forwarding, "set_secret") as set_mock,
+        ):
+            self.assertEqual(
+                "secret",
+                _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=True),
+            )
+
+        set_mock.assert_called_once_with(
+            "aicage/gpg/passphrase/FINGERPRINT", "secret"
+        )

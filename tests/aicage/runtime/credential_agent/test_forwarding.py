@@ -78,6 +78,31 @@ class CredentialAgentForwardingTests(TestCase):
             mock.ANY,
         )
 
+    def test_ensure_gpg_setup_reloads_a_fallback_sidecar(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        context = mock.Mock()
+        context.project_cfg.path = "/test-tmp/project"
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
+        }
+        plan = _gpg_forwarding._GpgForwardingPlan(Path("/test-tmp/gnupg"), [], [], True)
+        with (
+            mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
+            mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
+            mock.patch.object(
+                forwarding, "_ensure_sidecars", return_value=[resource]
+            ) as ensure_mock,
+            mock.patch.object(forwarding, "_reload_gpg_keys") as reload_mock,
+        ):
+            forwarding.ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
+
+        ensure_mock.assert_called_once_with(
+            [_CredentialProtocol.GPG], mock.ANY, mock.ANY, plan.credential_home
+        )
+        reload_mock.assert_called_once_with(
+            [resource], Path("/test-tmp/project"), plan.credential_home, interactive=True
+        )
+
     def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         context = mock.Mock()
@@ -117,6 +142,7 @@ class CredentialAgentForwardingTests(TestCase):
                 forwarding, "_ensure_sidecars", return_value=[resource]
             ) as ensure_mock,
             mock.patch.object(forwarding, "_reload_ssh_keys"),
+            mock.patch.object(forwarding, "_reload_gpg_keys"),
         ):
             with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, _env):
                 self.assertEqual(

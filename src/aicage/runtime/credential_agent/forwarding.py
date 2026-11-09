@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
@@ -13,6 +14,7 @@ from ._gpg_forwarding import (
     _gpg_enabled,
     _gpg_forwarding,
     _GpgForwardingPlan,
+    _reload_gpg_keys,
 )
 from ._resource_models import _CredentialProtocol, _CredentialResource
 from ._sidecars import _ensure_sidecars
@@ -73,6 +75,12 @@ def forwarding(
         mounts.extend(sidecar_mounts)
         env.extend(sidecar_env)
         _reload_ssh_keys(resources, interactive=False)
+        _reload_gpg_keys(
+            resources,
+            Path(context.project_cfg.path),
+            gpg_plan.credential_home,
+            interactive=False,
+        )
         yield mounts, env
 
 
@@ -95,6 +103,32 @@ def ensure_ssh_setup(
         reporter,
     )
     _reload_ssh_keys(resources, interactive=interactive)
+
+
+def ensure_gpg_setup(
+    context: ConfigContext,
+    agent: str,
+    reporter: OperationReporter,
+    *,
+    interactive: bool,
+) -> None:
+    if not _gpg_enabled(context, agent):
+        return
+    gpg_plan = _gpg_forwarding()
+    if gpg_plan is None or not gpg_plan.requires_sidecar:
+        return
+    resources = _ensure_sidecars(
+        [_CredentialProtocol.GPG],
+        resolve_container_user(),
+        reporter,
+        gpg_plan.credential_home,
+    )
+    _reload_gpg_keys(
+        resources,
+        Path(context.project_cfg.path),
+        gpg_plan.credential_home,
+        interactive=interactive,
+    )
 
 
 def _append_sidecar_target_args(
