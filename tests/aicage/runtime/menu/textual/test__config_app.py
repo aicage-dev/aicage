@@ -17,6 +17,7 @@ from aicage.runtime.menu.textual._models import (
     ShareEditorResult,
     SharesValues,
 )
+from aicage.runtime.menu.textual.services.execution_reporting import ExecutionReporter
 from aicage.runtime.menu.textual.views.overview.view import Overview
 
 from .._test_support import _build_context, _build_draft
@@ -43,8 +44,9 @@ class ConfigAppTests(TestCase):
 
         widgets = list(app.compose())
 
-        self.assertEqual(1, len(widgets))
+        self.assertEqual(2, len(widgets))
         self.assertIsInstance(widgets[0], Overview)
+        self.assertIsInstance(widgets[1], _config_app.ExecutionScreen)
 
     def test_init_sets_container_config_subtitle(self) -> None:
         app = _build_app()
@@ -75,7 +77,7 @@ class ConfigAppTests(TestCase):
                 return_value=SharesValues([], [built_in_share]),
             ),
         ):
-            app = _config_app.ConfigApp(draft, _build_context())
+            app = _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())
 
         self.assertEqual(False, app._state.built_in_shares[0].persisted)
         self.assertTrue(app._state.built_in_shares[0].enabled)
@@ -250,6 +252,38 @@ class ConfigAppTests(TestCase):
             _call_work_async(app, "_accept")
 
         finish_mock.assert_not_called()
+
+    def test_setup_credentials_uses_accepted_mount_preferences(self) -> None:
+        app = _build_app(AgentConfig(base="ubuntu", mounts=_AgentMounts(ssh=True)))
+        screen = mock.Mock()
+        overview = mock.Mock()
+
+        with (
+            mock.patch.object(
+                app, "query_one", side_effect=[overview, screen]
+            ),
+            mock.patch.object(app._reporter, "attach_screen") as attach_mock,
+            mock.patch(
+                "aicage.runtime.menu.textual._config_app.asyncio.to_thread",
+                new=mock.AsyncMock(),
+            ) as setup_mock,
+        ):
+            result = asyncio.run(app._setup_credentials())
+
+        self.assertTrue(result)
+        self.assertFalse(overview.display)
+        self.assertTrue(screen.display)
+        attach_mock.assert_called_once_with(screen)
+        self.assertEqual(
+            app._draft.effective_agent_cfg,
+            app._config_context.project_cfg.agents["codex"],
+        )
+        setup_mock.assert_awaited_once_with(
+            _config_app._ensure_credentials,
+            app._config_context,
+            "codex",
+            app._reporter,
+        )
 
     def test_on_overview_accept_requested_dispatches_ok(self) -> None:
         app = _build_app()
@@ -690,4 +724,4 @@ def _build_app(
         )
         draft.scope = scope
         draft.scope_config_exists = {scope: scope_config_exists}
-        return _config_app.ConfigApp(draft, _build_context())
+        return _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())
