@@ -16,8 +16,24 @@ from ._helpers import (
 pytestmark = pytest.mark.integration
 
 
-def test_gpg_agent_signs_commit_in_container(
+def test_gpg_agent_signs_commit_through_direct_agent(
     monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if os.name == "nt":
+        pytest.skip("Windows always uses the GnuPG credential sidecar.")
+    _assert_gpg_agent_signs_commit(monkeypatch, use_sidecar=False)
+
+
+def test_gpg_agent_signs_commit_through_sidecar(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _assert_gpg_agent_signs_commit(monkeypatch, use_sidecar=True)
+
+
+def _assert_gpg_agent_signs_commit(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    use_sidecar: bool,
 ) -> None:
     require_integration()
     initial_cwd = Path.cwd()
@@ -36,7 +52,9 @@ def test_gpg_agent_signs_commit_in_container(
             )
 
             fingerprint = _create_gpg_fixture(home / ".gnupg")
-            if os.name != "nt":
+            if use_sidecar:
+                _stop_host_gpg_agent(home / ".gnupg")
+            else:
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
             _configure_signed_git_repository(workspace, fingerprint)
             _enable_gnupg_mount(workspace)
@@ -53,7 +71,9 @@ def test_gpg_agent_signs_commit_in_container(
                     "-lc",
                     (
                         "git add signed.txt && git commit -S -m signed "
-                        "&& git verify-commit HEAD"
+                        "&& git verify-commit HEAD "
+                        "&& ! gpg --batch --with-colons --list-secret-keys "
+                        "| grep -qE '^(sec|ssb):'"
                     ),
                 ],
                 env=env,
@@ -157,6 +177,15 @@ def _prime_host_gpg_agent(gpg_home: Path, fingerprint: str) -> None:
         raise AssertionError("Host GnuPG did not find the generated secret key.")
 
 
+def _stop_host_gpg_agent(gpg_home: Path) -> None:
+    subprocess.run(
+        [*_gpgconf_command(), "--kill", "gpg-agent"],
+        check=True,
+        capture_output=True,
+        env=_gpg_environment(gpg_home),
+    )
+
+
 def _gpg_command() -> list[str]:
     if os.name != "nt":
         return ["gpg"]
@@ -164,6 +193,13 @@ def _gpg_command() -> list[str]:
     if not gpg.is_file():
         raise AssertionError(f"Git for Windows did not provide gpg.exe at {gpg}.")
     return [str(gpg)]
+
+
+def _gpgconf_command() -> list[str]:
+    if os.name != "nt":
+        return ["gpgconf"]
+    gpg = Path(_gpg_command()[0])
+    return [str(gpg.with_name("gpgconf.exe"))]
 
 
 def _gpg_environment(gpg_home: Path) -> dict[str, str]:
