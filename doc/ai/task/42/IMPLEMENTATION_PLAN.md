@@ -46,8 +46,8 @@ credential-agent gpg
 ```
 
 The SSH mode starts `ssh-agent` on the volume-backed socket and exposes a readiness command plus explicit key loading.
-The GnuPG mode starts `gpg-agent` with credential material only in the sidecar and exposes its restricted/extra socket
-through the named volume, plus a readiness command. Both modes must be noninteractive when invoked noninteractively.
+The GnuPG mode starts `gpg-agent` with credential material only in the sidecar and relays its normal socket into the
+named volume, plus a readiness command. Both modes must be noninteractive when invoked noninteractively.
 
 Update the image workflow to build, test, attest, sign, publish, and retain both multi-architecture tags independently.
 Add container-level tests covering startup, readiness, socket use from another container through a named volume, and the
@@ -132,10 +132,11 @@ contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
 
-**Status: in progress.** The live Docker matrix covers basic SSH sidecar forwarding and GnuPG commit signing. Linux
-covers both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG
-path. The existing SSH test verifies identities are available through Aicage's sidecar and that configured private-key
-paths are absent from the target; the GnuPG tests verify signing and target `GNUPGHOME` private-key-file isolation.
+**Status: in progress.** The live Docker matrix covers SSH sidecar forwarding and GnuPG commit signing. Linux covers
+both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG path. The
+SSH test verifies agent-backed signing, verification, isolated SSH authentication, target private-key-path absence,
+and restart/reload. The GnuPG tests verify signing, target `GNUPGHOME` private-key-file isolation, and sidecar
+restart/reload.
 
 The remaining cases below are required before this commit is complete. Keep the current temporary credential-focused
 CI matrix only while the broader integration failures are being diagnosed, then remove it and restore normal discovery.
@@ -144,7 +145,6 @@ Extend the existing SSH and GnuPG integration suites and Windows workflow to cov
 
 - protected SSH-key initial setup, post-reboot reload, and noninteractive missing-keyring-secret failure;
 - protected GnuPG signing through the sidecar, including platform-keyring retrieval and target private-key isolation;
-- moving the SSH integration fixture outside all target-mounted checkout paths;
 - removing the temporary Task 42 integration-matrix filter and restoring the full non-proxy integration suite.
 
 ## Documentation
