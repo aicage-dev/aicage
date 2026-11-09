@@ -18,13 +18,16 @@ from aicage.runtime.docker_args.support.git_support import (
     resolve_gpg_agent_socket,
     resolve_gpg_home,
     resolve_gpg_public_files,
-    resolve_gpg_secret_key_fingerprints,
+    resolve_gpg_secret_key_state,
 )
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
 from ._resource_gpg import (
+    _gpg_key_is_cached,
     _gpg_key_is_protected,
+    _gpg_keygrips,
     _load_gpg_key,
+    _reset_gpg_agent,
 )
 from ._resource_models import _CredentialProtocol, _CredentialResource
 from .keyring.errors import KeyringError, SecretNotFoundError
@@ -85,8 +88,13 @@ def _reload_gpg_keys(
     )
     if resource is None:
         return
-    for fingerprint in resolve_gpg_secret_key_fingerprints():
-        if _gpg_key_is_protected(resource, fingerprint):
+    fingerprints, keygrips = resolve_gpg_secret_key_state()
+    if _gpg_keygrips(resource) != keygrips:
+        _reset_gpg_agent(resource)
+    for fingerprint in fingerprints:
+        if _gpg_key_is_protected(resource, fingerprint) and not _gpg_key_is_cached(
+            resource, fingerprint
+        ):
             _load_gpg_key(
                 resource,
                 fingerprint,

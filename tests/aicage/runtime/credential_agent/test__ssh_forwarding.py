@@ -55,7 +55,9 @@ class SshForwardingTests(TestCase):
             env,
         )
 
-    def test_reload_ssh_keys_loads_unencrypted_key_from_sidecar_mount(self) -> None:
+    def test_reload_ssh_keys_loads_missing_unencrypted_key_from_sidecar_mount(
+        self,
+    ) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         key = Path("/test-tmp/.ssh/id_ed25519")
         with (
@@ -66,12 +68,49 @@ class SshForwardingTests(TestCase):
             mock.patch.object(
                 _ssh_forwarding, "_ssh_key_is_encrypted", return_value=False
             ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_list_ssh_identities", return_value=[]
+            ),
             mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
         ):
             _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
         load_mock.assert_called_once_with(
             resource, resource.credential_directory / "id_ed25519", ""
         )
+
+    def test_reload_ssh_keys_removes_stale_and_keeps_loaded_identities(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        current_identity = "ssh-ed25519 AAAA current"
+        stale_identity = "ssh-ed25519 AAAA stale"
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:current"
+            ),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_list_ssh_identities",
+                return_value=[current_identity, stale_identity],
+            ),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_ssh_identity_fingerprint",
+                side_effect=["SHA256:current", "SHA256:stale"],
+            ),
+            mock.patch.object(_ssh_forwarding, "_remove_ssh_identity") as remove_mock,
+            mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
+
+        remove_mock.assert_called_once_with(resource, stale_identity)
+        load_mock.assert_not_called()
 
     def test_reload_ssh_keys_skips_missing_and_rejects_external_resources(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
@@ -210,6 +249,30 @@ class SshForwardingTests(TestCase):
         ):
             self.assertTrue(_ssh_forwarding._ssh_key_is_encrypted(key))
             self.assertEqual("SHA256:key", _ssh_forwarding._ssh_key_fingerprint(key))
+
+    def test_ssh_identity_fingerprint_interprets_sidecar_public_key(self) -> None:
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_keygen", return_value="/usr/bin/ssh-keygen"
+            ),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout="256 SHA256:key comment"),
+            ) as run_mock,
+        ):
+            fingerprint = _ssh_forwarding._ssh_identity_fingerprint(
+                "ssh-ed25519 AAAA key"
+            )
+
+        self.assertEqual("SHA256:key", fingerprint)
+        run_mock.assert_called_once_with(
+            ["/usr/bin/ssh-keygen", "-lf", "-", "-E", "sha256"],
+            input="ssh-ed25519 AAAA key\n",
+            check=False,
+            capture_output=True,
+            text=True,
+        )
 
     def test_ssh_keygen_requires_the_host_tool(self) -> None:
         with (

@@ -40,6 +40,52 @@ class ResourceGpgTests(TestCase):
         ):
             _resource_gpg._gpg_key_is_protected(resource, "FINGERPRINT")
 
+    def test_gpg_key_is_cached_reads_the_sidecar_result(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        client = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "cached"}
+        client.api.exec_start.return_value = b"cached\n"
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        with (
+            mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _resource_gpg, "_find_container", return_value=mock.Mock()
+            ),
+        ):
+            self.assertTrue(_resource_gpg._gpg_key_is_cached(resource, "FINGERPRINT"))
+
+    def test_gpg_keygrips_returns_the_sidecar_state(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        client = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "keygrips"}
+        client.api.exec_start.return_value = b"FIRST\nSECOND\n"
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        with (
+            mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _resource_gpg, "_find_container", return_value=mock.Mock()
+            ),
+        ):
+            self.assertEqual({"FIRST", "SECOND"}, _resource_gpg._gpg_keygrips(resource))
+
+    def test_reset_gpg_agent_runs_the_sidecar_reset_command(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        client = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "reset"}
+        client.api.exec_start.return_value = b""
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        container = mock.Mock()
+        with (
+            mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
+            mock.patch.object(_resource_gpg, "_find_container", return_value=container),
+        ):
+            _resource_gpg._reset_gpg_agent(resource)
+
+        client.api.exec_create.assert_called_once_with(
+            container.id,
+            ["credential-agent", "gpg", "reset"],
+        )
+
     def test_load_gpg_key_streams_passphrase_to_sidecar(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         client = mock.Mock()

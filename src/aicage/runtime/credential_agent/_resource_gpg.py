@@ -29,6 +29,41 @@ def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bo
     return output.strip() == "protected"
 
 
+def _gpg_key_is_cached(resource: _CredentialResource, fingerprint: str) -> bool:
+    client = get_docker_client()
+    container = _sidecar_container(client, resource)
+    output = _run_gpg_command(
+        client,
+        container,
+        ["credential-agent", "gpg", "cached", fingerprint],
+        fingerprint,
+    )
+    return output.strip() == "cached"
+
+
+def _gpg_keygrips(resource: _CredentialResource) -> set[str]:
+    client = get_docker_client()
+    container = _sidecar_container(client, resource)
+    output = _run_gpg_command(
+        client,
+        container,
+        ["credential-agent", "gpg", "keygrips"],
+        resource.container_name,
+    )
+    return set(output.splitlines())
+
+
+def _reset_gpg_agent(resource: _CredentialResource) -> None:
+    client = get_docker_client()
+    container = _sidecar_container(client, resource)
+    _run_gpg_command(
+        client,
+        container,
+        ["credential-agent", "gpg", "reset"],
+        resource.container_name,
+    )
+
+
 def _run_gpg_command(
     client: DockerClient, container: Container, command: list[str], identifier: str
 ) -> str:

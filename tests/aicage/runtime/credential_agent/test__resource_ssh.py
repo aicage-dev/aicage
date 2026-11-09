@@ -76,6 +76,46 @@ class ResourceSshTests(TestCase):
                 resource, PurePosixPath("/credential/ssh/id_ed25519"), ""
             )
 
+    def test_list_ssh_identities_returns_sidecar_public_keys(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        client = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "list-id"}
+        client.api.exec_start.return_value = b"ssh-ed25519 AAAA first\n"
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        container = mock.Mock()
+        with (
+            mock.patch.object(_resource_ssh, "get_docker_client", return_value=client),
+            mock.patch.object(_resource_ssh, "_find_container", return_value=container),
+        ):
+            identities = _resource_ssh._list_ssh_identities(resource)
+
+        self.assertEqual(["ssh-ed25519 AAAA first"], identities)
+        client.api.exec_create.assert_called_once_with(
+            container.id,
+            ["credential-agent", "ssh", "list"],
+        )
+
+    def test_remove_ssh_identity_streams_public_key_to_sidecar(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        client = mock.Mock()
+        stream = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "remove-id"}
+        client.api.exec_start.return_value = stream
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        container = mock.Mock()
+        with (
+            mock.patch.object(_resource_ssh, "get_docker_client", return_value=client),
+            mock.patch.object(_resource_ssh, "_find_container", return_value=container),
+        ):
+            _resource_ssh._remove_ssh_identity(resource, "ssh-ed25519 AAAA key")
+
+        stream.sendall.assert_called_once_with(b"ssh-ed25519 AAAA key\n")
+        client.api.exec_create.assert_called_once_with(
+            container.id,
+            ["credential-agent", "ssh", "remove"],
+            stdin=True,
+        )
+
     def test_load_ssh_key_rejects_a_failed_exec(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         client = mock.Mock()
