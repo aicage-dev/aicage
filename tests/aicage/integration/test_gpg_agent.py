@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from aicage.config.config_store import SettingsStore
+from aicage.constants import CREDENTIAL_AGENT_IMAGE
 
 from ._helpers import (
     require_integration,
@@ -52,6 +53,10 @@ def _assert_gpg_agent_signs_commit(
             )
 
             fingerprint = _create_gpg_fixture(home / ".gnupg")
+            if use_sidecar and os.name != "nt":
+                _assert_fixture_key_is_readable_by_credential_image(
+                    home / ".gnupg", fingerprint
+                )
             if use_sidecar:
                 _stop_host_gpg_agent(home / ".gnupg")
                 _force_gpg_sidecar(root, env, home / ".gnupg")
@@ -153,6 +158,36 @@ def _create_gpg_fixture(gpg_home: Path) -> str:
     _create_gpg_fixture_on_host(gpg_home)
     result = _list_gpg_secret_keys_on_host(gpg_home)
     return _gpg_key_fingerprint(result.stdout)
+
+
+def _assert_fixture_key_is_readable_by_credential_image(
+    gpg_home: Path, fingerprint: str
+) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--user",
+            f"{os.getuid()}:{os.getgid()}",
+            "--entrypoint",
+            "gpg",
+            "--mount",
+            f"type=bind,src={gpg_home},dst=/credential/gnupg,readonly",
+            CREDENTIAL_AGENT_IMAGE,
+            "--batch",
+            "--with-colons",
+            "--with-keygrip",
+            "--homedir",
+            "/credential/gnupg",
+            "--list-secret-keys",
+            fingerprint,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def _create_gpg_fixture_on_host(gpg_home: Path) -> None:
