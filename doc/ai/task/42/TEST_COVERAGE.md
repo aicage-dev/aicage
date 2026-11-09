@@ -80,9 +80,8 @@ named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
 
-The unit-test items in this section are complete for the implemented SSH/keyring and sidecar lifecycle behavior. Basic
-integration coverage is now present, but protected-key, replacement/reload, and full-matrix cases remain Commit 5
-work.
+The unit and integration items in this section are complete for the implemented SSH/keyring and sidecar lifecycle
+behavior.
 
 ### Unit tests
 
@@ -96,7 +95,7 @@ work.
 
 ### Integration and platform tests
 
-Completed basic live coverage:
+Completed live coverage:
 
 - Linux direct GnuPG forwarding remains functional when the host socket is bind-mountable; forced fallback-sidecar
   GnuPG signing is also covered.
@@ -115,11 +114,8 @@ Completed basic live coverage:
 - Protected GnuPG setup retrieves a controlled-keyring passphrase, loads a real protected signing key, and lets a
   public-only client sign over the sidecar socket both before and after sidecar restart. It also fails before target
   startup when the secret is absent.
-
-Still required:
-
-- Remove the temporary Task 42 CI-matrix filter and run the restored non-proxy integration suite on the relevant
-  platform matrix.
+- The temporary credential-focused CI matrix filter has been removed, so CI again discovers the normal non-proxy
+  integration suite.
 
 ## Scope boundary
 
