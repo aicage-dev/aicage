@@ -39,10 +39,9 @@ and arm64 builders. It currently covers:
 - GnuPG client signing: a separate container uses its own public-key-only GnuPG home and a socket symlink into the
   shared volume to sign with an unprotected synthetic key; a third container verifies that signature using only the
   public key.
-- Protected GnuPG client signing: `gpg load` seeds both the normal sidecar-local cache and the GnuPG restricted cache
-  used by extra-socket clients. A separate public-key-only client then signs through the restricted socket volume and
-  a third container verifies the signature. The expected restricted-socket `Forbidden` key-listing diagnostic does
-  not prevent signing and is not a test failure.
+- Protected GnuPG client signing: `gpg load` seeds the sidecar-local agent cache. A separate public-key-only client
+  signs through a named-volume relay to the sidecar's normal GnuPG-agent socket, and a third container verifies the
+  signature.
 - Runtime user ownership: credential-loading tests chown the fresh socket volume and run the sidecar as the invoking
   numeric UID:GID; SSH readiness succeeds as that numeric user both before and after sidecar recreation.
 - Socket-volume isolation: tests assert that every shared-volume entry is a Unix socket; it cannot contain files,
@@ -105,8 +104,8 @@ Completed basic live coverage:
 - A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key files in
   its temporary GnuPG home.
 - SSH sidecar identities and public support files are available in the target, while configured private-key paths are
-  absent; the target signs and verifies a message through the sidecar socket, then authenticates to an isolated SSHD
-  through that socket.
+  absent; the fixture lives outside target-mounted checkout paths. The target signs and verifies a message through the
+  sidecar socket, then authenticates to an isolated SSHD through that socket.
 - Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
 - Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second commit without
   private-key files in the target GnuPG home.
@@ -115,7 +114,6 @@ Still required:
 
 - Protected SSH initial setup, post-reboot reload, and noninteractive missing-keyring-secret behavior.
 - Protected GnuPG sidecar signing with a keyring-retrieved passphrase.
-- Place the SSH fixture outside target-mounted checkout paths, matching the GnuPG fixture's isolation.
 - Remove the temporary Task 42 CI-matrix filter and run the restored non-proxy integration suite on the relevant
   platform matrix.
 - Run the platform-specific cases on the Aicage CI matrix, where native host and target-image behavior is available.
