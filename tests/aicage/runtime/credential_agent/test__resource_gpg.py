@@ -59,7 +59,7 @@ class ResourceGpgTests(TestCase):
         client = mock.Mock()
         client.api.exec_create.side_effect = [{"Id": "keygrips"}, {"Id": "keyinfo"}]
         client.api.exec_start.side_effect = [
-            b"grp:::::::::KEYGRIP:\n",
+            b"sec:u::::\nfpr:::::::::FINGERPRINT:\ngrp:::::::::KEYGRIP:\n",
             b"S KEYINFO KEYGRIP D - - - P - - -\nOK\n",
         ]
         client.api.exec_inspect.return_value = {"ExitCode": 0}
@@ -82,7 +82,6 @@ class ResourceGpgTests(TestCase):
                         "--homedir",
                         "/tmp/credential-agent",
                         "--list-secret-keys",
-                        "FINGERPRINT",
                     ],
                 ),
                 mock.call(
