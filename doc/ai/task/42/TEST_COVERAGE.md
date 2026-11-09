@@ -109,14 +109,17 @@ Completed basic live coverage:
 - Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
 - Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second commit without
   private-key files in the target GnuPG home.
+- Protected SSH setup stores an encrypted key's passphrase through a controlled keyring boundary, loads the real key
+  into the sidecar, reloads it after a stopped-sidecar restart, and fails before target startup when the secret is
+  absent.
+- Protected GnuPG setup retrieves a controlled-keyring passphrase, loads a real protected signing key, and lets a
+  public-only client sign over the sidecar socket both before and after sidecar restart. It also fails before target
+  startup when the secret is absent.
 
 Still required:
 
-- Protected SSH initial setup, post-reboot reload, and noninteractive missing-keyring-secret behavior.
-- Protected GnuPG sidecar signing with a keyring-retrieved passphrase.
 - Remove the temporary Task 42 CI-matrix filter and run the restored non-proxy integration suite on the relevant
   platform matrix.
-- Run the platform-specific cases on the Aicage CI matrix, where native host and target-image behavior is available.
 
 ## Scope boundary
 
