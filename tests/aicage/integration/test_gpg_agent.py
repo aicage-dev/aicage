@@ -1,4 +1,5 @@
 import os
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -75,6 +76,7 @@ def test_protected_gpg_key_reloads_after_sidecar_restart(
                 forwarding.ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=True
                 )
+                _assert_gpg_sidecar_key_is_protected(fingerprint)
                 get_secret_mock.assert_called_once_with(
                     f"aicage/gpg/passphrase/{fingerprint}"
                 )
@@ -271,6 +273,18 @@ def _create_gpg_sidecar_fixture(gpg_home: Path, *, passphrase: str = "") -> str:
     gpg_home.mkdir(mode=0o700)
     mount = f"type=bind,src={gpg_home},dst=/credential/gnupg"
     user = resolve_container_user()
+    generate_key = (
+        "gpg --batch --passphrase '' "
+        "--quick-generate-key 'Aicage Integration <integration@example.com>' "
+        "ed25519 sign never"
+        if not passphrase
+        else (
+            f"printf '%s\\n' {shlex.quote(passphrase)} | "
+            "gpg --batch --pinentry-mode loopback --passphrase-fd 0 "
+            "--quick-generate-key 'Aicage Integration <integration@example.com>' "
+            "ed25519 sign never"
+        )
+    )
     result = subprocess.run(
         [
             "docker",
@@ -286,10 +300,8 @@ def _create_gpg_sidecar_fixture(gpg_home: Path, *, passphrase: str = "") -> str:
             mount,
             CREDENTIAL_AGENT_IMAGE,
             "-c",
-            "chmod 700 \"$GNUPGHOME\" && gpg --batch --pinentry-mode loopback "
-            f"--passphrase {passphrase!r} "
-            "--quick-generate-key 'Aicage Integration <integration@example.com>' "
-            "ed25519 sign never && gpg --batch --with-colons --list-secret-keys",
+            "chmod 700 \"$GNUPGHOME\" && "
+            f"{generate_key} && gpg --batch --with-colons --list-secret-keys",
         ],
         check=False,
         capture_output=True,
@@ -301,6 +313,24 @@ def _create_gpg_sidecar_fixture(gpg_home: Path, *, passphrase: str = "") -> str:
             f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
     return _gpg_key_fingerprint(result.stdout)
+
+
+def _assert_gpg_sidecar_key_is_protected(fingerprint: str) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "aicage-credential-agent-gpg",
+            "credential-agent",
+            "gpg",
+            "protected",
+            fingerprint,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.strip() == "protected"
 
 
 def _assert_gpg_sidecar_client_signs(
