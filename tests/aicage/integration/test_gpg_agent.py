@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
+from shutil import copy2
 
 import pytest
 
@@ -42,6 +43,7 @@ def _assert_gpg_agent_signs_commit(
     with temporary_test_root(temp_root) as root:
         home = root / "home"
         try:
+            host_gpg_home = _host_gpg_home() if use_sidecar else None
             home.mkdir()
             _set_home(monkeypatch, home)
             workspace, env = setup_workspace(
@@ -53,6 +55,10 @@ def _assert_gpg_agent_signs_commit(
 
             fingerprint = _create_gpg_fixture(home / ".gnupg")
             if use_sidecar:
+                assert host_gpg_home is not None
+                _copy_host_gpg_private_key(
+                    host_gpg_home, home / ".gnupg", fingerprint
+                )
                 _force_gpg_sidecar(root, env, home / ".gnupg")
             else:
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
@@ -192,6 +198,55 @@ def _gpg_key_fingerprint(stdout: str) -> str:
         if fields[0] == "fpr":
             return fields[9]
     raise AssertionError("Generated GnuPG key has no fingerprint.")
+
+
+def _host_gpg_home() -> Path:
+    result = subprocess.run(
+        ["gpgconf", "--list-dirs", "homedir"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return Path(result.stdout.strip())
+
+
+def _copy_host_gpg_private_key(
+    host_gpg_home: Path, gpg_home: Path, fingerprint: str
+) -> None:
+    keygrip = _gpg_keygrip(gpg_home, fingerprint)
+    target = gpg_home / "private-keys-v1.d" / f"{keygrip}.key"
+    if target.is_file():
+        return
+    source = host_gpg_home / "private-keys-v1.d" / f"{keygrip}.key"
+    if not source.is_file():
+        raise AssertionError(
+            f"Host GnuPG private key fixture is unavailable at {source}."
+        )
+    target.parent.mkdir(mode=0o700)
+    copy2(source, target)
+    target.chmod(0o600)
+
+
+def _gpg_keygrip(gpg_home: Path, fingerprint: str) -> str:
+    result = subprocess.run(
+        [
+            *_gpg_command(),
+            "--batch",
+            "--with-colons",
+            "--with-keygrip",
+            "--list-keys",
+            fingerprint,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=_gpg_environment(gpg_home),
+    )
+    for line in result.stdout.splitlines():
+        fields = line.split(":")
+        if fields[0] == "grp":
+            return fields[9]
+    raise AssertionError("Generated GnuPG key has no keygrip.")
 
 
 def _gpg_sidecar_failure_output(output: str, fingerprint: str) -> str:
