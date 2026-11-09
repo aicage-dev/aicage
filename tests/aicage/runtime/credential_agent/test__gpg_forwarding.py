@@ -173,9 +173,6 @@ class GpgForwardingTests(TestCase):
                 return_value=["FINGERPRINT"],
             ) as fingerprints_mock,
             mock.patch.object(
-                _gpg_forwarding, "_gpg_signing_key", return_value="FINGERPRINT"
-            ),
-            mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_protected", return_value=True
             ),
             mock.patch.object(
@@ -189,7 +186,7 @@ class GpgForwardingTests(TestCase):
 
         passphrase_mock.assert_called_once_with("FINGERPRINT", interactive=False)
         load_mock.assert_called_once_with(resource, "FINGERPRINT", "secret")
-        fingerprints_mock.assert_called_once_with(resource, "FINGERPRINT")
+        fingerprints_mock.assert_called_once_with(Path("/project"))
 
     def test_reload_gpg_keys_skips_an_unprotected_key(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
@@ -199,7 +196,6 @@ class GpgForwardingTests(TestCase):
                 "_gpg_secret_key_fingerprints",
                 return_value=["FINGERPRINT"],
             ),
-            mock.patch.object(_gpg_forwarding, "_gpg_signing_key", return_value=None),
             mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_protected", return_value=False
             ),
@@ -210,6 +206,35 @@ class GpgForwardingTests(TestCase):
             )
 
         load_mock.assert_not_called()
+
+    def test_gpg_secret_key_fingerprints_uses_the_host_keyring(self) -> None:
+        result = mock.Mock(
+            stdout="sec:u::::\nfpr:::::::::FINGERPRINT:\n",
+        )
+        with (
+            mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_signing_key", return_value="FINGERPRINT"
+            ),
+            mock.patch.object(
+                _gpg_forwarding.subprocess, "run", return_value=result
+            ) as run_mock,
+        ):
+            actual = _gpg_forwarding._gpg_secret_key_fingerprints(Path("/project"))
+
+        self.assertEqual(["FINGERPRINT"], actual)
+        run_mock.assert_called_once_with(
+            [
+                "/usr/bin/gpg",
+                "--batch",
+                "--with-colons",
+                "--list-secret-keys",
+                "FINGERPRINT",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
 
     def test_gpg_passphrase_uses_the_stored_keyring_secret(self) -> None:
         with mock.patch.object(
