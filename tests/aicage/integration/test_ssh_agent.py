@@ -27,7 +27,7 @@ def test_ssh_agent_is_available_in_container(
 ) -> None:
     require_integration()
     initial_cwd = Path.cwd()
-    temp_root = Path(__file__).resolve().parents[3] / ".aicage-test-tmp"
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
     temp_root.mkdir(exist_ok=True)
     with temporary_test_root(temp_root) as root:
         home = root / "home"
@@ -47,6 +47,9 @@ def test_ssh_agent_is_available_in_container(
                 capture_output=True,
             )
             keys = _configure_ssh_keys(home)
+            (workspace / "allowed_signers").write_text(
+                f"aicage {keys.public_keys[0]}\n", encoding="utf-8"
+            )
             _enable_ssh_mount(workspace)
 
             with _ssh_agent(root / "agent.sock") as agent_env:
@@ -71,6 +74,17 @@ def test_ssh_agent_is_available_in_container(
                             f"! test -e {shlex.quote(container_project_path(path).as_posix())}"
                             for path in keys.private_paths
                         ],
+                        "printf '%s\\n' signed > signing-message",
+                        "rm -f signing-message.sig",
+                        (
+                            "ssh-keygen -Y sign -U "
+                            f"-f {shlex.quote(container_project_path(keys.public_paths[0]).as_posix())} "
+                            "-n aicage signing-message"
+                        ),
+                        (
+                            "ssh-keygen -Y verify -f allowed_signers -I aicage "
+                            "-n aicage -s signing-message.sig < signing-message"
+                        ),
                     ]
                 )
                 exit_code, output = run_cli_pty(
@@ -88,6 +102,26 @@ def test_ssh_agent_is_available_in_container(
                     cwd=workspace,
                 )
 
+            assert exit_code == 0, output
+            subprocess.run(
+                ["docker", "stop", "aicage-credential-agent-ssh"],
+                check=True,
+                capture_output=True,
+            )
+            exit_code, output = run_cli_pty(
+                [
+                    "--menu",
+                    "none",
+                    "-e",
+                    "AICAGE_ENTRYPOINT_CMD=bash",
+                    "--",
+                    "copilot",
+                    "-lc",
+                    command,
+                ],
+                env=env,
+                cwd=workspace,
+            )
             assert exit_code == 0, output
         finally:
             monkeypatch.chdir(initial_cwd)

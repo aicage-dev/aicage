@@ -81,6 +81,36 @@ def _assert_gpg_agent_signs_commit(
             )
 
             assert exit_code == 0, output
+            if use_sidecar:
+                subprocess.run(
+                    ["docker", "stop", "aicage-credential-agent-gpg"],
+                    check=True,
+                    capture_output=True,
+                )
+                (workspace / "signed-after-restart.txt").write_text(
+                    "signed after restart\n", encoding="utf-8"
+                )
+                exit_code, output = run_cli_pty(
+                    [
+                        "--menu",
+                        "none",
+                        "-e",
+                        "AICAGE_ENTRYPOINT_CMD=bash",
+                        "--",
+                        "copilot",
+                        "-lc",
+                        (
+                            "git add signed-after-restart.txt "
+                            "&& git commit -S -m signed-after-restart "
+                            "&& git verify-commit HEAD "
+                            "&& ! find \"$GNUPGHOME/private-keys-v1.d\" -type f "
+                            "-print -quit 2>/dev/null | grep -q ."
+                        ),
+                    ],
+                    env=env,
+                    cwd=workspace,
+                )
+                assert exit_code == 0, output
         finally:
             monkeypatch.chdir(initial_cwd)
 
