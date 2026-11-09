@@ -66,16 +66,31 @@ def _gpg_keygrips(
             "--homedir",
             _GPG_AGENT_HOME,
             "--list-secret-keys",
-            fingerprint,
         ],
         fingerprint,
     )
-    return [
-        fields[_GPG_FINGERPRINT_FIELD]
-        for line in output.splitlines()
-        if (fields := line.split(":"))[0] == "grp"
-        and len(fields) > _GPG_FINGERPRINT_FIELD
-    ]
+    keygrips: list[str] = []
+    primary_fingerprint_pending = False
+    selected_primary_key = False
+    for line in output.splitlines():
+        fields = line.split(":")
+        record_type = fields[0]
+        if record_type == "sec":
+            primary_fingerprint_pending = True
+            selected_primary_key = False
+        elif record_type == "fpr" and primary_fingerprint_pending:
+            selected_primary_key = (
+                len(fields) > _GPG_FINGERPRINT_FIELD
+                and fields[_GPG_FINGERPRINT_FIELD] == fingerprint
+            )
+            primary_fingerprint_pending = False
+        elif (
+            record_type == "grp"
+            and selected_primary_key
+            and len(fields) > _GPG_FINGERPRINT_FIELD
+        ):
+            keygrips.append(fields[_GPG_FINGERPRINT_FIELD])
+    return keygrips
 
 
 def _primary_gpg_fingerprints(output: str) -> list[str]:
