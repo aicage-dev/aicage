@@ -53,7 +53,6 @@ def _assert_gpg_agent_signs_commit(
 
             fingerprint = _create_gpg_fixture(home / ".gnupg")
             if use_sidecar:
-                _stop_host_gpg_agent(home / ".gnupg")
                 _force_gpg_sidecar(root, env, home / ".gnupg")
             else:
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
@@ -208,15 +207,6 @@ def _prime_host_gpg_agent(gpg_home: Path, fingerprint: str) -> None:
         raise AssertionError("Host GnuPG did not find the generated secret key.")
 
 
-def _stop_host_gpg_agent(gpg_home: Path) -> None:
-    subprocess.run(
-        [*_gpgconf_command(), "--kill", "gpg-agent"],
-        check=True,
-        capture_output=True,
-        env=_gpg_environment(gpg_home),
-    )
-
-
 def _force_gpg_sidecar(
     root: Path, env: dict[str, str], gpg_home: Path
 ) -> None:
@@ -244,13 +234,6 @@ def _gpg_command() -> list[str]:
     if not gpg.is_file():
         raise AssertionError(f"Git for Windows did not provide gpg.exe at {gpg}.")
     return [str(gpg)]
-
-
-def _gpgconf_command() -> list[str]:
-    if os.name != "nt":
-        return ["gpgconf"]
-    gpg = Path(_gpg_command()[0])
-    return [str(gpg.with_name("gpgconf.exe"))]
 
 
 def _gpg_environment(gpg_home: Path) -> dict[str, str]:
