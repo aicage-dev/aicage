@@ -6,11 +6,13 @@ See [test coverage](TEST_COVERAGE.md) for the current evidence and the division 
 ## Current implementation status
 
 Commits 1 through 4 are complete. `aicage-image-util` provides the published `credential-agent` helper image, and
-`aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. SSH sidecar
-setup and encrypted-key reload use the platform keyring on Linux, Windows, and macOS.
+`aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. SSH and
+GnuPG encrypted-key reload use the platform keyring on Linux, Windows, and macOS.
 
-The remaining work is Commit 5: live Aicage integration and platform-matrix coverage. In particular, the existing
-unit tests do not replace a real Linux fallback, Windows Docker Desktop/WSL, sidecar restart, or GnuPG signing test.
+Commit 5 is in progress. The CI matrix now proves basic SSH sidecar forwarding and GnuPG commit signing on Linux and
+Windows: Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required sidecar-only
+path. Protected-key lifecycle, sidecar replacement/reload, SSH authentication/signing, and restoration of the full
+integration matrix remain outstanding.
 
 ## Problem
 
