@@ -31,6 +31,7 @@ class CredentialAgentSidecarsTests(TestCase):
             "image:tag",
             "image-id",
             "1000:1000",
+            None,
         )
 
     def test__ensure_sidecars_skips_image_without_protocols(self) -> None:

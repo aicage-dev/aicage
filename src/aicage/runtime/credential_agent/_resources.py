@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from aicage.docker.execution.client import get_docker_client
+from aicage.paths import HOST_SSH_DIR
 
 from ._resource_lifecycle import (
     _create_container,
@@ -28,12 +29,11 @@ def _ensure_resources(
     image_ref: str,
     image_id: str,
     user: str,
-    credential_paths: dict[_CredentialProtocol, Path] | None = None,
+    gpg_home: Path | None = None,
 ) -> list[_CredentialResource]:
     requested = _resources(protocols)
     if not requested:
         return []
-    credential_paths = credential_paths or {}
     image = _ImageSpec(image_ref=image_ref, image_id=image_id, user=user)
     with _resource_lock():
         client = get_docker_client()
@@ -41,7 +41,7 @@ def _ensure_resources(
             volume = _ensure_volume(client, resource)
             _prepare_volume(client, resource, volume, image)
             container = _find_container(client, resource)
-            credential_path = credential_paths.get(resource.protocol)
+            credential_path = _credential_path(resource, gpg_home)
             if container is None or _requires_replacement(
                 container,
                 resource,
@@ -57,3 +57,11 @@ def _ensure_resources(
                 container.start()
             _ensure_ready(client, resource, volume, image.image_ref)
     return requested
+
+
+def _credential_path(
+    resource: _CredentialResource, gpg_home: Path | None
+) -> Path | None:
+    if resource.protocol is _CredentialProtocol.SSH:
+        return HOST_SSH_DIR if HOST_SSH_DIR.is_dir() else None
+    return gpg_home

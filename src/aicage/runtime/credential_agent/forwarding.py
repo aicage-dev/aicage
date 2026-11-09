@@ -7,7 +7,6 @@ from pathlib import Path
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.docker.execution.env import resolve_container_user
-from aicage.paths import HOST_SSH_DIR
 from aicage.reporting import OperationReporter
 from aicage.runtime.run_args import EnvVar, MountSpec
 
@@ -35,7 +34,6 @@ def forwarding(
     mounts: list[MountSpec] = []
     env: list[EnvVar] = []
     protocols: list[_CredentialProtocol] = []
-    credential_paths: dict[_CredentialProtocol, Path] = {}
     gpg_home: Path | None = None
 
     if agent_cfg.mounts.ssh is True:
@@ -44,8 +42,6 @@ def forwarding(
         env.extend(ssh_env)
         if ssh_sidecar:
             protocols.append(_CredentialProtocol.SSH)
-            if HOST_SSH_DIR.is_dir():
-                credential_paths[_CredentialProtocol.SSH] = HOST_SSH_DIR
 
     if _gpg_enabled(context, agent):
         gpg_mounts, gpg_env, gpg_sidecar, gpg_home = _gpg_forwarding()
@@ -53,12 +49,8 @@ def forwarding(
         env.extend(gpg_env)
         if gpg_sidecar:
             protocols.append(_CredentialProtocol.GPG)
-            if gpg_home is not None:
-                credential_paths[_CredentialProtocol.GPG] = gpg_home
 
-    resources = _ensure_sidecars(
-        protocols, resolve_container_user(), reporter, credential_paths
-    )
+    resources = _ensure_sidecars(protocols, resolve_container_user(), reporter, gpg_home)
     gpg_resource: _CredentialResource | None = None
     for resource in resources:
         if resource.protocol is _CredentialProtocol.GPG:
@@ -92,14 +84,10 @@ def ensure_ssh_setup(
     _mounts, _env, sidecar = _ssh_forwarding()
     if not sidecar:
         return
-    credential_paths: dict[_CredentialProtocol, Path] = {}
-    if HOST_SSH_DIR.is_dir():
-        credential_paths[_CredentialProtocol.SSH] = HOST_SSH_DIR
     resources = _ensure_sidecars(
         [_CredentialProtocol.SSH],
         resolve_container_user(),
         reporter,
-        credential_paths,
     )
     _reload_ssh_keys(resources, interactive=interactive)
 

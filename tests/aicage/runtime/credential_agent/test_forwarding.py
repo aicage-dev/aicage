@@ -19,13 +19,10 @@ class CredentialAgentForwardingTests(TestCase):
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(ssh=True))
         }
-        ssh_home = Path("/test-tmp/.ssh")
         with (
             mock.patch.object(
                 forwarding, "_ssh_forwarding", return_value=([], [], True)
             ),
-            mock.patch.object(forwarding, "HOST_SSH_DIR", ssh_home),
-            mock.patch.object(Path, "is_dir", return_value=True),
             mock.patch.object(
                 forwarding, "_ensure_sidecars", return_value=[resource]
             ) as ensure_mock,
@@ -56,7 +53,7 @@ class CredentialAgentForwardingTests(TestCase):
             [_CredentialProtocol.SSH],
             mock.ANY,
             mock.ANY,
-            {_CredentialProtocol.SSH: ssh_home},
+            None,
         )
 
     def test_ensure_ssh_setup_creates_the_required_sidecar(self) -> None:
@@ -64,13 +61,10 @@ class CredentialAgentForwardingTests(TestCase):
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(ssh=True))
         }
-        ssh_home = Path("/test-tmp/.ssh")
         with (
             mock.patch.object(
                 forwarding, "_ssh_forwarding", return_value=([], [], True)
             ),
-            mock.patch.object(forwarding, "HOST_SSH_DIR", ssh_home),
-            mock.patch.object(Path, "is_dir", return_value=True),
             mock.patch.object(
                 forwarding, "_ensure_sidecars"
             ) as ensure_mock,
@@ -82,7 +76,6 @@ class CredentialAgentForwardingTests(TestCase):
             [_CredentialProtocol.SSH],
             mock.ANY,
             mock.ANY,
-            {_CredentialProtocol.SSH: ssh_home},
         )
 
     def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
@@ -145,5 +138,5 @@ class CredentialAgentForwardingTests(TestCase):
             [_CredentialProtocol.GPG],
             mock.ANY,
             mock.ANY,
-            {_CredentialProtocol.GPG: gpg_home},
+            gpg_home,
         )
