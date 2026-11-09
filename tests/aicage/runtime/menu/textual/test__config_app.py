@@ -137,7 +137,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     "git_support",
                     "ssh",
-                    "SSH directory (for Git remote access and signing)",
+                    "SSH agent (for SSH access)",
                     None,
                     None,
                     True,
@@ -157,7 +157,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     "git_support",
                     "ssh",
-                    "(Auto) SSH directory (for Git remote access and signing)",
+                    "(Auto) SSH agent (for SSH access)",
                     None,
                     None,
                     True,

@@ -1,0 +1,121 @@
+"""GnuPG credential-forwarding operations."""
+
+import os
+import subprocess  # nosec B404 -- GnuPG readiness uses a fixed host command.
+import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path, PurePosixPath
+from shutil import copy2, which
+
+from aicage.config.context import ConfigContext
+from aicage.config.project_config import AgentConfig
+from aicage.paths import container_project_path
+from aicage.runtime.docker_args.support.git_support import (
+    resolve_gpg_agent_socket,
+    resolve_gpg_home,
+    resolve_gpg_public_files,
+)
+from aicage.runtime.docker_args.support.signing import (
+    is_commit_signing_enabled,
+    resolve_signing_format,
+)
+from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
+
+from ._resource_models import _CredentialResource
+
+_GNUPGHOME = "GNUPGHOME"
+_GPG_SOCKET_NAME = "S.gpg-agent"
+_GPG_CONNECT_AGENT = which("gpg-connect-agent")
+_GPG_CLIENT_HOME = PurePosixPath("/run/credential-agent-client/gnupg")
+
+
+def _gpg_enabled(context: ConfigContext, agent: str) -> bool:
+    agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
+    project_path = Path(context.project_cfg.path)
+    return (
+        agent_cfg.mounts.gnupg is True
+        and is_commit_signing_enabled(project_path)
+        and resolve_signing_format(project_path) != "ssh"
+    )
+
+
+def _gpg_forwarding() -> tuple[list[BindMountSpec], list[EnvVar], bool, Path | None]:
+    gpg_home = resolve_gpg_home()
+    if gpg_home is None:
+        return [], [], False, None
+    container_home = container_project_path(gpg_home)
+    support_mounts = _gpg_support_mounts(gpg_home)
+    socket = _direct_gpg_socket()
+    if socket is not None:
+        return (
+            [BindMountSpec(socket, container_home / _GPG_SOCKET_NAME), *support_mounts],
+            [EnvVar(_GNUPGHOME, container_home.as_posix())],
+            False,
+            gpg_home,
+        )
+    return [], [], True, gpg_home
+
+
+@contextmanager
+def _gpg_sidecar_target_args(
+    resource: _CredentialResource,
+    gpg_home: Path,
+) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+    with tempfile.TemporaryDirectory(
+        dir=gpg_home.parent, prefix=".aicage-gpg-"
+    ) as directory:
+        client_home = Path(directory)
+        _copy_gpg_support_files(gpg_home, client_home)
+        (client_home / _GPG_SOCKET_NAME).symlink_to(resource.socket_path)
+        yield (
+            [
+                BindMountSpec(client_home, _GPG_CLIENT_HOME),
+                *_external_gpg_support_mounts(gpg_home),
+                VolumeMountSpec(
+                    resource.volume_name, resource.socket_directory, True
+                ),
+            ],
+            [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
+        )
+
+
+def _gpg_support_mounts(gpg_home: Path) -> list[BindMountSpec]:
+    return [
+        BindMountSpec(path, container_project_path(path), True)
+        for path in resolve_gpg_public_files(gpg_home)
+    ]
+
+
+def _copy_gpg_support_files(gpg_home: Path, client_home: Path) -> None:
+    for path in resolve_gpg_public_files(gpg_home):
+        try:
+            relative_path = path.relative_to(gpg_home)
+        except ValueError:
+            continue
+        destination = client_home / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        copy2(path, destination)
+
+
+def _external_gpg_support_mounts(gpg_home: Path) -> list[BindMountSpec]:
+    return [
+        BindMountSpec(path, container_project_path(path), True)
+        for path in resolve_gpg_public_files(gpg_home)
+        if not path.is_relative_to(gpg_home)
+    ]
+
+
+def _direct_gpg_socket() -> Path | None:
+    if os.name == "nt":
+        return None
+    socket = resolve_gpg_agent_socket()
+    if socket is None or _GPG_CONNECT_AGENT is None or not socket.is_socket():
+        return None
+    result = subprocess.run(
+        [_GPG_CONNECT_AGENT, "--raw-socket", str(socket), "/bye"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )  # nosec B603
+    return socket if result.returncode == 0 else None
