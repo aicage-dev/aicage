@@ -18,10 +18,7 @@ from aicage.runtime.docker_args.support.git_support import (
     resolve_gpg_agent_socket,
     resolve_gpg_home,
     resolve_gpg_public_files,
-)
-from aicage.runtime.docker_args.support.signing import (
-    is_commit_signing_enabled,
-    resolve_signing_format,
+    resolve_gpg_secret_key_fingerprints,
 )
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
@@ -36,10 +33,7 @@ from .keyring.keyring import get_secret, set_secret
 _GNUPGHOME = "GNUPGHOME"
 _GPG_SOCKET_NAME = "S.gpg-agent"
 _GPG_CONNECT_AGENT = which("gpg-connect-agent")
-_GPG = which("gpg")
-_GIT = which("git")
 _GPG_CLIENT_HOME = PurePosixPath("/run/credential-agent-client/gnupg")
-_GPG_FINGERPRINT_FIELD = 9
 
 
 @dataclass
@@ -59,12 +53,7 @@ class _GpgForwardingPlan:
 
 def _gpg_enabled(context: ConfigContext, agent: str) -> bool:
     agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
-    project_path = Path(context.project_cfg.path)
-    return (
-        agent_cfg.mounts.gnupg is True
-        and is_commit_signing_enabled(project_path)
-        and resolve_signing_format(project_path) != "ssh"
-    )
+    return agent_cfg.mounts.gnupg is True
 
 
 def _gpg_forwarding() -> _GpgForwardingPlan | None:
@@ -88,7 +77,6 @@ def _gpg_forwarding() -> _GpgForwardingPlan | None:
 
 def _reload_gpg_keys(
     resources: list[_CredentialResource],
-    project_path: Path,
     *,
     interactive: bool,
 ) -> None:
@@ -97,61 +85,13 @@ def _reload_gpg_keys(
     )
     if resource is None:
         return
-    for fingerprint in _gpg_secret_key_fingerprints(project_path):
+    for fingerprint in resolve_gpg_secret_key_fingerprints():
         if _gpg_key_is_protected(resource, fingerprint):
             _load_gpg_key(
                 resource,
                 fingerprint,
                 _gpg_passphrase(fingerprint, interactive=interactive),
             )
-
-
-def _gpg_signing_key(project_path: Path) -> str | None:
-    result = subprocess.run(
-        [_git(), "config", "--get", "user.signingkey"],
-        check=False,
-        capture_output=True,
-        text=True,
-        cwd=project_path,
-    )  # nosec B603 -- command is a fixed local Git invocation.
-    return result.stdout if result.returncode == 0 else None
-
-
-def _gpg_secret_key_fingerprints(project_path: Path) -> list[str]:
-    """Return the first primary fingerprint from the host GnuPG keyring."""
-    command = [_gpg(), "--batch", "--with-colons", "--list-secret-keys"]
-    signing_key = _gpg_signing_key(project_path)
-    if signing_key and signing_key.strip():
-        command.append(signing_key.strip())
-    result = subprocess.run(
-        command,
-        check=False,
-        capture_output=True,
-        text=True,
-    )  # nosec B603 -- command is a fixed local GnuPG invocation.
-    return _primary_gpg_fingerprints(result.stdout)
-
-
-def _primary_gpg_fingerprints(output: str) -> list[str]:
-    fingerprints: list[str] = []
-    secret_key_pending = False
-    for line in output.splitlines():
-        fields = line.split(":")
-        record_type = fields[0]
-        if record_type == "sec":
-            secret_key_pending = True
-            continue
-        if (
-            record_type == "fpr"
-            and secret_key_pending
-            and len(fields) > _GPG_FINGERPRINT_FIELD
-        ):
-            fingerprints.append(fields[_GPG_FINGERPRINT_FIELD])
-            secret_key_pending = False
-            continue
-        if record_type in {"sec", "ssb"}:
-            secret_key_pending = False
-    return fingerprints[:1]
 
 
 def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
@@ -161,33 +101,21 @@ def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
     except SecretNotFoundError:
         if not interactive or not sys.stdin.isatty():
             raise RuntimeError(
-                "No passphrase for GnuPG signing key "
+                "No passphrase for GnuPG key "
                 f"'{fingerprint}' is stored in the platform keyring. "
                 "Open the terminal configuration UI to add this key."
             ) from None
-        passphrase = getpass(f"Passphrase for GnuPG signing key {fingerprint}: ")
+        passphrase = getpass(f"Passphrase for GnuPG key {fingerprint}: ")
         if not passphrase:
             raise RuntimeError(
-                f"No passphrase was supplied for GnuPG signing key '{fingerprint}'."
+                f"No passphrase was supplied for GnuPG key '{fingerprint}'."
             ) from None
         set_secret(secret_name, passphrase)
         return passphrase
     except KeyringError as exc:
         raise RuntimeError(
-            f"Cannot access the platform keyring for GnuPG signing key '{fingerprint}'."
+            f"Cannot access the platform keyring for GnuPG key '{fingerprint}'."
         ) from exc
-
-
-def _git() -> str:
-    if _GIT is None:
-        raise RuntimeError("git is required to inspect GnuPG signing keys.")
-    return _GIT
-
-
-def _gpg() -> str:
-    if _GPG is None:
-        raise RuntimeError("gpg is required to inspect GnuPG signing keys.")
-    return _GPG
 
 
 @contextmanager

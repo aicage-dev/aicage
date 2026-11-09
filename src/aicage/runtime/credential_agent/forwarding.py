@@ -2,7 +2,6 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from pathlib import Path
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
@@ -75,11 +74,7 @@ def forwarding(
         mounts.extend(sidecar_mounts)
         env.extend(sidecar_env)
         _reload_ssh_keys(resources, interactive=False)
-        _reload_gpg_keys(
-            resources,
-            Path(context.project_cfg.path),
-            interactive=False,
-        )
+        _reload_gpg_keys(resources, interactive=False)
         yield mounts, env
 
 
@@ -122,11 +117,7 @@ def ensure_gpg_setup(
         reporter,
         gpg_plan.credential_home,
     )
-    _reload_gpg_keys(
-        resources,
-        Path(context.project_cfg.path),
-        interactive=interactive,
-    )
+    _reload_gpg_keys(resources, interactive=interactive)
 
 
 def _append_sidecar_target_args(
