@@ -205,9 +205,7 @@ def _gpg_sidecar_target_args(
             [
                 BindMountSpec(client_home, _GPG_CLIENT_HOME),
                 *_external_gpg_support_mounts(gpg_home),
-                VolumeMountSpec(
-                    resource.volume_name, resource.socket_directory, True
-                ),
+                VolumeMountSpec(resource.volume_name, resource.socket_directory, True),
             ],
             [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
         )

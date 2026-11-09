@@ -65,9 +65,7 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(
                 forwarding, "_ssh_forwarding", return_value=([], [], True)
             ),
-            mock.patch.object(
-                forwarding, "_ensure_sidecars"
-            ) as ensure_mock,
+            mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
             mock.patch.object(forwarding, "_reload_ssh_keys"),
         ):
             forwarding.ensure_ssh_setup(context, "codex", mock.Mock(), interactive=True)
@@ -156,9 +154,7 @@ class CredentialAgentForwardingTests(TestCase):
                     ],
                     mounts,
                 )
-                self.assertEqual(
-                    [EnvVar("GNUPGHOME", target_home.as_posix())], _env
-                )
+                self.assertEqual([EnvVar("GNUPGHOME", target_home.as_posix())], _env)
 
         target_args_mock.assert_called_once_with(resource, gpg_home)
         ensure_mock.assert_called_once_with(

@@ -79,7 +79,9 @@ def _close_exec_stream(stream: object) -> None:
         close()
 
 
-def _wait_for_exec_completion(client: DockerClient, execution_id: str) -> dict[str, object]:
+def _wait_for_exec_completion(
+    client: DockerClient, execution_id: str
+) -> dict[str, object]:
     deadline = time.monotonic() + _EXEC_COMPLETION_TIMEOUT_SECONDS
     while True:
         result = client.api.exec_inspect(execution_id)

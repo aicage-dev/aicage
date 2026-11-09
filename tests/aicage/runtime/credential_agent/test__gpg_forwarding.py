@@ -82,9 +82,7 @@ class GpgForwardingTests(TestCase):
                 "resolve_gpg_public_files",
                 return_value=[public_keyring, external_keyring],
             ):
-                plan = _gpg_forwarding._GpgForwardingPlan(
-                    gpg_home, [], [], True
-                )
+                plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
                 with plan.sidecar_target_args(resource) as (mounts, env):
                     client_mount = mounts[0]
                     assert isinstance(client_mount, BindMountSpec)
@@ -245,7 +243,9 @@ class GpgForwardingTests(TestCase):
         self.assertEqual("secret", actual)
         get_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT")
 
-    def test_gpg_passphrase_requires_interactive_setup_for_a_missing_secret(self) -> None:
+    def test_gpg_passphrase_requires_interactive_setup_for_a_missing_secret(
+        self,
+    ) -> None:
         with (
             mock.patch.object(
                 _gpg_forwarding,
@@ -273,6 +273,4 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=True),
             )
 
-        set_mock.assert_called_once_with(
-            "aicage/gpg/passphrase/FINGERPRINT", "secret"
-        )
+        set_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT", "secret")

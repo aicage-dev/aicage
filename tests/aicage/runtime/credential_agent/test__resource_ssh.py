@@ -17,7 +17,9 @@ class ResourceSshTests(TestCase):
 
         _resource_ssh._close_exec_stream(stream)
 
-        self.assertEqual([mock.call._response.close(), mock.call.close()], stream.mock_calls)
+        self.assertEqual(
+            [mock.call._response.close(), mock.call.close()], stream.mock_calls
+        )
 
     def test_write_exec_input_uses_socket_io_socket_when_stream_is_not_writable(
         self,

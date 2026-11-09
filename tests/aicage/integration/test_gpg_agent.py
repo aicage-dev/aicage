@@ -69,14 +69,20 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     raise SecretNotFoundError() from exc
 
             with (
-                mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=gpg_home),
-                mock.patch.object(_gpg_forwarding, "_direct_gpg_socket", return_value=None),
+                mock.patch.object(
+                    _gpg_forwarding, "resolve_gpg_home", return_value=gpg_home
+                ),
+                mock.patch.object(
+                    _gpg_forwarding, "_direct_gpg_socket", return_value=None
+                ),
                 mock.patch.object(
                     _gpg_forwarding,
                     "_gpg_secret_key_fingerprints",
                     return_value=[fingerprint],
                 ),
-                mock.patch.object(_gpg_forwarding, "get_secret", side_effect=get_secret) as get_secret_mock,
+                mock.patch.object(
+                    _gpg_forwarding, "get_secret", side_effect=get_secret
+                ) as get_secret_mock,
             ):
                 forwarding.ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=True
@@ -102,7 +108,9 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     check=True,
                     capture_output=True,
                 )
-                with pytest.raises(RuntimeError, match="Open the terminal configuration UI"):
+                with pytest.raises(
+                    RuntimeError, match="Open the terminal configuration UI"
+                ):
                     with forwarding.forwarding(context, "copilot", mock.Mock()):
                         pass
         finally:
@@ -152,7 +160,7 @@ def _assert_gpg_agent_signs_commit(
                     (
                         "git add signed.txt && git commit -S -m signed "
                         "&& git verify-commit HEAD "
-                        "&& ! find \"$GNUPGHOME/private-keys-v1.d\" -type f "
+                        '&& ! find "$GNUPGHOME/private-keys-v1.d" -type f '
                         "-print -quit 2>/dev/null | grep -q ."
                     ),
                 ],
@@ -183,7 +191,7 @@ def _assert_gpg_agent_signs_commit(
                             "git add signed-after-restart.txt "
                             "&& git commit -S -m signed-after-restart "
                             "&& git verify-commit HEAD "
-                            "&& ! find \"$GNUPGHOME/private-keys-v1.d\" -type f "
+                            '&& ! find "$GNUPGHOME/private-keys-v1.d" -type f '
                             "-print -quit 2>/dev/null | grep -q ."
                         ),
                     ],
@@ -253,7 +261,9 @@ def _create_gpg_fixture_on_host(gpg_home: Path) -> None:
         env=_gpg_environment(gpg_home),
     )
     if result.returncode != 0:
-        raise AssertionError(f"GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}")
+        raise AssertionError(
+            f"GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
 
 
 def _list_gpg_secret_keys_on_host(gpg_home: Path) -> subprocess.CompletedProcess[str]:
@@ -305,7 +315,7 @@ def _create_gpg_sidecar_fixture(gpg_home: Path, *, passphrase: str = "") -> str:
             mount,
             CREDENTIAL_AGENT_IMAGE,
             "-c",
-            "chmod 700 \"$GNUPGHOME\" && "
+            'chmod 700 "$GNUPGHOME" && '
             f"{generate_key} && gpg --batch --with-colons --list-secret-keys",
         ],
         check=False,
@@ -392,9 +402,7 @@ def _prime_host_gpg_agent(gpg_home: Path, fingerprint: str) -> None:
         raise AssertionError("Host GnuPG did not find the generated secret key.")
 
 
-def _force_gpg_sidecar(
-    root: Path, env: dict[str, str], gpg_home: Path
-) -> None:
+def _force_gpg_sidecar(root: Path, env: dict[str, str], gpg_home: Path) -> None:
     if os.name == "nt":
         return
     bin_dir = root / "bin"

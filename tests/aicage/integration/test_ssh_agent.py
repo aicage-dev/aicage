@@ -162,13 +162,17 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
 
             with (
                 _host_ssh_directory(home / ".ssh"),
-                mock.patch.object(_ssh_forwarding, "get_secret", side_effect=get_secret),
+                mock.patch.object(
+                    _ssh_forwarding, "get_secret", side_effect=get_secret
+                ),
                 mock.patch.object(
                     _ssh_forwarding,
                     "set_secret",
                     side_effect=keyring.__setitem__,
                 ) as set_secret,
-                mock.patch.object(_ssh_forwarding.sys.stdin, "isatty", return_value=True),
+                mock.patch.object(
+                    _ssh_forwarding.sys.stdin, "isatty", return_value=True
+                ),
                 mock.patch.object(_ssh_forwarding, "getpass", return_value="secret"),
             ):
                 forwarding.ensure_ssh_setup(
@@ -192,7 +196,9 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
                     check=True,
                     capture_output=True,
                 )
-                with pytest.raises(RuntimeError, match="Open the terminal configuration UI"):
+                with pytest.raises(
+                    RuntimeError, match="Open the terminal configuration UI"
+                ):
                     with forwarding.forwarding(context, "copilot", mock.Mock()):
                         pass
         finally:
@@ -319,7 +325,9 @@ def _assert_ssh_authentication(
             capture_output=True,
         )
         project_cfg = store.load_project(workspace)
-        project_cfg.agents["copilot"].docker_args = f"--network container:{container_name}"
+        project_cfg.agents["copilot"].docker_args = (
+            f"--network container:{container_name}"
+        )
         store.save_project(workspace, project_cfg)
         exit_code, output = run_cli_pty(
             [
