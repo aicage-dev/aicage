@@ -25,7 +25,11 @@ from aicage.runtime.docker_args.support.signing import (
 )
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
-from ._resource_gpg import _gpg_key_is_protected, _load_gpg_key
+from ._resource_gpg import (
+    _gpg_key_is_protected,
+    _gpg_secret_key_fingerprints,
+    _load_gpg_key,
+)
 from ._resource_models import _CredentialProtocol, _CredentialResource
 from .keyring.errors import KeyringError, SecretNotFoundError
 from .keyring.keyring import get_secret, set_secret
@@ -33,10 +37,8 @@ from .keyring.keyring import get_secret, set_secret
 _GNUPGHOME = "GNUPGHOME"
 _GPG_SOCKET_NAME = "S.gpg-agent"
 _GPG_CONNECT_AGENT = which("gpg-connect-agent")
-_GPG = which("gpg")
 _GIT = which("git")
 _GPG_CLIENT_HOME = PurePosixPath("/run/credential-agent-client/gnupg")
-_GPG_FINGERPRINT_FIELD = 9
 
 
 @dataclass
@@ -94,34 +96,14 @@ def _reload_gpg_keys(
     )
     if resource is None:
         return
-    for fingerprint in _gpg_secret_key_fingerprints(project_path):
+    signing_key = _gpg_signing_key(project_path)
+    for fingerprint in _gpg_secret_key_fingerprints(resource, signing_key):
         if _gpg_key_is_protected(resource, fingerprint):
             _load_gpg_key(
                 resource,
                 fingerprint,
                 _gpg_passphrase(fingerprint, interactive=interactive),
             )
-
-
-def _gpg_secret_key_fingerprints(project_path: Path) -> list[str]:
-    signing_key = _gpg_signing_key(project_path)
-    command = [
-        _gpg(),
-        "--batch",
-        "--with-colons",
-        "--list-secret-keys",
-    ]
-    if signing_key and signing_key.strip():
-        command.append(signing_key.strip())
-    result = subprocess.run(
-        command,
-        check=False,
-        capture_output=True,
-        text=True,
-    )  # nosec B603 -- command is a fixed local GnuPG invocation.
-    if result.returncode != 0:
-        raise RuntimeError("Cannot inspect GnuPG secret keys for commit signing.")
-    return _primary_gpg_fingerprints(result.stdout)
 
 
 def _gpg_signing_key(project_path: Path) -> str | None:
@@ -133,28 +115,6 @@ def _gpg_signing_key(project_path: Path) -> str | None:
         cwd=project_path,
     )  # nosec B603 -- command is a fixed local Git invocation.
     return result.stdout if result.returncode == 0 else None
-
-
-def _primary_gpg_fingerprints(output: str) -> list[str]:
-    fingerprints: list[str] = []
-    secret_key_pending = False
-    for line in output.splitlines():
-        fields = line.split(":")
-        record_type = fields[0]
-        if record_type == "sec":
-            secret_key_pending = True
-            continue
-        if (
-            record_type == "fpr"
-            and secret_key_pending
-            and len(fields) > _GPG_FINGERPRINT_FIELD
-        ):
-            fingerprints.append(fields[_GPG_FINGERPRINT_FIELD])
-            secret_key_pending = False
-            continue
-        if record_type in {"sec", "ssb"}:
-            secret_key_pending = False
-    return fingerprints[:1]
 
 
 def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
@@ -179,12 +139,6 @@ def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
         raise RuntimeError(
             f"Cannot access the platform keyring for GnuPG signing key '{fingerprint}'."
         ) from exc
-
-
-def _gpg() -> str:
-    if _GPG is None:
-        raise RuntimeError("gpg is required to inspect GnuPG signing keys.")
-    return _GPG
 
 
 def _git() -> str:
