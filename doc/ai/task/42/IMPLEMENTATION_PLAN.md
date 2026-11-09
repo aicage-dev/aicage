@@ -136,16 +136,15 @@ contract still needs to define those cases.
 both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG path. The
 SSH test verifies agent-backed signing, verification, isolated SSH authentication, target private-key-path absence,
 and restart/reload. The GnuPG tests verify signing, target `GNUPGHOME` private-key-file isolation, and sidecar
-restart/reload.
+restart/reload. Protected-key integration tests use real encrypted fixtures, sidecars, and client socket volumes while
+controlling the platform-keyring boundary: SSH covers interactive setup, noninteractive reload after restart, and the
+missing-secret error; GnuPG covers passphrase retrieval, public-only client signing, reload after restart, and the
+missing-secret error. Native-keyring backend behavior remains covered by the platform-specific unit suites.
 
 The remaining cases below are required before this commit is complete. Keep the current temporary credential-focused
 CI matrix only while the broader integration failures are being diagnosed, then remove it and restore normal discovery.
 
-Extend the existing SSH and GnuPG integration suites and Windows workflow to cover:
-
-- protected SSH-key initial setup, post-reboot reload, and noninteractive missing-keyring-secret failure;
-- protected GnuPG signing through the sidecar, including platform-keyring retrieval and target private-key isolation;
-- removing the temporary Task 42 integration-matrix filter and restoring the full non-proxy integration suite.
+Remove the temporary Task 42 integration-matrix filter and restore the full non-proxy integration suite.
 
 ## Documentation
 
