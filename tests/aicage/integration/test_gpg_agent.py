@@ -38,7 +38,7 @@ def test_gpg_agent_signs_commit_through_sidecar(
     _assert_gpg_agent_signs_commit(monkeypatch, use_sidecar=True)
 
 
-def test_protected_gpg_key_reloads_after_sidecar_restart(
+def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_integration()
@@ -71,6 +71,11 @@ def test_protected_gpg_key_reloads_after_sidecar_restart(
             with (
                 mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=gpg_home),
                 mock.patch.object(_gpg_forwarding, "_direct_gpg_socket", return_value=None),
+                mock.patch.object(
+                    _gpg_forwarding,
+                    "_gpg_secret_key_fingerprints",
+                    return_value=[fingerprint],
+                ),
                 mock.patch.object(_gpg_forwarding, "get_secret", side_effect=get_secret) as get_secret_mock,
             ):
                 forwarding.ensure_gpg_setup(

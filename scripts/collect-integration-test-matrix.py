@@ -15,7 +15,10 @@ import pytest
 _TEST_WIP_NODE_IDS = {
     "tests/aicage/integration/test_gpg_agent.py::test_gpg_agent_signs_commit_through_direct_agent",
     "tests/aicage/integration/test_gpg_agent.py::test_gpg_agent_signs_commit_through_sidecar",
-    "tests/aicage/integration/test_gpg_agent.py::test_protected_gpg_key_reloads_after_sidecar_restart",
+    (
+        "tests/aicage/integration/test_gpg_agent.py::"
+        "test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret"
+    ),
     "tests/aicage/integration/test_ssh_agent.py::test_ssh_agent_is_available_in_container",
     (
         "tests/aicage/integration/test_ssh_agent.py::"
