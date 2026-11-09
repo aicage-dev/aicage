@@ -3,7 +3,7 @@ from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
 from aicage.config.project_config import AgentConfig, _AgentMounts
-from aicage.runtime.credential_agent import forwarding
+from aicage.runtime.credential_agent import _gpg_forwarding, forwarding
 from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
     _resources,
@@ -86,6 +86,7 @@ class CredentialAgentForwardingTests(TestCase):
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
         }
         gpg_home = Path("/test-tmp/gnupg")
+        gpg_plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
         client_home = Path("/test-tmp/client-gnupg")
         target_home = PurePosixPath("/run/credential-agent-client/gnupg")
         with (
@@ -93,10 +94,10 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(
                 forwarding,
                 "_gpg_forwarding",
-                return_value=([], [], True, gpg_home),
+                return_value=gpg_plan,
             ),
             mock.patch.object(
-                forwarding,
+                _gpg_forwarding,
                 "_gpg_sidecar_target_args",
                 return_value=nullcontext(
                     (

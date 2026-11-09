@@ -2,7 +2,6 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from pathlib import Path
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
@@ -13,7 +12,7 @@ from aicage.runtime.run_args import EnvVar, MountSpec
 from ._gpg_forwarding import (
     _gpg_enabled,
     _gpg_forwarding,
-    _gpg_sidecar_target_args,
+    _GpgForwardingPlan,
 )
 from ._resource_models import _CredentialProtocol, _CredentialResource
 from ._sidecars import _ensure_sidecars
@@ -34,7 +33,7 @@ def forwarding(
     mounts: list[MountSpec] = []
     env: list[EnvVar] = []
     protocols: list[_CredentialProtocol] = []
-    gpg_home: Path | None = None
+    gpg_plan: _GpgForwardingPlan | None = None
 
     if agent_cfg.mounts.ssh is True:
         ssh_mounts, ssh_env, ssh_sidecar = _ssh_forwarding()
@@ -44,24 +43,30 @@ def forwarding(
             protocols.append(_CredentialProtocol.SSH)
 
     if _gpg_enabled(context, agent):
-        gpg_mounts, gpg_env, gpg_sidecar, gpg_home = _gpg_forwarding()
-        mounts.extend(gpg_mounts)
-        env.extend(gpg_env)
-        if gpg_sidecar:
+        gpg_plan = _gpg_forwarding()
+        if gpg_plan is not None:
+            mounts.extend(gpg_plan.target_mounts)
+            env.extend(gpg_plan.target_env)
+        if gpg_plan is not None and gpg_plan.requires_sidecar:
             protocols.append(_CredentialProtocol.GPG)
 
-    resources = _ensure_sidecars(protocols, resolve_container_user(), reporter, gpg_home)
+    resources = _ensure_sidecars(
+        protocols,
+        resolve_container_user(),
+        reporter,
+        gpg_plan.credential_home if gpg_plan is not None else None,
+    )
     gpg_resource: _CredentialResource | None = None
     for resource in resources:
         if resource.protocol is _CredentialProtocol.GPG:
             gpg_resource = resource
         else:
             _append_sidecar_target_args(resource, mounts, env)
-    if gpg_resource is None or gpg_home is None:
+    if gpg_resource is None or gpg_plan is None:
         _reload_ssh_keys(resources, interactive=False)
         yield mounts, env
         return
-    with _gpg_sidecar_target_args(gpg_resource, gpg_home) as (
+    with gpg_plan.sidecar_target_args(gpg_resource) as (
         sidecar_mounts,
         sidecar_env,
     ):
