@@ -1,11 +1,12 @@
 import os
 import subprocess
 from pathlib import Path
-from shutil import copy2
 
 import pytest
 
 from aicage.config.config_store import SettingsStore
+from aicage.constants import CREDENTIAL_AGENT_IMAGE
+from aicage.docker.execution.env import resolve_container_user
 
 from ._helpers import (
     require_integration,
@@ -43,7 +44,6 @@ def _assert_gpg_agent_signs_commit(
     with temporary_test_root(temp_root) as root:
         home = root / "home"
         try:
-            host_gpg_home = _host_gpg_home() if use_sidecar else None
             home.mkdir()
             _set_home(monkeypatch, home)
             workspace, env = setup_workspace(
@@ -53,14 +53,11 @@ def _assert_gpg_agent_signs_commit(
                 workspace_path=root / "workspace",
             )
 
-            fingerprint = _create_gpg_fixture(home / ".gnupg")
             if use_sidecar:
-                assert host_gpg_home is not None
-                _copy_host_gpg_private_key(
-                    host_gpg_home, home / ".gnupg", fingerprint
-                )
+                fingerprint = _create_gpg_sidecar_fixture(home / ".gnupg")
                 _force_gpg_sidecar(root, env, home / ".gnupg")
             else:
+                fingerprint = _create_gpg_fixture(home / ".gnupg")
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
             _configure_signed_git_repository(workspace, fingerprint)
             _enable_gnupg_mount(workspace)
@@ -200,53 +197,39 @@ def _gpg_key_fingerprint(stdout: str) -> str:
     raise AssertionError("Generated GnuPG key has no fingerprint.")
 
 
-def _host_gpg_home() -> Path:
-    result = subprocess.run(
-        ["gpgconf", "--list-dirs", "homedir"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return Path(result.stdout.strip())
-
-
-def _copy_host_gpg_private_key(
-    host_gpg_home: Path, gpg_home: Path, fingerprint: str
-) -> None:
-    keygrip = _gpg_keygrip(gpg_home, fingerprint)
-    target = gpg_home / "private-keys-v1.d" / f"{keygrip}.key"
-    if target.is_file():
-        return
-    source = host_gpg_home / "private-keys-v1.d" / f"{keygrip}.key"
-    if not source.is_file():
-        raise AssertionError(
-            f"Host GnuPG private key fixture is unavailable at {source}."
-        )
-    target.parent.mkdir(mode=0o700)
-    copy2(source, target)
-    target.chmod(0o600)
-
-
-def _gpg_keygrip(gpg_home: Path, fingerprint: str) -> str:
+def _create_gpg_sidecar_fixture(gpg_home: Path) -> str:
+    gpg_home.mkdir(mode=0o700)
+    mount = f"type=bind,src={gpg_home},dst=/credential/gnupg"
+    user = resolve_container_user()
     result = subprocess.run(
         [
-            *_gpg_command(),
-            "--batch",
-            "--with-colons",
-            "--with-keygrip",
-            "--list-keys",
-            fingerprint,
+            "docker",
+            "run",
+            "--rm",
+            "--user",
+            user,
+            "--entrypoint",
+            "/bin/sh",
+            "-e",
+            "GNUPGHOME=/credential/gnupg",
+            "--mount",
+            mount,
+            CREDENTIAL_AGENT_IMAGE,
+            "-c",
+            "chmod 700 \"$GNUPGHOME\" && gpg --batch --passphrase '' "
+            "--quick-generate-key 'Aicage Integration <integration@example.com>' "
+            "ed25519 sign never && gpg --batch --with-colons --list-secret-keys",
         ],
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
-        env=_gpg_environment(gpg_home),
     )
-    for line in result.stdout.splitlines():
-        fields = line.split(":")
-        if fields[0] == "grp":
-            return fields[9]
-    raise AssertionError("Generated GnuPG key has no keygrip.")
+    if result.returncode != 0:
+        raise AssertionError(
+            f"GnuPG sidecar fixture generation failed:\n"
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+    return _gpg_key_fingerprint(result.stdout)
 
 
 def _gpg_sidecar_failure_output(output: str, fingerprint: str) -> str:
