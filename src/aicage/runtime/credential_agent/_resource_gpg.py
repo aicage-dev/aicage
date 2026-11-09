@@ -25,11 +25,13 @@ def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bo
     """Return whether the sidecar's secret key requires a passphrase."""
     client = get_docker_client()
     container = _sidecar_container(client, resource)
-    keygrips = _gpg_keygrips(client, container, fingerprint)
-    return any(
-        _gpg_key_info(client, container, keygrip).split()[7] == "P"
-        for keygrip in keygrips
+    output = _run_gpg_command(
+        client,
+        container,
+        ["credential-agent", "gpg", "protected", fingerprint],
+        fingerprint,
     )
+    return output.strip() == "protected"
 
 
 def _gpg_secret_key_fingerprints(
