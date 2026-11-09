@@ -199,24 +199,14 @@ def _gpg_sidecar_failure_output(output: str, fingerprint: str) -> str:
     commands = (
         ["id"],
         [
-            "find",
+            "ls",
+            "-lna",
             "/credential/gnupg/private-keys-v1.d",
-            "-maxdepth",
-            "1",
-            "-type",
-            "f",
-            "-printf",
-            "%f %m %u:%g\\n",
         ],
         [
-            "find",
+            "ls",
+            "-lna",
             "/tmp/credential-agent/private-keys-v1.d",
-            "-maxdepth",
-            "1",
-            "-type",
-            "f",
-            "-printf",
-            "%f %m %u:%g\\n",
         ],
         [
             "gpg",
