@@ -102,12 +102,12 @@ class ResourceGpgTests(TestCase):
         resource = _resources([_CredentialProtocol.GPG])[0]
         client = mock.Mock()
         client.api.exec_create.return_value = {"Id": "exec-id"}
-        client.api.exec_start.return_value = b""
+        client.api.exec_start.return_value = b"gpg: key lookup failed\n"
         client.api.exec_inspect.return_value = {"ExitCode": 1}
         with (
             mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
             mock.patch.object(_resource_gpg, "_find_container", return_value=mock.Mock()),
-            self.assertRaisesRegex(DockerError, "Failed to inspect"),
+            self.assertRaisesRegex(DockerError, "gpg: key lookup failed"),
         ):
             _resource_gpg._gpg_key_is_protected(resource, "FINGERPRINT")
 

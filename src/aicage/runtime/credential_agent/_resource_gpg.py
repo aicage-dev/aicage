@@ -130,8 +130,12 @@ def _run_gpg_command(
             f"Failed to inspect GnuPG key '{identifier}' in the credential sidecar."
         ) from exc
     if result.get("ExitCode") != 0:
+        details = output.decode("utf-8", errors="replace").strip()
+        if details:
+            details = details[:1000]
         raise DockerError(
             f"Failed to inspect GnuPG key '{identifier}' in the credential sidecar."
+            + (f"\n{details}" if details else "")
         )
     return output.decode("utf-8")
 
