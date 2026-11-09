@@ -105,14 +105,14 @@ Completed basic live coverage:
 - A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key files in
   its temporary GnuPG home.
 - SSH sidecar identities and public support files are available in the target, while configured private-key paths are
-  absent; the target signs and verifies a message through the sidecar socket.
+  absent; the target signs and verifies a message through the sidecar socket, then authenticates to an isolated SSHD
+  through that socket.
 - Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
 - Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second commit without
   private-key files in the target GnuPG home.
 
 Still required:
 
-- Linux and Windows SSH authentication through the Aicage-managed sidecar.
 - Protected SSH initial setup, post-reboot reload, and noninteractive missing-keyring-secret behavior.
 - Protected GnuPG sidecar signing with a keyring-retrieved passphrase.
 - Place the SSH fixture outside target-mounted checkout paths, matching the GnuPG fixture's isolation.
