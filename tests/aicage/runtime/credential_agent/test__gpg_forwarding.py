@@ -12,9 +12,9 @@ from aicage.runtime.run_args import BindMountSpec, EnvVar, VolumeMountSpec
 
 
 class GpgForwardingTests(TestCase):
-    def test_gpg_forwarding_returns_empty_without_a_home(self) -> None:
+    def test_gpg_forwarding_returns_none_without_a_home(self) -> None:
         with mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=None):
-            self.assertEqual(([], [], False, None), _gpg_forwarding._gpg_forwarding())
+            self.assertIsNone(_gpg_forwarding._gpg_forwarding())
 
     def test_gpg_enabled_requires_openpgp_signing(self) -> None:
         context = mock.Mock()
@@ -52,20 +52,22 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=home),
             mock.patch.object(
-                _gpg_forwarding, "resolve_gpg_public_files", return_value=[]
-            ),
+                _gpg_forwarding, "resolve_gpg_public_files"
+            ) as public_files_mock,
             mock.patch.object(_gpg_forwarding, "_direct_gpg_socket", return_value=None),
         ):
-            _mounts, _env, sidecar, actual_home = _gpg_forwarding._gpg_forwarding()
+            plan = _gpg_forwarding._gpg_forwarding()
 
-        self.assertTrue(sidecar)
-        self.assertEqual(home, actual_home)
+        assert plan is not None
+        self.assertTrue(plan.requires_sidecar)
+        self.assertEqual(home, plan.credential_home)
+        public_files_mock.assert_not_called()
 
     def test_direct_gpg_socket_rejects_windows_and_missing_sockets(self) -> None:
         with mock.patch.object(_gpg_forwarding.os, "name", "nt"):
             self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
 
-    def test_gpg_sidecar_target_args_uses_a_private_client_home(self) -> None:
+    def test_sidecar_target_args_uses_a_private_client_home(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with tempfile.TemporaryDirectory() as directory:
             parent = Path(directory)
@@ -80,9 +82,10 @@ class GpgForwardingTests(TestCase):
                 "resolve_gpg_public_files",
                 return_value=[public_keyring, external_keyring],
             ):
-                with _gpg_forwarding._gpg_sidecar_target_args(
-                    resource, gpg_home
-                ) as (mounts, env):
+                plan = _gpg_forwarding._GpgForwardingPlan(
+                    gpg_home, [], [], True
+                )
+                with plan.sidecar_target_args(resource) as (mounts, env):
                     client_mount = mounts[0]
                     assert isinstance(client_mount, BindMountSpec)
                     client_home = client_mount.host_path
@@ -146,7 +149,8 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding, "_direct_gpg_socket", return_value=socket
             ),
         ):
-            mounts, env, sidecar, actual_home = _gpg_forwarding._gpg_forwarding()
+            plan = _gpg_forwarding._gpg_forwarding()
+        assert plan is not None
         self.assertEqual(
             [
                 BindMountSpec(socket, PurePosixPath("/test-tmp/gnupg/S.gpg-agent")),
@@ -154,8 +158,8 @@ class GpgForwardingTests(TestCase):
                     public_keyring, PurePosixPath("/test-tmp/gnupg/pubring.kbx"), True
                 ),
             ],
-            mounts,
+            plan.target_mounts,
         )
-        self.assertEqual([EnvVar("GNUPGHOME", "/test-tmp/gnupg")], env)
-        self.assertFalse(sidecar)
-        self.assertEqual(home, actual_home)
+        self.assertEqual([EnvVar("GNUPGHOME", "/test-tmp/gnupg")], plan.target_env)
+        self.assertFalse(plan.requires_sidecar)
+        self.assertEqual(home, plan.credential_home)

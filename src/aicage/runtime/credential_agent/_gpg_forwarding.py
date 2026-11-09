@@ -5,6 +5,7 @@ import subprocess  # nosec B404 -- GnuPG readiness uses a fixed host command.
 import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from shutil import copy2, which
 
@@ -30,6 +31,21 @@ _GPG_CONNECT_AGENT = which("gpg-connect-agent")
 _GPG_CLIENT_HOME = PurePosixPath("/run/credential-agent-client/gnupg")
 
 
+@dataclass
+class _GpgForwardingPlan:
+    credential_home: Path
+    target_mounts: list[BindMountSpec]
+    target_env: list[EnvVar]
+    requires_sidecar: bool
+
+    @contextmanager
+    def sidecar_target_args(
+        self, resource: _CredentialResource
+    ) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+        with _gpg_sidecar_target_args(resource, self.credential_home) as args:
+            yield args
+
+
 def _gpg_enabled(context: ConfigContext, agent: str) -> bool:
     agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
     project_path = Path(context.project_cfg.path)
@@ -40,21 +56,23 @@ def _gpg_enabled(context: ConfigContext, agent: str) -> bool:
     )
 
 
-def _gpg_forwarding() -> tuple[list[BindMountSpec], list[EnvVar], bool, Path | None]:
+def _gpg_forwarding() -> _GpgForwardingPlan | None:
     gpg_home = resolve_gpg_home()
     if gpg_home is None:
-        return [], [], False, None
+        return None
     container_home = container_project_path(gpg_home)
-    support_mounts = _gpg_support_mounts(gpg_home)
     socket = _direct_gpg_socket()
     if socket is not None:
-        return (
-            [BindMountSpec(socket, container_home / _GPG_SOCKET_NAME), *support_mounts],
+        return _GpgForwardingPlan(
+            gpg_home,
+            [
+                BindMountSpec(socket, container_home / _GPG_SOCKET_NAME),
+                *_gpg_support_mounts(gpg_home),
+            ],
             [EnvVar(_GNUPGHOME, container_home.as_posix())],
             False,
-            gpg_home,
         )
-    return [], [], True, gpg_home
+    return _GpgForwardingPlan(gpg_home, [], [], True)
 
 
 @contextmanager
