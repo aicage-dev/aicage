@@ -16,19 +16,13 @@ class GpgForwardingTests(TestCase):
         with mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=None):
             self.assertIsNone(_gpg_forwarding._gpg_forwarding())
 
-    def test_gpg_enabled_requires_openpgp_signing(self) -> None:
+    def test_gpg_enabled_requires_mount_preference(self) -> None:
         context = mock.Mock()
-        context.project_cfg.path = "/test-tmp/project"
         context.project_cfg.agents = {"codex": mock.Mock(mounts=mock.Mock(gnupg=True))}
-        with (
-            mock.patch.object(
-                _gpg_forwarding, "is_commit_signing_enabled", return_value=True
-            ),
-            mock.patch.object(
-                _gpg_forwarding, "resolve_signing_format", return_value="openpgp"
-            ),
-        ):
-            self.assertTrue(_gpg_forwarding._gpg_enabled(context, "codex"))
+        self.assertTrue(_gpg_forwarding._gpg_enabled(context, "codex"))
+
+        context.project_cfg.agents["codex"].mounts.gnupg = False
+        self.assertFalse(_gpg_forwarding._gpg_enabled(context, "codex"))
 
     def test_direct_gpg_socket_requires_a_reachable_unix_socket(self) -> None:
         socket = mock.Mock(spec=Path)
@@ -164,36 +158,50 @@ class GpgForwardingTests(TestCase):
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(home, plan.credential_home)
 
-    def test_reload_gpg_keys_loads_a_protected_signing_key(self) -> None:
+    def test_reload_gpg_keys_loads_protected_keys(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "_gpg_secret_key_fingerprints",
-                return_value=["FINGERPRINT"],
+                "resolve_gpg_secret_key_fingerprints",
+                return_value=["FIRST", "SECOND"],
             ) as fingerprints_mock,
             mock.patch.object(
-                _gpg_forwarding, "_gpg_key_is_protected", return_value=True
+                _gpg_forwarding,
+                "_gpg_key_is_protected",
+                side_effect=[True, True],
             ),
             mock.patch.object(
-                _gpg_forwarding, "_gpg_passphrase", return_value="secret"
+                _gpg_forwarding,
+                "_gpg_passphrase",
+                side_effect=["first secret", "second secret"],
             ) as passphrase_mock,
             mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
         ):
-            _gpg_forwarding._reload_gpg_keys(
-                [resource], Path("/project"), interactive=False
-            )
+            _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
 
-        passphrase_mock.assert_called_once_with("FINGERPRINT", interactive=False)
-        load_mock.assert_called_once_with(resource, "FINGERPRINT", "secret")
-        fingerprints_mock.assert_called_once_with(Path("/project"))
+        self.assertEqual(
+            [
+                mock.call("FIRST", interactive=False),
+                mock.call("SECOND", interactive=False),
+            ],
+            passphrase_mock.call_args_list,
+        )
+        self.assertEqual(
+            [
+                mock.call(resource, "FIRST", "first secret"),
+                mock.call(resource, "SECOND", "second secret"),
+            ],
+            load_mock.call_args_list,
+        )
+        fingerprints_mock.assert_called_once_with()
 
     def test_reload_gpg_keys_skips_an_unprotected_key(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "_gpg_secret_key_fingerprints",
+                "resolve_gpg_secret_key_fingerprints",
                 return_value=["FINGERPRINT"],
             ),
             mock.patch.object(
@@ -201,40 +209,9 @@ class GpgForwardingTests(TestCase):
             ),
             mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
         ):
-            _gpg_forwarding._reload_gpg_keys(
-                [resource], Path("/project"), interactive=False
-            )
+            _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
 
         load_mock.assert_not_called()
-
-    def test_gpg_secret_key_fingerprints_uses_the_host_keyring(self) -> None:
-        result = mock.Mock(
-            stdout="sec:u::::\nfpr:::::::::FINGERPRINT:\n",
-        )
-        with (
-            mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
-            mock.patch.object(
-                _gpg_forwarding, "_gpg_signing_key", return_value="FINGERPRINT"
-            ),
-            mock.patch.object(
-                _gpg_forwarding.subprocess, "run", return_value=result
-            ) as run_mock,
-        ):
-            actual = _gpg_forwarding._gpg_secret_key_fingerprints(Path("/project"))
-
-        self.assertEqual(["FINGERPRINT"], actual)
-        run_mock.assert_called_once_with(
-            [
-                "/usr/bin/gpg",
-                "--batch",
-                "--with-colons",
-                "--list-secret-keys",
-                "FINGERPRINT",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
 
     def test_gpg_passphrase_uses_the_stored_keyring_secret(self) -> None:
         with mock.patch.object(

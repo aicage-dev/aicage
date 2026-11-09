@@ -24,7 +24,7 @@ _GIT_SUPPORT_LABELS: dict[str, str] = {
 _GIT_SUPPORT_CONFIG_LABELS: dict[str, str] = {
     MOUNT_GITCONFIG_KEY: "Git configuration (identity, aliases, and settings)",
     MOUNT_GITROOT_KEY: "Git repository root (when launched from a subdirectory)",
-    MOUNT_GNUPG_KEY: "GnuPG agent (for Git commit signing)",
+    MOUNT_GNUPG_KEY: "GnuPG agent",
     MOUNT_SSH_KEY: "SSH agent (for SSH access)",
 }
 

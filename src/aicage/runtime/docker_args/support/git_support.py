@@ -12,7 +12,8 @@ from aicage.paths import HOST_GNUPG_DIR, HOST_SSH_DIR
 from aicage.runtime._ssh_agent import _has_ssh_support
 
 from ._exec import capture_stdout
-from .signing import is_commit_signing_enabled, resolve_signing_format
+
+_GPG_FINGERPRINT_FIELD = 9
 
 
 @dataclass(frozen=True)
@@ -75,14 +76,6 @@ def resolve_gpg_home() -> Path | None:
     return fallback if fallback.exists() else None
 
 
-def resolve_gpg_agent_extra_socket() -> Path | None:
-    stdout = capture_stdout(["gpgconf", "--list-dirs", "agent-extra-socket"])
-    if not stdout:
-        return None
-    path = stdout.strip()
-    return Path(path).expanduser() if path else None
-
-
 def resolve_gpg_agent_socket() -> Path | None:
     stdout = capture_stdout(["gpgconf", "--list-dirs", "agent-socket"])
     if not stdout:
@@ -109,6 +102,30 @@ def resolve_gpg_public_files(gpg_home: Path) -> list[Path]:
     return list(dict.fromkeys(paths))
 
 
+def resolve_gpg_secret_key_fingerprints() -> list[str]:
+    output = capture_stdout(["gpg", "--batch", "--with-colons", "--list-secret-keys"])
+    if output is None:
+        return []
+    fingerprints: list[str] = []
+    secret_key_pending = False
+    for line in output.splitlines():
+        fields = line.split(":")
+        record_type = fields[0]
+        if record_type == "sec":
+            secret_key_pending = True
+            continue
+        if (
+            record_type == "fpr"
+            and secret_key_pending
+            and len(fields) > _GPG_FINGERPRINT_FIELD
+        ):
+            fingerprints.append(fields[_GPG_FINGERPRINT_FIELD])
+            secret_key_pending = False
+        elif record_type == "ssb":
+            secret_key_pending = False
+    return fingerprints
+
+
 def _configured_gpg_public_files(gpg_conf: Path, gpg_home: Path) -> list[Path]:
     paths: list[Path] = []
     for line in gpg_conf.read_text(encoding="utf-8").splitlines():
@@ -131,6 +148,10 @@ def _gpg_config_public_file_value(line: str) -> str | None:
     if option not in {"keyring", "trustdb-name"} or not separator:
         return None
     return path.strip() or None
+
+
+def has_gpg_support() -> bool:
+    return bool(resolve_gpg_secret_key_fingerprints())
 
 
 def has_ssh_support() -> bool:
@@ -159,9 +180,6 @@ def _git_support_prompt_items(
             )
         )
 
-    signing_enabled = is_commit_signing_enabled(project_path)
-    signing_format = resolve_signing_format(project_path) if signing_enabled else None
-
     if has_ssh_support() and mounts_cfg.ssh is None:
         git_items.append(
             _GitSupportPromptItem(
@@ -171,17 +189,17 @@ def _git_support_prompt_items(
             )
         )
 
-    needs_gnupg = signing_enabled and signing_format != "ssh"
-    if needs_gnupg and mounts_cfg.gnupg is None:
-        gpg_agent_socket = resolve_gpg_agent_extra_socket()
-        if gpg_agent_socket:
+    if has_gpg_support():
+        gpg_home = resolve_gpg_home()
+        if gpg_home and mounts_cfg.gnupg is None:
             git_items.append(
                 _GitSupportPromptItem(
                     MOUNT_GNUPG_KEY,
-                    "GnuPG agent (for Git signing)",
-                    gpg_agent_socket,
+                    "GnuPG agent",
+                    gpg_home,
                 )
             )
+
     return [(item.key, f"{item.label}: {item.path}") for item in git_items]
 
 

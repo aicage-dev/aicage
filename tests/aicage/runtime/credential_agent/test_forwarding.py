@@ -15,7 +15,6 @@ class CredentialAgentForwardingTests(TestCase):
     def test_forwarding_ensures_ssh_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         context = mock.Mock()
-        context.project_cfg.path = "/test-tmp/project"
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(ssh=True))
         }
@@ -99,9 +98,7 @@ class CredentialAgentForwardingTests(TestCase):
         ensure_mock.assert_called_once_with(
             [_CredentialProtocol.GPG], mock.ANY, mock.ANY, plan.credential_home
         )
-        reload_mock.assert_called_once_with(
-            [resource], Path("/test-tmp/project"), interactive=True
-        )
+        reload_mock.assert_called_once_with([resource], interactive=True)
 
     def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]

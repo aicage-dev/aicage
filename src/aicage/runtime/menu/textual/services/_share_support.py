@@ -11,14 +11,11 @@ from aicage.config.project_config import (
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.docker_args.support.git_support import (
+    has_gpg_support,
     has_ssh_support,
     resolve_git_config_path,
     resolve_git_root,
-    resolve_gpg_agent_extra_socket,
-)
-from aicage.runtime.docker_args.support.signing import (
-    is_commit_signing_enabled,
-    resolve_signing_format,
+    resolve_gpg_home,
 )
 from aicage.runtime.mounts.shares import (
     ShareSpec,
@@ -85,9 +82,6 @@ def built_in_share_values(
             )
         )
 
-    signing_enabled = is_commit_signing_enabled(project_path)
-    signing_format = resolve_signing_format(project_path) if signing_enabled else None
-
     if has_ssh_support():
         built_in_shares.append(
             BuiltInShareValue(
@@ -101,16 +95,15 @@ def built_in_share_values(
             )
         )
 
-    needs_gnupg = signing_enabled and signing_format != "ssh"
-    if needs_gnupg:
-        gpg_agent_socket = resolve_gpg_agent_extra_socket()
-        if gpg_agent_socket:
+    if has_gpg_support():
+        gpg_home = resolve_gpg_home()
+        if gpg_home:
             built_in_shares.append(
                 BuiltInShareValue(
                     source="git_support",
                     key=MOUNT_GNUPG_KEY,
                     label=git_support_label(MOUNT_GNUPG_KEY),
-                    path=str(gpg_agent_socket),
+                    path=str(gpg_home),
                     persisted=mounts_cfg.gnupg,
                     enabled=_built_in_share_enabled(mounts_cfg.gnupg),
                     inherited=_is_inherited_mount(

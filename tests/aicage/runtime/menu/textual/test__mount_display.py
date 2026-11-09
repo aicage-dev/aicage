@@ -30,7 +30,7 @@ class MountDisplayTests(TestCase):
     def test_git_support_config_label_describes_gnupg_agent(self) -> None:
         value = _mount_display.git_support_config_label(MOUNT_GNUPG_KEY)
 
-        self.assertEqual("GnuPG agent (for Git commit signing)", value)
+        self.assertEqual("GnuPG agent", value)
 
     def test_extension_label_returns_prefixed_label(self) -> None:
         value = _mount_display.extension_label("gh")

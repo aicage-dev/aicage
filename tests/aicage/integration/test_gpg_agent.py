@@ -24,18 +24,18 @@ from ._helpers import (
 pytestmark = pytest.mark.integration
 
 
-def test_gpg_agent_signs_commit_through_direct_agent(
+def test_gpg_agent_signs_through_direct_agent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     if os.name == "nt":
         pytest.skip("Windows always uses the GnuPG credential sidecar.")
-    _assert_gpg_agent_signs_commit(monkeypatch, use_sidecar=False)
+    _assert_gpg_agent_signs(monkeypatch, use_sidecar=False)
 
 
-def test_gpg_agent_signs_commit_through_sidecar(
+def test_gpg_agent_signs_through_sidecar(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _assert_gpg_agent_signs_commit(monkeypatch, use_sidecar=True)
+    _assert_gpg_agent_signs(monkeypatch, use_sidecar=True)
 
 
 def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
@@ -54,7 +54,6 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
             fingerprint = _create_gpg_sidecar_fixture(gpg_home, passphrase="secret")
             workspace = root / "workspace"
             workspace.mkdir()
-            _configure_signed_git_repository(workspace, fingerprint)
             context = mock.Mock()
             context.project_cfg.path = str(workspace)
             context.project_cfg.agents = {
@@ -69,14 +68,20 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     raise SecretNotFoundError() from exc
 
             with (
-                mock.patch.object(_gpg_forwarding, "resolve_gpg_home", return_value=gpg_home),
-                mock.patch.object(_gpg_forwarding, "_direct_gpg_socket", return_value=None),
+                mock.patch.object(
+                    _gpg_forwarding, "resolve_gpg_home", return_value=gpg_home
+                ),
+                mock.patch.object(
+                    _gpg_forwarding, "_direct_gpg_socket", return_value=None
+                ),
                 mock.patch.object(
                     _gpg_forwarding,
-                    "_gpg_secret_key_fingerprints",
+                    "resolve_gpg_secret_key_fingerprints",
                     return_value=[fingerprint],
                 ),
-                mock.patch.object(_gpg_forwarding, "get_secret", side_effect=get_secret) as get_secret_mock,
+                mock.patch.object(
+                    _gpg_forwarding, "get_secret", side_effect=get_secret
+                ) as get_secret_mock,
             ):
                 forwarding.ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=True
@@ -109,7 +114,7 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
             monkeypatch.chdir(initial_cwd)
 
 
-def _assert_gpg_agent_signs_commit(
+def _assert_gpg_agent_signs(
     monkeypatch: pytest.MonkeyPatch,
     *,
     use_sidecar: bool,
@@ -136,9 +141,7 @@ def _assert_gpg_agent_signs_commit(
             else:
                 fingerprint = _create_gpg_fixture(home / ".gnupg")
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
-            _configure_signed_git_repository(workspace, fingerprint)
             _enable_gnupg_mount(workspace)
-            (workspace / "signed.txt").write_text("signed\n", encoding="utf-8")
 
             exit_code, output = run_cli_pty(
                 [
@@ -150,8 +153,10 @@ def _assert_gpg_agent_signs_commit(
                     "copilot",
                     "-lc",
                     (
-                        "git add signed.txt && git commit -S -m signed "
-                        "&& git verify-commit HEAD "
+                        "printf signed > signing-message "
+                        f"&& gpg --batch --local-user {shlex.quote(fingerprint)} "
+                        "--detach-sign signing-message "
+                        "&& gpg --verify signing-message.sig signing-message "
                         "&& ! find \"$GNUPGHOME/private-keys-v1.d\" -type f "
                         "-print -quit 2>/dev/null | grep -q ."
                     ),
@@ -167,9 +172,6 @@ def _assert_gpg_agent_signs_commit(
                     check=True,
                     capture_output=True,
                 )
-                (workspace / "signed-after-restart.txt").write_text(
-                    "signed after restart\n", encoding="utf-8"
-                )
                 exit_code, output = run_cli_pty(
                     [
                         "--menu",
@@ -180,9 +182,10 @@ def _assert_gpg_agent_signs_commit(
                         "copilot",
                         "-lc",
                         (
-                            "git add signed-after-restart.txt "
-                            "&& git commit -S -m signed-after-restart "
-                            "&& git verify-commit HEAD "
+                            "printf signed-after-restart > restart-message "
+                            f"&& gpg --batch --local-user {shlex.quote(fingerprint)} "
+                            "--detach-sign restart-message "
+                            "&& gpg --verify restart-message.sig restart-message "
                             "&& ! find \"$GNUPGHOME/private-keys-v1.d\" -type f "
                             "-print -quit 2>/dev/null | grep -q ."
                         ),
@@ -193,19 +196,6 @@ def _assert_gpg_agent_signs_commit(
                 assert exit_code == 0, output
         finally:
             monkeypatch.chdir(initial_cwd)
-
-
-def _configure_signed_git_repository(workspace: Path, fingerprint: str) -> None:
-    commands = (
-        ["git", "init"],
-        ["git", "config", "user.name", "Aicage Integration"],
-        ["git", "config", "user.email", "integration@example.com"],
-        ["git", "config", "commit.gpgsign", "true"],
-        ["git", "config", "gpg.format", "openpgp"],
-        ["git", "config", "user.signingkey", fingerprint],
-    )
-    for command in commands:
-        subprocess.run(command, cwd=workspace, check=True, capture_output=True)
 
 
 def _enable_gnupg_mount(workspace: Path) -> None:
