@@ -56,10 +56,21 @@ class CredentialAgentResourcesTests(TestCase):
         client = mock.Mock()
         volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
         container = self._container(status="exited")
+        credentials = Path("/test-tmp/.ssh")
+        container.attrs["Mounts"] = [
+            {
+                "Destination": self._resource.credential_directory.as_posix(),
+                "Source": str(credentials),
+            }
+        ]
         client.volumes.get.return_value = volume
         client.containers.get.return_value = container
 
-        with self._client(client):
+        with (
+            self._client(client),
+            mock.patch.object(_resources, "HOST_SSH_DIR", credentials),
+            mock.patch.object(Path, "is_dir", return_value=True),
+        ):
             _resources._ensure_resources(
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
