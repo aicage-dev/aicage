@@ -65,7 +65,7 @@ def _gpg_keygrips(
             "--with-keygrip",
             "--homedir",
             _GPG_AGENT_HOME,
-            "--list-secret-keys",
+            "--list-keys",
         ],
         fingerprint,
     )
@@ -75,7 +75,7 @@ def _gpg_keygrips(
     for line in output.splitlines():
         fields = line.split(":")
         record_type = fields[0]
-        if record_type == "sec":
+        if record_type == "pub":
             primary_fingerprint_pending = True
             selected_primary_key = False
         elif record_type == "fpr" and primary_fingerprint_pending:
