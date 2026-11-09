@@ -152,13 +152,16 @@ class CredentialAgentResourcesTests(TestCase):
             None,
         ]
 
-        with self._client(client):
+        with (
+            self._client(client),
+            mock.patch.object(_resources, "HOST_SSH_DIR", credentials),
+            mock.patch.object(Path, "is_dir", return_value=True),
+        ):
             _resources._ensure_resources(
                 [self._ssh],
                 "image:tag",
                 "image-id",
                 "1000:1000",
-                {self._ssh: credentials},
             )
 
         sidecar_call = client.containers.run.call_args_list[1]
