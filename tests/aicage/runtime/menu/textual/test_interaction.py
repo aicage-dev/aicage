@@ -30,7 +30,7 @@ class ConfigureRunTests(TestCase):
         ) as edit_mock:
             result = resolved.configure_run(draft, _build_context(), "codex")
 
-        edit_mock.assert_called_once_with(draft, mock.ANY)
+        edit_mock.assert_called_once_with(draft, mock.ANY, resolved._reporter)
         self.assertIsInstance(result, ConfigSelectionResult)
         assert isinstance(result, ConfigSelectionResult)
         self.assertIs(selection, result.selection)
@@ -119,6 +119,7 @@ class EditDraftWithTextualAppTests(TestCase):
             result = interaction._edit_draft_with_textual_app(
                 draft,
                 context,
+                ExecutionReporter(),
             )
 
         parsed = draft.parsed
@@ -151,7 +152,9 @@ class EditDraftWithTextualAppTests(TestCase):
             ),
             self.assertRaises(RuntimeError),
         ):
-            interaction._edit_draft_with_textual_app(draft, _build_context())
+            interaction._edit_draft_with_textual_app(
+                draft, _build_context(), ExecutionReporter()
+            )
 
     def test__edit_draft_with_textual_app_raises_keyboard_interrupt_on_cancel(
         self,
@@ -173,7 +176,9 @@ class EditDraftWithTextualAppTests(TestCase):
             ),
             self.assertRaises(KeyboardInterrupt),
         ):
-            interaction._edit_draft_with_textual_app(draft, _build_context())
+            interaction._edit_draft_with_textual_app(
+                draft, _build_context(), ExecutionReporter()
+            )
 
     def test_confirm_image_update_raises_keyboard_interrupt_for_none(
         self,

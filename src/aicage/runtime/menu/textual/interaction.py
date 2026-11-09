@@ -29,7 +29,7 @@ class TextualInteraction:
         agent: str,
     ) -> ConfigSelectionResult | ConfigScopeChange:
         del agent  # Textual reads agent from draft.agent.
-        return _edit_draft_with_textual_app(draft, context)
+        return _edit_draft_with_textual_app(draft, context, self._reporter)
 
     def confirm_aicage_update(
         self,
@@ -57,11 +57,12 @@ class TextualInteraction:
 def _edit_draft_with_textual_app(
     draft: RunConfigDraft,
     context: ConfigContext,
+    reporter: ExecutionReporter,
 ) -> ConfigSelectionResult | ConfigScopeChange:
     original_project_cfg = deepcopy(draft.project_cfg)
     original_parsed = deepcopy(draft.parsed)
     draft.prefill_for_overview()
-    result = ConfigApp(draft, context).run(inline=True)
+    result = ConfigApp(draft, context, reporter).run(inline=True)
     if result is None:
         draft.project_cfg.path = original_project_cfg.path
         draft.project_cfg.agents = original_project_cfg.agents
