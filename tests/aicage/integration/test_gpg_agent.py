@@ -80,7 +80,7 @@ def _assert_gpg_agent_signs_commit(
                 cwd=workspace,
             )
 
-            assert exit_code == 0, output
+            assert exit_code == 0, _gpg_sidecar_failure_output(output, fingerprint)
             if use_sidecar:
                 subprocess.run(
                     ["docker", "stop", "aicage-credential-agent-gpg"],
@@ -110,7 +110,7 @@ def _assert_gpg_agent_signs_commit(
                     env=env,
                     cwd=workspace,
                 )
-                assert exit_code == 0, output
+                assert exit_code == 0, _gpg_sidecar_failure_output(output, fingerprint)
         finally:
             monkeypatch.chdir(initial_cwd)
 
@@ -192,6 +192,79 @@ def _gpg_key_fingerprint(stdout: str) -> str:
         if fields[0] == "fpr":
             return fields[9]
     raise AssertionError("Generated GnuPG key has no fingerprint.")
+
+
+def _gpg_sidecar_failure_output(output: str, fingerprint: str) -> str:
+    """Return sidecar metadata that is safe to include with a failed assertion."""
+    commands = (
+        ["id"],
+        [
+            "find",
+            "/credential/gnupg/private-keys-v1.d",
+            "-maxdepth",
+            "1",
+            "-type",
+            "f",
+            "-printf",
+            "%f %m %u:%g\\n",
+        ],
+        [
+            "find",
+            "/tmp/credential-agent/private-keys-v1.d",
+            "-maxdepth",
+            "1",
+            "-type",
+            "f",
+            "-printf",
+            "%f %m %u:%g\\n",
+        ],
+        [
+            "gpg",
+            "--batch",
+            "--with-colons",
+            "--with-keygrip",
+            "--homedir",
+            "/tmp/credential-agent",
+            "--list-keys",
+            fingerprint,
+        ],
+        [
+            "sh",
+            "-c",
+            "gpg --batch --with-colons --with-keygrip --homedir /tmp/credential-agent "
+            '--list-keys "$1" | awk -F: \'$1 == "grp" {print $10}\' '
+            "| while IFS= read -r keygrip; do "
+            "gpg-connect-agent --raw-socket /tmp/credential-agent/S.gpg-agent "
+            '\"KEYINFO $keygrip\" /bye; done',
+            "sh",
+            fingerprint,
+        ],
+        [
+            "gpg",
+            "--batch",
+            "--with-colons",
+            "--homedir",
+            "/tmp/credential-agent",
+            "--list-secret-keys",
+            fingerprint,
+        ],
+    )
+    diagnostics = [output]
+    for command in commands:
+        result = subprocess.run(
+            ["docker", "exec", "aicage-credential-agent-gpg", *command],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        diagnostics.append(
+            "$ "
+            + " ".join(command)
+            + f"\nexit code: {result.returncode}"
+            + (f"\nstdout:\n{result.stdout}" if result.stdout else "")
+            + (f"\nstderr:\n{result.stderr}" if result.stderr else "")
+        )
+    return "\n\n".join(diagnostics)
 
 
 def _prime_host_gpg_agent(gpg_home: Path, fingerprint: str) -> None:
