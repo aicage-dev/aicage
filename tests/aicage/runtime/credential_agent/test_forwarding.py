@@ -100,7 +100,7 @@ class CredentialAgentForwardingTests(TestCase):
             [_CredentialProtocol.GPG], mock.ANY, mock.ANY, plan.credential_home
         )
         reload_mock.assert_called_once_with(
-            [resource], Path("/test-tmp/project"), plan.credential_home, interactive=True
+            [resource], Path("/test-tmp/project"), interactive=True
         )
 
     def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
