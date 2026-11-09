@@ -6,11 +6,16 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
 from aicage.config.config_store import SettingsStore
+from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.paths import container_project_path
+from aicage.runtime import _ssh_agent as ssh_agent_module
+from aicage.runtime.credential_agent import _resources, _ssh_forwarding, forwarding
+from aicage.runtime.credential_agent.keyring.errors import SecretNotFoundError
 
 from ._helpers import (
     require_integration,
@@ -129,6 +134,71 @@ def test_ssh_agent_is_available_in_container(
             monkeypatch.chdir(initial_cwd)
 
 
+def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secret(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    require_integration()
+    initial_cwd = Path.cwd()
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
+    temp_root.mkdir(exist_ok=True)
+    with temporary_test_root(temp_root) as root:
+        home = root / "home"
+        home.mkdir()
+        try:
+            _set_home(monkeypatch, home)
+            key = _configure_protected_ssh_key(home)
+            context = mock.Mock()
+            context.project_cfg.path = str(root / "workspace")
+            context.project_cfg.agents = {
+                "copilot": AgentConfig(mounts=_AgentMounts(ssh=True))
+            }
+            keyring: dict[str, str] = {}
+
+            def get_secret(name: str) -> str:
+                try:
+                    return keyring[name]
+                except KeyError as exc:
+                    raise SecretNotFoundError() from exc
+
+            with (
+                _host_ssh_directory(home / ".ssh"),
+                mock.patch.object(_ssh_forwarding, "get_secret", side_effect=get_secret),
+                mock.patch.object(
+                    _ssh_forwarding,
+                    "set_secret",
+                    side_effect=keyring.__setitem__,
+                ) as set_secret,
+                mock.patch.object(_ssh_forwarding.sys.stdin, "isatty", return_value=True),
+                mock.patch.object(_ssh_forwarding, "getpass", return_value="secret"),
+            ):
+                forwarding.ensure_ssh_setup(
+                    context, "copilot", mock.Mock(), interactive=True
+                )
+                set_secret.assert_called_once()
+                _assert_ssh_sidecar_has_key(key)
+
+                subprocess.run(
+                    ["docker", "stop", "aicage-credential-agent-ssh"],
+                    check=True,
+                    capture_output=True,
+                )
+                with forwarding.forwarding(context, "copilot", mock.Mock()):
+                    pass
+                _assert_ssh_sidecar_has_key(key)
+
+                keyring.clear()
+                subprocess.run(
+                    ["docker", "stop", "aicage-credential-agent-ssh"],
+                    check=True,
+                    capture_output=True,
+                )
+                with pytest.raises(RuntimeError, match="Open the terminal configuration UI"):
+                    with forwarding.forwarding(context, "copilot", mock.Mock()):
+                        pass
+        finally:
+            monkeypatch.chdir(initial_cwd)
+
+
 class _SshKeys:
     def __init__(self, private_paths: list[Path]) -> None:
         self.private_paths = private_paths
@@ -161,6 +231,46 @@ def _configure_ssh_keys(home: Path) -> _SshKeys:
     )
     (ssh_dir / "config").write_text("Include config.d/*\n", encoding="utf-8")
     return _SshKeys([default_key, configured_key])
+
+
+def _configure_protected_ssh_key(home: Path) -> Path:
+    ssh_dir = home / ".ssh"
+    ssh_dir.mkdir()
+    key = ssh_dir / "id_ed25519"
+    subprocess.run(
+        ["ssh-keygen", "-q", "-t", "ed25519", "-N", "secret", "-f", str(key)],
+        check=True,
+        capture_output=True,
+    )
+    return key
+
+
+@contextmanager
+def _host_ssh_directory(ssh_dir: Path) -> Iterator[None]:
+    with (
+        mock.patch.object(ssh_agent_module, "HOST_SSH_DIR", ssh_dir),
+        mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", ssh_dir),
+        mock.patch.object(_resources, "HOST_SSH_DIR", ssh_dir),
+    ):
+        yield
+
+
+def _assert_ssh_sidecar_has_key(key: Path) -> None:
+    expected_key = " ".join(key.with_name(f"{key.name}.pub").read_text().split()[:2])
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "aicage-credential-agent-ssh",
+            "sh",
+            "-c",
+            "SSH_AUTH_SOCK=/run/credential-agent/ssh-agent.sock ssh-add -L",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert expected_key in result.stdout
 
 
 def _enable_ssh_mount(workspace: Path) -> None:
