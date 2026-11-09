@@ -144,7 +144,6 @@ Extend the existing SSH and GnuPG integration suites and Windows workflow to cov
 
 - protected SSH-key initial setup, post-reboot reload, and noninteractive missing-keyring-secret failure;
 - protected GnuPG signing through the sidecar, including platform-keyring retrieval and target private-key isolation;
-- SSH authentication through the Aicage-managed sidecar; signing is now covered;
 - moving the SSH integration fixture outside all target-mounted checkout paths;
 - removing the temporary Task 42 integration-matrix filter and restoring the full non-proxy integration suite.
 

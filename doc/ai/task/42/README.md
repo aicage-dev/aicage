@@ -11,7 +11,7 @@ GnuPG encrypted-key reload use the platform keyring on Linux, Windows, and macOS
 
 Commit 5 is in progress. The CI matrix now proves basic SSH sidecar forwarding and GnuPG commit signing on Linux and
 Windows: Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required sidecar-only
-path. Protected-key lifecycle, SSH authentication, and restoration of the full integration matrix remain outstanding.
+path. Protected-key lifecycle and restoration of the full integration matrix remain outstanding.
 
 ## Problem
 

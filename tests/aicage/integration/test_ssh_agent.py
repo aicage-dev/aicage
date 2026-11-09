@@ -2,6 +2,7 @@ import os
 import re
 import shlex
 import subprocess
+import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -103,6 +104,7 @@ def test_ssh_agent_is_available_in_container(
                 )
 
             assert exit_code == 0, output
+            _assert_ssh_authentication(workspace, env, keys.public_paths[0])
             subprocess.run(
                 ["docker", "stop", "aicage-credential-agent-ssh"],
                 check=True,
@@ -166,6 +168,77 @@ def _enable_ssh_mount(workspace: Path) -> None:
     project_cfg = store.load_project(workspace)
     project_cfg.agents["copilot"].mounts.ssh = True
     store.save_project(workspace, project_cfg)
+
+
+def _assert_ssh_authentication(
+    workspace: Path, env: dict[str, str], public_key: Path
+) -> None:
+    image_name = "aicage-integration-sshd"
+    container_name = f"aicage-integration-sshd-{uuid.uuid4().hex}"
+    authorized_keys = workspace / "authorized_keys"
+    store = SettingsStore()
+    project_cfg = store.load_project(workspace)
+    previous_docker_args = project_cfg.agents["copilot"].docker_args
+    authorized_keys.write_text(public_key.read_text(encoding="utf-8"), encoding="utf-8")
+    subprocess.run(
+        [
+            "docker",
+            "build",
+            "--tag",
+            image_name,
+            "--file",
+            str(Path(__file__).with_name("sshd") / "Dockerfile"),
+            str(Path(__file__).resolve().parents[3]),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    try:
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "--detach",
+                "--name",
+                container_name,
+                "--mount",
+                f"type=bind,src={authorized_keys},dst=/authorized_keys,readonly",
+                image_name,
+            ],
+            check=True,
+            capture_output=True,
+        )
+        project_cfg = store.load_project(workspace)
+        project_cfg.agents["copilot"].docker_args = f"--network container:{container_name}"
+        store.save_project(workspace, project_cfg)
+        exit_code, output = run_cli_pty(
+            [
+                "--menu",
+                "none",
+                "-e",
+                "AICAGE_ENTRYPOINT_CMD=bash",
+                "--",
+                "copilot",
+                "-lc",
+                (
+                    "ssh -p 2222 -o BatchMode=yes -o PasswordAuthentication=no "
+                    "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+                    "root@127.0.0.1 true"
+                ),
+            ],
+            env=env,
+            cwd=workspace,
+        )
+        assert exit_code == 0, output
+    finally:
+        project_cfg = store.load_project(workspace)
+        project_cfg.agents["copilot"].docker_args = previous_docker_args
+        store.save_project(workspace, project_cfg)
+        subprocess.run(
+            ["docker", "rm", "--force", container_name],
+            check=False,
+            capture_output=True,
+        )
 
 
 def _set_home(monkeypatch: pytest.MonkeyPatch, home: Path) -> None:

@@ -54,6 +54,7 @@ def _assert_gpg_agent_signs_commit(
             fingerprint = _create_gpg_fixture(home / ".gnupg")
             if use_sidecar:
                 _stop_host_gpg_agent(home / ".gnupg")
+                _force_gpg_sidecar(root, env, home / ".gnupg")
             else:
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
             _configure_signed_git_repository(workspace, fingerprint)
@@ -214,6 +215,26 @@ def _stop_host_gpg_agent(gpg_home: Path) -> None:
         capture_output=True,
         env=_gpg_environment(gpg_home),
     )
+
+
+def _force_gpg_sidecar(
+    root: Path, env: dict[str, str], gpg_home: Path
+) -> None:
+    if os.name == "nt":
+        return
+    bin_dir = root / "bin"
+    bin_dir.mkdir()
+    gpgconf = bin_dir / "gpgconf"
+    gpgconf.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1 $2 $3" = "--list-dirs homedir" ]; then\n'
+        '  printf "%s\\n" "$GNUPGHOME"\n'
+        "fi\n",
+        encoding="utf-8",
+    )
+    gpgconf.chmod(0o755)
+    env["GNUPGHOME"] = str(gpg_home)
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
 
 
 def _gpg_command() -> list[str]:
