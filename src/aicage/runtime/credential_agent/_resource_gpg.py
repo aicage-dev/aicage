@@ -9,7 +9,7 @@ from docker.models.containers import Container
 from aicage.docker.errors import DockerError
 from aicage.docker.execution.client import get_docker_client
 
-from ._resource_lifecycle import _find_container
+from ._resource_lifecycle import _credential_mount_path, _find_container
 from ._resource_models import _CredentialResource
 from ._resource_ssh import (
     _close_exec_stream,
@@ -25,12 +25,18 @@ def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bo
     """Return whether the sidecar's secret key requires a passphrase."""
     client = get_docker_client()
     container = _sidecar_container(client, resource)
-    output = _run_gpg_command(
-        client,
-        container,
-        ["credential-agent", "gpg", "protected", fingerprint],
-        fingerprint,
-    )
+    try:
+        output = _run_gpg_command(
+            client,
+            container,
+            ["credential-agent", "gpg", "protected", fingerprint],
+            fingerprint,
+        )
+    except DockerError as exc:
+        credential_path = _credential_mount_path(container, resource)
+        raise DockerError(
+            f"{exc}\nCredential home mount: {credential_path}"
+        ) from exc
     return output.strip() == "protected"
 
 
