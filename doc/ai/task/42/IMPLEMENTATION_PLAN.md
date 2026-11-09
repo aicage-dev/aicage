@@ -132,17 +132,22 @@ contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
 
-**Status: pending.** Unit coverage is complete for the current credential-agent orchestration, but the live Docker and
-platform cases below still need to be implemented and run on their relevant CI hosts.
+**Status: in progress.** The live Docker matrix covers basic SSH sidecar forwarding and GnuPG commit signing. Linux
+covers both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG
+path. The existing SSH test verifies identities are available through Aicage's sidecar and that configured private-key
+paths are absent from the target; the GnuPG tests verify signing and target `GNUPGHOME` private-key-file isolation.
+
+The remaining cases below are required before this commit is complete. Keep the current temporary credential-focused
+CI matrix only while the broader integration failures are being diagnosed, then remove it and restore normal discovery.
 
 Extend the existing SSH and GnuPG integration suites and Windows workflow to cover:
 
-- SSH sidecar forwarding on Unix and Windows;
-- Unix direct GnuPG forwarding when usable, with GnuPG sidecar fallback;
-- Windows Docker Desktop/WSL socket-volume forwarding without a Windows named-pipe mount or Windows OpenSSH service;
-- GnuPG signing through the volume-backed socket without target private-key mounts;
+- protected SSH-key initial setup, post-reboot reload, and noninteractive missing-keyring-secret failure;
+- protected GnuPG signing through the sidecar, including platform-keyring retrieval and target private-key isolation;
+- SSH authentication or signing through the Aicage-managed sidecar, rather than identity listing alone;
 - stopping/removing either sidecar and recreating it on the next relevant run while keeping its volume;
-- first encrypted SSH-key setup, post-reboot reload, and the noninteractive missing-passphrase error.
+- moving the SSH integration fixture outside all target-mounted checkout paths;
+- removing the temporary Task 42 integration-matrix filter and restoring the full non-proxy integration suite.
 
 ## Documentation
 

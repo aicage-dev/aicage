@@ -81,8 +81,9 @@ named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
 
-The unit-test items in this section are complete for the implemented SSH/keyring and sidecar lifecycle behavior. The
-integration and platform items remain pending Commit 5 work.
+The unit-test items in this section are complete for the implemented SSH/keyring and sidecar lifecycle behavior. Basic
+integration coverage is now present, but protected-key, replacement/reload, and full-matrix cases remain Commit 5
+work.
 
 ### Unit tests
 
@@ -96,17 +97,26 @@ integration and platform items remain pending Commit 5 work.
 
 ### Integration and platform tests
 
-- Linux direct GnuPG forwarding remains functional when the host socket is bind-mountable; SSH uses its sidecar.
-- Linux fallback sidecars provide SSH authentication and GnuPG signing from an actual Aicage target container.
-- Windows Docker Desktop/WSL target containers use only socket volumes; they do not mount
-  `\\.\pipe\openssh-ssh-agent` or alter/start the Windows OpenSSH service.
-- A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key mounts.
+Completed basic live coverage:
+
+- Linux direct GnuPG forwarding remains functional when the host socket is bind-mountable; forced fallback-sidecar
+  GnuPG signing is also covered.
+- Windows Docker Desktop/WSL covers the required sidecar-only GnuPG path and SSH sidecar identity availability.
+- A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key files in
+  its temporary GnuPG home.
+- SSH sidecar identities and public support files are available in the target, while configured private-key paths are
+  absent.
+
+Still required:
+
+- Linux and Windows SSH authentication or signing through the Aicage-managed sidecar.
 - Stop or remove either singleton sidecar, retain its volume, then confirm the next relevant Aicage run recreates and
   reloads it.
-- Terminal configuration, global configuration, and tree configuration all perform required SSH setup when sharing is
-  enabled.
-- First encrypted-key setup, post-reboot sidecar reload, and noninteractive missing-keyring-secret failure behave as
-  specified.
+- Protected SSH initial setup, post-reboot reload, and noninteractive missing-keyring-secret behavior.
+- Protected GnuPG sidecar signing with a keyring-retrieved passphrase.
+- Place the SSH fixture outside target-mounted checkout paths, matching the GnuPG fixture's isolation.
+- Remove the temporary Task 42 CI-matrix filter and run the restored non-proxy integration suite on the relevant
+  platform matrix.
 - Run the platform-specific cases on the Aicage CI matrix, where native host and target-image behavior is available.
 
 ## Scope boundary
