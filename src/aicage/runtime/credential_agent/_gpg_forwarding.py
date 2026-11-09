@@ -95,7 +95,7 @@ def _reload_gpg_keys(
     )
     if resource is None:
         return
-    for fingerprint in _gpg_secret_key_fingerprints(project_path, gpg_home):
+    for fingerprint in _gpg_secret_key_fingerprints(project_path):
         if _gpg_key_is_protected(resource, fingerprint):
             _load_gpg_key(
                 resource,
@@ -104,13 +104,11 @@ def _reload_gpg_keys(
             )
 
 
-def _gpg_secret_key_fingerprints(project_path: Path, gpg_home: Path) -> list[str]:
+def _gpg_secret_key_fingerprints(project_path: Path) -> list[str]:
     signing_key = _gpg_signing_key(project_path)
     command = [
         _gpg(),
         "--batch",
-        "--homedir",
-        str(gpg_home),
         "--with-colons",
         "--list-secret-keys",
     ]
