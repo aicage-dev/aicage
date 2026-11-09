@@ -11,11 +11,10 @@ from aicage.config.project_config import (
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.runtime._errors import RuntimeExecutionError
 from aicage.runtime.docker_args.support.git_support import (
+    has_ssh_support,
     resolve_git_config_path,
     resolve_git_root,
-    resolve_gpg_home,
-    resolve_ssh_dir,
-    uses_ssh_remotes,
+    resolve_gpg_agent_extra_socket,
 )
 from aicage.runtime.docker_args.support.signing import (
     is_commit_signing_enabled,
@@ -88,36 +87,30 @@ def built_in_share_values(
 
     signing_enabled = is_commit_signing_enabled(project_path)
     signing_format = resolve_signing_format(project_path) if signing_enabled else None
-    ssh_needed = (signing_enabled and signing_format == "ssh") or uses_ssh_remotes(
-        project_path
-    )
-    if ssh_needed:
-        ssh_dir = resolve_ssh_dir()
-        if ssh_dir.exists():
-            built_in_shares.append(
-                BuiltInShareValue(
-                    source="git_support",
-                    key=MOUNT_SSH_KEY,
-                    label=git_support_label(MOUNT_SSH_KEY),
-                    path=str(ssh_dir),
-                    persisted=mounts_cfg.ssh,
-                    enabled=_built_in_share_enabled(mounts_cfg.ssh),
-                    inherited=_is_inherited_mount(
-                        local_mounts.ssh, inherited_mounts.ssh
-                    ),
-                )
+
+    if has_ssh_support():
+        built_in_shares.append(
+            BuiltInShareValue(
+                source="git_support",
+                key=MOUNT_SSH_KEY,
+                label=git_support_label(MOUNT_SSH_KEY),
+                path="SSH agent",
+                persisted=mounts_cfg.ssh,
+                enabled=_built_in_share_enabled(mounts_cfg.ssh),
+                inherited=_is_inherited_mount(local_mounts.ssh, inherited_mounts.ssh),
             )
+        )
 
     needs_gnupg = signing_enabled and signing_format != "ssh"
     if needs_gnupg:
-        gpg_home = resolve_gpg_home()
-        if gpg_home and gpg_home.exists():
+        gpg_agent_socket = resolve_gpg_agent_extra_socket()
+        if gpg_agent_socket:
             built_in_shares.append(
                 BuiltInShareValue(
                     source="git_support",
                     key=MOUNT_GNUPG_KEY,
                     label=git_support_label(MOUNT_GNUPG_KEY),
-                    path=str(gpg_home),
+                    path=str(gpg_agent_socket),
                     persisted=mounts_cfg.gnupg,
                     enabled=_built_in_share_enabled(mounts_cfg.gnupg),
                     inherited=_is_inherited_mount(

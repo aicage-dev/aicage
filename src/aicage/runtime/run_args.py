@@ -14,6 +14,13 @@ class BindMountSpec(MountSpec):
     read_only: bool = False
 
 
+@dataclass
+class VolumeMountSpec(MountSpec):
+    volume_name: str
+    container_path: PurePosixPath
+    read_only: bool = False
+
+
 @dataclass(frozen=True)
 class EnvVar:
     name: str

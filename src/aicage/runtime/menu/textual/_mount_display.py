@@ -18,14 +18,14 @@ _READ_ONLY_PREFIX = "Read-only"
 _GIT_SUPPORT_LABELS: dict[str, str] = {
     MOUNT_GITCONFIG_KEY: "Git config",
     MOUNT_GITROOT_KEY: "Git root",
-    MOUNT_SSH_KEY: "SSH",
-    MOUNT_GNUPG_KEY: "GnuPG",
+    MOUNT_SSH_KEY: "SSH agent",
+    MOUNT_GNUPG_KEY: "GnuPG agent",
 }
 _GIT_SUPPORT_CONFIG_LABELS: dict[str, str] = {
     MOUNT_GITCONFIG_KEY: "Git configuration (identity, aliases, and settings)",
     MOUNT_GITROOT_KEY: "Git repository root (when launched from a subdirectory)",
-    MOUNT_GNUPG_KEY: "GnuPG home (for Git commit signing)",
-    MOUNT_SSH_KEY: "SSH directory (for Git remote access and signing)",
+    MOUNT_GNUPG_KEY: "GnuPG agent (for Git commit signing)",
+    MOUNT_SSH_KEY: "SSH agent (for SSH access)",
 }
 
 
