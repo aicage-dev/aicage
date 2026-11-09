@@ -49,6 +49,62 @@ def _load_ssh_key(
         )
 
 
+def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
+    client = get_docker_client()
+    container = _find_container(client, resource)
+    if container is None:
+        raise DockerError(
+            f"Credential sidecar '{resource.container_name}' is unavailable."
+        )
+    try:
+        created = client.api.exec_create(
+            container.id,
+            ["credential-agent", "ssh", "list"],
+        )
+        execution_id = created["Id"]
+        output = client.api.exec_start(execution_id)
+        result = _wait_for_exec_completion(client, execution_id)
+    except (DockerException, KeyError) as exc:
+        raise DockerError(
+            f"Failed to list SSH identities in credential sidecar '{resource.container_name}'."
+        ) from exc
+    if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Failed to list SSH identities in credential sidecar '{resource.container_name}'."
+        )
+    return [line for line in output.decode("utf-8").splitlines() if line]
+
+
+def _remove_ssh_identity(resource: _CredentialResource, identity: str) -> None:
+    client = get_docker_client()
+    container = _find_container(client, resource)
+    if container is None:
+        raise DockerError(
+            f"Credential sidecar '{resource.container_name}' is unavailable."
+        )
+    try:
+        created = client.api.exec_create(
+            container.id,
+            ["credential-agent", "ssh", "remove"],
+            stdin=True,
+        )
+        execution_id = created["Id"]
+        stream = client.api.exec_start(execution_id, socket=True)
+        try:
+            _write_exec_input(stream, identity.encode("utf-8") + b"\n")
+        finally:
+            _close_exec_stream(stream)
+        result = _wait_for_exec_completion(client, execution_id)
+    except (DockerException, OSError, KeyError) as exc:
+        raise DockerError(
+            f"Failed to remove an SSH identity from credential sidecar '{resource.container_name}'."
+        ) from exc
+    if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Failed to remove an SSH identity from credential sidecar '{resource.container_name}'."
+        )
+
+
 def _write_exec_input(stream: object, content: bytes) -> None:
     for socket in (stream, getattr(stream, "_sock", None)):
         sendall = getattr(socket, "sendall", None)

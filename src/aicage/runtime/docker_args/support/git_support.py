@@ -102,11 +102,18 @@ def resolve_gpg_public_files(gpg_home: Path) -> list[Path]:
     return list(dict.fromkeys(paths))
 
 
-def resolve_gpg_secret_key_fingerprints() -> list[str]:
-    output = capture_stdout(["gpg", "--batch", "--with-colons", "--list-secret-keys"])
+def _resolve_gpg_secret_key_fingerprints() -> list[str]:
+    return resolve_gpg_secret_key_state()[0]
+
+
+def resolve_gpg_secret_key_state() -> tuple[list[str], set[str]]:
+    output = capture_stdout(
+        ["gpg", "--batch", "--with-colons", "--with-keygrip", "--list-secret-keys"]
+    )
     if output is None:
-        return []
+        return [], set()
     fingerprints: list[str] = []
+    keygrips: set[str] = set()
     secret_key_pending = False
     for line in output.splitlines():
         fields = line.split(":")
@@ -123,7 +130,9 @@ def resolve_gpg_secret_key_fingerprints() -> list[str]:
             secret_key_pending = False
         elif record_type == "ssb":
             secret_key_pending = False
-    return fingerprints
+        elif record_type == "grp" and len(fields) > _GPG_FINGERPRINT_FIELD:
+            keygrips.add(fields[_GPG_FINGERPRINT_FIELD])
+    return fingerprints, keygrips
 
 
 def _configured_gpg_public_files(gpg_conf: Path, gpg_home: Path) -> list[Path]:
@@ -151,7 +160,7 @@ def _gpg_config_public_file_value(line: str) -> str | None:
 
 
 def has_gpg_support() -> bool:
-    return bool(resolve_gpg_secret_key_fingerprints())
+    return bool(_resolve_gpg_secret_key_fingerprints())
 
 
 def has_ssh_support() -> bool:

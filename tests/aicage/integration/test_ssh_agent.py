@@ -199,6 +199,43 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
             monkeypatch.chdir(initial_cwd)
 
 
+def test_ssh_sidecar_removes_deleted_host_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    require_integration()
+    initial_cwd = Path.cwd()
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
+    temp_root.mkdir(exist_ok=True)
+    with temporary_test_root(temp_root) as root:
+        home = root / "home"
+        home.mkdir()
+        try:
+            _set_home(monkeypatch, home)
+            keys = _configure_ssh_keys(home)
+            identities = [_ssh_public_identity(path) for path in keys.private_paths]
+            context = mock.Mock()
+            context.project_cfg.path = str(root / "workspace")
+            context.project_cfg.agents = {
+                "copilot": AgentConfig(mounts=_AgentMounts(ssh=True))
+            }
+
+            with _host_ssh_directory(home / ".ssh"):
+                forwarding.ensure_ssh_setup(
+                    context, "copilot", mock.Mock(), interactive=False
+                )
+                for identity in identities:
+                    _assert_ssh_sidecar_has_identity(identity)
+                for key in [*keys.private_paths, *keys.public_paths]:
+                    key.unlink()
+                forwarding.ensure_ssh_setup(
+                    context, "copilot", mock.Mock(), interactive=False
+                )
+                for identity in identities:
+                    _assert_ssh_sidecar_lacks_identity(identity)
+        finally:
+            monkeypatch.chdir(initial_cwd)
+
+
 class _SshKeys:
     def __init__(self, private_paths: list[Path]) -> None:
         self.private_paths = private_paths
@@ -256,7 +293,14 @@ def _host_ssh_directory(ssh_dir: Path) -> Iterator[None]:
 
 
 def _assert_ssh_sidecar_has_key(key: Path) -> None:
-    expected_key = " ".join(key.with_name(f"{key.name}.pub").read_text().split()[:2])
+    _assert_ssh_sidecar_has_identity(_ssh_public_identity(key))
+
+
+def _ssh_public_identity(key: Path) -> str:
+    return " ".join(key.with_name(f"{key.name}.pub").read_text().split()[:2])
+
+
+def _assert_ssh_sidecar_has_identity(identity: str) -> None:
     result = subprocess.run(
         [
             "docker",
@@ -270,7 +314,24 @@ def _assert_ssh_sidecar_has_key(key: Path) -> None:
         capture_output=True,
         text=True,
     )
-    assert expected_key in result.stdout
+    assert identity in result.stdout
+
+
+def _assert_ssh_sidecar_lacks_identity(identity: str) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "aicage-credential-agent-ssh",
+            "credential-agent",
+            "ssh",
+            "list",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert identity not in result.stdout
 
 
 def _enable_ssh_mount(workspace: Path) -> None:

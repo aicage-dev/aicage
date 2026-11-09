@@ -14,7 +14,7 @@ from aicage.runtime._ssh_agent import (
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
 from ._resource_models import _CredentialProtocol, _CredentialResource
-from ._resource_ssh import _load_ssh_key
+from ._resource_ssh import _list_ssh_identities, _load_ssh_key, _remove_ssh_identity
 from .keyring.errors import KeyringError, SecretNotFoundError
 from .keyring.keyring import get_secret, set_secret
 
@@ -57,6 +57,7 @@ def _reload_ssh_keys(
     )
     if resource is None:
         return
+    desired_keys: dict[str, tuple[Path, PurePosixPath]] = {}
     for key in _resolve_ssh_key_files():
         try:
             relative_key = key.relative_to(HOST_SSH_DIR)
@@ -64,11 +65,24 @@ def _reload_ssh_keys(
             raise RuntimeError(
                 f"SSH key '{key}' is outside {HOST_SSH_DIR} and cannot be shared safely."
             ) from exc
-        _load_ssh_key(
-            resource,
+        desired_keys[_ssh_key_fingerprint(key)] = (
+            key,
             resource.credential_directory / relative_key,
-            _ssh_passphrase(key, interactive=interactive),
         )
+    sidecar_keys = {
+        _ssh_identity_fingerprint(identity): identity
+        for identity in _list_ssh_identities(resource)
+    }
+    for fingerprint, identity in sidecar_keys.items():
+        if fingerprint not in desired_keys:
+            _remove_ssh_identity(resource, identity)
+    for fingerprint, (key, sidecar_key) in desired_keys.items():
+        if fingerprint not in sidecar_keys:
+            _load_ssh_key(
+                resource,
+                sidecar_key,
+                _ssh_passphrase(key, interactive=interactive),
+            )
 
 
 def _ssh_passphrase(key: Path, *, interactive: bool) -> str:
@@ -129,6 +143,24 @@ def _ssh_key_fingerprint(key: Path) -> str:
         raise RuntimeError(
             f"Cannot determine the fingerprint for SSH key '{key.name}'."
         )
+    return fields[_SSH_FINGERPRINT_FIELD]
+
+
+def _ssh_identity_fingerprint(identity: str) -> str:
+    result = subprocess.run(
+        [_ssh_keygen(), "-lf", "-", "-E", "sha256"],
+        input=f"{identity}\n",
+        check=False,
+        capture_output=True,
+        text=True,
+    )  # nosec B603 -- fixed local SSH identity inspection.
+    fields = result.stdout.split()
+    if (
+        result.returncode != 0
+        or len(fields) < _SSH_FINGERPRINT_FIELD_COUNT
+        or not fields[_SSH_FINGERPRINT_FIELD].startswith("SHA256:")
+    ):
+        raise RuntimeError("Cannot determine the fingerprint for a sidecar SSH identity.")
     return fields[_SSH_FINGERPRINT_FIELD]
 
 

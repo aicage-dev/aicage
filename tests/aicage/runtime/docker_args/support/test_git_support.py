@@ -136,16 +136,47 @@ class GitSupportTests(TestCase):
             "fpr:::::::::PRIMARY_TWO:\n"
         )
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output) as capture:
-            fingerprints = git_support.resolve_gpg_secret_key_fingerprints()
+            fingerprints = git_support._resolve_gpg_secret_key_fingerprints()
 
         self.assertEqual(["PRIMARY_ONE", "PRIMARY_TWO"], fingerprints)
         capture.assert_called_once_with(
-            ["gpg", "--batch", "--with-colons", "--list-secret-keys"]
+            [
+                "gpg",
+                "--batch",
+                "--with-colons",
+                "--with-keygrip",
+                "--list-secret-keys",
+            ]
+        )
+
+    def test_resolve_gpg_secret_key_state_returns_primary_fingerprints_and_keygrips(
+        self,
+    ) -> None:
+        output = (
+            "sec:u::::\n"
+            "fpr:::::::::PRIMARY:\n"
+            "grp:::::::::KEYGRIP_ONE:\n"
+            "ssb:u::::\n"
+            "grp:::::::::KEYGRIP_TWO:\n"
+        )
+        with mock.patch(f"{_MODULE}.capture_stdout", return_value=output) as capture:
+            fingerprints, keygrips = git_support.resolve_gpg_secret_key_state()
+
+        self.assertEqual(["PRIMARY"], fingerprints)
+        self.assertEqual({"KEYGRIP_ONE", "KEYGRIP_TWO"}, keygrips)
+        capture.assert_called_once_with(
+            [
+                "gpg",
+                "--batch",
+                "--with-colons",
+                "--with-keygrip",
+                "--list-secret-keys",
+            ]
         )
 
     def test_has_gpg_support_requires_a_secret_key(self) -> None:
         with mock.patch(
-            f"{_MODULE}.resolve_gpg_secret_key_fingerprints", return_value=[]
+            f"{_MODULE}._resolve_gpg_secret_key_fingerprints", return_value=[]
         ):
             self.assertFalse(git_support.has_gpg_support())
 

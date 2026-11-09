@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from functools import partial
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
@@ -56,6 +57,7 @@ def forwarding(
         resolve_container_user(),
         reporter,
         gpg_plan.credential_home if gpg_plan is not None else None,
+        reconcile=partial(_reload_credentials, interactive=False),
     )
     gpg_resource: _CredentialResource | None = None
     for resource in resources:
@@ -64,7 +66,6 @@ def forwarding(
         else:
             _append_sidecar_target_args(resource, mounts, env)
     if gpg_resource is None or gpg_plan is None:
-        _reload_ssh_keys(resources, interactive=False)
         yield mounts, env
         return
     with gpg_plan.sidecar_target_args(gpg_resource) as (
@@ -73,8 +74,6 @@ def forwarding(
     ):
         mounts.extend(sidecar_mounts)
         env.extend(sidecar_env)
-        _reload_ssh_keys(resources, interactive=False)
-        _reload_gpg_keys(resources, interactive=False)
         yield mounts, env
 
 
@@ -91,12 +90,12 @@ def ensure_ssh_setup(
     _mounts, _env, sidecar = _ssh_forwarding()
     if not sidecar:
         return
-    resources = _ensure_sidecars(
+    _ensure_sidecars(
         [_CredentialProtocol.SSH],
         resolve_container_user(),
         reporter,
+        reconcile=partial(_reload_credentials, interactive=interactive),
     )
-    _reload_ssh_keys(resources, interactive=interactive)
 
 
 def ensure_gpg_setup(
@@ -111,12 +110,19 @@ def ensure_gpg_setup(
     gpg_plan = _gpg_forwarding()
     if gpg_plan is None or not gpg_plan.requires_sidecar:
         return
-    resources = _ensure_sidecars(
+    _ensure_sidecars(
         [_CredentialProtocol.GPG],
         resolve_container_user(),
         reporter,
         gpg_plan.credential_home,
+        reconcile=partial(_reload_credentials, interactive=interactive),
     )
+
+
+def _reload_credentials(
+    resources: list[_CredentialResource], *, interactive: bool
+) -> None:
+    _reload_ssh_keys(resources, interactive=interactive)
     _reload_gpg_keys(resources, interactive=interactive)
 
 

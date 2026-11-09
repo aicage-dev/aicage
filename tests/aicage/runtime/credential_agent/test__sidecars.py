@@ -2,6 +2,7 @@ from unittest import TestCase, mock
 
 from aicage.runtime.credential_agent import _sidecars
 from aicage.runtime.credential_agent._resource_models import _CredentialProtocol
+from aicage.runtime.credential_agent._resources import ResourceSetup
 
 
 class CredentialAgentSidecarsTests(TestCase):
@@ -31,7 +32,7 @@ class CredentialAgentSidecarsTests(TestCase):
             "image:tag",
             "image-id",
             "1000:1000",
-            None,
+            ResourceSetup(),
         )
 
     def test__ensure_sidecars_skips_image_without_protocols(self) -> None:

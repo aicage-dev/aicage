@@ -23,6 +23,8 @@ from ._helpers import (
 
 pytestmark = pytest.mark.integration
 
+_GPG_FINGERPRINT_FIELD = 9
+
 
 def test_gpg_agent_signs_through_direct_agent(
     monkeypatch: pytest.MonkeyPatch,
@@ -76,8 +78,8 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                 ),
                 mock.patch.object(
                     _gpg_forwarding,
-                    "resolve_gpg_secret_key_fingerprints",
-                    return_value=[fingerprint],
+                    "resolve_gpg_secret_key_state",
+                    side_effect=lambda: _gpg_secret_key_state(gpg_home),
                 ),
                 mock.patch.object(
                     _gpg_forwarding, "get_secret", side_effect=get_secret
@@ -110,6 +112,52 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                 with pytest.raises(RuntimeError, match="Open the terminal configuration UI"):
                     with forwarding.forwarding(context, "copilot", mock.Mock()):
                         pass
+        finally:
+            monkeypatch.chdir(initial_cwd)
+
+
+def test_gpg_sidecar_removes_deleted_host_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    require_integration()
+    initial_cwd = Path.cwd()
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
+    temp_root.mkdir(exist_ok=True)
+    with temporary_test_root(temp_root) as root:
+        home = root / "home"
+        try:
+            home.mkdir()
+            _set_home(monkeypatch, home)
+            gpg_home = home / ".gnupg"
+            _create_gpg_sidecar_fixture(gpg_home)
+            context = mock.Mock()
+            context.project_cfg.path = str(root / "workspace")
+            context.project_cfg.agents = {
+                "copilot": AgentConfig(mounts=_AgentMounts(gnupg=True))
+            }
+
+            with (
+                mock.patch.object(
+                    _gpg_forwarding, "resolve_gpg_home", return_value=gpg_home
+                ),
+                mock.patch.object(
+                    _gpg_forwarding, "_direct_gpg_socket", return_value=None
+                ),
+                mock.patch.object(
+                    _gpg_forwarding,
+                    "resolve_gpg_secret_key_state",
+                    side_effect=lambda: _gpg_secret_key_state(gpg_home),
+                ),
+            ):
+                forwarding.ensure_gpg_setup(
+                    context, "copilot", mock.Mock(), interactive=False
+                )
+                _assert_gpg_sidecar_has_keygrips()
+                shutil.rmtree(gpg_home / "private-keys-v1.d")
+                forwarding.ensure_gpg_setup(
+                    context, "copilot", mock.Mock(), interactive=False
+                )
+                _assert_gpg_sidecar_has_no_keygrips()
         finally:
             monkeypatch.chdir(initial_cwd)
 
@@ -248,12 +296,32 @@ def _create_gpg_fixture_on_host(gpg_home: Path) -> None:
 
 def _list_gpg_secret_keys_on_host(gpg_home: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [*_gpg_command(), "--batch", "--with-colons", "--list-secret-keys"],
+        [
+            *_gpg_command(),
+            "--batch",
+            "--with-colons",
+            "--with-keygrip",
+            "--list-secret-keys",
+        ],
         check=True,
         capture_output=True,
         text=True,
         env=_gpg_environment(gpg_home),
     )
+
+
+def _gpg_secret_key_state(gpg_home: Path) -> tuple[list[str], set[str]]:
+    result = _list_gpg_secret_keys_on_host(gpg_home)
+    secret_key_present = any(line.startswith("sec:") for line in result.stdout.splitlines())
+    fingerprints = [_gpg_key_fingerprint(result.stdout)] if secret_key_present else []
+    keygrips = {
+        fields[_GPG_FINGERPRINT_FIELD]
+        for line in result.stdout.splitlines()
+        if (fields := line.split(":"))
+        and fields[0] == "grp"
+        and len(fields) > _GPG_FINGERPRINT_FIELD
+    }
+    return fingerprints, keygrips
 
 
 def _gpg_key_fingerprint(stdout: str) -> str:
@@ -326,6 +394,40 @@ def _assert_gpg_sidecar_key_is_protected(fingerprint: str) -> None:
         text=True,
     )
     assert result.stdout.strip() == "protected"
+
+
+def _assert_gpg_sidecar_has_keygrips() -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "aicage-credential-agent-gpg",
+            "credential-agent",
+            "gpg",
+            "keygrips",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.strip()
+
+
+def _assert_gpg_sidecar_has_no_keygrips() -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "aicage-credential-agent-gpg",
+            "credential-agent",
+            "gpg",
+            "keygrips",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert not result.stdout.strip()
 
 
 def _assert_gpg_sidecar_client_signs(

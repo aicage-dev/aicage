@@ -163,14 +163,16 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_fingerprints",
-                return_value=["FIRST", "SECOND"],
-            ) as fingerprints_mock,
+                "resolve_gpg_secret_key_state",
+                return_value=(["FIRST", "SECOND"], {"ONE"}),
+            ),
+            mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"ONE"}),
             mock.patch.object(
                 _gpg_forwarding,
                 "_gpg_key_is_protected",
                 side_effect=[True, True],
             ),
+            mock.patch.object(_gpg_forwarding, "_gpg_key_is_cached", return_value=False),
             mock.patch.object(
                 _gpg_forwarding,
                 "_gpg_passphrase",
@@ -194,16 +196,52 @@ class GpgForwardingTests(TestCase):
             ],
             load_mock.call_args_list,
         )
-        fingerprints_mock.assert_called_once_with()
+
+    def test_reload_gpg_keys_resets_stale_sidecar_state(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "resolve_gpg_secret_key_state",
+                return_value=([], {"HOST"}),
+            ),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_keygrips", return_value={"STALE"}
+            ),
+            mock.patch.object(_gpg_forwarding, "_reset_gpg_agent") as reset_mock,
+        ):
+            _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
+
+        reset_mock.assert_called_once_with(resource)
+
+    def test_reload_gpg_keys_skips_cached_protected_keys(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "resolve_gpg_secret_key_state",
+                return_value=(["FINGERPRINT"], {"KEY"}),
+            ),
+            mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_key_is_protected", return_value=True
+            ),
+            mock.patch.object(_gpg_forwarding, "_gpg_key_is_cached", return_value=True),
+            mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
+        ):
+            _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
+
+        load_mock.assert_not_called()
 
     def test_reload_gpg_keys_skips_an_unprotected_key(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_fingerprints",
-                return_value=["FINGERPRINT"],
+                "resolve_gpg_secret_key_state",
+                return_value=(["FINGERPRINT"], {"KEY"}),
             ),
+            mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
             mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_protected", return_value=False
             ),

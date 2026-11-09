@@ -14,6 +14,7 @@ from aicage.runtime.credential_agent._resource_models import (
 from aicage.runtime.credential_agent._resource_models import (
     _resources as _resource_definitions,
 )
+from aicage.runtime.credential_agent._resources import ResourceSetup
 
 
 class CredentialAgentResourcesTests(TestCase):
@@ -205,6 +206,25 @@ class CredentialAgentResourcesTests(TestCase):
             _resources._ensure_resources(
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
+
+    def test__ensure_resources_reconciles_while_resources_are_locked(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        container = self._container(status="running")
+        client.volumes.get.return_value = volume
+        client.containers.get.return_value = container
+        reconcile = mock.Mock()
+
+        with self._client(client):
+            _resources._ensure_resources(
+                [self._ssh],
+                "image:tag",
+                "image-id",
+                "1000:1000",
+                ResourceSetup(reconcile=reconcile),
+            )
+
+        reconcile.assert_called_once_with([self._resource])
 
     def test_resource_lock_translates_contention_error(self) -> None:
         with (
