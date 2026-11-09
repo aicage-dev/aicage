@@ -86,7 +86,6 @@ def _gpg_forwarding() -> _GpgForwardingPlan | None:
 def _reload_gpg_keys(
     resources: list[_CredentialResource],
     project_path: Path,
-    gpg_home: Path,
     *,
     interactive: bool,
 ) -> None:

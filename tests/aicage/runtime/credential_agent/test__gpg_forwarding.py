@@ -181,7 +181,7 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
         ):
             _gpg_forwarding._reload_gpg_keys(
-                [resource], Path("/project"), Path("/gnupg"), interactive=False
+                [resource], Path("/project"), interactive=False
             )
 
         passphrase_mock.assert_called_once_with("FINGERPRINT", interactive=False)
@@ -230,7 +230,7 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
         ):
             _gpg_forwarding._reload_gpg_keys(
-                [resource], Path("/project"), Path("/gnupg"), interactive=False
+                [resource], Path("/project"), interactive=False
             )
 
         load_mock.assert_not_called()

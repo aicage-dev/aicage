@@ -78,7 +78,6 @@ def forwarding(
         _reload_gpg_keys(
             resources,
             Path(context.project_cfg.path),
-            gpg_plan.credential_home,
             interactive=False,
         )
         yield mounts, env
@@ -126,7 +125,6 @@ def ensure_gpg_setup(
     _reload_gpg_keys(
         resources,
         Path(context.project_cfg.path),
-        gpg_plan.credential_home,
         interactive=interactive,
     )
 
