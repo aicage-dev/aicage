@@ -221,7 +221,7 @@ def _assert_ssh_authentication(
                 "copilot",
                 "-lc",
                 (
-                    "ssh -p 2222 -o BatchMode=yes -o PasswordAuthentication=no "
+                    "ssh -F /dev/null -p 2222 -o BatchMode=yes -o PasswordAuthentication=no "
                     "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
                     "root@127.0.0.1 true"
                 ),

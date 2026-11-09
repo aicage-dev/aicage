@@ -227,7 +227,7 @@ def _force_gpg_sidecar(
     gpgconf = bin_dir / "gpgconf"
     gpgconf.write_text(
         "#!/bin/sh\n"
-        'if [ "$1 $2 $3" = "--list-dirs homedir" ]; then\n'
+        'if [ "$1 $2" = "--list-dirs homedir" ]; then\n'
         '  printf "%s\\n" "$GNUPGHOME"\n'
         "fi\n",
         encoding="utf-8",
