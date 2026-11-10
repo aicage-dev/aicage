@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import replace
 from typing import TypeVar
 
@@ -19,10 +18,6 @@ from aicage.config.project_config import (
 )
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.interaction import ExtensionChoiceOption
-from aicage.runtime.credential_agent.forwarding import (
-    ensure_gpg_setup,
-    ensure_ssh_setup,
-)
 from aicage.runtime.docker_args.mount_preferences import disable_git_mounts
 from aicage.runtime.docker_args.support.git_support import detected_git_mounts
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
@@ -41,7 +36,6 @@ from .services.host_access_flow import confirm_and_apply_host_access
 from .services.summary import extras_values, shares_values
 from .views.base_screen import BaseScreen
 from .views.docker_args_screen import DockerArgsScreen
-from .views.execution_screen import ExecutionScreen
 from .views.extensions_screen import ExtensionsScreen
 from .views.host_access_confirm_screen import HostAccessConfirmScreen
 from .views.overview.view import Overview
@@ -81,8 +75,6 @@ class ConfigApp(
         self._state = self._initial_state()
 
     def compose(self) -> ComposeResult:
-        execution_screen = ExecutionScreen()
-        execution_screen.display = False
         yield Overview(
             self._draft.agent,
             self._draft.project_cfg.path,
@@ -90,7 +82,6 @@ class ConfigApp(
             self._draft.scope_title,
             self._draft.scope,
         )
-        yield execution_screen
 
     def on_mount(self) -> None:
         ensure_base_default(self._draft, self._config_context)
@@ -111,8 +102,6 @@ class ConfigApp(
         accepted = await self._confirm_undecided_built_in_shares()
         if not accepted:
             return
-        if not await self._setup_credentials():
-            return
         self._finish(
             ConfigSelectionResult(
                 selection=resolve_overview_selection(
@@ -122,27 +111,6 @@ class ConfigApp(
                 project_docker_args=self._draft.effective_agent_cfg.docker_args,
             )
         )
-
-    async def _setup_credentials(self) -> bool:
-        agent_cfg = self._draft.effective_agent_cfg
-        if agent_cfg.mounts.ssh is not True and agent_cfg.mounts.gnupg is not True:
-            return True
-        self._overview().display = False
-        screen = self.query_one(ExecutionScreen)
-        screen.display = True
-        self._reporter.attach_screen(screen)
-        self._config_context.project_cfg.agents[self._draft.agent] = agent_cfg
-        try:
-            await asyncio.to_thread(
-                _ensure_credentials,
-                self._config_context,
-                self._draft.agent,
-                self._reporter,
-            )
-        except BaseException as exc:
-            self.exit(exc)
-            return False
-        return True
 
     @work(exclusive=True)
     async def _edit_section(self, section_id: str) -> None:
@@ -521,12 +489,3 @@ def _scope_label(scope: str) -> str:
     if scope == "tree":
         return "directory tree"
     return "project"
-
-
-def _ensure_credentials(
-    context: ConfigContext,
-    agent: str,
-    reporter: ExecutionReporter,
-) -> None:
-    ensure_ssh_setup(context, agent, reporter, interactive=True)
-    ensure_gpg_setup(context, agent, reporter, interactive=True)

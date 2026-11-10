@@ -2,7 +2,6 @@
 
 import subprocess  # nosec B404 -- SSH key inspection uses fixed local commands.
 import sys
-from getpass import getpass
 from pathlib import Path, PurePosixPath
 from shutil import which
 
@@ -14,9 +13,14 @@ from aicage.runtime._ssh_agent import (
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
 from ._resource_models import _CredentialProtocol, _CredentialResource
-from ._resource_ssh import _list_ssh_identities, _load_ssh_key, _remove_ssh_identity
+from ._resource_ssh import (
+    _list_ssh_identities,
+    _load_ssh_key,
+    _load_ssh_key_interactively,
+    _remove_ssh_identity,
+)
 from .keyring.errors import KeyringError, SecretNotFoundError
-from .keyring.keyring import get_secret, set_secret
+from .keyring.keyring import get_secret
 
 _SSH_AUTH_SOCK = "SSH_AUTH_SOCK"
 _SSH_SOCKET_DIRECTORY = PurePosixPath("/run/credential-agent")
@@ -78,14 +82,14 @@ def _reload_ssh_keys(
             _remove_ssh_identity(resource, identity)
     for fingerprint, (key, sidecar_key) in desired_keys.items():
         if fingerprint not in sidecar_keys:
-            _load_ssh_key(
-                resource,
-                sidecar_key,
-                _ssh_passphrase(key, interactive=interactive),
-            )
+            passphrase = _ssh_passphrase(key, interactive=interactive)
+            if passphrase is None:
+                _load_ssh_key_interactively(resource, sidecar_key)
+            else:
+                _load_ssh_key(resource, sidecar_key, passphrase)
 
 
-def _ssh_passphrase(key: Path, *, interactive: bool) -> str:
+def _ssh_passphrase(key: Path, *, interactive: bool) -> str | None:
     if not _ssh_key_is_encrypted(key):
         return ""
     secret_name = f"aicage/ssh/passphrase/{_ssh_key_fingerprint(key)}"
@@ -97,13 +101,7 @@ def _ssh_passphrase(key: Path, *, interactive: bool) -> str:
                 f"No passphrase for SSH key '{key.name}' is stored in the platform keyring. "
                 "Open the terminal configuration UI to add this key."
             ) from None
-        passphrase = getpass(f"Passphrase for SSH key {key.name}: ")
-        if not passphrase:
-            raise RuntimeError(
-                f"No passphrase was supplied for SSH key '{key.name}'."
-            ) from None
-        set_secret(secret_name, passphrase)
-        return passphrase
+        return None
     except KeyringError as exc:
         raise RuntimeError(
             f"Cannot access the platform keyring for SSH key '{key.name}'."

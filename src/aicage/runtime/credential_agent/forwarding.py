@@ -98,6 +98,17 @@ def ensure_ssh_setup(
     )
 
 
+def ensure_credentials(
+    context: ConfigContext,
+    agent: str,
+    reporter: OperationReporter,
+    *,
+    interactive: bool,
+) -> None:
+    ensure_ssh_setup(context, agent, reporter, interactive=interactive)
+    ensure_gpg_setup(context, agent, reporter, interactive=interactive)
+
+
 def ensure_gpg_setup(
     context: ConfigContext,
     agent: str,
