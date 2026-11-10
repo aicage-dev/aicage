@@ -7,6 +7,7 @@ from docker.client import DockerClient
 from docker.errors import DockerException
 
 from aicage.docker.errors import DockerError
+from aicage.docker.execution.cli import run_docker_command
 from aicage.docker.execution.client import get_docker_client
 
 from ._resource_lifecycle import _find_container
@@ -44,6 +45,28 @@ def _load_ssh_key(
             f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
         ) from exc
     if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
+        )
+
+
+def _load_ssh_key_interactively(
+    resource: _CredentialResource, key_path: PurePosixPath
+) -> None:
+    result = run_docker_command(
+        [
+            "docker",
+            "exec",
+            "-it",
+            resource.container_name,
+            "credential-agent",
+            "ssh",
+            "load",
+            key_path.as_posix(),
+        ],
+        check=False,
+    )
+    if result.returncode != 0:
         raise DockerError(
             f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
         )

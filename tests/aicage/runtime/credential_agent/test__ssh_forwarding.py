@@ -169,7 +169,9 @@ class SshForwardingTests(TestCase):
             ):
                 _ssh_forwarding._ssh_passphrase(key, interactive=False)
 
-    def test_ssh_passphrase_stores_an_interactive_secret(self) -> None:
+    def test_ssh_passphrase_uses_interactive_sidecar_loading_for_a_missing_secret(
+        self,
+    ) -> None:
         key = Path("/test-tmp/.ssh/id_ed25519")
         with (
             mock.patch.object(
@@ -184,34 +186,8 @@ class SshForwardingTests(TestCase):
                 side_effect=_ssh_forwarding.SecretNotFoundError(),
             ),
             mock.patch.object(_ssh_forwarding.sys.stdin, "isatty", return_value=True),
-            mock.patch.object(_ssh_forwarding, "getpass", return_value="secret"),
-            mock.patch.object(_ssh_forwarding, "set_secret") as set_mock,
         ):
-            self.assertEqual(
-                "secret", _ssh_forwarding._ssh_passphrase(key, interactive=True)
-            )
-
-        set_mock.assert_called_once_with("aicage/ssh/passphrase/SHA256:key", "secret")
-
-    def test_ssh_passphrase_rejects_an_empty_interactive_secret(self) -> None:
-        key = Path("/test-tmp/.ssh/id_ed25519")
-        with (
-            mock.patch.object(
-                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
-            ),
-            mock.patch.object(
-                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
-            ),
-            mock.patch.object(
-                _ssh_forwarding,
-                "get_secret",
-                side_effect=_ssh_forwarding.SecretNotFoundError(),
-            ),
-            mock.patch.object(_ssh_forwarding.sys.stdin, "isatty", return_value=True),
-            mock.patch.object(_ssh_forwarding, "getpass", return_value=""),
-            self.assertRaisesRegex(RuntimeError, "No passphrase was supplied"),
-        ):
-            _ssh_forwarding._ssh_passphrase(key, interactive=True)
+            self.assertIsNone(_ssh_forwarding._ssh_passphrase(key, interactive=True))
 
     def test_ssh_passphrase_translates_keyring_errors(self) -> None:
         key = Path("/test-tmp/.ssh/id_ed25519")

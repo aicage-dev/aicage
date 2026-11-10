@@ -79,6 +79,18 @@ class CredentialAgentForwardingTests(TestCase):
             reconcile=mock.ANY,
         )
 
+    def test_ensure_credentials_sets_up_ssh_and_gpg(self) -> None:
+        context = mock.Mock()
+        reporter = mock.Mock()
+        with (
+            mock.patch.object(forwarding, "ensure_ssh_setup") as ssh_mock,
+            mock.patch.object(forwarding, "ensure_gpg_setup") as gpg_mock,
+        ):
+            forwarding.ensure_credentials(context, "codex", reporter, interactive=True)
+
+        ssh_mock.assert_called_once_with(context, "codex", reporter, interactive=True)
+        gpg_mock.assert_called_once_with(context, "codex", reporter, interactive=True)
+
     def test_ensure_gpg_setup_passes_a_reconciler_to_a_fallback_sidecar(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         context = mock.Mock()
