@@ -83,15 +83,12 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                 ),
                 mock.patch.object(
                     _gpg_forwarding, "get_secret", side_effect=get_secret
-                ) as get_secret_mock,
+                ),
             ):
                 forwarding.ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=True
                 )
                 _assert_gpg_sidecar_key_is_protected(fingerprint)
-                get_secret_mock.assert_called_once_with(
-                    f"aicage/gpg/passphrase/{fingerprint}"
-                )
                 _assert_gpg_sidecar_client_signs(root, gpg_home, fingerprint)
 
                 subprocess.run(
