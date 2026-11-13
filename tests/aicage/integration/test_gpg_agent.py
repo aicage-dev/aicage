@@ -82,6 +82,21 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     side_effect=lambda: _gpg_secret_key_state(gpg_home),
                 ),
                 mock.patch.object(
+                    _gpg_forwarding,
+                    "_gpg_key_is_protected",
+                    wraps=_gpg_forwarding._gpg_key_is_protected,
+                ) as protected_mock,
+                mock.patch.object(
+                    _gpg_forwarding,
+                    "_gpg_key_is_cached",
+                    wraps=_gpg_forwarding._gpg_key_is_cached,
+                ) as cached_mock,
+                mock.patch.object(
+                    _gpg_forwarding,
+                    "_load_gpg_key",
+                    wraps=_gpg_forwarding._load_gpg_key,
+                ) as load_mock,
+                mock.patch.object(
                     _gpg_forwarding, "get_secret", side_effect=get_secret
                 ),
             ):
@@ -89,7 +104,13 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     context, "copilot", mock.Mock(), interactive=True
                 )
                 _assert_gpg_sidecar_key_is_protected(fingerprint)
-                _assert_gpg_sidecar_key_is_cached(fingerprint)
+                try:
+                    _assert_gpg_sidecar_key_is_cached(fingerprint)
+                except AssertionError as exc:
+                    raise AssertionError(
+                        f"{exc}\n"
+                        f"{_gpg_reconciliation_trace(protected_mock, cached_mock, load_mock)}"
+                    ) from exc
                 _assert_gpg_sidecar_client_signs(root, gpg_home, fingerprint)
 
                 subprocess.run(
@@ -414,6 +435,19 @@ def _assert_gpg_sidecar_key_is_cached(fingerprint: str) -> None:
         f"return code: {result.returncode}\n"
         f"stdout:\n{result.stdout}\n"
         f"stderr:\n{result.stderr}"
+    )
+
+
+def _gpg_reconciliation_trace(
+    protected_mock: mock.Mock,
+    cached_mock: mock.Mock,
+    load_mock: mock.Mock,
+) -> str:
+    return (
+        "GnuPG reconciliation calls:\n"
+        f"protected: {protected_mock.call_args_list}\n"
+        f"cached: {cached_mock.call_args_list}\n"
+        f"load count: {load_mock.call_count}"
     )
 
 
