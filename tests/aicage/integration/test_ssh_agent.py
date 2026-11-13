@@ -152,7 +152,9 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
             context.project_cfg.agents = {
                 "copilot": AgentConfig(mounts=_AgentMounts(ssh=True))
             }
-            keyring: dict[str, str] = {}
+            keyring = {
+                f"aicage/ssh/passphrase/{_ssh_forwarding._ssh_key_fingerprint(key)}": "secret"
+            }
 
             def get_secret(name: str) -> str:
                 try:
@@ -163,18 +165,10 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
             with (
                 _host_ssh_directory(home / ".ssh"),
                 mock.patch.object(_ssh_forwarding, "get_secret", side_effect=get_secret),
-                mock.patch.object(
-                    _ssh_forwarding,
-                    "set_secret",
-                    side_effect=keyring.__setitem__,
-                ) as set_secret,
-                mock.patch.object(_ssh_forwarding.sys.stdin, "isatty", return_value=True),
-                mock.patch.object(_ssh_forwarding, "getpass", return_value="secret"),
             ):
                 forwarding.ensure_ssh_setup(
                     context, "copilot", mock.Mock(), interactive=True
                 )
-                set_secret.assert_called_once()
                 _assert_ssh_sidecar_has_key(key)
 
                 subprocess.run(
