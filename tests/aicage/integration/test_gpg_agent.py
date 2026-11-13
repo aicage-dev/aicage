@@ -89,6 +89,7 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     context, "copilot", mock.Mock(), interactive=True
                 )
                 _assert_gpg_sidecar_key_is_protected(fingerprint)
+                _assert_gpg_sidecar_key_is_cached(fingerprint)
                 _assert_gpg_sidecar_client_signs(root, gpg_home, fingerprint)
 
                 subprocess.run(
@@ -391,6 +392,29 @@ def _assert_gpg_sidecar_key_is_protected(fingerprint: str) -> None:
         text=True,
     )
     assert result.stdout.strip() == "protected"
+
+
+def _assert_gpg_sidecar_key_is_cached(fingerprint: str) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "aicage-credential-agent-gpg",
+            "credential-agent",
+            "gpg",
+            "cached",
+            fingerprint,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0 and result.stdout.strip() == "cached", (
+        "GnuPG sidecar did not report the protected key as cached after setup:\n"
+        f"return code: {result.returncode}\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
 
 
 def _assert_gpg_sidecar_has_keygrips() -> None:
