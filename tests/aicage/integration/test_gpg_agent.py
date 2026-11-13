@@ -460,11 +460,13 @@ def _assert_gpg_sidecar_client_signs(
             "&& GNUPGHOME=/client-gnupg gpg --verify /client-gnupg/message.sig "
             "/client-gnupg/message",
         ],
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0
+    assert result.returncode == 0, (
+        f"GnuPG sidecar client failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
     assert not any((client_home / "private-keys-v1.d").glob("*"))
 
 
