@@ -174,6 +174,18 @@ class GitSupportTests(TestCase):
             ]
         )
 
+    def test_resolve_gpg_secret_key_state_skips_unusable_primary_keys(self) -> None:
+        output = (
+            "sec:e::::\n"
+            "fpr:::::::::EXPIRED:\n"
+            "sec:u::::\n"
+            "fpr:::::::::USABLE:\n"
+        )
+        with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
+            fingerprints, _keygrips = git_support.resolve_gpg_secret_key_state()
+
+        self.assertEqual(["USABLE"], fingerprints)
+
     def test_has_gpg_support_requires_a_secret_key(self) -> None:
         with mock.patch(
             f"{_MODULE}._resolve_gpg_secret_key_fingerprints", return_value=[]

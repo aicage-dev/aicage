@@ -14,6 +14,7 @@ from ._gpg_forwarding import (
     _gpg_enabled,
     _gpg_forwarding,
     _GpgForwardingPlan,
+    _prepare_direct_gpg_keys,
     _reload_gpg_keys,
 )
 from ._resource_models import _CredentialProtocol, _CredentialResource
@@ -119,7 +120,10 @@ def ensure_gpg_setup(
     if not _gpg_enabled(context, agent):
         return
     gpg_plan = _gpg_forwarding()
-    if gpg_plan is None or not gpg_plan.requires_sidecar:
+    if gpg_plan is None:
+        return
+    if not gpg_plan.requires_sidecar:
+        _prepare_direct_gpg_keys(gpg_plan.credential_home)
         return
     _ensure_sidecars(
         [_CredentialProtocol.GPG],

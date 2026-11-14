@@ -36,6 +36,7 @@ from .keyring.keyring import get_secret, set_secret
 _GNUPGHOME = "GNUPGHOME"
 _GPG_SOCKET_NAME = "S.gpg-agent"
 _GPG_CONNECT_AGENT = which("gpg-connect-agent")
+_GPG = which("gpg")
 _GPG_CLIENT_HOME = PurePosixPath("/run/credential-agent-client/gnupg")
 
 
@@ -100,6 +101,35 @@ def _reload_gpg_keys(
                 fingerprint,
                 _gpg_passphrase(fingerprint, interactive=interactive),
             )
+
+
+def _prepare_direct_gpg_keys(gpg_home: Path) -> None:
+    """Unlock configured host keys before the target container starts."""
+    if _GPG is None:
+        raise RuntimeError("GnuPG is required to prepare GnuPG credentials.")
+    fingerprints, _keygrips = resolve_gpg_secret_key_state()
+    with tempfile.TemporaryDirectory(prefix="aicage-gpg-") as directory:
+        message = Path(directory) / "message"
+        message.write_text("aicage GnuPG credential preparation\n", encoding="utf-8")
+        for fingerprint in fingerprints:
+            result = subprocess.run(
+                [
+                    _GPG,
+                    "--homedir",
+                    str(gpg_home),
+                    "--local-user",
+                    fingerprint,
+                    "--detach-sign",
+                    "--output",
+                    str(Path(directory) / f"{fingerprint}.sig"),
+                    str(message),
+                ],
+                check=False,
+            )  # nosec B603 -- fixed GnuPG command and locally resolved key identifiers.
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"Failed to unlock GnuPG key '{fingerprint}' before starting the agent."
+                )
 
 
 def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:

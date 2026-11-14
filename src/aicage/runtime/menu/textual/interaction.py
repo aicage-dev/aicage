@@ -59,10 +59,14 @@ class TextualInteraction:
             None,
             False,
             self._reporter,
-            operation=ensure_credential_image,
+            operation=_ensure_credential_image,
         ).run(inline=True)
         if isinstance(result, BaseException):
             raise result
+
+
+def _ensure_credential_image(reporter: OperationReporter) -> None:
+    ensure_credential_image(reporter)
 
 
 def _edit_draft_with_textual_app(

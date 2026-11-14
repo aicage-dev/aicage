@@ -11,6 +11,7 @@ from aicage.runtime.credential_agent import _resources
 from aicage.runtime.credential_agent._resource_lifecycle import _resource_lock
 from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
+    _CredentialResource,
 )
 from aicage.runtime.credential_agent._resource_models import (
     _resources as _resource_definitions,
@@ -217,12 +218,12 @@ class CredentialAgentResourcesTests(TestCase):
         events: list[str] = []
 
         @contextmanager
-        def resource_lock() -> object:
+        def resource_lock() -> Iterator[None]:
             events.append("locked")
             yield
             events.append("released")
 
-        def reconcile(_resources: list[object]) -> None:
+        def reconcile(_resources: list[_CredentialResource]) -> None:
             events.append("reconciled")
 
         with (

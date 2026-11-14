@@ -158,6 +158,34 @@ class GpgForwardingTests(TestCase):
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(home, plan.credential_home)
 
+    def test_prepare_direct_gpg_keys_unlocks_each_secret_key(self) -> None:
+        home = Path("/test-tmp/gnupg")
+        with (
+            mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
+            mock.patch.object(
+                _gpg_forwarding,
+                "resolve_gpg_secret_key_state",
+                return_value=(["FIRST", "SECOND"], set()),
+            ),
+            mock.patch.object(
+                _gpg_forwarding.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0),
+            ) as run_mock,
+        ):
+            _gpg_forwarding._prepare_direct_gpg_keys(home)
+
+        self.assertEqual(2, run_mock.call_count)
+        for fingerprint, call in zip(
+            ["FIRST", "SECOND"], run_mock.call_args_list, strict=True
+        ):
+            command = call.args[0]
+            self.assertEqual("/usr/bin/gpg", command[0])
+            self.assertEqual(["--homedir", str(home)], command[1:3])
+            self.assertIn(fingerprint, command)
+            self.assertIn("--detach-sign", command)
+            self.assertFalse(call.kwargs["check"])
+
     def test_reload_gpg_keys_loads_protected_keys(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (

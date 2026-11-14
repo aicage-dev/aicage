@@ -116,6 +116,23 @@ class CredentialAgentForwardingTests(TestCase):
             reconcile=mock.ANY,
         )
 
+    def test_ensure_gpg_setup_prepares_keys_for_a_direct_agent(self) -> None:
+        context = mock.Mock()
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
+        }
+        plan = _gpg_forwarding._GpgForwardingPlan(Path("/test-tmp/gnupg"), [], [], False)
+        with (
+            mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
+            mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
+            mock.patch.object(forwarding, "_prepare_direct_gpg_keys") as prepare_mock,
+            mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
+        ):
+            forwarding.ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
+
+        prepare_mock.assert_called_once_with(plan.credential_home)
+        ensure_mock.assert_not_called()
+
     def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         context = mock.Mock()
