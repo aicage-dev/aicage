@@ -403,6 +403,13 @@ def _create_protected_gpg_fixture(
         text=True,
         env=_gpg_environment(gpg_home),
     )
+    subprocess.run(
+        ["gpgconf", "--homedir", str(gpg_home), "--launch", "gpg-agent"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=_gpg_environment(gpg_home),
+    )
     return _gpg_key_fingerprint(_list_gpg_secret_keys_on_host(gpg_home).stdout)
 
 
