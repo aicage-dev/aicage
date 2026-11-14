@@ -152,9 +152,7 @@ def setup_workspace(
     monkeypatch.setattr(paths_module, "TREES_DIR", trees_dir)
     monkeypatch.setattr(config_store_module, "TREES_DIR", trees_dir)
     monkeypatch.setattr(paths_module, "GLOBAL_CONFIG_PATH", global_config_path)
-    monkeypatch.setattr(
-        config_store_module, "GLOBAL_CONFIG_PATH", global_config_path
-    )
+    monkeypatch.setattr(config_store_module, "GLOBAL_CONFIG_PATH", global_config_path)
     monkeypatch.setattr(paths_module, "CUSTOM_BASES_DIR", custom_bases_path)
     monkeypatch.setattr(paths_module, "CUSTOM_AGENTS_DIR", custom_agents_path)
     monkeypatch.setattr(paths_module, "CUSTOM_EXTENSIONS_DIR", custom_extensions_path)
