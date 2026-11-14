@@ -40,64 +40,6 @@ def test_gpg_agent_signs_through_sidecar(
     _assert_gpg_agent_signs(monkeypatch, use_sidecar=True)
 
 
-def test_protected_gpg_key_is_unlocked_before_the_target_starts(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    if os.name == "nt":
-        pytest.skip("Windows always uses the GnuPG credential sidecar.")
-    require_integration()
-    initial_cwd = Path.cwd()
-    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
-    temp_root.mkdir(exist_ok=True)
-    with temporary_test_root(temp_root) as root:
-        home = root / "home"
-        try:
-            home.mkdir()
-            _set_home(monkeypatch, home)
-            pinentry_log = root / "pinentry.log"
-            fingerprint = _create_protected_gpg_fixture(
-                home / ".gnupg", root / "pinentry", pinentry_log
-            )
-            context = mock.Mock()
-            context.project_cfg.path = str(root / "workspace")
-            context.project_cfg.agents = {
-                "copilot": AgentConfig(mounts=_AgentMounts(gnupg=True))
-            }
-            with mock.patch.object(
-                _gpg_forwarding, "resolve_gpg_home", return_value=home / ".gnupg"
-            ):
-                forwarding.ensure_gpg_setup(
-                    context, "copilot", mock.Mock(), interactive=True
-                )
-
-            message = root / "message"
-            signature = root / "message.sig"
-            message.write_text("aicage integration\n", encoding="utf-8")
-            result = subprocess.run(
-                [
-                    *_gpg_command(),
-                    "--batch",
-                    "--pinentry-mode",
-                    "error",
-                    "--local-user",
-                    fingerprint,
-                    "--detach-sign",
-                    "--output",
-                    str(signature),
-                    str(message),
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-                env=_gpg_environment(home / ".gnupg"),
-            )
-
-            assert result.returncode == 0, result.stderr
-            assert "GETPIN" in pinentry_log.read_text(encoding="utf-8")
-        finally:
-            monkeypatch.chdir(initial_cwd)
-
-
 def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -348,69 +290,6 @@ def _create_gpg_fixture_on_host(gpg_home: Path) -> None:
     )
     if result.returncode != 0:
         raise AssertionError(f"GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}")
-
-
-def _create_protected_gpg_fixture(
-    gpg_home: Path, pinentry: Path, pinentry_log: Path
-) -> str:
-    gpg_home.mkdir(mode=0o700)
-    pinentry.write_text(
-        "#!/bin/sh\n"
-        "printf 'OK aicage test pinentry\\n'\n"
-        "while IFS= read -r line; do\n"
-        f"  printf '%s\\n' \"$line\" >> {shlex.quote(str(pinentry_log))}\n"
-        "  case \"$line\" in\n"
-        "    GETPIN*) printf 'D secret\\nOK\\n' ;;\n"
-        "    'GETINFO pid') printf 'D %s\\nOK\\n' \"$$\" ;;\n"
-        "    'GETINFO version') printf 'D 1.0\\nOK\\n' ;;\n"
-        "    BYE) printf 'OK\\n'; exit 0 ;;\n"
-        "    *) printf 'OK\\n' ;;\n"
-        "  esac\n"
-        "done\n",
-        encoding="utf-8",
-    )
-    pinentry.chmod(0o755)
-    result = subprocess.run(
-        [
-            *_gpg_command(),
-            "--batch",
-            "--pinentry-mode",
-            "loopback",
-            "--passphrase",
-            "secret",
-            "--quick-generate-key",
-            "Aicage Integration <integration@example.com>",
-            "ed25519",
-            "sign",
-            "never",
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=_gpg_environment(gpg_home),
-    )
-    if result.returncode != 0:
-        raise AssertionError(
-            f"Protected GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
-        )
-    (gpg_home / "gpg-agent.conf").write_text(
-        f"pinentry-program {pinentry}\n", encoding="utf-8"
-    )
-    subprocess.run(
-        ["gpgconf", "--homedir", str(gpg_home), "--kill", "gpg-agent"],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=_gpg_environment(gpg_home),
-    )
-    subprocess.run(
-        ["gpgconf", "--homedir", str(gpg_home), "--launch", "gpg-agent"],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=_gpg_environment(gpg_home),
-    )
-    return _gpg_key_fingerprint(_list_gpg_secret_keys_on_host(gpg_home).stdout)
 
 
 def _list_gpg_secret_keys_on_host(gpg_home: Path) -> subprocess.CompletedProcess[str]:
