@@ -4,7 +4,12 @@ from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
 from aicage.docker import run
-from aicage.runtime.run_args import BindMountSpec, DockerRunArgs, EnvVar, VolumeMountSpec
+from aicage.runtime.run_args import (
+    BindMountSpec,
+    DockerRunArgs,
+    EnvVar,
+    VolumeMountSpec,
+)
 
 
 class RunCommandTests(TestCase):

@@ -119,7 +119,12 @@ def resolve_gpg_secret_key_state() -> tuple[list[str], set[str]]:
         fields = line.split(":")
         record_type = fields[0]
         if record_type == "sec":
-            secret_key_pending = len(fields) > 1 and fields[1] not in {"d", "e", "i", "r"}
+            secret_key_pending = len(fields) > 1 and fields[1] not in {
+                "d",
+                "e",
+                "i",
+                "r",
+            }
             continue
         if (
             record_type == "fpr"

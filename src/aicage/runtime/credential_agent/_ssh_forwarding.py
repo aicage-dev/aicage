@@ -159,7 +159,9 @@ def _ssh_identity_fingerprint(identity: str) -> str:
         or len(fields) < _SSH_FINGERPRINT_FIELD_COUNT
         or not fields[_SSH_FINGERPRINT_FIELD].startswith("SHA256:")
     ):
-        raise RuntimeError("Cannot determine the fingerprint for a sidecar SSH identity.")
+        raise RuntimeError(
+            "Cannot determine the fingerprint for a sidecar SSH identity."
+        )
     return fields[_SSH_FINGERPRINT_FIELD]
 
 

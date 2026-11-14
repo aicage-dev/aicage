@@ -65,9 +65,7 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(
                 forwarding, "_ssh_forwarding", return_value=([], [], True)
             ),
-            mock.patch.object(
-                forwarding, "_ensure_sidecars"
-            ) as ensure_mock,
+            mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
             mock.patch.object(forwarding, "_reload_ssh_keys"),
         ):
             forwarding.ensure_ssh_setup(context, "codex", mock.Mock(), interactive=True)
@@ -121,7 +119,9 @@ class CredentialAgentForwardingTests(TestCase):
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
         }
-        plan = _gpg_forwarding._GpgForwardingPlan(Path("/test-tmp/gnupg"), [], [], False)
+        plan = _gpg_forwarding._GpgForwardingPlan(
+            Path("/test-tmp/gnupg"), [], [], False
+        )
         with (
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
@@ -140,9 +140,7 @@ class CredentialAgentForwardingTests(TestCase):
         }
         gpg_home = Path("/test-tmp/gnupg")
         socket = gpg_home / "S.gpg-agent"
-        plan = _gpg_forwarding._GpgForwardingPlan(
-            gpg_home, [], [], False, socket
-        )
+        plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], False, socket)
         client_home = Path("/test-tmp/client-gnupg")
         target_home = PurePosixPath("/run/credential-agent-client/gnupg")
         target_args = (
@@ -218,9 +216,7 @@ class CredentialAgentForwardingTests(TestCase):
                     ],
                     mounts,
                 )
-                self.assertEqual(
-                    [EnvVar("GNUPGHOME", target_home.as_posix())], _env
-                )
+                self.assertEqual([EnvVar("GNUPGHOME", target_home.as_posix())], _env)
 
         target_args_mock.assert_called_once_with(resource, gpg_home)
         ensure_mock.assert_called_once_with(
