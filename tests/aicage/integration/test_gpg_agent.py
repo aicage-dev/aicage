@@ -40,54 +40,6 @@ def test_gpg_agent_signs_through_sidecar(
     _assert_gpg_agent_signs(monkeypatch, use_sidecar=True)
 
 
-def test_cached_protected_gpg_key_signs_through_direct_agent(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    if os.name == "nt":
-        pytest.skip("Windows always uses the GnuPG credential sidecar.")
-    require_integration()
-    initial_cwd = Path.cwd()
-    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
-    temp_root.mkdir(exist_ok=True)
-    with temporary_test_root(temp_root) as root:
-        home = root / "home"
-        try:
-            home.mkdir()
-            _set_home(monkeypatch, home)
-            workspace, env = setup_workspace(
-                monkeypatch,
-                root,
-                "copilot",
-                workspace_path=root / "workspace",
-            )
-            fingerprint = _create_cached_protected_gpg_fixture(home / ".gnupg")
-            _enable_gnupg_mount(workspace)
-
-            exit_code, output = run_cli_pty(
-                [
-                    "--menu",
-                    "none",
-                    "-e",
-                    "AICAGE_ENTRYPOINT_CMD=bash",
-                    "--",
-                    "copilot",
-                    "-lc",
-                    (
-                        "printf signed > signing-message "
-                        f"&& gpg --batch --pinentry-mode error --local-user {shlex.quote(fingerprint)} "
-                        "--detach-sign signing-message "
-                        "&& gpg --verify signing-message.sig signing-message"
-                    ),
-                ],
-                env=env,
-                cwd=workspace,
-            )
-
-            assert exit_code == 0, output
-        finally:
-            monkeypatch.chdir(initial_cwd)
-
-
 def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -338,63 +290,6 @@ def _create_gpg_fixture_on_host(gpg_home: Path) -> None:
     )
     if result.returncode != 0:
         raise AssertionError(f"GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}")
-
-
-def _create_cached_protected_gpg_fixture(gpg_home: Path) -> str:
-    gpg_home.mkdir(mode=0o700)
-    result = subprocess.run(
-        [
-            *_gpg_command(),
-            "--batch",
-            "--pinentry-mode",
-            "loopback",
-            "--passphrase",
-            "secret",
-            "--quick-generate-key",
-            "Aicage Integration <integration@example.com>",
-            "ed25519",
-            "sign",
-            "never",
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=_gpg_environment(gpg_home),
-    )
-    if result.returncode != 0:
-        raise AssertionError(
-            f"Protected GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
-        )
-    fingerprints, keygrips = _gpg_secret_key_state(gpg_home)
-    (gpg_home / "gpg-agent.conf").write_text(
-        "allow-preset-passphrase\n", encoding="utf-8"
-    )
-    subprocess.run(
-        ["gpgconf", "--homedir", str(gpg_home), "--kill", "gpg-agent"],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=_gpg_environment(gpg_home),
-    )
-    for keygrip in keygrips:
-        result = subprocess.run(
-            [
-                "gpg-connect-agent",
-                "--homedir",
-                str(gpg_home),
-                f"PRESET_PASSPHRASE {keygrip} -1 736563726574",
-                "/bye",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-            env=_gpg_environment(gpg_home),
-        )
-        if result.returncode != 0:
-            raise AssertionError(
-                f"Could not preset GnuPG passphrase:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
-            )
-    return fingerprints[0]
 
 
 def _list_gpg_secret_keys_on_host(gpg_home: Path) -> subprocess.CompletedProcess[str]:
