@@ -380,7 +380,13 @@ def _create_cached_protected_gpg_fixture(gpg_home: Path) -> str:
         env=environment,
     )
     subprocess.run(
-        ["gpgconf", "--homedir", str(gpg_home), "--launch", "gpg-agent"],
+        [
+            "gpg-agent",
+            "--homedir",
+            str(gpg_home),
+            "--allow-preset-passphrase",
+            "--daemon",
+        ],
         check=True,
         capture_output=True,
         text=True,
