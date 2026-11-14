@@ -344,6 +344,9 @@ def _create_gpg_fixture_on_host(gpg_home: Path) -> None:
 
 def _create_cached_protected_gpg_fixture(gpg_home: Path) -> str:
     gpg_home.mkdir(mode=0o700)
+    (gpg_home / "gpg-agent.conf").write_text(
+        "allow-preset-passphrase\n", encoding="utf-8"
+    )
     result = subprocess.run(
         [
             *_gpg_command(),
@@ -368,30 +371,7 @@ def _create_cached_protected_gpg_fixture(gpg_home: Path) -> str:
             f"Protected GnuPG key generation failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
     fingerprints, keygrips = _gpg_secret_key_state(gpg_home)
-    (gpg_home / "gpg-agent.conf").write_text(
-        "allow-preset-passphrase\n", encoding="utf-8"
-    )
     environment = _gpg_environment(gpg_home)
-    subprocess.run(
-        ["gpgconf", "--homedir", str(gpg_home), "--kill", "gpg-agent"],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=environment,
-    )
-    subprocess.run(
-        [
-            "gpg-agent",
-            "--homedir",
-            str(gpg_home),
-            "--allow-preset-passphrase",
-            "--daemon",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=environment,
-    )
     preset = Path(
         subprocess.run(
             ["gpgconf", "--list-dirs", "libexecdir"],
