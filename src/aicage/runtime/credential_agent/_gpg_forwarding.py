@@ -197,7 +197,7 @@ def _gpg_direct_target_args(
         _copy_gpg_support_files(gpg_home, client_home)
         yield (
             [
-                BindMountSpec(client_home, _GPG_CLIENT_HOME, True),
+                BindMountSpec(client_home, _GPG_CLIENT_HOME),
                 BindMountSpec(socket, _GPG_CLIENT_HOME / _GPG_SOCKET_NAME),
                 *_external_gpg_support_mounts(gpg_home),
             ],
