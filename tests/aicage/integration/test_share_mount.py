@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from aicage.config.config_store import SettingsStore
+from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.paths import container_project_path
 
 from ._helpers import (
@@ -71,6 +72,46 @@ def test_share_mounts_directory_read_only(
 
     assert exit_code != 0, output
     assert not (share_dir / "blocked.txt").exists()
+
+
+def test_share_mounts_inherited_directory_with_local_share(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    require_integration()
+    workspace, env = setup_workspace(monkeypatch, tmp_path, "copilot")
+    inherited_share_dir = tmp_path / "inherited-share"
+    local_share_dir = tmp_path / "local-share"
+    inherited_share_dir.mkdir()
+    local_share_dir.mkdir()
+    store = SettingsStore()
+    store.save_tree(
+        workspace.parent,
+        _ProjectConfig(
+            path=str(workspace.parent),
+            agents={"copilot": AgentConfig(shares=[str(inherited_share_dir)])},
+        ),
+    )
+    project_cfg = store.load_project(workspace)
+    project_cfg.agents["copilot"].shares = [str(local_share_dir)]
+    store.save_project(workspace, project_cfg)
+    inherited_container_path = container_project_path(inherited_share_dir).as_posix()
+    local_container_path = container_project_path(local_share_dir).as_posix()
+    exit_code, output = run_cli_pty(
+        [
+            "--menu",
+            "none",
+            "--env",
+            "AICAGE_ENTRYPOINT_CMD=bash",
+            "--",
+            "copilot",
+            "-lc",
+            f"test -d {inherited_container_path} && test -d {local_container_path}",
+        ],
+        env=env,
+        cwd=workspace,
+    )
+
+    assert exit_code == 0, output
 
 
 def test_extension_defined_share_mounts_directory(
