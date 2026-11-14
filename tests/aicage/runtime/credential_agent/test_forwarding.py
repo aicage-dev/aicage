@@ -130,7 +130,7 @@ class CredentialAgentForwardingTests(TestCase):
         ):
             forwarding.ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
 
-        prepare_mock.assert_called_once_with(plan.credential_home)
+        prepare_mock.assert_called_once_with(plan.credential_home, interactive=True)
         ensure_mock.assert_not_called()
 
     def test_forwarding_uses_a_private_home_for_a_direct_gpg_agent(self) -> None:

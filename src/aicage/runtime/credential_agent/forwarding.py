@@ -132,7 +132,7 @@ def ensure_gpg_setup(
     if gpg_plan is None:
         return
     if not gpg_plan.requires_sidecar:
-        _prepare_direct_gpg_keys(gpg_plan.credential_home)
+        _prepare_direct_gpg_keys(gpg_plan.credential_home, interactive=interactive)
         return
     _ensure_sidecars(
         [_CredentialProtocol.GPG],

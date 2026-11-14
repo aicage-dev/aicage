@@ -108,7 +108,7 @@ def _reload_gpg_keys(
             )
 
 
-def _prepare_direct_gpg_keys(gpg_home: Path) -> None:
+def _prepare_direct_gpg_keys(gpg_home: Path, *, interactive: bool) -> None:
     """Unlock configured host keys before the target container starts."""
     if _GPG is None:
         raise RuntimeError("GnuPG is required to prepare GnuPG credentials.")
@@ -117,24 +117,53 @@ def _prepare_direct_gpg_keys(gpg_home: Path) -> None:
         message = Path(directory) / "message"
         message.write_text("aicage GnuPG credential preparation\n", encoding="utf-8")
         for fingerprint in fingerprints:
-            result = subprocess.run(
-                [
-                    _GPG,
-                    "--homedir",
-                    str(gpg_home),
-                    "--local-user",
-                    fingerprint,
-                    "--detach-sign",
-                    "--output",
-                    str(Path(directory) / f"{fingerprint}.sig"),
-                    str(message),
-                ],
-                check=False,
-            )  # nosec B603 -- fixed GnuPG command and locally resolved key identifiers.
-            if result.returncode != 0:
+            signature = Path(directory) / f"{fingerprint}.sig"
+            if _sign_with_direct_gpg(gpg_home, fingerprint, message, signature):
+                continue
+            passphrase = _gpg_passphrase(fingerprint, interactive=interactive)
+            if not _sign_with_direct_gpg(
+                gpg_home, fingerprint, message, signature, passphrase
+            ):
                 raise RuntimeError(
                     f"Failed to unlock GnuPG key '{fingerprint}' before starting the agent."
                 )
+
+
+def _sign_with_direct_gpg(
+    gpg_home: Path,
+    fingerprint: str,
+    message: Path,
+    signature: Path,
+    passphrase: str | None = None,
+) -> bool:
+    command = [
+        _gpg(),
+        "--batch",
+        "--pinentry-mode",
+        "loopback" if passphrase is not None else "error",
+    ]
+    if passphrase is not None:
+        command.extend(["--passphrase-fd", "0"])
+    command.extend(
+        [
+            "--homedir",
+            str(gpg_home),
+            "--local-user",
+            fingerprint,
+            "--detach-sign",
+            "--output",
+            str(signature),
+            str(message),
+        ]
+    )
+    result = subprocess.run(
+        command,
+        check=False,
+        capture_output=True,
+        input=f"{passphrase}\n" if passphrase is not None else None,
+        text=True,
+    )  # nosec B603 -- fixed GnuPG command and locally resolved key identifiers.
+    return result.returncode == 0
 
 
 def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
@@ -159,6 +188,12 @@ def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
         raise RuntimeError(
             f"Cannot access the platform keyring for GnuPG key '{fingerprint}'."
         ) from exc
+
+
+def _gpg() -> str:
+    if _GPG is None:
+        raise RuntimeError("GnuPG is required to prepare GnuPG credentials.")
+    return _GPG
 
 
 @contextmanager
