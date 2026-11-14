@@ -71,9 +71,7 @@ class SshForwardingTests(TestCase):
             mock.patch.object(
                 _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
             ),
-            mock.patch.object(
-                _ssh_forwarding, "_list_ssh_identities", return_value=[]
-            ),
+            mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
         ):
             _ssh_forwarding._reload_ssh_keys([resource], interactive=False)

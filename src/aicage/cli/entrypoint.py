@@ -22,7 +22,10 @@ from aicage.paths import GLOBAL_LOG_PATH
 from aicage.reporting import ConsoleOperationReporter
 from aicage.runtime.credential_agent.forwarding import ensure_credentials
 from aicage.runtime.image_setup import prepare_image
-from aicage.runtime.menu.interaction import RuntimeInteraction, create_runtime_interaction
+from aicage.runtime.menu.interaction import (
+    RuntimeInteraction,
+    create_runtime_interaction,
+)
 from aicage.runtime.run_plan import prepare_run_args
 
 
@@ -50,7 +53,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             if run_config is None:
                 return exit_code
             logger.info("Resolved run config for agent %s", run_config.agent)
-            _prepare_credentials(run_config, interaction, interactive=parsed.menu != "none")
+            _prepare_credentials(
+                run_config, interaction, interactive=parsed.menu != "none"
+            )
             prepare_image(run_config, interaction)
             with prepare_run_args(
                 config=run_config,

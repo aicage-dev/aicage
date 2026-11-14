@@ -77,9 +77,7 @@ class GpgForwardingTests(TestCase):
                 "resolve_gpg_public_files",
                 return_value=[public_keyring, external_keyring],
             ):
-                plan = _gpg_forwarding._GpgForwardingPlan(
-                    gpg_home, [], [], True
-                )
+                plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
                 with plan.sidecar_target_args(resource) as (mounts, env):
                     client_mount = mounts[0]
                     assert isinstance(client_mount, BindMountSpec)
@@ -212,7 +210,9 @@ class GpgForwardingTests(TestCase):
                 "_gpg_key_is_protected",
                 side_effect=[True, True],
             ),
-            mock.patch.object(_gpg_forwarding, "_gpg_key_is_cached", return_value=False),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_key_is_cached", return_value=False
+            ),
             mock.patch.object(
                 _gpg_forwarding,
                 "_gpg_passphrase",
@@ -245,9 +245,7 @@ class GpgForwardingTests(TestCase):
                 "resolve_gpg_secret_key_state",
                 return_value=([], {"HOST"}),
             ),
-            mock.patch.object(
-                _gpg_forwarding, "_gpg_keygrips", return_value={"STALE"}
-            ),
+            mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"STALE"}),
             mock.patch.object(_gpg_forwarding, "_reset_gpg_agent") as reset_mock,
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
@@ -300,7 +298,9 @@ class GpgForwardingTests(TestCase):
         self.assertEqual("secret", actual)
         get_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT")
 
-    def test_gpg_passphrase_requires_interactive_setup_for_a_missing_secret(self) -> None:
+    def test_gpg_passphrase_requires_interactive_setup_for_a_missing_secret(
+        self,
+    ) -> None:
         with (
             mock.patch.object(
                 _gpg_forwarding,
@@ -328,6 +328,4 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=True),
             )
 
-        set_mock.assert_called_once_with(
-            "aicage/gpg/passphrase/FINGERPRINT", "secret"
-        )
+        set_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT", "secret")

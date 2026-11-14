@@ -20,7 +20,9 @@ class ResourceGpgTests(TestCase):
             mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
             mock.patch.object(_resource_gpg, "_find_container", return_value=container),
         ):
-            self.assertTrue(_resource_gpg._gpg_key_is_protected(resource, "FINGERPRINT"))
+            self.assertTrue(
+                _resource_gpg._gpg_key_is_protected(resource, "FINGERPRINT")
+            )
 
         client.api.exec_create.assert_called_once_with(
             container.id,
@@ -35,7 +37,9 @@ class ResourceGpgTests(TestCase):
         client.api.exec_inspect.return_value = {"ExitCode": 1}
         with (
             mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
-            mock.patch.object(_resource_gpg, "_find_container", return_value=mock.Mock()),
+            mock.patch.object(
+                _resource_gpg, "_find_container", return_value=mock.Mock()
+            ),
             self.assertRaisesRegex(DockerError, "gpg: key lookup failed"),
         ):
             _resource_gpg._gpg_key_is_protected(resource, "FINGERPRINT")

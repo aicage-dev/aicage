@@ -6,9 +6,7 @@ from aicage import constants
 from aicage.registry import _signature
 from aicage.registry._errors import RegistryError
 
-_AGENT_IMAGE_REF = (
-    f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_REPOSITORY}:agent"
-)
+_AGENT_IMAGE_REF = f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_REPOSITORY}:agent"
 _AGENT_DIGEST_REF = (
     f"{constants.IMAGE_REGISTRY}/{constants.IMAGE_REPOSITORY}@sha256:abc"
 )

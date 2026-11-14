@@ -59,9 +59,7 @@ class _GpgForwardingPlan:
     def direct_target_args(self) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
         if self.direct_socket is None:
             raise RuntimeError("The GnuPG forwarding plan has no direct agent socket.")
-        with _gpg_direct_target_args(
-            self.direct_socket, self.credential_home
-        ) as args:
+        with _gpg_direct_target_args(self.direct_socket, self.credential_home) as args:
             yield args
 
 
@@ -178,9 +176,7 @@ def _gpg_sidecar_target_args(
             [
                 BindMountSpec(client_home, _GPG_CLIENT_HOME),
                 *_external_gpg_support_mounts(gpg_home),
-                VolumeMountSpec(
-                    resource.volume_name, resource.socket_directory, True
-                ),
+                VolumeMountSpec(resource.volume_name, resource.socket_directory, True),
             ],
             [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
         )
