@@ -62,7 +62,13 @@ class ResourceSshTests(TestCase):
         stream.close.assert_called_once()
         client.api.exec_create.assert_called_once_with(
             container.id,
-            ["credential-agent", "ssh", "load", "/credential/ssh/id_ed25519"],
+            [
+                "credential-agent",
+                "ssh",
+                "load",
+                "/credential/ssh/id_ed25519",
+                "/credential/ssh/id_ed25519",
+            ],
             stdin=True,
         )
 
@@ -105,6 +111,7 @@ class ResourceSshTests(TestCase):
                 "credential-agent",
                 "ssh",
                 "load-interactive",
+                "/credential/ssh/id_ed25519",
                 "/credential/ssh/id_ed25519",
             ],
             check=False,

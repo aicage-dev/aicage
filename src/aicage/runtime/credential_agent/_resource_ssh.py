@@ -21,7 +21,10 @@ _EXEC_COMPLETION_POLL_SECONDS = 0.05
 
 
 def _load_ssh_key(
-    resource: _CredentialResource, key_path: PurePosixPath, passphrase: str
+    resource: _CredentialResource,
+    key_path: PurePosixPath,
+    passphrase: str,
+    target_path: PurePosixPath | None = None,
 ) -> None:
     """Load one key through the sidecar's stdin-only image contract."""
     client = get_docker_client()
@@ -33,7 +36,13 @@ def _load_ssh_key(
     try:
         created = client.api.exec_create(
             container.id,
-            ["credential-agent", "ssh", "load", key_path.as_posix()],
+            [
+                "credential-agent",
+                "ssh",
+                "load",
+                key_path.as_posix(),
+                (target_path or key_path).as_posix(),
+            ],
             stdin=True,
         )
         execution_id = created["Id"]
@@ -54,7 +63,9 @@ def _load_ssh_key(
 
 
 def _load_ssh_key_interactively(
-    resource: _CredentialResource, key_path: PurePosixPath
+    resource: _CredentialResource,
+    key_path: PurePosixPath,
+    target_path: PurePosixPath | None = None,
 ) -> None:
     with _terminal_streams() as (stdin, stdout):
         result = run_docker_command(
@@ -67,6 +78,7 @@ def _load_ssh_key_interactively(
                 "ssh",
                 "load-interactive",
                 key_path.as_posix(),
+                (target_path or key_path).as_posix(),
             ],
             check=False,
             stdin=stdin,

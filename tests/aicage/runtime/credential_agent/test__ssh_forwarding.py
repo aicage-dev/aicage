@@ -78,7 +78,10 @@ class SshForwardingTests(TestCase):
         ):
             _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
         load_mock.assert_called_once_with(
-            resource, resource.credential_directory / "id_ed25519", ""
+            resource,
+            resource.credential_directory / "id_ed25519",
+            "",
+            PurePosixPath("/test-tmp/.ssh/id_ed25519"),
         )
 
     def test_reload_ssh_keys_removes_stale_and_keeps_loaded_identities(self) -> None:

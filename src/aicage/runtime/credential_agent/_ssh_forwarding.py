@@ -61,7 +61,7 @@ def _reload_ssh_keys(
     )
     if resource is None:
         return
-    desired_keys: dict[str, tuple[Path, PurePosixPath]] = {}
+    desired_keys: dict[str, tuple[Path, PurePosixPath, PurePosixPath]] = {}
     for key in _resolve_ssh_key_files():
         try:
             relative_key = key.relative_to(HOST_SSH_DIR)
@@ -72,6 +72,7 @@ def _reload_ssh_keys(
         desired_keys[_ssh_key_fingerprint(key)] = (
             key,
             resource.credential_directory / relative_key,
+            container_project_path(key),
         )
     sidecar_keys = {
         _ssh_identity_fingerprint(identity): identity
@@ -80,13 +81,13 @@ def _reload_ssh_keys(
     for fingerprint, identity in sidecar_keys.items():
         if fingerprint not in desired_keys:
             _remove_ssh_identity(resource, identity)
-    for fingerprint, (key, sidecar_key) in desired_keys.items():
+    for fingerprint, (key, sidecar_key, target_key) in desired_keys.items():
         if fingerprint not in sidecar_keys:
             passphrase = _ssh_passphrase(key, interactive=interactive)
             if passphrase is None:
-                _load_ssh_key_interactively(resource, sidecar_key)
+                _load_ssh_key_interactively(resource, sidecar_key, target_key)
             else:
-                _load_ssh_key(resource, sidecar_key, passphrase)
+                _load_ssh_key(resource, sidecar_key, passphrase, target_key)
 
 
 def _ssh_passphrase(key: Path, *, interactive: bool) -> str | None:
