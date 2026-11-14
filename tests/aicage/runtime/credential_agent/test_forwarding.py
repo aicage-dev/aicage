@@ -133,6 +133,38 @@ class CredentialAgentForwardingTests(TestCase):
         prepare_mock.assert_called_once_with(plan.credential_home)
         ensure_mock.assert_not_called()
 
+    def test_forwarding_uses_a_private_home_for_a_direct_gpg_agent(self) -> None:
+        context = mock.Mock()
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
+        }
+        gpg_home = Path("/test-tmp/gnupg")
+        socket = gpg_home / "S.gpg-agent"
+        plan = _gpg_forwarding._GpgForwardingPlan(
+            gpg_home, [], [], False, socket
+        )
+        client_home = Path("/test-tmp/client-gnupg")
+        target_home = PurePosixPath("/run/credential-agent-client/gnupg")
+        target_args = (
+            [BindMountSpec(client_home, target_home, True)],
+            [EnvVar("GNUPGHOME", target_home.as_posix())],
+        )
+        with (
+            mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
+            mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_direct_target_args",
+                return_value=nullcontext(target_args),
+            ) as target_args_mock,
+            mock.patch.object(forwarding, "_ensure_sidecars", return_value=[]),
+        ):
+            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
+                self.assertEqual(target_args[0], mounts)
+                self.assertEqual(target_args[1], env)
+
+        target_args_mock.assert_called_once_with(socket, gpg_home)
+
     def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         context = mock.Mock()

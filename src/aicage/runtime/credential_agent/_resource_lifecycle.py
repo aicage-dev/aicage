@@ -11,15 +11,14 @@ from docker.models.containers import Container
 from docker.models.volumes import Volume
 
 from aicage.docker.errors import DockerError
-from aicage.paths import CREDENTIAL_AGENT_LOCK_PATH
+from aicage.paths import CREDENTIAL_AGENT_LOCK_PATH, container_project_path
 
 from ._resource_models import (
     _IMAGE_ID_LABEL,
     _PROTOCOL_LABEL,
     _RESOURCE_LABEL,
     _RESOURCE_VALUE,
-    _RESOURCE_VERSION,
-    _VERSION_LABEL,
+    _CredentialProtocol,
     _CredentialResource,
     _ImageSpec,
 )
@@ -62,8 +61,7 @@ def _requires_replacement(
         )
     labels = _labels_for(container)
     return (
-        labels.get(_VERSION_LABEL) != _RESOURCE_VERSION
-        or labels.get(_IMAGE_ID_LABEL) != image_id
+        labels.get(_IMAGE_ID_LABEL) != image_id
         or _credential_mount_path(container, resource) != credential_path
         or _is_unhealthy(container)
     )
@@ -84,6 +82,7 @@ def _create_container(
             "bind": resource.credential_directory.as_posix(),
             "mode": "ro",
         }
+    tmpfs = _ssh_copy_tmpfs(resource, credential_path, image.user)
     return client.containers.run(
         image.image_ref,
         [resource.protocol.value, "serve"],
@@ -92,7 +91,25 @@ def _create_container(
         user=image.user,
         labels=_labels(resource, image.image_id),
         volumes=volumes,
+        tmpfs=tmpfs,
     )
+
+
+def _ssh_copy_tmpfs(
+    resource: _CredentialResource,
+    credential_path: Path | None,
+    user: str,
+) -> dict[str, str]:
+    if resource.protocol is not _CredentialProtocol.SSH or credential_path is None:
+        return {}
+    uid, separator, gid = user.partition(":")
+    if not separator:
+        gid = uid
+    return {
+        container_project_path(credential_path).as_posix(): (
+            f"rw,uid={uid},gid={gid},mode=0700"
+        )
+    }
 
 
 def _prepare_volume(
@@ -150,7 +167,6 @@ def _labels(resource: _CredentialResource, image_id: str | None) -> dict[str, st
     labels = {
         _RESOURCE_LABEL: _RESOURCE_VALUE,
         _PROTOCOL_LABEL: resource.protocol.value,
-        _VERSION_LABEL: _RESOURCE_VERSION,
     }
     if image_id is not None:
         labels[_IMAGE_ID_LABEL] = image_id

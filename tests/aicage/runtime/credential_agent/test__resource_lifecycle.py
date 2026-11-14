@@ -9,6 +9,26 @@ from aicage.runtime.credential_agent._resource_models import (
 
 
 class ResourceLifecycleTests(TestCase):
+    def test_ssh_copy_tmpfs_uses_the_target_key_directory(self) -> None:
+        definition = _resources([_CredentialProtocol.SSH])[0]
+
+        self.assertEqual(
+            {"/test-tmp/.ssh": "rw,uid=1000,gid=1001,mode=0700"},
+            _resource_lifecycle._ssh_copy_tmpfs(
+                definition, Path("/test-tmp/.ssh"), "1000:1001"
+            ),
+        )
+
+    def test_gpg_has_no_ssh_copy_tmpfs(self) -> None:
+        definition = _resources([_CredentialProtocol.GPG])[0]
+
+        self.assertEqual(
+            {},
+            _resource_lifecycle._ssh_copy_tmpfs(
+                definition, Path("/test-tmp/.gnupg"), "1000:1001"
+            ),
+        )
+
     def test_labels_for_reads_attributes_and_config_labels(self) -> None:
         resource = mock.Mock(
             labels=None,

@@ -128,7 +128,7 @@ class GpgForwardingTests(TestCase):
         ):
             self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
 
-    def test_gpg_forwarding_uses_direct_socket_and_public_files(self) -> None:
+    def test_gpg_forwarding_uses_a_direct_socket(self) -> None:
         home = Path("/test-tmp/gnupg")
         socket = home / "S.gpg-agent"
         public_keyring = home / "pubring.kbx"
@@ -145,17 +145,10 @@ class GpgForwardingTests(TestCase):
         ):
             plan = _gpg_forwarding._gpg_forwarding()
         assert plan is not None
-        self.assertEqual(
-            [
-                BindMountSpec(socket, PurePosixPath("/test-tmp/gnupg/S.gpg-agent")),
-                BindMountSpec(
-                    public_keyring, PurePosixPath("/test-tmp/gnupg/pubring.kbx"), True
-                ),
-            ],
-            plan.target_mounts,
-        )
-        self.assertEqual([EnvVar("GNUPGHOME", "/test-tmp/gnupg")], plan.target_env)
+        self.assertEqual([], plan.target_mounts)
+        self.assertEqual([], plan.target_env)
         self.assertFalse(plan.requires_sidecar)
+        self.assertEqual(socket, plan.direct_socket)
         self.assertEqual(home, plan.credential_home)
 
     def test_prepare_direct_gpg_keys_unlocks_each_secret_key(self) -> None:

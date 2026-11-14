@@ -8,9 +8,7 @@ from pathlib import PurePosixPath
 _RESOURCE_LABEL = "org.aicage.resource"
 _RESOURCE_VALUE = "credential-agent"
 _PROTOCOL_LABEL = "org.aicage.credential-agent.protocol"
-_VERSION_LABEL = "org.aicage.credential-agent.version"
 _IMAGE_ID_LABEL = "org.aicage.credential-agent.image-id"
-_RESOURCE_VERSION = "1"
 
 
 class _CredentialProtocol(StrEnum):

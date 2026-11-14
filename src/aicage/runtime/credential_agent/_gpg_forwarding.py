@@ -46,12 +46,22 @@ class _GpgForwardingPlan:
     target_mounts: list[BindMountSpec]
     target_env: list[EnvVar]
     requires_sidecar: bool
+    direct_socket: Path | None = None
 
     @contextmanager
     def sidecar_target_args(
         self, resource: _CredentialResource
     ) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
         with _gpg_sidecar_target_args(resource, self.credential_home) as args:
+            yield args
+
+    @contextmanager
+    def direct_target_args(self) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+        if self.direct_socket is None:
+            raise RuntimeError("The GnuPG forwarding plan has no direct agent socket.")
+        with _gpg_direct_target_args(
+            self.direct_socket, self.credential_home
+        ) as args:
             yield args
 
 
@@ -64,17 +74,14 @@ def _gpg_forwarding() -> _GpgForwardingPlan | None:
     gpg_home = resolve_gpg_home()
     if gpg_home is None:
         return None
-    container_home = container_project_path(gpg_home)
     socket = _direct_gpg_socket()
     if socket is not None:
         return _GpgForwardingPlan(
             gpg_home,
-            [
-                BindMountSpec(socket, container_home / _GPG_SOCKET_NAME),
-                *_gpg_support_mounts(gpg_home),
-            ],
-            [EnvVar(_GNUPGHOME, container_home.as_posix())],
+            [],
+            [],
             False,
+            socket,
         )
     return _GpgForwardingPlan(gpg_home, [], [], True)
 
@@ -174,6 +181,25 @@ def _gpg_sidecar_target_args(
                 VolumeMountSpec(
                     resource.volume_name, resource.socket_directory, True
                 ),
+            ],
+            [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
+        )
+
+
+@contextmanager
+def _gpg_direct_target_args(
+    socket: Path, gpg_home: Path
+) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+    with tempfile.TemporaryDirectory(
+        dir=gpg_home.parent, prefix=".aicage-gpg-"
+    ) as directory:
+        client_home = Path(directory)
+        _copy_gpg_support_files(gpg_home, client_home)
+        yield (
+            [
+                BindMountSpec(client_home, _GPG_CLIENT_HOME, True),
+                BindMountSpec(socket, _GPG_CLIENT_HOME / _GPG_SOCKET_NAME),
+                *_external_gpg_support_mounts(gpg_home),
             ],
             [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
         )

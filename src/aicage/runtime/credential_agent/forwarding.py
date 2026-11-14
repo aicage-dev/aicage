@@ -47,7 +47,7 @@ def forwarding(
 
     if _gpg_enabled(context, agent):
         gpg_plan = _gpg_forwarding()
-        if gpg_plan is not None:
+        if gpg_plan is not None and gpg_plan.requires_sidecar:
             mounts.extend(gpg_plan.target_mounts)
             env.extend(gpg_plan.target_env)
         if gpg_plan is not None and gpg_plan.requires_sidecar:
@@ -66,8 +66,17 @@ def forwarding(
             gpg_resource = resource
         else:
             _append_sidecar_target_args(resource, mounts, env)
-    if gpg_resource is None or gpg_plan is None:
+    if gpg_plan is None:
         yield mounts, env
+        return
+    if gpg_resource is None:
+        if gpg_plan.direct_socket is None:
+            yield mounts, env
+            return
+        with gpg_plan.direct_target_args() as (direct_mounts, direct_env):
+            mounts.extend(direct_mounts)
+            env.extend(direct_env)
+            yield mounts, env
         return
     with gpg_plan.sidecar_target_args(gpg_resource) as (
         sidecar_mounts,

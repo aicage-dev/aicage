@@ -26,7 +26,6 @@ class CredentialAgentResourcesTests(TestCase):
         self._labels = {
             "org.aicage.resource": "credential-agent",
             "org.aicage.credential-agent.protocol": "ssh",
-            "org.aicage.credential-agent.version": "1",
             "org.aicage.credential-agent.image-id": "image-id",
         }
 
@@ -50,7 +49,6 @@ class CredentialAgentResourcesTests(TestCase):
             labels={
                 "org.aicage.resource": "credential-agent",
                 "org.aicage.credential-agent.protocol": "ssh",
-                "org.aicage.credential-agent.version": "1",
             },
         )
         self.assertEqual(3, client.containers.run.call_count)
@@ -133,26 +131,6 @@ class CredentialAgentResourcesTests(TestCase):
             _resources._ensure_resources(
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
-
-    def test__ensure_resources_replaces_stale_resource_version(self) -> None:
-        client = mock.Mock()
-        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
-        labels = {**self._labels, "org.aicage.credential-agent.version": "old"}
-        container = self._container(labels=labels, status="running")
-        client.volumes.get.return_value = volume
-        client.containers.get.return_value = container
-        client.containers.run.side_effect = [
-            None,
-            self._container(status="running"),
-            None,
-        ]
-
-        with self._client(client):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
-            )
-
-        container.remove.assert_called_once_with(force=True)
 
     def test__ensure_resources_mounts_credentials_only_in_sidecar(self) -> None:
         client = mock.Mock()
