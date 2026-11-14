@@ -1,7 +1,10 @@
 """SSH key loading through a credential sidecar."""
 
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import PurePosixPath
+from typing import TextIO
 
 from docker.client import DockerClient
 from docker.errors import DockerException
@@ -53,23 +56,39 @@ def _load_ssh_key(
 def _load_ssh_key_interactively(
     resource: _CredentialResource, key_path: PurePosixPath
 ) -> None:
-    result = run_docker_command(
-        [
-            "docker",
-            "exec",
-            "-it",
-            resource.container_name,
-            "credential-agent",
-            "ssh",
-            "load",
-            key_path.as_posix(),
-        ],
-        check=False,
-    )
+    with _terminal_streams() as (stdin, stdout):
+        result = run_docker_command(
+            [
+                "docker",
+                "exec",
+                "-it",
+                resource.container_name,
+                "credential-agent",
+                "ssh",
+                "load",
+                key_path.as_posix(),
+            ],
+            check=False,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stdout,
+        )
     if result.returncode != 0:
         raise DockerError(
             f"Failed to load SSH key '{key_path.name}' into the credential sidecar."
         )
+
+
+@contextmanager
+def _terminal_streams() -> Iterator[tuple[TextIO, TextIO]]:
+    try:
+        with (
+            open("/dev/tty", encoding="utf-8") as stdin,
+            open("/dev/tty", "w", encoding="utf-8") as stdout,
+        ):
+            yield stdin, stdout
+    except OSError as exc:
+        raise DockerError("Cannot attach SSH passphrase entry to the terminal.") from exc
 
 
 def _list_ssh_identities(resource: _CredentialResource) -> list[str]:

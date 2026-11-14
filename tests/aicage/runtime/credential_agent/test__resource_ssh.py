@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from pathlib import PurePosixPath
 from unittest import TestCase, mock
 
@@ -75,6 +76,42 @@ class ResourceSshTests(TestCase):
             _resource_ssh._load_ssh_key(
                 resource, PurePosixPath("/credential/ssh/id_ed25519"), ""
             )
+
+    def test_load_ssh_key_interactively_attaches_the_terminal(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        stdin = mock.Mock()
+        stdout = mock.Mock()
+        result = mock.Mock(returncode=0)
+        with (
+            mock.patch.object(
+                _resource_ssh,
+                "_terminal_streams",
+                return_value=nullcontext((stdin, stdout)),
+            ),
+            mock.patch.object(
+                _resource_ssh, "run_docker_command", return_value=result
+            ) as run_mock,
+        ):
+            _resource_ssh._load_ssh_key_interactively(
+                resource, PurePosixPath("/credential/ssh/id_ed25519")
+            )
+
+        run_mock.assert_called_once_with(
+            [
+                "docker",
+                "exec",
+                "-it",
+                resource.container_name,
+                "credential-agent",
+                "ssh",
+                "load",
+                "/credential/ssh/id_ed25519",
+            ],
+            check=False,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stdout,
+        )
 
     def test_list_ssh_identities_returns_sidecar_public_keys(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
