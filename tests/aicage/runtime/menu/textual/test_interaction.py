@@ -51,6 +51,17 @@ class ExecuteImageSetupTests(TestCase):
 
         run_mock.assert_called_once_with(inline=True)
 
+    def test_execute_credential_image_setup(self) -> None:
+        resolved = interaction.TextualInteraction(ExecutionReporter())
+
+        with mock.patch(
+            "aicage.runtime.menu.textual.interaction.ExecutionApp.run",
+            return_value=None,
+        ) as run_mock:
+            resolved.execute_credential_image_setup()
+
+        run_mock.assert_called_once_with(inline=True)
+
 
 class TextualInteractionTests(TestCase):
     def test_reporter(self) -> None:

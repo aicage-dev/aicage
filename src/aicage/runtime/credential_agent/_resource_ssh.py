@@ -65,7 +65,7 @@ def _load_ssh_key_interactively(
                 resource.container_name,
                 "credential-agent",
                 "ssh",
-                "load",
+                "load-interactive",
                 key_path.as_posix(),
             ],
             check=False,

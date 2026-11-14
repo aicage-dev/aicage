@@ -17,6 +17,17 @@ class NoneInteractionTests(TestCase):
 
         self.assertEqual("_NoneInteraction", resolved.__class__.__name__)
 
+    def test_execute_credential_image_setup(self) -> None:
+        reporter = mock.Mock()
+        resolved = _none_interaction._NoneInteraction(reporter)
+
+        with mock.patch(
+            "aicage.runtime.menu._none_interaction.ensure_credential_image"
+        ) as ensure_mock:
+            resolved.execute_credential_image_setup()
+
+        ensure_mock.assert_called_once_with(reporter)
+
 
 class ConfigureRunTests(TestCase):
     def test_configure_run(self) -> None:

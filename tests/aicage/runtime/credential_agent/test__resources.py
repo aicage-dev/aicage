@@ -1,4 +1,5 @@
-from contextlib import AbstractContextManager
+from collections.abc import Iterator
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from unittest import TestCase, mock
 
@@ -207,15 +208,27 @@ class CredentialAgentResourcesTests(TestCase):
                 [self._ssh], "image:tag", "image-id", "1000:1000"
             )
 
-    def test__ensure_resources_reconciles_while_resources_are_locked(self) -> None:
+    def test__ensure_resources_reconciles_after_releasing_resources_lock(self) -> None:
         client = mock.Mock()
         volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
         container = self._container(status="running")
         client.volumes.get.return_value = volume
         client.containers.get.return_value = container
-        reconcile = mock.Mock()
+        events: list[str] = []
 
-        with self._client(client):
+        @contextmanager
+        def resource_lock() -> object:
+            events.append("locked")
+            yield
+            events.append("released")
+
+        def reconcile(_resources: list[object]) -> None:
+            events.append("reconciled")
+
+        with (
+            self._client(client),
+            mock.patch.object(_resources, "_resource_lock", resource_lock),
+        ):
             _resources._ensure_resources(
                 [self._ssh],
                 "image:tag",
@@ -224,7 +237,7 @@ class CredentialAgentResourcesTests(TestCase):
                 ResourceSetup(reconcile=reconcile),
             )
 
-        reconcile.assert_called_once_with([self._resource])
+        self.assertEqual(["locked", "released", "reconciled"], events)
 
     def test_resource_lock_translates_contention_error(self) -> None:
         with (
@@ -244,11 +257,18 @@ class CredentialAgentResourcesTests(TestCase):
 
         self.assertEqual(1, len(resources))
 
-    def _client(self, client: mock.Mock) -> AbstractContextManager[object]:
-        return mock.patch(
-            "aicage.runtime.credential_agent._resources.get_docker_client",
-            return_value=client,
-        )
+    @contextmanager
+    def _client(self, client: mock.Mock) -> Iterator[None]:
+        with (
+            mock.patch(
+                "aicage.runtime.credential_agent._resources.get_docker_client",
+                return_value=client,
+            ),
+            mock.patch.object(
+                _resources, "_resource_lock", return_value=nullcontext()
+            ),
+        ):
+            yield
 
     def _container(
         self,

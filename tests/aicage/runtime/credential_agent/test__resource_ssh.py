@@ -104,7 +104,7 @@ class ResourceSshTests(TestCase):
                 resource.container_name,
                 "credential-agent",
                 "ssh",
-                "load",
+                "load-interactive",
                 "/credential/ssh/id_ed25519",
             ],
             check=False,

@@ -23,7 +23,9 @@ class DockerCliTests(TestCase):
         ):
             result = run_docker_command(["docker", "run"], check=True)
 
-        run_mock.assert_called_once_with(["docker", "run"], stdout=None, stderr=None)
+        run_mock.assert_called_once_with(
+            ["docker", "run"], stdin=None, stdout=None, stderr=None
+        )
         register_mock.assert_called_once_with(process)
         assert result.returncode == 0
 

@@ -2,6 +2,7 @@ from aicage.cli_types import ConfigUpdateArgs
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
+from aicage.registry.credential_image import ensure_credential_image
 from aicage.registry.ensure_image import ensure_image
 from aicage.registry.image_selection.interaction import (
     BaseChoiceRequest,
@@ -97,6 +98,9 @@ class _NoneInteraction:
             update_approved=update_approved,
             reporter=self.reporter,
         )
+
+    def execute_credential_image_setup(self) -> None:
+        ensure_credential_image(self.reporter)
 
 
 class _NonInteractiveSelectionInteraction:
