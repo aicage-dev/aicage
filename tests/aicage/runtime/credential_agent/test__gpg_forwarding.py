@@ -1,4 +1,5 @@
 import tempfile
+from contextlib import nullcontext
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
@@ -150,6 +151,24 @@ class GpgForwardingTests(TestCase):
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(socket, plan.direct_socket)
         self.assertEqual(home, plan.credential_home)
+
+    def test_direct_target_args_uses_the_direct_agent_socket(self) -> None:
+        home = Path("/test-tmp/gnupg")
+        socket = home / "S.gpg-agent"
+        plan = _gpg_forwarding._GpgForwardingPlan(home, [], [], False, socket)
+        expected = (
+            [BindMountSpec(Path("/test-tmp/client"), PurePosixPath("/client"))],
+            [EnvVar("GNUPGHOME", "/client")],
+        )
+        with mock.patch.object(
+            _gpg_forwarding,
+            "_gpg_direct_target_args",
+            return_value=nullcontext(expected),
+        ) as target_args:
+            with plan.direct_target_args() as actual:
+                self.assertEqual(expected, actual)
+
+        target_args.assert_called_once_with(socket, home)
 
     def test_prepare_direct_gpg_keys_unlocks_each_secret_key(self) -> None:
         home = Path("/test-tmp/gnupg")
