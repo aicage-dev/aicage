@@ -176,10 +176,7 @@ class GitSupportTests(TestCase):
 
     def test_resolve_gpg_secret_key_state_skips_unusable_primary_keys(self) -> None:
         output = (
-            "sec:e::::\n"
-            "fpr:::::::::EXPIRED:\n"
-            "sec:u::::\n"
-            "fpr:::::::::USABLE:\n"
+            "sec:e::::\n" "fpr:::::::::EXPIRED:\n" "sec:u::::\n" "fpr:::::::::USABLE:\n"
         )
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
             fingerprints, _keygrips = git_support.resolve_gpg_secret_key_state()
@@ -227,9 +224,7 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
                 mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
                 mock.patch(f"{_MODULE}.has_gpg_support", return_value=True),
-                mock.patch(
-                    f"{_MODULE}.resolve_gpg_home", return_value=Path(tmp_dir)
-                ),
+                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=Path(tmp_dir)),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -254,9 +249,7 @@ class GitSupportTests(TestCase):
                 mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
                 mock.patch(f"{_MODULE}.has_ssh_support", return_value=False),
                 mock.patch(f"{_MODULE}.has_gpg_support", return_value=True),
-                mock.patch(
-                    f"{_MODULE}.resolve_gpg_home", return_value=Path(tmp_dir)
-                ),
+                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=Path(tmp_dir)),
             ):
                 items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 
@@ -324,7 +317,9 @@ class GitSupportTests(TestCase):
             mock.patch(f"{_MODULE}.resolve_git_root", return_value=project_path),
             mock.patch(f"{_MODULE}.has_ssh_support", return_value=True),
             mock.patch(f"{_MODULE}.has_gpg_support", return_value=True),
-            mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=Path("/test-tmp/gnupg")),
+            mock.patch(
+                f"{_MODULE}.resolve_gpg_home", return_value=Path("/test-tmp/gnupg")
+            ),
         ):
             items = git_support._git_support_prompt_items(project_path, mounts_cfg)
 

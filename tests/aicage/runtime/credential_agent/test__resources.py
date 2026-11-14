@@ -243,9 +243,7 @@ class CredentialAgentResourcesTests(TestCase):
                 "aicage.runtime.credential_agent._resources.get_docker_client",
                 return_value=client,
             ),
-            mock.patch.object(
-                _resources, "_resource_lock", return_value=nullcontext()
-            ),
+            mock.patch.object(_resources, "_resource_lock", return_value=nullcontext()),
         ):
             yield
 
