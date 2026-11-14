@@ -17,6 +17,10 @@ _TEST_WIP_NODE_IDS = {
     "tests/aicage/integration/test_gpg_agent.py::test_gpg_agent_signs_through_sidecar",
     (
         "tests/aicage/integration/test_gpg_agent.py::"
+        "test_cached_protected_gpg_key_signs_through_direct_agent"
+    ),
+    (
+        "tests/aicage/integration/test_gpg_agent.py::"
         "test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret"
     ),
     "tests/aicage/integration/test_gpg_agent.py::test_gpg_sidecar_removes_deleted_host_keys",
