@@ -197,9 +197,26 @@ class GpgForwardingTests(TestCase):
             self.assertIn("--detach-sign", command)
             self.assertFalse(call.kwargs["check"])
             self.assertTrue(call.kwargs["capture_output"])
-            self.assertIsNone(call.kwargs["input"])
 
-    def test_prepare_direct_gpg_keys_retries_protected_key_with_keyring_secret(self) -> None:
+    def test_prepare_direct_gpg_keys_rejects_uncached_noninteractive_key(self) -> None:
+        home = Path("/test-tmp/gnupg")
+        with (
+            mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
+            mock.patch.object(
+                _gpg_forwarding,
+                "resolve_gpg_secret_key_state",
+                return_value=(["FINGERPRINT"], set()),
+            ),
+            mock.patch.object(
+                _gpg_forwarding.subprocess, "run", return_value=mock.Mock(returncode=2)
+            ) as run_mock,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "not cached"):
+                _gpg_forwarding._prepare_direct_gpg_keys(home, interactive=False)
+
+        run_mock.assert_called_once()
+
+    def test_prepare_direct_gpg_keys_uses_host_gpg_interactively(self) -> None:
         home = Path("/test-tmp/gnupg")
         with (
             mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
@@ -213,45 +230,13 @@ class GpgForwardingTests(TestCase):
                 "run",
                 side_effect=[mock.Mock(returncode=2), mock.Mock(returncode=0)],
             ) as run_mock,
-            mock.patch.object(
-                _gpg_forwarding, "_gpg_passphrase", return_value="secret"
-            ) as passphrase_mock,
         ):
-            _gpg_forwarding._prepare_direct_gpg_keys(home, interactive=False)
+            _gpg_forwarding._prepare_direct_gpg_keys(home, interactive=True)
 
-        passphrase_mock.assert_called_once_with("FINGERPRINT", interactive=False)
         self.assertEqual(2, run_mock.call_count)
-        retry = run_mock.call_args_list[1]
-        self.assertEqual("loopback", retry.args[0][3])
-        self.assertIn("--passphrase-fd", retry.args[0])
-        self.assertEqual("secret\n", retry.kwargs["input"])
+        self.assertNotIn("--batch", run_mock.call_args_list[1].args[0])
 
-    def test_prepare_direct_gpg_keys_propagates_missing_noninteractive_secret(self) -> None:
-        home = Path("/test-tmp/gnupg")
-        with (
-            mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
-            mock.patch.object(
-                _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=(["FINGERPRINT"], set()),
-            ),
-            mock.patch.object(
-                _gpg_forwarding.subprocess,
-                "run",
-                return_value=mock.Mock(returncode=2),
-            ) as run_mock,
-            mock.patch.object(
-                _gpg_forwarding,
-                "_gpg_passphrase",
-                side_effect=RuntimeError("No stored passphrase"),
-            ),
-        ):
-            with self.assertRaisesRegex(RuntimeError, "No stored passphrase"):
-                _gpg_forwarding._prepare_direct_gpg_keys(home, interactive=False)
-
-        run_mock.assert_called_once()
-
-    def test_reload_gpg_keys_loads_protected_keys(self) -> None:
+    def test_reload_gpg_keys_loads_protected_keys_interactively(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
@@ -268,26 +253,14 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_cached", return_value=False
             ),
-            mock.patch.object(
-                _gpg_forwarding,
-                "_gpg_passphrase",
-                side_effect=["first secret", "second secret"],
-            ) as passphrase_mock,
-            mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
+            mock.patch.object(_gpg_forwarding, "_load_gpg_key_interactively") as load_mock,
         ):
-            _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
+            _gpg_forwarding._reload_gpg_keys([resource], interactive=True)
 
         self.assertEqual(
             [
-                mock.call("FIRST", interactive=False),
-                mock.call("SECOND", interactive=False),
-            ],
-            passphrase_mock.call_args_list,
-        )
-        self.assertEqual(
-            [
-                mock.call(resource, "FIRST", "first secret"),
-                mock.call(resource, "SECOND", "second secret"),
+                mock.call(resource, "FIRST"),
+                mock.call(resource, "SECOND"),
             ],
             load_mock.call_args_list,
         )
@@ -304,7 +277,6 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(_gpg_forwarding, "_reset_gpg_agent") as reset_mock,
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
-
         reset_mock.assert_called_once_with(resource)
 
     def test_reload_gpg_keys_skips_cached_protected_keys(self) -> None:
@@ -320,11 +292,9 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding, "_gpg_key_is_protected", return_value=True
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_key_is_cached", return_value=True),
-            mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
+            mock.patch.object(_gpg_forwarding, "_load_gpg_key_interactively"),
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
-
-        load_mock.assert_not_called()
 
     def test_reload_gpg_keys_skips_an_unprotected_key(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
@@ -338,49 +308,6 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_protected", return_value=False
             ),
-            mock.patch.object(_gpg_forwarding, "_load_gpg_key") as load_mock,
+            mock.patch.object(_gpg_forwarding, "_load_gpg_key_interactively"),
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
-
-        load_mock.assert_not_called()
-
-    def test_gpg_passphrase_uses_the_stored_keyring_secret(self) -> None:
-        with mock.patch.object(
-            _gpg_forwarding, "get_secret", return_value="secret"
-        ) as get_mock:
-            actual = _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=False)
-
-        self.assertEqual("secret", actual)
-        get_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT")
-
-    def test_gpg_passphrase_requires_interactive_setup_for_a_missing_secret(
-        self,
-    ) -> None:
-        with (
-            mock.patch.object(
-                _gpg_forwarding,
-                "get_secret",
-                side_effect=_gpg_forwarding.SecretNotFoundError(),
-            ),
-            mock.patch.object(_gpg_forwarding.sys.stdin, "isatty", return_value=False),
-            self.assertRaisesRegex(RuntimeError, "Open the terminal configuration UI"),
-        ):
-            _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=False)
-
-    def test_gpg_passphrase_stores_an_interactive_secret(self) -> None:
-        with (
-            mock.patch.object(
-                _gpg_forwarding,
-                "get_secret",
-                side_effect=_gpg_forwarding.SecretNotFoundError(),
-            ),
-            mock.patch.object(_gpg_forwarding.sys.stdin, "isatty", return_value=True),
-            mock.patch.object(_gpg_forwarding, "getpass", return_value="secret"),
-            mock.patch.object(_gpg_forwarding, "set_secret") as set_mock,
-        ):
-            self.assertEqual(
-                "secret",
-                _gpg_forwarding._gpg_passphrase("FINGERPRINT", interactive=True),
-            )
-
-        set_mock.assert_called_once_with("aicage/gpg/passphrase/FINGERPRINT", "secret")

@@ -5,14 +5,13 @@ from docker.errors import DockerException
 from docker.models.containers import Container
 
 from aicage.docker.errors import DockerError
+from aicage.docker.execution.cli import run_docker_command
 from aicage.docker.execution.client import get_docker_client
 
 from ._resource_lifecycle import _find_container
 from ._resource_models import _CredentialResource
 from ._resource_ssh import (
-    _close_exec_stream,
-    _wait_for_exec_completion,
-    _write_exec_input,
+    _terminal_streams,
 )
 
 
@@ -87,30 +86,25 @@ def _run_gpg_command(
     return output.decode("utf-8")
 
 
-def _load_gpg_key(
-    resource: _CredentialResource, fingerprint: str, passphrase: str
-) -> None:
-    """Load one secret key through the sidecar's stdin-only image contract."""
-    client = get_docker_client()
-    container = _sidecar_container(client, resource)
-    try:
-        created = client.api.exec_create(
-            container.id,
-            ["credential-agent", "gpg", "load", fingerprint],
-            stdin=True,
+def _load_gpg_key_interactively(resource: _CredentialResource, fingerprint: str) -> None:
+    with _terminal_streams() as (stdin, stdout):
+        result = run_docker_command(
+            [
+                "docker",
+                "exec",
+                "-it",
+                resource.container_name,
+                "credential-agent",
+                "gpg",
+                "load-interactive",
+                fingerprint,
+            ],
+            check=False,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stdout,
         )
-        execution_id = created["Id"]
-        stream = client.api.exec_start(execution_id, socket=True)
-        try:
-            _write_exec_input(stream, passphrase.encode("utf-8") + b"\n")
-        finally:
-            _close_exec_stream(stream)
-        result = _wait_for_exec_completion(client, execution_id)
-    except (DockerException, OSError, KeyError) as exc:
-        raise DockerError(
-            f"Failed to load GnuPG key '{fingerprint}' into the credential sidecar."
-        ) from exc
-    if result.get("ExitCode") != 0:
+    if result.returncode != 0:
         raise DockerError(
             f"Failed to load GnuPG key '{fingerprint}' into the credential sidecar."
         )

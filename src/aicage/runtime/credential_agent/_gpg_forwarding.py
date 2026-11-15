@@ -2,12 +2,10 @@
 
 import os
 import subprocess  # nosec B404 -- GnuPG readiness uses a fixed host command.
-import sys
 import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from getpass import getpass
 from pathlib import Path, PurePosixPath
 from shutil import copy2, which
 
@@ -26,12 +24,10 @@ from ._resource_gpg import (
     _gpg_key_is_cached,
     _gpg_key_is_protected,
     _gpg_keygrips,
-    _load_gpg_key,
+    _load_gpg_key_interactively,
     _reset_gpg_agent,
 )
 from ._resource_models import _CredentialProtocol, _CredentialResource
-from .keyring.errors import KeyringError, SecretNotFoundError
-from .keyring.keyring import get_secret, set_secret
 
 _GNUPGHOME = "GNUPGHOME"
 _GPG_SOCKET_NAME = "S.gpg-agent"
@@ -101,11 +97,13 @@ def _reload_gpg_keys(
         if _gpg_key_is_protected(resource, fingerprint) and not _gpg_key_is_cached(
             resource, fingerprint
         ):
-            _load_gpg_key(
-                resource,
-                fingerprint,
-                _gpg_passphrase(fingerprint, interactive=interactive),
-            )
+            if not interactive:
+                raise RuntimeError(
+                    "GnuPG key "
+                    f"'{fingerprint}' is not cached in the credential sidecar. "
+                    "Open the terminal configuration UI to load this key."
+                )
+            _load_gpg_key_interactively(resource, fingerprint)
 
 
 def _prepare_direct_gpg_keys(gpg_home: Path, *, interactive: bool) -> None:
@@ -120,9 +118,13 @@ def _prepare_direct_gpg_keys(gpg_home: Path, *, interactive: bool) -> None:
             signature = Path(directory) / f"{fingerprint}.sig"
             if _sign_with_direct_gpg(gpg_home, fingerprint, message, signature):
                 continue
-            passphrase = _gpg_passphrase(fingerprint, interactive=interactive)
-            if not _sign_with_direct_gpg(
-                gpg_home, fingerprint, message, signature, passphrase
+            if not interactive:
+                raise RuntimeError(
+                    f"GnuPG key '{fingerprint}' is not cached in the host agent. "
+                    "Open the terminal configuration UI to load this key."
+                )
+            if not _sign_with_direct_gpg_interactively(
+                gpg_home, fingerprint, message, signature
             ):
                 raise RuntimeError(
                     f"Failed to unlock GnuPG key '{fingerprint}' before starting the agent."
@@ -134,16 +136,13 @@ def _sign_with_direct_gpg(
     fingerprint: str,
     message: Path,
     signature: Path,
-    passphrase: str | None = None,
 ) -> bool:
     command = [
         _gpg(),
         "--batch",
         "--pinentry-mode",
-        "loopback" if passphrase is not None else "error",
+        "error",
     ]
-    if passphrase is not None:
-        command.extend(["--passphrase-fd", "0"])
     command.extend(
         [
             "--homedir",
@@ -160,34 +159,32 @@ def _sign_with_direct_gpg(
         command,
         check=False,
         capture_output=True,
-        input=f"{passphrase}\n" if passphrase is not None else None,
         text=True,
-    )  # nosec B603 -- fixed GnuPG command and locally resolved key identifiers.
+    )  # nosec B603 -- The fixed GnuPG executable receives an argument vector, never a shell command.
     return result.returncode == 0
 
 
-def _gpg_passphrase(fingerprint: str, *, interactive: bool) -> str:
-    secret_name = f"aicage/gpg/passphrase/{fingerprint}"
-    try:
-        return get_secret(secret_name)
-    except SecretNotFoundError:
-        if not interactive or not sys.stdin.isatty():
-            raise RuntimeError(
-                "No passphrase for GnuPG key "
-                f"'{fingerprint}' is stored in the platform keyring. "
-                "Open the terminal configuration UI to add this key."
-            ) from None
-        passphrase = getpass(f"Passphrase for GnuPG key {fingerprint}: ")
-        if not passphrase:
-            raise RuntimeError(
-                f"No passphrase was supplied for GnuPG key '{fingerprint}'."
-            ) from None
-        set_secret(secret_name, passphrase)
-        return passphrase
-    except KeyringError as exc:
-        raise RuntimeError(
-            f"Cannot access the platform keyring for GnuPG key '{fingerprint}'."
-        ) from exc
+def _sign_with_direct_gpg_interactively(
+    gpg_home: Path,
+    fingerprint: str,
+    message: Path,
+    signature: Path,
+) -> bool:
+    result = subprocess.run(
+        [
+            _gpg(),
+            "--homedir",
+            str(gpg_home),
+            "--local-user",
+            fingerprint,
+            "--detach-sign",
+            "--output",
+            str(signature),
+            str(message),
+        ],
+        check=False,
+    )  # nosec B603 -- The fixed GnuPG executable receives an argument vector, never a shell command.
+    return result.returncode == 0
 
 
 def _gpg() -> str:
@@ -273,5 +270,5 @@ def _direct_gpg_socket() -> Path | None:
         check=False,
         capture_output=True,
         text=True,
-    )  # nosec B603
+    )  # nosec B603 -- The fixed gpg-connect-agent executable receives an argument vector, never a shell command.
     return socket if result.returncode == 0 else None

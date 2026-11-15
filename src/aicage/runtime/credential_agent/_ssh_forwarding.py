@@ -1,7 +1,6 @@
 """SSH credential-forwarding operations."""
 
 import subprocess  # nosec B404 -- SSH key inspection uses fixed local commands.
-import sys
 from pathlib import Path, PurePosixPath
 from shutil import which
 
@@ -19,8 +18,6 @@ from ._resource_ssh import (
     _load_ssh_key_interactively,
     _remove_ssh_identity,
 )
-from .keyring.errors import KeyringError, SecretNotFoundError
-from .keyring.keyring import get_secret
 
 _SSH_AUTH_SOCK = "SSH_AUTH_SOCK"
 _SSH_SOCKET_DIRECTORY = PurePosixPath("/run/credential-agent")
@@ -83,30 +80,15 @@ def _reload_ssh_keys(
             _remove_ssh_identity(resource, identity)
     for fingerprint, (key, sidecar_key, target_key) in desired_keys.items():
         if fingerprint not in sidecar_keys:
-            passphrase = _ssh_passphrase(key, interactive=interactive)
-            if passphrase is None:
+            if _ssh_key_is_encrypted(key):
+                if not interactive:
+                    raise RuntimeError(
+                        f"SSH key '{key.name}' is not loaded in the credential sidecar. "
+                        "Open the terminal configuration UI to load this key."
+                    )
                 _load_ssh_key_interactively(resource, sidecar_key, target_key)
             else:
-                _load_ssh_key(resource, sidecar_key, passphrase, target_key)
-
-
-def _ssh_passphrase(key: Path, *, interactive: bool) -> str | None:
-    if not _ssh_key_is_encrypted(key):
-        return ""
-    secret_name = f"aicage/ssh/passphrase/{_ssh_key_fingerprint(key)}"
-    try:
-        return get_secret(secret_name)
-    except SecretNotFoundError:
-        if not interactive or not sys.stdin.isatty():
-            raise RuntimeError(
-                f"No passphrase for SSH key '{key.name}' is stored in the platform keyring. "
-                "Open the terminal configuration UI to add this key."
-            ) from None
-        return None
-    except KeyringError as exc:
-        raise RuntimeError(
-            f"Cannot access the platform keyring for SSH key '{key.name}'."
-        ) from exc
+                _load_ssh_key(resource, sidecar_key, "", target_key)
 
 
 def _ssh_key_is_encrypted(key: Path) -> bool:

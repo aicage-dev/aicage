@@ -90,25 +90,29 @@ class ResourceGpgTests(TestCase):
             ["credential-agent", "gpg", "reset"],
         )
 
-    def test_load_gpg_key_streams_passphrase_to_sidecar(self) -> None:
+    def test_load_gpg_key_interactively_attaches_to_the_terminal(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
-        client = mock.Mock()
-        stream = mock.Mock()
-        client.api.exec_create.return_value = {"Id": "exec-id"}
-        client.api.exec_start.return_value = stream
-        client.api.exec_inspect.return_value = {"ExitCode": 0}
-        container = mock.Mock()
+        streams = mock.MagicMock()
+        streams.__enter__.return_value = (mock.Mock(), mock.Mock())
         with (
-            mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
-            mock.patch.object(_resource_gpg, "_find_container", return_value=container),
+            mock.patch.object(_resource_gpg, "_terminal_streams", return_value=streams),
+            mock.patch.object(
+                _resource_gpg,
+                "run_docker_command",
+                return_value=mock.Mock(returncode=0),
+            ) as run_mock,
         ):
-            _resource_gpg._load_gpg_key(resource, "FINGERPRINT", "secret")
+            _resource_gpg._load_gpg_key_interactively(resource, "FINGERPRINT")
 
-        stream.sendall.assert_called_once_with(b"secret\n")
-        client.api.exec_create.assert_called_once_with(
-            container.id,
-            ["credential-agent", "gpg", "load", "FINGERPRINT"],
-            stdin=True,
+        run_mock.assert_called_once_with(
+            [
+                "docker", "exec", "-it", resource.container_name, "credential-agent",
+                "gpg", "load-interactive", "FINGERPRINT",
+            ],
+            check=False,
+            stdin=streams.__enter__.return_value[0],
+            stdout=streams.__enter__.return_value[1],
+            stderr=streams.__enter__.return_value[1],
         )
 
     def test_sidecar_container_rejects_a_missing_sidecar(self) -> None:
