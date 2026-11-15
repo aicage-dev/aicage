@@ -88,9 +88,11 @@ def resolve_gpg_public_files(gpg_home: Path) -> list[Path]:
     paths = [
         path
         for path in (
+            gpg_home / "common.conf",
             gpg_home / "gpg.conf",
             gpg_home / "pubring.kbx",
             gpg_home / "pubring.gpg",
+            gpg_home / "public-keys.d" / "pubring.db",
             gpg_home / "trustdb.gpg",
             gpg_home / "tofu.db",
         )

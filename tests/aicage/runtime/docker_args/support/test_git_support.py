@@ -104,10 +104,15 @@ class GitSupportTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             gpg_home = Path(tmp_dir) / "gnupg"
             gpg_home.mkdir()
+            common_conf = gpg_home / "common.conf"
             (gpg_home / "pubring.kbx").touch()
+            keyboxd_database = gpg_home / "public-keys.d" / "pubring.db"
+            keyboxd_database.parent.mkdir()
+            keyboxd_database.touch()
             (gpg_home / "trustdb.gpg").touch()
             custom_keyring = gpg_home / "custom.kbx"
             custom_keyring.touch()
+            common_conf.write_text("use-keyboxd\n", encoding="utf-8")
             gpg_conf = gpg_home / "gpg.conf"
             gpg_conf.write_text(
                 "keyring custom.kbx\ntrustdb-name missing-trustdb.gpg\n",
@@ -118,8 +123,10 @@ class GitSupportTests(TestCase):
 
         self.assertEqual(
             [
+                common_conf,
                 gpg_conf,
                 gpg_home / "pubring.kbx",
+                keyboxd_database,
                 gpg_home / "trustdb.gpg",
                 custom_keyring,
             ],
