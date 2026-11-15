@@ -1,6 +1,7 @@
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
+from aicage.docker.errors import DockerError
 from aicage.runtime.credential_agent import _ssh_forwarding
 from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
@@ -55,7 +56,7 @@ class SshForwardingTests(TestCase):
             env,
         )
 
-    def test_reload_ssh_keys_loads_missing_unencrypted_key_from_sidecar_mount(
+    def test_reload_ssh_keys_loads_missing_key_with_an_empty_passphrase(
         self,
     ) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
@@ -64,9 +65,6 @@ class SshForwardingTests(TestCase):
             mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
             mock.patch.object(
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
-            ),
-            mock.patch.object(
-                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=False
             ),
             mock.patch.object(
                 _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
@@ -79,6 +77,35 @@ class SshForwardingTests(TestCase):
             resource,
             resource.credential_directory / "id_ed25519",
             "",
+            PurePosixPath("/test-tmp/.ssh/id_ed25519"),
+        )
+
+    def test_reload_ssh_keys_prompts_only_after_empty_passphrase_load_fails(
+        self,
+    ) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_load_ssh_key",
+                side_effect=DockerError("passphrase required"),
+            ),
+            mock.patch.object(_ssh_forwarding, "_load_ssh_key_interactively") as prompt_mock,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=True)
+
+        prompt_mock.assert_called_once_with(
+            resource,
+            resource.credential_directory / "id_ed25519",
             PurePosixPath("/test-tmp/.ssh/id_ed25519"),
         )
 
@@ -129,7 +156,7 @@ class SshForwardingTests(TestCase):
         ):
             _ssh_forwarding._reload_ssh_keys([ssh_resource], interactive=False)
 
-    def test_ssh_key_helpers_interpret_command_results(self) -> None:
+    def test_ssh_key_fingerprint_interprets_command_results(self) -> None:
         key = Path("/test-tmp/id_ed25519")
         with (
             mock.patch.object(
@@ -138,14 +165,10 @@ class SshForwardingTests(TestCase):
             mock.patch.object(
                 _ssh_forwarding.subprocess,
                 "run",
-                side_effect=[
-                    mock.Mock(returncode=1),
-                    mock.Mock(returncode=0, stdout="256 SHA256:key comment"),
-                ],
+                return_value=mock.Mock(returncode=0, stdout="256 SHA256:key comment"),
             ),
             mock.patch.object(Path, "is_file", return_value=False),
         ):
-            self.assertTrue(_ssh_forwarding._ssh_key_is_encrypted(key))
             self.assertEqual("SHA256:key", _ssh_forwarding._ssh_key_fingerprint(key))
 
     def test_ssh_identity_fingerprint_interprets_sidecar_public_key(self) -> None:

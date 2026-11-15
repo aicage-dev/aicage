@@ -58,7 +58,6 @@ def forwarding(
         resolve_container_user(),
         reporter,
         gpg_plan.credential_home if gpg_plan is not None else None,
-        reconcile=partial(_reload_credentials, interactive=False),
     )
     gpg_resource: _CredentialResource | None = None
     for resource in resources:

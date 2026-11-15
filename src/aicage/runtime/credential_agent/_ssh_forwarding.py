@@ -9,6 +9,7 @@ from aicage.runtime._ssh_agent import (
     _resolve_ssh_key_files,
     _resolve_ssh_support_files,
 )
+from aicage.docker.errors import DockerError
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
 from ._resource_models import _CredentialProtocol, _CredentialResource
@@ -80,25 +81,16 @@ def _reload_ssh_keys(
             _remove_ssh_identity(resource, identity)
     for fingerprint, (key, sidecar_key, target_key) in desired_keys.items():
         if fingerprint not in sidecar_keys:
-            if _ssh_key_is_encrypted(key):
-                if not interactive:
+            try:
+                _load_ssh_key(resource, sidecar_key, "", target_key)
+            except DockerError:
+                if interactive:
+                    _load_ssh_key_interactively(resource, sidecar_key, target_key)
+                else:
                     raise RuntimeError(
                         f"SSH key '{key.name}' is not loaded in the credential sidecar. "
                         "Open the terminal configuration UI to load this key."
-                    )
-                _load_ssh_key_interactively(resource, sidecar_key, target_key)
-            else:
-                _load_ssh_key(resource, sidecar_key, "", target_key)
-
-
-def _ssh_key_is_encrypted(key: Path) -> bool:
-    result = subprocess.run(  # nosec B603 -- fixed local key inspection.
-        [_ssh_keygen(), "-y", "-P", "", "-f", str(key)],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode != 0
+                    ) from None
 
 
 def _ssh_key_fingerprint(key: Path) -> str:

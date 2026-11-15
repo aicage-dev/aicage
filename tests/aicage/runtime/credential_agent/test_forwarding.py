@@ -53,7 +53,6 @@ class CredentialAgentForwardingTests(TestCase):
             mock.ANY,
             mock.ANY,
             None,
-            reconcile=mock.ANY,
         )
 
     def test_ensure_ssh_setup_creates_the_required_sidecar(self) -> None:
@@ -224,7 +223,6 @@ class CredentialAgentForwardingTests(TestCase):
             mock.ANY,
             mock.ANY,
             gpg_home,
-            reconcile=mock.ANY,
         )
 
     def test_forwarding_mounts_ssh_and_gpg_socket_volumes_at_distinct_paths(self) -> None:
