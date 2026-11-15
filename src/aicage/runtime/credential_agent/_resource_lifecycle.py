@@ -2,7 +2,8 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import portalocker
 from docker.client import DockerClient
@@ -62,7 +63,7 @@ def _requires_replacement(
     labels = _labels_for(container)
     return (
         labels.get(_IMAGE_ID_LABEL) != image_id
-        or _credential_mount_path(container, resource) != credential_path
+        or not _credential_mount_matches(container, resource, credential_path)
         or _is_unhealthy(container)
     )
 
@@ -234,6 +235,28 @@ def _credential_mount_path(
             source = mount.get("Source")
             return Path(source) if isinstance(source, str) else None
     return None
+
+
+def _credential_mount_matches(
+    container: Container,
+    resource: _CredentialResource,
+    credential_path: Path | None,
+) -> bool:
+    source = _credential_mount_path(container, resource)
+    if source == credential_path:
+        return True
+    if os.name != "nt" or credential_path is None or source is None:
+        return False
+    return source.as_posix().casefold() == _docker_desktop_host_path(
+        credential_path
+    ).as_posix().casefold()
+
+
+def _docker_desktop_host_path(path: Path) -> PurePosixPath:
+    windows_path = PureWindowsPath(path)
+    drive = windows_path.drive.rstrip(":").lower()
+    parts = [part for part in windows_path.parts if part != windows_path.anchor]
+    return PurePosixPath("/run/desktop/mnt/host", drive, *parts)
 
 
 @contextmanager

@@ -80,6 +80,31 @@ class CredentialAgentResourcesTests(TestCase):
         container.remove.assert_not_called()
         self.assertEqual(2, client.containers.run.call_count)
 
+    def test__ensure_resources_keeps_windows_docker_desktop_sidecar(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        container = self._container(status="running")
+        credentials = Path("C:/Users/stefa/.ssh")
+        container.attrs["Mounts"] = [
+            {
+                "Destination": self._resource.credential_directory.as_posix(),
+                "Source": "/run/desktop/mnt/host/c/Users/stefa/.ssh",
+            }
+        ]
+        client.volumes.get.return_value = volume
+        client.containers.get.return_value = container
+
+        with (
+            self._client(client),
+            mock.patch.object(_resources, "HOST_SSH_DIR", credentials),
+            mock.patch.object(Path, "is_dir", return_value=True),
+        ):
+            _resources._ensure_resources(
+                [self._ssh], "image:tag", "image-id", "0:0"
+            )
+
+        container.remove.assert_not_called()
+
     def test__ensure_resources_replaces_unhealthy_or_obsolete_sidecar(self) -> None:
         cases: tuple[tuple[dict[str, str], dict[str, object]], ...] = (
             (self._labels, {"Status": "running", "Health": {"Status": "unhealthy"}}),
