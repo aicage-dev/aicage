@@ -122,6 +122,30 @@ class ResourceSshTests(TestCase):
             stderr=stdout,
         )
 
+    def test_terminal_streams_returns_process_terminal_streams(self) -> None:
+        stdin = mock.Mock()
+        stdout = mock.Mock()
+        stdin.isatty.return_value = True
+        stdout.isatty.return_value = True
+        with (
+            mock.patch.object(_resource_ssh.sys, "stdin", stdin),
+            mock.patch.object(_resource_ssh.sys, "stdout", stdout),
+        ):
+            with _resource_ssh._terminal_streams() as streams:
+                self.assertEqual((stdin, stdout), streams)
+
+    def test_terminal_streams_rejects_noninteractive_input(self) -> None:
+        stdin = mock.Mock()
+        stdout = mock.Mock()
+        stdin.isatty.return_value = False
+        with (
+            mock.patch.object(_resource_ssh.sys, "stdin", stdin),
+            mock.patch.object(_resource_ssh.sys, "stdout", stdout),
+            self.assertRaisesRegex(DockerError, "interactive terminal"),
+        ):
+            with _resource_ssh._terminal_streams():
+                pass
+
     def test_list_ssh_identities_returns_sidecar_public_keys(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         client = mock.Mock()

@@ -3,6 +3,7 @@ from contextlib import nullcontext
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
+from aicage.docker.errors import DockerError
 from aicage.paths import container_project_path
 from aicage.runtime.credential_agent import _gpg_forwarding
 from aicage.runtime.credential_agent._resource_models import (
@@ -72,10 +73,20 @@ class GpgForwardingTests(TestCase):
             external_keyring = parent / "external.kbx"
             public_keyring.write_text("public keyring", encoding="utf-8")
             external_keyring.write_text("external keyring", encoding="utf-8")
-            with mock.patch.object(
-                _gpg_forwarding,
-                "resolve_gpg_public_files",
-                return_value=[public_keyring, external_keyring],
+            with (
+                mock.patch.object(
+                    _gpg_forwarding,
+                    "resolve_gpg_public_files",
+                    return_value=[public_keyring, external_keyring],
+                ),
+                mock.patch.object(_gpg_forwarding, "_create_gpg_socket_link") as link,
+                mock.patch.object(
+                    Path,
+                    "symlink_to",
+                    side_effect=AssertionError(
+                        "The host must not create the GnuPG socket link."
+                    ),
+                ),
             ):
                 plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
                 with plan.sidecar_target_args(resource) as (mounts, env):
@@ -86,10 +97,8 @@ class GpgForwardingTests(TestCase):
                         "public keyring",
                         (client_home / "pubring.kbx").read_text(encoding="utf-8"),
                     )
-                    self.assertEqual(
-                        resource.socket_path.as_posix(),
-                        (client_home / "S.gpg-agent").readlink().as_posix(),
-                    )
+                    link.assert_called_once_with(resource, client_home)
+                    self.assertFalse((client_home / "S.gpg-agent").exists())
                     self.assertEqual(
                         [
                             BindMountSpec(
@@ -103,7 +112,7 @@ class GpgForwardingTests(TestCase):
                             ),
                             VolumeMountSpec(
                                 resource.volume_name,
-                                resource.socket_directory,
+                                _gpg_forwarding._GPG_SOCKET_DIRECTORY,
                                 True,
                             ),
                         ],
@@ -126,6 +135,50 @@ class GpgForwardingTests(TestCase):
             ),
         ):
             self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
+
+    def test_create_gpg_socket_link_uses_a_linux_helper_container(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        client_home = Path("/test-tmp/client-gnupg")
+        client = mock.Mock()
+        with (
+            mock.patch.object(_gpg_forwarding, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _gpg_forwarding, "resolve_container_user", return_value="1000:1001"
+            ),
+        ):
+            _gpg_forwarding._create_gpg_socket_link(resource, client_home)
+
+        client.containers.run.assert_called_once_with(
+            _gpg_forwarding.CREDENTIAL_AGENT_IMAGE,
+            [
+                "-c",
+                "ln -s /run/credential-agent-gpg/S.gpg-agent "
+                "/run/credential-agent-client/gnupg/S.gpg-agent",
+            ],
+            entrypoint="/bin/sh",
+            remove=True,
+            user="1000:1001",
+            volumes={
+                str(client_home): {
+                    "bind": "/run/credential-agent-client/gnupg",
+                    "mode": "rw",
+                },
+                resource.volume_name: {
+                    "bind": "/run/credential-agent-gpg",
+                    "mode": "ro",
+                },
+            },
+        )
+
+    def test_create_gpg_socket_link_translates_docker_failures(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        client = mock.Mock()
+        client.containers.run.side_effect = _gpg_forwarding.DockerException("failed")
+        with (
+            mock.patch.object(_gpg_forwarding, "get_docker_client", return_value=client),
+            self.assertRaisesRegex(DockerError, "prepare the GnuPG client home"),
+        ):
+            _gpg_forwarding._create_gpg_socket_link(resource, Path("/test-tmp/client"))
 
     def test_gpg_forwarding_uses_a_direct_socket(self) -> None:
         home = Path("/test-tmp/gnupg")

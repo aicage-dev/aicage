@@ -99,7 +99,8 @@ setup when SSH sharing is enabled.
 
 ## Commit 4: `aicage` SSH passphrase and reload lifecycle
 
-**Status: complete.** Implemented in `aicage` commits `04c24bae` and `d5669737`.
+**Status: superseded.** The former native-keyring design was removed by `013073c9`; protected-key passphrases now stay
+outside Aicage and are entered directly into the sidecar during interactive setup.
 
 The private `credential_agent.keyring` package uses an explicit public facade (`keyring.py`) and errors module; its
 empty package initializer intentionally exports nothing. It provides native macOS Keychain and Windows Credential

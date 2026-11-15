@@ -190,7 +190,7 @@ class CredentialAgentForwardingTests(TestCase):
                             BindMountSpec(client_home, target_home),
                             VolumeMountSpec(
                                 resource.volume_name,
-                                resource.socket_directory,
+                                _gpg_forwarding._GPG_SOCKET_DIRECTORY,
                                 True,
                             ),
                         ],
@@ -210,7 +210,7 @@ class CredentialAgentForwardingTests(TestCase):
                         BindMountSpec(client_home, target_home),
                         VolumeMountSpec(
                             resource.volume_name,
-                            resource.socket_directory,
+                            _gpg_forwarding._GPG_SOCKET_DIRECTORY,
                             True,
                         ),
                     ],
@@ -226,6 +226,61 @@ class CredentialAgentForwardingTests(TestCase):
             gpg_home,
             reconcile=mock.ANY,
         )
+
+    def test_forwarding_mounts_ssh_and_gpg_socket_volumes_at_distinct_paths(self) -> None:
+        ssh_resource, gpg_resource = _resources(
+            [_CredentialProtocol.SSH, _CredentialProtocol.GPG]
+        )
+        context = mock.Mock()
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(ssh=True, gnupg=True))
+        }
+        gpg_home = Path("/test-tmp/gnupg")
+        gpg_plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
+        gpg_args = (
+            [
+                VolumeMountSpec(
+                    gpg_resource.volume_name,
+                    _gpg_forwarding._GPG_SOCKET_DIRECTORY,
+                    True,
+                )
+            ],
+            [EnvVar("GNUPGHOME", "/run/credential-agent-client/gnupg")],
+        )
+        with (
+            mock.patch.object(
+                forwarding, "_ssh_forwarding", return_value=([], [], True)
+            ),
+            mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
+            mock.patch.object(forwarding, "_gpg_forwarding", return_value=gpg_plan),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_sidecar_target_args",
+                return_value=nullcontext(gpg_args),
+            ),
+            mock.patch.object(
+                forwarding, "_ensure_sidecars", return_value=[ssh_resource, gpg_resource]
+            ),
+        ):
+            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
+                self.assertEqual(
+                    [
+                        VolumeMountSpec(
+                            ssh_resource.volume_name,
+                            PurePosixPath("/run/credential-agent"),
+                            True,
+                        ),
+                        *gpg_args[0],
+                    ],
+                    mounts,
+                )
+                self.assertEqual(
+                    [
+                        EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock"),
+                        *gpg_args[1],
+                    ],
+                    env,
+                )
 
     def test_reload_credentials_reloads_both_protocols(self) -> None:
         resources = _resources([_CredentialProtocol.SSH, _CredentialProtocol.GPG])

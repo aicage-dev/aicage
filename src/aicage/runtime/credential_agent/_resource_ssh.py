@@ -4,6 +4,7 @@ import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+import sys
 from typing import TextIO
 
 from docker.client import DockerClient
@@ -93,16 +94,11 @@ def _load_ssh_key_interactively(
 
 @contextmanager
 def _terminal_streams() -> Iterator[tuple[TextIO, TextIO]]:
-    try:
-        with (
-            open("/dev/tty", encoding="utf-8") as stdin,
-            open("/dev/tty", "w", encoding="utf-8") as stdout,
-        ):
-            yield stdin, stdout
-    except OSError as exc:
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
         raise DockerError(
-            "Cannot attach SSH passphrase entry to the terminal."
-        ) from exc
+            "An interactive terminal is required to load SSH keys."
+        )
+    yield sys.stdin, sys.stdout
 
 
 def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
