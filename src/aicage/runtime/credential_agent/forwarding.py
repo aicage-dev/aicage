@@ -26,6 +26,20 @@ from ._ssh_forwarding import (
 )
 
 
+def prepare_credentials(
+    context: ConfigContext,
+    agent: str,
+    setup_credential_image: Callable[[], None],
+    *,
+    interactive: bool,
+) -> None:
+    if _requires_credential_sidecar(context, agent):
+        setup_credential_image()
+    _ensure_credentials(
+        context, agent, ConsoleOperationReporter(), interactive=interactive
+    )
+
+
 @contextmanager
 def credential_forwarding(
     context: ConfigContext,
@@ -76,20 +90,6 @@ def credential_forwarding(
     with gpg_plan.sidecar_target_args(gpg_resource) as sidecar_mounts:
         mounts.extend(sidecar_mounts)
         yield mounts, env
-
-
-def prepare_credentials(
-    context: ConfigContext,
-    agent: str,
-    setup_credential_image: Callable[[], None],
-    *,
-    interactive: bool,
-) -> None:
-    if _requires_credential_sidecar(context, agent):
-        setup_credential_image()
-    _ensure_credentials(
-        context, agent, ConsoleOperationReporter(), interactive=interactive
-    )
 
 
 def _requires_credential_sidecar(context: ConfigContext, agent: str) -> bool:
