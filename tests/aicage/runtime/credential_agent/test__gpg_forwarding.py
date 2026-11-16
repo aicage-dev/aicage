@@ -10,7 +10,7 @@ from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
     _resources,
 )
-from aicage.runtime.run_args import BindMountSpec, EnvVar, VolumeMountSpec
+from aicage.runtime.run_args import BindMountSpec, VolumeMountSpec
 
 
 class GpgForwardingTests(TestCase):
@@ -88,8 +88,8 @@ class GpgForwardingTests(TestCase):
                     ),
                 ),
             ):
-                plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
-                with plan.sidecar_target_args(resource) as (mounts, env):
+                plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, True)
+                with plan.sidecar_target_args(resource) as mounts:
                     client_mount = mounts[0]
                     assert isinstance(client_mount, BindMountSpec)
                     client_home = client_mount.host_path
@@ -98,12 +98,11 @@ class GpgForwardingTests(TestCase):
                         (client_home / "pubring.kbx").read_text(encoding="utf-8"),
                     )
                     link.assert_called_once_with(resource, client_home)
-                    self.assertFalse((client_home / "S.gpg-agent").exists())
                     self.assertEqual(
                         [
                             BindMountSpec(
                                 client_home,
-                                PurePosixPath("/run/credential-agent-client/gnupg"),
+                                _gpg_forwarding._GPG_STAGING_HOME,
                             ),
                             BindMountSpec(
                                 external_keyring,
@@ -117,15 +116,6 @@ class GpgForwardingTests(TestCase):
                             ),
                         ],
                         mounts,
-                    )
-                    self.assertEqual(
-                        [
-                            EnvVar(
-                                "GNUPGHOME",
-                                "/run/credential-agent-client/gnupg",
-                            )
-                        ],
-                        env,
                     )
             self.assertFalse(client_home.exists())
         with (
@@ -152,19 +142,19 @@ class GpgForwardingTests(TestCase):
             _gpg_forwarding.CREDENTIAL_AGENT_IMAGE,
             [
                 "-c",
-                "ln -s /run/credential-agent-gpg/S.gpg-agent "
-                "/run/credential-agent-client/gnupg/S.gpg-agent",
+                "ln -s /run/aicage/gnupg-socket/S.gpg-agent "
+                "/run/aicage/gnupg-staging/S.gpg-agent",
             ],
             entrypoint="/bin/sh",
             remove=True,
             user="1000:1001",
             volumes={
                 str(client_home): {
-                    "bind": "/run/credential-agent-client/gnupg",
+                    "bind": "/run/aicage/gnupg-staging",
                     "mode": "rw",
                 },
                 resource.volume_name: {
-                    "bind": "/run/credential-agent-gpg",
+                    "bind": "/run/aicage/gnupg-socket",
                     "mode": "ro",
                 },
             },
@@ -197,8 +187,6 @@ class GpgForwardingTests(TestCase):
         ):
             plan = _gpg_forwarding._gpg_forwarding()
         assert plan is not None
-        self.assertEqual([], plan.target_mounts)
-        self.assertEqual([], plan.target_env)
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(socket, plan.direct_socket)
         self.assertEqual(home, plan.credential_home)
@@ -206,11 +194,8 @@ class GpgForwardingTests(TestCase):
     def test_direct_target_args_uses_the_direct_agent_socket(self) -> None:
         home = Path("/test-tmp/gnupg")
         socket = home / "S.gpg-agent"
-        plan = _gpg_forwarding._GpgForwardingPlan(home, [], [], False, socket)
-        expected = (
-            [BindMountSpec(Path("/test-tmp/client"), PurePosixPath("/client"))],
-            [EnvVar("GNUPGHOME", "/client")],
-        )
+        plan = _gpg_forwarding._GpgForwardingPlan(home, False, socket)
+        expected = [BindMountSpec(Path("/test-tmp/client"), PurePosixPath("/client"))]
         with mock.patch.object(
             _gpg_forwarding,
             "_gpg_direct_target_args",

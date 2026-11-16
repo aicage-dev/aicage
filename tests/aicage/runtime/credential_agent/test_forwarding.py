@@ -95,7 +95,7 @@ class CredentialAgentForwardingTests(TestCase):
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
         }
-        plan = _gpg_forwarding._GpgForwardingPlan(Path("/test-tmp/gnupg"), [], [], True)
+        plan = _gpg_forwarding._GpgForwardingPlan(Path("/test-tmp/gnupg"), True)
         with (
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
@@ -118,9 +118,7 @@ class CredentialAgentForwardingTests(TestCase):
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
         }
-        plan = _gpg_forwarding._GpgForwardingPlan(
-            Path("/test-tmp/gnupg"), [], [], False
-        )
+        plan = _gpg_forwarding._GpgForwardingPlan(Path("/test-tmp/gnupg"), False)
         with (
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
@@ -139,13 +137,10 @@ class CredentialAgentForwardingTests(TestCase):
         }
         gpg_home = Path("/test-tmp/gnupg")
         socket = gpg_home / "S.gpg-agent"
-        plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], False, socket)
+        plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, False, socket)
         client_home = Path("/test-tmp/client-gnupg")
-        target_home = PurePosixPath("/run/credential-agent-client/gnupg")
-        target_args = (
-            [BindMountSpec(client_home, target_home, True)],
-            [EnvVar("GNUPGHOME", target_home.as_posix())],
-        )
+        target_home = _gpg_forwarding._GPG_STAGING_HOME
+        target_args = [BindMountSpec(client_home, target_home)]
         with (
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
@@ -157,8 +152,8 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding, "_ensure_sidecars", return_value=[]),
         ):
             with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
-                self.assertEqual(target_args[0], mounts)
-                self.assertEqual(target_args[1], env)
+                self.assertEqual(target_args, mounts)
+                self.assertEqual([], env)
 
         target_args_mock.assert_called_once_with(socket, gpg_home)
 
@@ -170,9 +165,9 @@ class CredentialAgentForwardingTests(TestCase):
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
         }
         gpg_home = Path("/test-tmp/gnupg")
-        gpg_plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
+        gpg_plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, True)
         client_home = Path("/test-tmp/client-gnupg")
-        target_home = PurePosixPath("/run/credential-agent-client/gnupg")
+        target_home = _gpg_forwarding._GPG_STAGING_HOME
         with (
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(
@@ -184,17 +179,14 @@ class CredentialAgentForwardingTests(TestCase):
                 _gpg_forwarding,
                 "_gpg_sidecar_target_args",
                 return_value=nullcontext(
-                    (
-                        [
-                            BindMountSpec(client_home, target_home),
-                            VolumeMountSpec(
-                                resource.volume_name,
-                                _gpg_forwarding._GPG_SOCKET_DIRECTORY,
-                                True,
-                            ),
-                        ],
-                        [EnvVar("GNUPGHOME", target_home.as_posix())],
-                    )
+                    [
+                        BindMountSpec(client_home, target_home),
+                        VolumeMountSpec(
+                            resource.volume_name,
+                            _gpg_forwarding._GPG_SOCKET_DIRECTORY,
+                            True,
+                        ),
+                    ]
                 ),
             ) as target_args_mock,
             mock.patch.object(
@@ -203,7 +195,7 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding, "_reload_ssh_keys"),
             mock.patch.object(forwarding, "_reload_gpg_keys"),
         ):
-            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, _env):
+            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
                 self.assertEqual(
                     [
                         BindMountSpec(client_home, target_home),
@@ -215,7 +207,7 @@ class CredentialAgentForwardingTests(TestCase):
                     ],
                     mounts,
                 )
-                self.assertEqual([EnvVar("GNUPGHOME", target_home.as_posix())], _env)
+                self.assertEqual([], env)
 
         target_args_mock.assert_called_once_with(resource, gpg_home)
         ensure_mock.assert_called_once_with(
@@ -234,17 +226,14 @@ class CredentialAgentForwardingTests(TestCase):
             "codex": AgentConfig(mounts=_AgentMounts(ssh=True, gnupg=True))
         }
         gpg_home = Path("/test-tmp/gnupg")
-        gpg_plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, [], [], True)
-        gpg_args = (
-            [
-                VolumeMountSpec(
-                    gpg_resource.volume_name,
-                    _gpg_forwarding._GPG_SOCKET_DIRECTORY,
-                    True,
-                )
-            ],
-            [EnvVar("GNUPGHOME", "/run/credential-agent-client/gnupg")],
-        )
+        gpg_plan = _gpg_forwarding._GpgForwardingPlan(gpg_home, True)
+        gpg_args = [
+            VolumeMountSpec(
+                gpg_resource.volume_name,
+                _gpg_forwarding._GPG_SOCKET_DIRECTORY,
+                True,
+            )
+        ]
         with (
             mock.patch.object(
                 forwarding, "_ssh_forwarding", return_value=([], [], True)
@@ -268,14 +257,13 @@ class CredentialAgentForwardingTests(TestCase):
                             PurePosixPath("/run/credential-agent"),
                             True,
                         ),
-                        *gpg_args[0],
+                        *gpg_args,
                     ],
                     mounts,
                 )
                 self.assertEqual(
                     [
-                        EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock"),
-                        *gpg_args[1],
+                        EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")
                     ],
                     env,
                 )

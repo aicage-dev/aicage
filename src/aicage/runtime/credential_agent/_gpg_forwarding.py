@@ -24,7 +24,7 @@ from aicage.runtime.docker_args.support.git_support import (
     resolve_gpg_public_files,
     resolve_gpg_secret_key_state,
 )
-from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
+from aicage.runtime.run_args import BindMountSpec, MountSpec, VolumeMountSpec
 
 from ._resource_gpg import (
     _gpg_key_is_cached,
@@ -35,32 +35,29 @@ from ._resource_gpg import (
 )
 from ._resource_models import _CredentialProtocol, _CredentialResource
 
-_GNUPGHOME = "GNUPGHOME"
 _GPG_SOCKET_NAME = "S.gpg-agent"
 _GPG_CONNECT_AGENT = which("gpg-connect-agent")
 _GPG = which("gpg")
-_GPG_CLIENT_HOME = PurePosixPath("/run/credential-agent-client/gnupg")
-_GPG_SOCKET_DIRECTORY = PurePosixPath("/run/credential-agent-gpg")
+_GPG_STAGING_HOME = PurePosixPath("/run/aicage/gnupg-staging")
+_GPG_SOCKET_DIRECTORY = PurePosixPath("/run/aicage/gnupg-socket")
 _GPG_SOCKET_PATH = _GPG_SOCKET_DIRECTORY / _GPG_SOCKET_NAME
 
 
 @dataclass
 class _GpgForwardingPlan:
     credential_home: Path
-    target_mounts: list[BindMountSpec]
-    target_env: list[EnvVar]
     requires_sidecar: bool
     direct_socket: Path | None = None
 
     @contextmanager
     def sidecar_target_args(
         self, resource: _CredentialResource
-    ) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+    ) -> Iterator[list[MountSpec]]:
         with _gpg_sidecar_target_args(resource, self.credential_home) as args:
             yield args
 
     @contextmanager
-    def direct_target_args(self) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+    def direct_target_args(self) -> Iterator[list[MountSpec]]:
         if self.direct_socket is None:
             raise RuntimeError("The GnuPG forwarding plan has no direct agent socket.")
         with _gpg_direct_target_args(self.direct_socket, self.credential_home) as args:
@@ -80,12 +77,10 @@ def _gpg_forwarding() -> _GpgForwardingPlan | None:
     if socket is not None:
         return _GpgForwardingPlan(
             gpg_home,
-            [],
-            [],
             False,
             socket,
         )
-    return _GpgForwardingPlan(gpg_home, [], [], True)
+    return _GpgForwardingPlan(gpg_home, True)
 
 
 def _reload_gpg_keys(
@@ -205,21 +200,18 @@ def _gpg() -> str:
 def _gpg_sidecar_target_args(
     resource: _CredentialResource,
     gpg_home: Path,
-) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+) -> Iterator[list[MountSpec]]:
     with tempfile.TemporaryDirectory(
         dir=gpg_home.parent, prefix=".aicage-gpg-"
     ) as directory:
         client_home = Path(directory)
         _copy_gpg_support_files(gpg_home, client_home)
         _create_gpg_socket_link(resource, client_home)
-        yield (
-            [
-                BindMountSpec(client_home, _GPG_CLIENT_HOME),
-                *_external_gpg_support_mounts(gpg_home),
-                VolumeMountSpec(resource.volume_name, _GPG_SOCKET_DIRECTORY, True),
-            ],
-            [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
-        )
+        yield [
+            BindMountSpec(client_home, _GPG_STAGING_HOME),
+            *_external_gpg_support_mounts(gpg_home),
+            VolumeMountSpec(resource.volume_name, _GPG_SOCKET_DIRECTORY, True),
+        ]
 
 
 def _create_gpg_socket_link(
@@ -232,14 +224,14 @@ def _create_gpg_socket_link(
             [
                 "-c",
                 f"ln -s {_GPG_SOCKET_PATH.as_posix()} "
-                f"{(_GPG_CLIENT_HOME / _GPG_SOCKET_NAME).as_posix()}",
+                f"{(_GPG_STAGING_HOME / _GPG_SOCKET_NAME).as_posix()}",
             ],
             entrypoint="/bin/sh",
             remove=True,
             user=resolve_container_user(),
             volumes={
                 str(client_home): {
-                    "bind": _GPG_CLIENT_HOME.as_posix(),
+                    "bind": _GPG_STAGING_HOME.as_posix(),
                     "mode": "rw",
                 },
                 resource.volume_name: {
@@ -255,20 +247,18 @@ def _create_gpg_socket_link(
 @contextmanager
 def _gpg_direct_target_args(
     socket: Path, gpg_home: Path
-) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+) -> Iterator[list[MountSpec]]:
     with tempfile.TemporaryDirectory(
         dir=gpg_home.parent, prefix=".aicage-gpg-"
     ) as directory:
         client_home = Path(directory)
         _copy_gpg_support_files(gpg_home, client_home)
-        yield (
-            [
-                BindMountSpec(client_home, _GPG_CLIENT_HOME),
-                BindMountSpec(socket, _GPG_CLIENT_HOME / _GPG_SOCKET_NAME),
-                *_external_gpg_support_mounts(gpg_home),
-            ],
-            [EnvVar(_GNUPGHOME, _GPG_CLIENT_HOME.as_posix())],
-        )
+        (client_home / _GPG_SOCKET_NAME).symlink_to(_GPG_SOCKET_PATH)
+        yield [
+            BindMountSpec(client_home, _GPG_STAGING_HOME),
+            BindMountSpec(socket, _GPG_SOCKET_PATH),
+            *_external_gpg_support_mounts(gpg_home),
+        ]
 
 
 def _gpg_support_mounts(gpg_home: Path) -> list[BindMountSpec]:
