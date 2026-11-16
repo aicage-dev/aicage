@@ -241,7 +241,9 @@ class CredentialAgentForwardingTests(TestCase):
             gpg_home,
         )
 
-    def test_forwarding_mounts_ssh_and_gpg_socket_volumes_at_distinct_paths(self) -> None:
+    def test_forwarding_mounts_ssh_and_gpg_socket_volumes_at_distinct_paths(
+        self,
+    ) -> None:
         ssh_resource, gpg_resource = _resources(
             [_CredentialProtocol.SSH, _CredentialProtocol.GPG]
         )
@@ -270,7 +272,9 @@ class CredentialAgentForwardingTests(TestCase):
                 return_value=nullcontext(gpg_args),
             ),
             mock.patch.object(
-                forwarding, "_ensure_sidecars", return_value=[ssh_resource, gpg_resource]
+                forwarding,
+                "_ensure_sidecars",
+                return_value=[ssh_resource, gpg_resource],
             ),
         ):
             with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
@@ -286,9 +290,7 @@ class CredentialAgentForwardingTests(TestCase):
                     mounts,
                 )
                 self.assertEqual(
-                    [
-                        EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")
-                    ],
+                    [EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")],
                     env,
                 )
 

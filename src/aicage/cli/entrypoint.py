@@ -50,7 +50,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             _restart_with_current_args(parsed_argv)
         with credential_image_session():
             if isinstance(parsed, ConfigUpdateArgs):
-                configure_inherited_config(parsed.scope, parsed.agent, interaction, parsed)
+                configure_inherited_config(
+                    parsed.scope, parsed.agent, interaction, parsed
+                )
             else:
                 run_config: RunConfig | None = load_run_config(
                     parsed.agent, interaction, parsed

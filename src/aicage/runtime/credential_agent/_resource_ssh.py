@@ -95,9 +95,7 @@ def _load_ssh_key_interactively(
 @contextmanager
 def _terminal_streams() -> Iterator[tuple[TextIO, TextIO]]:
     if not sys.stdin.isatty() or not sys.stdout.isatty():
-        raise DockerError(
-            "An interactive terminal is required to load SSH keys."
-        )
+        raise DockerError("An interactive terminal is required to load SSH keys.")
     yield sys.stdin, sys.stdout
 
 

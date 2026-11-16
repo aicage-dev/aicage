@@ -106,8 +106,14 @@ class ResourceGpgTests(TestCase):
 
         run_mock.assert_called_once_with(
             [
-                "docker", "exec", "-it", resource.container_name, "credential-agent",
-                "gpg", "load-interactive", "FINGERPRINT",
+                "docker",
+                "exec",
+                "-it",
+                resource.container_name,
+                "credential-agent",
+                "gpg",
+                "load-interactive",
+                "FINGERPRINT",
             ],
             check=False,
             stdin=streams.__enter__.return_value[0],

@@ -93,7 +93,9 @@ def test_cached_protected_gpg_key_signs_through_direct_agent(
 def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    pytest.skip("Interactive protected-key setup requires a terminal-backed integration fixture.")
+    pytest.skip(
+        "Interactive protected-key setup requires a terminal-backed integration fixture."
+    )
     require_integration()
     initial_cwd = Path.cwd()
     temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"

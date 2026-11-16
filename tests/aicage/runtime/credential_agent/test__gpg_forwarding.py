@@ -131,7 +131,9 @@ class GpgForwardingTests(TestCase):
         client_home = Path("/test-tmp/client-gnupg")
         client = mock.Mock()
         with (
-            mock.patch.object(_gpg_forwarding, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _gpg_forwarding, "get_docker_client", return_value=client
+            ),
             mock.patch.object(
                 _gpg_forwarding, "resolve_container_user", return_value="1000:1001"
             ),
@@ -165,7 +167,9 @@ class GpgForwardingTests(TestCase):
         client = mock.Mock()
         client.containers.run.side_effect = _gpg_forwarding.DockerException("failed")
         with (
-            mock.patch.object(_gpg_forwarding, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _gpg_forwarding, "get_docker_client", return_value=client
+            ),
             self.assertRaisesRegex(DockerError, "prepare the GnuPG client home"),
         ):
             _gpg_forwarding._create_gpg_socket_link(resource, Path("/test-tmp/client"))
@@ -291,7 +295,9 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_cached", return_value=False
             ),
-            mock.patch.object(_gpg_forwarding, "_load_gpg_key_interactively") as load_mock,
+            mock.patch.object(
+                _gpg_forwarding, "_load_gpg_key_interactively"
+            ) as load_mock,
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=True)
 

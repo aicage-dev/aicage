@@ -247,9 +247,10 @@ def _credential_mount_matches(
         return True
     if os.name != "nt" or credential_path is None or source is None:
         return False
-    return source.as_posix().casefold() == _docker_desktop_host_path(
-        credential_path
-    ).as_posix().casefold()
+    return (
+        source.as_posix().casefold()
+        == _docker_desktop_host_path(credential_path).as_posix().casefold()
+    )
 
 
 def _docker_desktop_host_path(path: Path) -> PurePosixPath:

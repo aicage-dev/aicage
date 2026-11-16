@@ -136,7 +136,9 @@ def test_ssh_agent_is_available_in_container(
 def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    pytest.skip("Interactive protected-key setup requires a terminal-backed integration fixture.")
+    pytest.skip(
+        "Interactive protected-key setup requires a terminal-backed integration fixture."
+    )
     require_integration()
     initial_cwd = Path.cwd()
     temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"

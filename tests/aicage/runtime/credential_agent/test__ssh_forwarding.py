@@ -99,7 +99,9 @@ class SshForwardingTests(TestCase):
                 "_load_ssh_key",
                 side_effect=DockerError("passphrase required"),
             ),
-            mock.patch.object(_ssh_forwarding, "_load_ssh_key_interactively") as prompt_mock,
+            mock.patch.object(
+                _ssh_forwarding, "_load_ssh_key_interactively"
+            ) as prompt_mock,
         ):
             _ssh_forwarding._reload_ssh_keys([resource], interactive=True)
 

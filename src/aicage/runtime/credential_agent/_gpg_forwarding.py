@@ -214,9 +214,7 @@ def _gpg_sidecar_target_args(
         ]
 
 
-def _create_gpg_socket_link(
-    resource: _CredentialResource, client_home: Path
-) -> None:
+def _create_gpg_socket_link(resource: _CredentialResource, client_home: Path) -> None:
     """Create the client-home socket link in Docker's Linux filesystem."""
     try:
         get_docker_client().containers.run(
@@ -245,9 +243,7 @@ def _create_gpg_socket_link(
 
 
 @contextmanager
-def _gpg_direct_target_args(
-    socket: Path, gpg_home: Path
-) -> Iterator[list[MountSpec]]:
+def _gpg_direct_target_args(socket: Path, gpg_home: Path) -> Iterator[list[MountSpec]]:
     with tempfile.TemporaryDirectory(
         dir=gpg_home.parent, prefix=".aicage-gpg-"
     ) as directory:

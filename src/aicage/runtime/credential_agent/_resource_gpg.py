@@ -86,7 +86,9 @@ def _run_gpg_command(
     return output.decode("utf-8")
 
 
-def _load_gpg_key_interactively(resource: _CredentialResource, fingerprint: str) -> None:
+def _load_gpg_key_interactively(
+    resource: _CredentialResource, fingerprint: str
+) -> None:
     with _terminal_streams() as (stdin, stdout):
         result = run_docker_command(
             [

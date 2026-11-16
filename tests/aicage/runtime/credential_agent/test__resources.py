@@ -102,9 +102,7 @@ class CredentialAgentResourcesTests(TestCase):
                 "aicage.runtime.credential_agent._resource_lifecycle.os.name", "nt"
             ),
         ):
-            _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "0:0"
-            )
+            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "0:0")
 
         container.remove.assert_not_called()
 
