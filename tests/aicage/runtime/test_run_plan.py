@@ -227,7 +227,7 @@ class RunPlanTests(TestCase):
                 self.assertEqual([mount], result.mounts)
                 self.assertEqual([env], result.env)
 
-        forwarding_mock.assert_called_once_with(config.context, config.agent, mock.ANY)
+        forwarding_mock.assert_called_once_with(mock.ANY)
 
     def test_prepare_run_args_uses_credential_forwarding_when_ssh_is_disabled(
         self,
@@ -247,7 +247,7 @@ class RunPlanTests(TestCase):
             with prepare_run_args(config, parsed, mock.Mock()) as result:
                 self.assertIs(run_args, result)
 
-        forwarding_mock.assert_called_once_with(config.context, config.agent, mock.ANY)
+        forwarding_mock.assert_called_once_with(mock.ANY)
 
     def test_host_timezone_env_uses_existing_tz_env(self) -> None:
         with mock.patch.dict(os.environ, {"TZ": "Europe/Zurich"}, clear=True):

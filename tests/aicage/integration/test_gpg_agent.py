@@ -90,87 +90,6 @@ def test_cached_protected_gpg_key_signs_through_direct_agent(
             monkeypatch.chdir(initial_cwd)
 
 
-def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    pytest.skip(
-        "Interactive protected-key setup requires a terminal-backed integration fixture."
-    )
-    require_integration()
-    initial_cwd = Path.cwd()
-    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
-    temp_root.mkdir(exist_ok=True)
-    with temporary_test_root(temp_root) as root:
-        home = root / "home"
-        try:
-            home.mkdir()
-            _set_home(monkeypatch, home)
-            gpg_home = home / ".gnupg"
-            fingerprint = _create_gpg_sidecar_fixture(gpg_home, passphrase="secret")
-            workspace = root / "workspace"
-            workspace.mkdir()
-            context = mock.Mock()
-            context.project_cfg.path = str(workspace)
-            context.project_cfg.agents = {
-                "copilot": AgentConfig(mounts=_AgentMounts(gnupg=True))
-            }
-            keyring = {f"aicage/gpg/passphrase/{fingerprint}": "secret"}
-
-            def get_secret(name: str) -> str:
-                try:
-                    return keyring[name]
-                except KeyError as exc:
-                    raise RuntimeError() from exc
-
-            with (
-                mock.patch.object(
-                    _gpg_forwarding, "resolve_gpg_home", return_value=gpg_home
-                ),
-                mock.patch.object(
-                    _gpg_forwarding, "_direct_gpg_socket", return_value=None
-                ),
-                mock.patch.object(
-                    _gpg_forwarding,
-                    "resolve_gpg_secret_key_state",
-                    return_value=([fingerprint], set()),
-                ),
-                mock.patch.object(
-                    _gpg_forwarding, "get_secret", side_effect=get_secret
-                ),
-            ):
-                forwarding._ensure_gpg_setup(
-                    context, "copilot", mock.Mock(), interactive=True
-                )
-                _assert_gpg_sidecar_key_is_protected(fingerprint)
-                _assert_gpg_sidecar_key_is_cached(fingerprint)
-                _assert_gpg_sidecar_client_signs(root, gpg_home, fingerprint)
-
-                subprocess.run(
-                    ["docker", "stop", "aicage-credential-agent-gpg"],
-                    check=True,
-                    capture_output=True,
-                )
-                with forwarding.credential_forwarding(context, "copilot", mock.Mock()):
-                    pass
-                _assert_gpg_sidecar_client_signs(root, gpg_home, fingerprint)
-
-                keyring.clear()
-                subprocess.run(
-                    ["docker", "stop", "aicage-credential-agent-gpg"],
-                    check=True,
-                    capture_output=True,
-                )
-                with pytest.raises(
-                    RuntimeError, match="Open the terminal configuration UI"
-                ):
-                    with forwarding.credential_forwarding(
-                        context, "copilot", mock.Mock()
-                    ):
-                        pass
-        finally:
-            monkeypatch.chdir(initial_cwd)
-
-
 def test_gpg_sidecar_removes_deleted_host_keys(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -204,12 +123,12 @@ def test_gpg_sidecar_removes_deleted_host_keys(
                     side_effect=lambda: _gpg_secret_key_state(gpg_home),
                 ),
             ):
-                forwarding._ensure_gpg_setup(
+                forwarding.prepare_credentials(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 _assert_gpg_sidecar_has_keygrips()
                 shutil.rmtree(gpg_home / "private-keys-v1.d")
-                forwarding._ensure_gpg_setup(
+                forwarding.prepare_credentials(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 _assert_gpg_sidecar_has_no_keygrips()

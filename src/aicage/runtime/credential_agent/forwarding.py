@@ -1,13 +1,14 @@
 """Protocol-aware credential forwarding for target containers."""
 
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import partial
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.docker.execution.env import resolve_container_user
-from aicage.reporting import ConsoleOperationReporter, OperationReporter
+from aicage.reporting import OperationReporter
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 from ._gpg_forwarding import (
@@ -17,7 +18,8 @@ from ._gpg_forwarding import (
     _prepare_direct_gpg_keys,
     _reload_gpg_keys,
 )
-from ._resource_models import _CredentialProtocol, _CredentialResource
+from ._image import _credential_image
+from ._resource_models import _CredentialProtocol, _CredentialResource, _ImageSpec
 from ._sidecars import _ensure_sidecars
 from ._ssh_forwarding import (
     _append_ssh_target_args,
@@ -26,32 +28,66 @@ from ._ssh_forwarding import (
 )
 
 
+@dataclass(frozen=True)
+class CredentialSetup:
+    plan: "_CredentialPlan"
+    resources: list[_CredentialResource]
+
+
+@dataclass(frozen=True)
+class _CredentialPlan:
+    mounts: list[MountSpec]
+    env: list[EnvVar]
+    protocols: list[_CredentialProtocol]
+    gpg_plan: _GpgForwardingPlan | None
+
+
 def prepare_credentials(
     context: ConfigContext,
     agent: str,
-    setup_credential_image: Callable[[], None],
+    reporter: OperationReporter,
     *,
     interactive: bool,
-) -> None:
-    if _requires_credential_sidecar(context, agent):
-        setup_credential_image()
-    _ensure_credentials(
-        context, agent, ConsoleOperationReporter(), interactive=interactive
-    )
+) -> CredentialSetup:
+    plan = _credential_plan(context, agent)
+    return CredentialSetup(plan, _prepare_plan(plan, reporter, interactive=interactive))
 
 
 @contextmanager
 def credential_forwarding(
-    context: ConfigContext,
-    agent: str,
-    reporter: OperationReporter,
+    setup: CredentialSetup,
 ) -> Iterator[tuple[list[MountSpec], list[EnvVar]]]:
+    plan = setup.plan
+    mounts = list(plan.mounts)
+    env = list(plan.env)
+    gpg_resource: _CredentialResource | None = None
+    for resource in setup.resources:
+        if resource.protocol is _CredentialProtocol.GPG:
+            gpg_resource = resource
+        else:
+            _append_sidecar_target_args(resource, mounts, env)
+    if plan.gpg_plan is None:
+        yield mounts, env
+        return
+    if gpg_resource is None:
+        if plan.gpg_plan.direct_socket is None:
+            yield mounts, env
+            return
+        with plan.gpg_plan.direct_target_args() as direct_mounts:
+            mounts.extend(direct_mounts)
+            yield mounts, env
+        return
+    with plan.gpg_plan.sidecar_target_args(gpg_resource) as sidecar_mounts:
+        mounts.extend(sidecar_mounts)
+        yield mounts, env
+
+
+def _credential_plan(context: ConfigContext, agent: str) -> _CredentialPlan:
     agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
     mounts: list[MountSpec] = []
     env: list[EnvVar] = []
     protocols: list[_CredentialProtocol] = []
     gpg_plan: _GpgForwardingPlan | None = None
-
     if agent_cfg.mounts.ssh is True:
         ssh_mounts, ssh_env, ssh_sidecar = _ssh_forwarding()
         mounts.extend(ssh_mounts)
@@ -63,100 +99,21 @@ def credential_forwarding(
         gpg_plan = _gpg_forwarding()
         if gpg_plan is not None and gpg_plan.requires_sidecar:
             protocols.append(_CredentialProtocol.GPG)
-
-    resources = _ensure_sidecars(
-        protocols,
-        resolve_container_user(),
-        reporter,
-        gpg_plan.credential_home if gpg_plan is not None else None,
-    )
-    gpg_resource: _CredentialResource | None = None
-    for resource in resources:
-        if resource.protocol is _CredentialProtocol.GPG:
-            gpg_resource = resource
-        else:
-            _append_sidecar_target_args(resource, mounts, env)
-    if gpg_plan is None:
-        yield mounts, env
-        return
-    if gpg_resource is None:
-        if gpg_plan.direct_socket is None:
-            yield mounts, env
-            return
-        with gpg_plan.direct_target_args() as direct_mounts:
-            mounts.extend(direct_mounts)
-            yield mounts, env
-        return
-    with gpg_plan.sidecar_target_args(gpg_resource) as sidecar_mounts:
-        mounts.extend(sidecar_mounts)
-        yield mounts, env
+    return _CredentialPlan(mounts, env, protocols, gpg_plan)
 
 
-def _requires_credential_sidecar(context: ConfigContext, agent: str) -> bool:
-    """Return whether the configured credentials require the helper image."""
-    agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
-    if agent_cfg.mounts.ssh is True:
-        _mounts, _env, ssh_sidecar = _ssh_forwarding()
-        if ssh_sidecar:
-            return True
-    if not _gpg_enabled(context, agent):
-        return False
-    gpg_plan = _gpg_forwarding()
-    return gpg_plan is not None and gpg_plan.requires_sidecar
-
-
-def _ensure_ssh_setup(
-    context: ConfigContext,
-    agent: str,
-    reporter: OperationReporter,
-    *,
-    interactive: bool,
-) -> None:
-    agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
-    if agent_cfg.mounts.ssh is not True:
-        return
-    _mounts, _env, sidecar = _ssh_forwarding()
-    if not sidecar:
-        return
-    _ensure_sidecars(
-        [_CredentialProtocol.SSH],
-        resolve_container_user(),
-        reporter,
-        reconcile=partial(_reload_credentials, interactive=interactive),
-    )
-
-
-def _ensure_credentials(
-    context: ConfigContext,
-    agent: str,
-    reporter: OperationReporter,
-    *,
-    interactive: bool,
-) -> None:
-    _ensure_ssh_setup(context, agent, reporter, interactive=interactive)
-    _ensure_gpg_setup(context, agent, reporter, interactive=interactive)
-
-
-def _ensure_gpg_setup(
-    context: ConfigContext,
-    agent: str,
-    reporter: OperationReporter,
-    *,
-    interactive: bool,
-) -> None:
-    if not _gpg_enabled(context, agent):
-        return
-    gpg_plan = _gpg_forwarding()
-    if gpg_plan is None:
-        return
-    if not gpg_plan.requires_sidecar:
-        _prepare_direct_gpg_keys(gpg_plan.credential_home, interactive=interactive)
-        return
-    _ensure_sidecars(
-        [_CredentialProtocol.GPG],
-        resolve_container_user(),
-        reporter,
-        gpg_plan.credential_home,
+def _prepare_plan(
+    plan: _CredentialPlan, reporter: OperationReporter, *, interactive: bool
+) -> list[_CredentialResource]:
+    if plan.gpg_plan is not None and not plan.gpg_plan.requires_sidecar:
+        _prepare_direct_gpg_keys(plan.gpg_plan.credential_home, interactive=interactive)
+    if not plan.protocols:
+        return []
+    image_ref, image_id = _credential_image(reporter)
+    return _ensure_sidecars(
+        plan.protocols,
+        _ImageSpec(image_ref, image_id, resolve_container_user()),
+        plan.gpg_plan.credential_home if plan.gpg_plan is not None else None,
         reconcile=partial(_reload_credentials, interactive=interactive),
     )
 

@@ -20,7 +20,6 @@ from aicage.config.image_refs import default_extended_image_ref
 from aicage.config.project_config import AgentConfig, _ProjectConfig
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft, _create_run_config_draft
-from aicage.registry.credential_image import credential_image_session
 from aicage.registry.errors import RegistryError
 from aicage.runtime.credential_agent.forwarding import prepare_credentials
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
@@ -123,20 +122,19 @@ def configure_inherited_config(
     bases = load_bases()
     agents = load_agents(bases)
     _require_known_agent(agent, agents)
-    with credential_image_session():
-        _configure_scope(
-            _ConfigScopeContext(
-                store,
-                directory_path,
-                agent,
-                interaction,
-                bases,
-                agents,
-                load_extensions(),
-            ),
-            scope,
-            parsed=parsed,
-        )
+    _configure_scope(
+        _ConfigScopeContext(
+            store,
+            directory_path,
+            agent,
+            interaction,
+            bases,
+            agents,
+            load_extensions(),
+        ),
+        scope,
+        parsed=parsed,
+    )
 
 
 def _configure_scope(
@@ -198,7 +196,7 @@ def _configure_scope(
             prepare_credentials(
                 context,
                 scope_context.agent,
-                scope_context.interaction.execute_credential_image_setup,
+                scope_context.interaction.reporter,
                 interactive=current_parsed is None or current_parsed.menu != "none",
             )
             return

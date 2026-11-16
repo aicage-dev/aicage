@@ -133,74 +133,6 @@ def test_ssh_agent_is_available_in_container(
             monkeypatch.chdir(initial_cwd)
 
 
-def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secret(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    pytest.skip(
-        "Interactive protected-key setup requires a terminal-backed integration fixture."
-    )
-    require_integration()
-    initial_cwd = Path.cwd()
-    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
-    temp_root.mkdir(exist_ok=True)
-    with temporary_test_root(temp_root) as root:
-        home = root / "home"
-        home.mkdir()
-        try:
-            _set_home(monkeypatch, home)
-            key = _configure_protected_ssh_key(home)
-            context = mock.Mock()
-            context.project_cfg.path = str(root / "workspace")
-            context.project_cfg.agents = {
-                "copilot": AgentConfig(mounts=_AgentMounts(ssh=True))
-            }
-            keyring = {
-                f"aicage/ssh/passphrase/{_ssh_forwarding._ssh_key_fingerprint(key)}": "secret"
-            }
-
-            def get_secret(name: str) -> str:
-                try:
-                    return keyring[name]
-                except KeyError as exc:
-                    raise RuntimeError() from exc
-
-            with (
-                _host_ssh_directory(home / ".ssh"),
-                mock.patch.object(
-                    _ssh_forwarding, "get_secret", side_effect=get_secret
-                ),
-            ):
-                forwarding._ensure_ssh_setup(
-                    context, "copilot", mock.Mock(), interactive=True
-                )
-                _assert_ssh_sidecar_has_key(key)
-
-                subprocess.run(
-                    ["docker", "stop", "aicage-credential-agent-ssh"],
-                    check=True,
-                    capture_output=True,
-                )
-                with forwarding.credential_forwarding(context, "copilot", mock.Mock()):
-                    pass
-                _assert_ssh_sidecar_has_key(key)
-
-                keyring.clear()
-                subprocess.run(
-                    ["docker", "stop", "aicage-credential-agent-ssh"],
-                    check=True,
-                    capture_output=True,
-                )
-                with pytest.raises(
-                    RuntimeError, match="Open the terminal configuration UI"
-                ):
-                    with forwarding.credential_forwarding(
-                        context, "copilot", mock.Mock()
-                    ):
-                        pass
-        finally:
-            monkeypatch.chdir(initial_cwd)
-
-
 def test_ssh_sidecar_removes_deleted_host_keys(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -222,14 +154,14 @@ def test_ssh_sidecar_removes_deleted_host_keys(
             }
 
             with _host_ssh_directory(home / ".ssh"):
-                forwarding._ensure_ssh_setup(
+                forwarding.prepare_credentials(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 for identity in identities:
                     _assert_ssh_sidecar_has_identity(identity)
                 for key in [*keys.private_paths, *keys.public_paths]:
                     key.unlink()
-                forwarding._ensure_ssh_setup(
+                forwarding.prepare_credentials(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 for identity in identities:

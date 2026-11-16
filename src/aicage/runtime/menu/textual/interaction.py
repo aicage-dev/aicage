@@ -3,7 +3,6 @@ from copy import deepcopy
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft
-from aicage.registry.credential_image import ensure_credential_image
 from aicage.reporting import OperationReporter
 from aicage.runtime._confirm import prompt_update_aicage
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
@@ -53,20 +52,6 @@ class TextualInteraction:
         ).run(inline=True)
         if isinstance(result, BaseException):
             raise result
-
-    def execute_credential_image_setup(self) -> None:
-        result = ExecutionApp(
-            None,
-            False,
-            self._reporter,
-            operation=_ensure_credential_image,
-        ).run(inline=True)
-        if isinstance(result, BaseException):
-            raise result
-
-
-def _ensure_credential_image(reporter: OperationReporter) -> None:
-    ensure_credential_image(reporter)
 
 
 def _edit_draft_with_textual_app(
