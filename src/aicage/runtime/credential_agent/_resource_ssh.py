@@ -1,10 +1,10 @@
 """SSH key loading through a credential sidecar."""
 
+import sys
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-import sys
 from typing import TextIO
 
 from docker.client import DockerClient

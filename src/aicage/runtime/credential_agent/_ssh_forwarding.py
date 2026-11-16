@@ -4,12 +4,12 @@ import subprocess  # nosec B404 -- SSH key inspection uses fixed local commands.
 from pathlib import Path, PurePosixPath
 from shutil import which
 
+from aicage.docker.errors import DockerError
 from aicage.paths import HOST_SSH_DIR, container_project_path
 from aicage.runtime._ssh_agent import (
     _resolve_ssh_key_files,
     _resolve_ssh_support_files,
 )
-from aicage.docker.errors import DockerError
 from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMountSpec
 
 from ._resource_models import _CredentialProtocol, _CredentialResource
