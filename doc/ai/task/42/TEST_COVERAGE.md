@@ -8,7 +8,7 @@ Both repositories should test cross-container SSH and GnuPG use. They exercise d
 
 - `aicage-image-util` proves the credential-agent image with synthetic credentials, Docker containers, and named
   volumes. It must be independent of a real user's keys, host agent, keyring, or project configuration.
-- `aicage` proves that its configuration, host inspection, keyring integration, Docker resource manager, and target
+- `aicage` proves that its configuration, host inspection, Docker resource manager, and target
   container mount layout select and invoke that image correctly on supported hosts.
 
 ## Current `aicage-image-util` coverage
@@ -57,14 +57,12 @@ This is live image coverage, not a mock suite. It does not use a real host crede
 ## Current `aicage` unit coverage
 
 The `aicage` unit suite covers credential-image selection, singleton sidecar/volume lifecycle, direct-versus-sidecar
-forwarding, target mount arguments, SSH key discovery and reload, and the platform keyring implementations. Relevant
+forwarding, target mount arguments, SSH key discovery and reload. Relevant
 test modules include:
 
 - `tests/aicage/runtime/credential_agent/test__resource_lifecycle.py` for labelled singleton resources, replacement,
   locks, retained volumes, and readiness;
 - `test__ssh_forwarding.py` and `test__gpg_forwarding.py` for forwarding selection and target arguments;
-- `keyring/test__secret_service.py`, `keyring/test__windows.py`, and `keyring/test__macos.py` for native-store success
-  and failure behavior; and
 - configuration tests for interactive setup and noninteractive reload behavior.
 
 On 2026-11-07, `pytest --cov=src --cov-report=term-missing` completed with 1002 passed, 42 skipped, and 94% total
@@ -80,7 +78,7 @@ named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
 
-The unit and integration items in this section are complete for the implemented SSH/keyring and sidecar lifecycle
+The unit and integration items in this section are complete for the implemented SSH and sidecar lifecycle
 behavior.
 
 ### Unit tests
@@ -91,7 +89,7 @@ behavior.
   otherwise; Windows always selects sidecars and never requests a Windows named-pipe mount.
 - `DockerRunArgs` volume mounts and protocol environment for each selection, with no target private-key mounts.
 - SSH/GnuPG host support files retained read-only in the target container.
-- Keyring lookup/store, passphrase fingerprint mapping, reload, and clear noninteractive missing-secret errors.
+- Protected-key sidecar-cache checks and clear noninteractive missing-key errors.
 
 ### Integration and platform tests
 
@@ -108,12 +106,8 @@ Completed live coverage:
 - Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
 - Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second message without
   private-key files in the target GnuPG home.
-- Protected SSH setup stores an encrypted key's passphrase through a controlled keyring boundary, loads the real key
-  into the sidecar, reloads it after a stopped-sidecar restart, and fails before target startup when the secret is
-  absent.
-- Protected GnuPG setup retrieves a controlled-keyring passphrase, loads a real protected signing key, and lets a
-  public-only client sign over the sidecar socket both before and after sidecar restart. It also fails before target
-  startup when the secret is absent.
+- Protected SSH and GnuPG keys are loaded through interactive sidecar setup. A noninteractive run fails before target
+  startup when the required protected key is absent from the sidecar cache.
 - The temporary credential-focused CI matrix filter has been removed, so CI again discovers the normal non-proxy
   integration suite.
 
@@ -123,5 +117,5 @@ An image test may reproduce the generic target-container shape using only synthe
 That overlap is intentional. It detects regressions in the helper image before Aicage orchestration is involved.
 
 An Aicage integration test must not assume the helper-image tests make its host-specific behavior safe. It remains
-responsible for mount selection, user identity mapping, credential discovery, keyring interaction, resource
+responsible for mount selection, user identity mapping, credential discovery, resource
 orchestration, and platform restrictions.

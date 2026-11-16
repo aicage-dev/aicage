@@ -6,16 +6,18 @@ See [test coverage](TEST_COVERAGE.md) for the current evidence and the division 
 ## Current implementation status
 
 Commits 1 through 4 are complete. `aicage-image-util` provides the published `credential-agent` helper image, and
-`aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. SSH and
-GnuPG encrypted-key reload use the platform keyring on Linux, Windows, and macOS.
+`aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. Protected
+key passphrases are entered directly into the credential sidecar during interactive setup; Aicage does not read, store,
+or reload them.
 
 Commit 5 is complete. The CI matrix proves SSH sidecar forwarding and GnuPG signing on Linux and Windows:
 Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required sidecar-only path. SSH and
-GnuPG sidecars are restarted and reloaded successfully, and target credential homes remain private-key-free.
+GnuPG sidecars are restarted and unprotected keys are reloaded successfully, and target credential homes remain
+private-key-free.
 SSH and GnuPG sharing is discovered from available host keys, independently of Git configuration; Git signing is one
 consumer of the forwarded agents, not an activation requirement.
-Protected SSH and GnuPG lifecycle tests use real encrypted fixtures, sidecars, socket volumes, and target clients while
-controlling the platform-keyring boundary. Native-keyring backends retain their platform-specific unit coverage.
+Protected SSH and GnuPG keys require interactive setup whenever their sidecar cache is empty. This keeps passphrases
+out of Aicage process memory and platform credential stores.
 The integration matrix again uses normal non-proxy test discovery rather than a temporary credential-only filter.
 
 ## Problem
@@ -110,26 +112,21 @@ owns sidecar behavior when the sidecar path is selected.
 ## Passphrase handling
 
 When SSH sharing is enabled in the terminal configuration UI, its existing confirmation dialog also authorizes SSH
-setup. Aicage creates/updates the sidecar there. For an encrypted key, it first looks up a passphrase in the
-operating-system keyring by public-key fingerprint and asks only when no entry exists. There is no separate setup
-command.
+setup. Aicage creates/updates the sidecar there. For an encrypted key, the sidecar prompts directly; Aicage never
+receives the passphrase. There is no separate setup command.
 
-After a reboot, the sidecar agent is empty. Aicage loads each key again before starting a target container: directly
-for an unencrypted key, or by retrieving its passphrase from the operating-system keyring. On Linux use the
-freedesktop.org Secret Service API; use the platform's normal credential store on Windows and macOS.
+After a reboot, the sidecar agent is empty. Aicage reloads unencrypted keys before starting a target container.
+Encrypted keys require the terminal configuration UI to load them again directly into the sidecar.
 
-A noninteractive invocation must never prompt. If it finds an encrypted key whose passphrase is not in the keyring,
-it stops before starting the target container and tells the user to open the normal terminal configuration UI to add
-that key.
+A noninteractive invocation must never prompt. If it finds an encrypted key that is not loaded in the sidecar, it stops
+before starting the target container and tells the user to open the normal terminal configuration UI to load that key.
 
 Global and tree shared-configuration edits must perform the same terminal SSH setup when SSH sharing is enabled, even
 though they do not start a target agent container.
 
 The GnuPG sidecar owns its GnuPG agent lifecycle and pinentry behavior. Its noninteractive behavior must likewise never
-prompt. For passphrase-protected GnuPG secret keys that must be used noninteractively, Aicage stores the passphrase in
-the platform keyring by the relevant secret-key or subkey fingerprint and passes it only transiently, via stdin, to a
-one-time sidecar operation. This complements rather than replaces the sidecar's interactive pinentry, smartcard, cache,
-and key-selection behavior. The socket volumes never contain private keys or passphrases.
+prompt. A protected GnuPG key must already be cached in the sidecar; otherwise interactive setup delegates pinentry to
+the sidecar. The socket volumes never contain private keys or passphrases.
 
 ## Implementation areas
 
