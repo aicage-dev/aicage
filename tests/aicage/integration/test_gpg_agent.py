@@ -150,7 +150,7 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     check=True,
                     capture_output=True,
                 )
-                with forwarding.forwarding(context, "copilot", mock.Mock()):
+                with forwarding.credential_forwarding(context, "copilot", mock.Mock()):
                     pass
                 _assert_gpg_sidecar_client_signs(root, gpg_home, fingerprint)
 
@@ -163,7 +163,9 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                 with pytest.raises(
                     RuntimeError, match="Open the terminal configuration UI"
                 ):
-                    with forwarding.forwarding(context, "copilot", mock.Mock()):
+                    with forwarding.credential_forwarding(
+                        context, "copilot", mock.Mock()
+                    ):
                         pass
         finally:
             monkeypatch.chdir(initial_cwd)

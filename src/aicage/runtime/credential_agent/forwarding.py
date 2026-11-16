@@ -27,7 +27,7 @@ from ._ssh_forwarding import (
 
 
 @contextmanager
-def forwarding(
+def credential_forwarding(
     context: ConfigContext,
     agent: str,
     reporter: OperationReporter,

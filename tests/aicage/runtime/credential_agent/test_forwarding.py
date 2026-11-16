@@ -36,7 +36,9 @@ class CredentialAgentForwardingTests(TestCase):
         ):
             self.assertTrue(forwarding._requires_credential_sidecar(context, "codex"))
 
-    def test_forwarding_ensures_ssh_sidecar_and_adds_target_args(self) -> None:
+    def test_credential_forwarding_ensures_ssh_sidecar_and_adds_target_args(
+        self,
+    ) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         context = mock.Mock()
         context.project_cfg.agents = {
@@ -51,7 +53,10 @@ class CredentialAgentForwardingTests(TestCase):
             ) as ensure_mock,
             mock.patch.object(forwarding, "_reload_ssh_keys"),
         ):
-            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
+            with forwarding.credential_forwarding(context, "codex", mock.Mock()) as (
+                mounts,
+                env,
+            ):
                 self.assertEqual(
                     [
                         VolumeMountSpec(
@@ -175,7 +180,9 @@ class CredentialAgentForwardingTests(TestCase):
         prepare_mock.assert_called_once_with(plan.credential_home, interactive=True)
         ensure_mock.assert_not_called()
 
-    def test_forwarding_uses_a_private_home_for_a_direct_gpg_agent(self) -> None:
+    def test_credential_forwarding_uses_a_private_home_for_a_direct_gpg_agent(
+        self,
+    ) -> None:
         context = mock.Mock()
         context.project_cfg.agents = {
             "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
@@ -196,13 +203,18 @@ class CredentialAgentForwardingTests(TestCase):
             ) as target_args_mock,
             mock.patch.object(forwarding, "_ensure_sidecars", return_value=[]),
         ):
-            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
+            with forwarding.credential_forwarding(context, "codex", mock.Mock()) as (
+                mounts,
+                env,
+            ):
                 self.assertEqual(target_args, mounts)
                 self.assertEqual([], env)
 
         target_args_mock.assert_called_once_with(socket, gpg_home)
 
-    def test_forwarding_ensures_gpg_sidecar_and_adds_target_args(self) -> None:
+    def test_credential_forwarding_ensures_gpg_sidecar_and_adds_target_args(
+        self,
+    ) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         context = mock.Mock()
         context.project_cfg.path = "/test-tmp/project"
@@ -240,7 +252,10 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding, "_reload_ssh_keys"),
             mock.patch.object(forwarding, "_reload_gpg_keys"),
         ):
-            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
+            with forwarding.credential_forwarding(context, "codex", mock.Mock()) as (
+                mounts,
+                env,
+            ):
                 self.assertEqual(
                     [
                         BindMountSpec(client_home, target_home),
@@ -262,7 +277,7 @@ class CredentialAgentForwardingTests(TestCase):
             gpg_home,
         )
 
-    def test_forwarding_mounts_ssh_and_gpg_socket_volumes_at_distinct_paths(
+    def test_credential_forwarding_mounts_ssh_and_gpg_socket_volumes_at_distinct_paths(
         self,
     ) -> None:
         ssh_resource, gpg_resource = _resources(
@@ -298,7 +313,10 @@ class CredentialAgentForwardingTests(TestCase):
                 return_value=[ssh_resource, gpg_resource],
             ),
         ):
-            with forwarding.forwarding(context, "codex", mock.Mock()) as (mounts, env):
+            with forwarding.credential_forwarding(context, "codex", mock.Mock()) as (
+                mounts,
+                env,
+            ):
                 self.assertEqual(
                     [
                         VolumeMountSpec(

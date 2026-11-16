@@ -180,7 +180,7 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
                     check=True,
                     capture_output=True,
                 )
-                with forwarding.forwarding(context, "copilot", mock.Mock()):
+                with forwarding.credential_forwarding(context, "copilot", mock.Mock()):
                     pass
                 _assert_ssh_sidecar_has_key(key)
 
@@ -193,7 +193,9 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
                 with pytest.raises(
                     RuntimeError, match="Open the terminal configuration UI"
                 ):
-                    with forwarding.forwarding(context, "copilot", mock.Mock()):
+                    with forwarding.credential_forwarding(
+                        context, "copilot", mock.Mock()
+                    ):
                         pass
         finally:
             monkeypatch.chdir(initial_cwd)

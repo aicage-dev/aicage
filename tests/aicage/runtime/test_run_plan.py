@@ -218,7 +218,7 @@ class RunPlanTests(TestCase):
                 "aicage.runtime.run_plan._build_run_args", return_value=run_args
             ),
             mock.patch(
-                "aicage.runtime.run_plan._credential_forwarding",
+                "aicage.runtime.run_plan.credential_forwarding",
                 return_value=nullcontext(([mount], [env])),
             ) as forwarding_mock,
         ):
@@ -240,7 +240,7 @@ class RunPlanTests(TestCase):
                 "aicage.runtime.run_plan._build_run_args", return_value=run_args
             ),
             mock.patch(
-                "aicage.runtime.run_plan._credential_forwarding",
+                "aicage.runtime.run_plan.credential_forwarding",
                 return_value=nullcontext(([], [])),
             ) as forwarding_mock,
         ):
