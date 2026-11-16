@@ -19,8 +19,12 @@ from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
+from aicage.registry.credential_image import credential_image_session
 from aicage.reporting import ConsoleOperationReporter
-from aicage.runtime.credential_agent.forwarding import ensure_credentials
+from aicage.runtime.credential_agent.forwarding import (
+    ensure_credentials,
+    requires_credential_sidecar,
+)
 from aicage.runtime.image_setup import prepare_image
 from aicage.runtime.menu.interaction import (
     RuntimeInteraction,
@@ -44,29 +48,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         interaction = create_runtime_interaction(parsed.menu)
         if maybe_prompt_update(__version__, interaction.confirm_aicage_update):
             _restart_with_current_args(parsed_argv)
-        if isinstance(parsed, ConfigUpdateArgs):
-            configure_inherited_config(parsed.scope, parsed.agent, interaction, parsed)
-        else:
-            run_config: RunConfig | None = load_run_config(
-                parsed.agent, interaction, parsed
-            )
-            if run_config is None:
-                return exit_code
-            logger.info("Resolved run config for agent %s", run_config.agent)
-            _prepare_credentials(
-                run_config, interaction, interactive=parsed.menu != "none"
-            )
-            prepare_image(run_config, interaction)
-            with prepare_run_args(
-                config=run_config,
-                parsed=parsed,
-                reporter=interaction.reporter,
-            ) as run_args:
-                if parsed.dry_run:
-                    print_run_command(run_args)
-                    logger.info("Dry-run docker command printed.")
-                else:
-                    run_container(run_args)
+        with credential_image_session():
+            if isinstance(parsed, ConfigUpdateArgs):
+                configure_inherited_config(parsed.scope, parsed.agent, interaction, parsed)
+            else:
+                run_config: RunConfig | None = load_run_config(
+                    parsed.agent, interaction, parsed
+                )
+                if run_config is None:
+                    return exit_code
+                logger.info("Resolved run config for agent %s", run_config.agent)
+                _prepare_credentials(
+                    run_config, interaction, interactive=parsed.menu != "none"
+                )
+                prepare_image(run_config, interaction)
+                with prepare_run_args(
+                    config=run_config,
+                    parsed=parsed,
+                    reporter=interaction.reporter,
+                ) as run_args:
+                    if parsed.dry_run:
+                        print_run_command(run_args)
+                        logger.info("Dry-run docker command printed.")
+                    else:
+                        run_container(run_args)
     except KeyboardInterrupt:
         print()
         logger.warning("Interrupted by user.")
@@ -86,20 +91,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     return exit_code
 
 
-def _credentials_are_enabled(run_config: RunConfig) -> bool:
-    agent_cfg = run_config.context.project_cfg.agents.get(run_config.agent)
-    return agent_cfg is not None and (
-        agent_cfg.mounts.ssh is True or agent_cfg.mounts.gnupg is True
-    )
-
-
 def _prepare_credentials(
     run_config: RunConfig,
     interaction: RuntimeInteraction,
     *,
     interactive: bool,
 ) -> None:
-    if _credentials_are_enabled(run_config):
+    if requires_credential_sidecar(run_config.context, run_config.agent):
         interaction.execute_credential_image_setup()
     ensure_credentials(
         run_config.context,

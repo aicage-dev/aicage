@@ -78,6 +78,19 @@ def forwarding(
         yield mounts, env
 
 
+def requires_credential_sidecar(context: ConfigContext, agent: str) -> bool:
+    """Return whether the configured credentials require the helper image."""
+    agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
+    if agent_cfg.mounts.ssh is True:
+        _mounts, _env, ssh_sidecar = _ssh_forwarding()
+        if ssh_sidecar:
+            return True
+    if not _gpg_enabled(context, agent):
+        return False
+    gpg_plan = _gpg_forwarding()
+    return gpg_plan is not None and gpg_plan.requires_sidecar
+
+
 def ensure_ssh_setup(
     context: ConfigContext,
     agent: str,

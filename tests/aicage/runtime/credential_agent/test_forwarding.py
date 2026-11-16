@@ -12,6 +12,30 @@ from aicage.runtime.run_args import BindMountSpec, EnvVar, VolumeMountSpec
 
 
 class CredentialAgentForwardingTests(TestCase):
+    def test_requires_credential_sidecar_ignores_direct_gpg_forwarding(self) -> None:
+        context = mock.Mock()
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(gnupg=True))
+        }
+        plan = _gpg_forwarding._GpgForwardingPlan(
+            Path("/test-tmp/gnupg"), False, Path("/test-tmp/gnupg/S.gpg-agent")
+        )
+        with (
+            mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
+            mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
+        ):
+            self.assertFalse(forwarding.requires_credential_sidecar(context, "codex"))
+
+    def test_requires_credential_sidecar_includes_ssh_sidecars(self) -> None:
+        context = mock.Mock()
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(ssh=True))
+        }
+        with mock.patch.object(
+            forwarding, "_ssh_forwarding", return_value=([], [], True)
+        ):
+            self.assertTrue(forwarding.requires_credential_sidecar(context, "codex"))
+
     def test_forwarding_ensures_ssh_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         context = mock.Mock()

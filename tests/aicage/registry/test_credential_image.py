@@ -1,3 +1,4 @@
+from threading import Thread
 from unittest import TestCase, mock
 
 from aicage import constants
@@ -9,6 +10,56 @@ _CREDENTIAL_AGENT_REPOSITORY = (
 
 
 class CredentialImageTests(TestCase):
+    def test_credential_image_session_reuses_the_resolved_image(self) -> None:
+        reporter = mock.Mock()
+        with (
+            credential_image.credential_image_session(),
+            mock.patch(
+                "aicage.registry.credential_image.get_local_repo_digest_for_repo",
+                return_value="sha256:current",
+            ) as local_digest_mock,
+            mock.patch(
+                "aicage.registry.credential_image.get_remote_digest",
+                return_value="sha256:current",
+            ),
+            mock.patch(
+                "aicage.registry.credential_image.get_local_image_id",
+                return_value="image-id",
+            ),
+        ):
+            first = credential_image.ensure_credential_image(reporter)
+            second = credential_image.ensure_credential_image(reporter)
+
+        self.assertEqual(first, second)
+        local_digest_mock.assert_called_once()
+
+    def test_credential_image_session_reuses_a_worker_thread_image(self) -> None:
+        reporter = mock.Mock()
+        with (
+            credential_image.credential_image_session(),
+            mock.patch(
+                "aicage.registry.credential_image.get_local_repo_digest_for_repo",
+                return_value="sha256:current",
+            ) as local_digest_mock,
+            mock.patch(
+                "aicage.registry.credential_image.get_remote_digest",
+                return_value="sha256:current",
+            ),
+            mock.patch(
+                "aicage.registry.credential_image.get_local_image_id",
+                return_value="image-id",
+            ),
+        ):
+            worker = Thread(
+                target=credential_image.ensure_credential_image,
+                args=(reporter,),
+            )
+            worker.start()
+            worker.join()
+            credential_image.ensure_credential_image(reporter)
+
+        local_digest_mock.assert_called_once()
+
     def test_ensure_credential_image_pulls_missing_image(self) -> None:
         reporter = mock.Mock()
         with (
