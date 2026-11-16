@@ -138,7 +138,7 @@ def test_protected_gpg_key_reloads_after_restart_and_rejects_missing_secret(
                     _gpg_forwarding, "get_secret", side_effect=get_secret
                 ),
             ):
-                forwarding.ensure_gpg_setup(
+                forwarding._ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=True
                 )
                 _assert_gpg_sidecar_key_is_protected(fingerprint)
@@ -202,12 +202,12 @@ def test_gpg_sidecar_removes_deleted_host_keys(
                     side_effect=lambda: _gpg_secret_key_state(gpg_home),
                 ),
             ):
-                forwarding.ensure_gpg_setup(
+                forwarding._ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 _assert_gpg_sidecar_has_keygrips()
                 shutil.rmtree(gpg_home / "private-keys-v1.d")
-                forwarding.ensure_gpg_setup(
+                forwarding._ensure_gpg_setup(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 _assert_gpg_sidecar_has_no_keygrips()

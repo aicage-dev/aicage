@@ -20,16 +20,9 @@ from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
 from aicage.registry.credential_image import credential_image_session
-from aicage.reporting import ConsoleOperationReporter
-from aicage.runtime.credential_agent.forwarding import (
-    ensure_credentials,
-    requires_credential_sidecar,
-)
+from aicage.runtime.credential_agent.forwarding import prepare_credentials
 from aicage.runtime.image_setup import prepare_image
-from aicage.runtime.menu.interaction import (
-    RuntimeInteraction,
-    create_runtime_interaction,
-)
+from aicage.runtime.menu.interaction import create_runtime_interaction
 from aicage.runtime.run_plan import prepare_run_args
 
 
@@ -60,8 +53,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if run_config is None:
                     return exit_code
                 logger.info("Resolved run config for agent %s", run_config.agent)
-                _prepare_credentials(
-                    run_config, interaction, interactive=parsed.menu != "none"
+                prepare_credentials(
+                    run_config.context,
+                    run_config.agent,
+                    interaction.execute_credential_image_setup,
+                    interactive=parsed.menu != "none",
                 )
                 prepare_image(run_config, interaction)
                 with prepare_run_args(
@@ -91,22 +87,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         logger.exception("Unhandled exception during CLI execution")
         exit_code = 1
     return exit_code
-
-
-def _prepare_credentials(
-    run_config: RunConfig,
-    interaction: RuntimeInteraction,
-    *,
-    interactive: bool,
-) -> None:
-    if requires_credential_sidecar(run_config.context, run_config.agent):
-        interaction.execute_credential_image_setup()
-    ensure_credentials(
-        run_config.context,
-        run_config.agent,
-        ConsoleOperationReporter(),
-        interactive=interactive,
-    )
 
 
 def _info_config(scope: str | None) -> None:

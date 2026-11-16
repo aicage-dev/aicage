@@ -170,7 +170,7 @@ def test_protected_ssh_key_setup_reloads_after_restart_and_rejects_missing_secre
                     _ssh_forwarding, "get_secret", side_effect=get_secret
                 ),
             ):
-                forwarding.ensure_ssh_setup(
+                forwarding._ensure_ssh_setup(
                     context, "copilot", mock.Mock(), interactive=True
                 )
                 _assert_ssh_sidecar_has_key(key)
@@ -220,14 +220,14 @@ def test_ssh_sidecar_removes_deleted_host_keys(
             }
 
             with _host_ssh_directory(home / ".ssh"):
-                forwarding.ensure_ssh_setup(
+                forwarding._ensure_ssh_setup(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 for identity in identities:
                     _assert_ssh_sidecar_has_identity(identity)
                 for key in [*keys.private_paths, *keys.public_paths]:
                     key.unlink()
-                forwarding.ensure_ssh_setup(
+                forwarding._ensure_ssh_setup(
                     context, "copilot", mock.Mock(), interactive=False
                 )
                 for identity in identities:

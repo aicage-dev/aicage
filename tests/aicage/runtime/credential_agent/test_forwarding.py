@@ -24,7 +24,7 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(forwarding, "_gpg_forwarding", return_value=plan),
         ):
-            self.assertFalse(forwarding.requires_credential_sidecar(context, "codex"))
+            self.assertFalse(forwarding._requires_credential_sidecar(context, "codex"))
 
     def test_requires_credential_sidecar_includes_ssh_sidecars(self) -> None:
         context = mock.Mock()
@@ -34,7 +34,7 @@ class CredentialAgentForwardingTests(TestCase):
         with mock.patch.object(
             forwarding, "_ssh_forwarding", return_value=([], [], True)
         ):
-            self.assertTrue(forwarding.requires_credential_sidecar(context, "codex"))
+            self.assertTrue(forwarding._requires_credential_sidecar(context, "codex"))
 
     def test_forwarding_ensures_ssh_sidecar_and_adds_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
@@ -91,7 +91,7 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
             mock.patch.object(forwarding, "_reload_ssh_keys"),
         ):
-            forwarding.ensure_ssh_setup(context, "codex", mock.Mock(), interactive=True)
+            forwarding._ensure_ssh_setup(context, "codex", mock.Mock(), interactive=True)
 
         ensure_mock.assert_called_once_with(
             [_CredentialProtocol.SSH],
@@ -104,13 +104,34 @@ class CredentialAgentForwardingTests(TestCase):
         context = mock.Mock()
         reporter = mock.Mock()
         with (
-            mock.patch.object(forwarding, "ensure_ssh_setup") as ssh_mock,
-            mock.patch.object(forwarding, "ensure_gpg_setup") as gpg_mock,
+            mock.patch.object(forwarding, "_ensure_ssh_setup") as ssh_mock,
+            mock.patch.object(forwarding, "_ensure_gpg_setup") as gpg_mock,
         ):
-            forwarding.ensure_credentials(context, "codex", reporter, interactive=True)
+            forwarding._ensure_credentials(context, "codex", reporter, interactive=True)
 
         ssh_mock.assert_called_once_with(context, "codex", reporter, interactive=True)
         gpg_mock.assert_called_once_with(context, "codex", reporter, interactive=True)
+
+    def test_prepare_credentials_sets_up_image_and_credentials(self) -> None:
+        context = mock.Mock()
+        setup_credential_image = mock.Mock()
+        with (
+            mock.patch.object(
+                forwarding, "_requires_credential_sidecar", return_value=True
+            ),
+            mock.patch.object(forwarding, "_ensure_credentials") as ensure_mock,
+        ):
+            forwarding.prepare_credentials(
+                context,
+                "codex",
+                setup_credential_image,
+                interactive=True,
+            )
+
+        setup_credential_image.assert_called_once_with()
+        ensure_mock.assert_called_once_with(
+            context, "codex", mock.ANY, interactive=True
+        )
 
     def test_ensure_gpg_setup_passes_a_reconciler_to_a_fallback_sidecar(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
@@ -127,7 +148,7 @@ class CredentialAgentForwardingTests(TestCase):
                 forwarding, "_ensure_sidecars", return_value=[resource]
             ) as ensure_mock,
         ):
-            forwarding.ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
+            forwarding._ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
 
         ensure_mock.assert_called_once_with(
             [_CredentialProtocol.GPG],
@@ -149,7 +170,7 @@ class CredentialAgentForwardingTests(TestCase):
             mock.patch.object(forwarding, "_prepare_direct_gpg_keys") as prepare_mock,
             mock.patch.object(forwarding, "_ensure_sidecars") as ensure_mock,
         ):
-            forwarding.ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
+            forwarding._ensure_gpg_setup(context, "codex", mock.Mock(), interactive=True)
 
         prepare_mock.assert_called_once_with(plan.credential_home, interactive=True)
         ensure_mock.assert_not_called()

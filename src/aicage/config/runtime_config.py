@@ -22,11 +22,7 @@ from aicage.config.run_config import RunConfig
 from aicage.config.run_config_draft import RunConfigDraft, _create_run_config_draft
 from aicage.registry.credential_image import credential_image_session
 from aicage.registry.errors import RegistryError
-from aicage.reporting import ConsoleOperationReporter
-from aicage.runtime.credential_agent.forwarding import (
-    ensure_credentials,
-    requires_credential_sidecar,
-)
+from aicage.runtime.credential_agent.forwarding import prepare_credentials
 from aicage.runtime.docker_args.resolve.resolver import resolve_docker_args
 from aicage.runtime.menu.interaction import RuntimeInteraction
 from aicage.runtime.menu.scope_change import ConfigScopeChange
@@ -199,15 +195,10 @@ def _configure_scope(
                 scope,
                 draft.project_cfg,
             )
-            agent_cfg = context.project_cfg.agents.get(scope_context.agent)
-            if agent_cfg is not None and requires_credential_sidecar(
-                context, scope_context.agent
-            ):
-                scope_context.interaction.execute_credential_image_setup()
-            ensure_credentials(
+            prepare_credentials(
                 context,
                 scope_context.agent,
-                ConsoleOperationReporter(),
+                scope_context.interaction.execute_credential_image_setup,
                 interactive=current_parsed is None or current_parsed.menu != "none",
             )
             return

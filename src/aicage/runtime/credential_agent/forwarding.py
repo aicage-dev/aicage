@@ -1,13 +1,13 @@
 """Protocol-aware credential forwarding for target containers."""
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from functools import partial
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.docker.execution.env import resolve_container_user
-from aicage.reporting import OperationReporter
+from aicage.reporting import ConsoleOperationReporter, OperationReporter
 from aicage.runtime.run_args import EnvVar, MountSpec
 
 from ._gpg_forwarding import (
@@ -78,7 +78,21 @@ def forwarding(
         yield mounts, env
 
 
-def requires_credential_sidecar(context: ConfigContext, agent: str) -> bool:
+def prepare_credentials(
+    context: ConfigContext,
+    agent: str,
+    setup_credential_image: Callable[[], None],
+    *,
+    interactive: bool,
+) -> None:
+    if _requires_credential_sidecar(context, agent):
+        setup_credential_image()
+    _ensure_credentials(
+        context, agent, ConsoleOperationReporter(), interactive=interactive
+    )
+
+
+def _requires_credential_sidecar(context: ConfigContext, agent: str) -> bool:
     """Return whether the configured credentials require the helper image."""
     agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
     if agent_cfg.mounts.ssh is True:
@@ -91,7 +105,7 @@ def requires_credential_sidecar(context: ConfigContext, agent: str) -> bool:
     return gpg_plan is not None and gpg_plan.requires_sidecar
 
 
-def ensure_ssh_setup(
+def _ensure_ssh_setup(
     context: ConfigContext,
     agent: str,
     reporter: OperationReporter,
@@ -112,18 +126,18 @@ def ensure_ssh_setup(
     )
 
 
-def ensure_credentials(
+def _ensure_credentials(
     context: ConfigContext,
     agent: str,
     reporter: OperationReporter,
     *,
     interactive: bool,
 ) -> None:
-    ensure_ssh_setup(context, agent, reporter, interactive=interactive)
-    ensure_gpg_setup(context, agent, reporter, interactive=interactive)
+    _ensure_ssh_setup(context, agent, reporter, interactive=interactive)
+    _ensure_gpg_setup(context, agent, reporter, interactive=interactive)
 
 
-def ensure_gpg_setup(
+def _ensure_gpg_setup(
     context: ConfigContext,
     agent: str,
     reporter: OperationReporter,

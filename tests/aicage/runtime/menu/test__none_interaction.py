@@ -104,24 +104,12 @@ class ConfigureRunTests(TestCase):
             mock.patch(
                 "aicage.runtime.menu._none_interaction.apply_mount_preferences"
             ) as mount_mock,
-            mock.patch(
-                "aicage.runtime.menu._none_interaction.ensure_ssh_setup"
-            ) as ssh_setup_mock,
-            mock.patch(
-                "aicage.runtime.menu._none_interaction.ensure_gpg_setup"
-            ) as gpg_setup_mock,
         ):
             context = _build_context()
             resolved.configure_run(draft, context, "codex")
 
         mount_mock.assert_not_called()
         self.assertEqual({"gh": True}, draft.agent_cfg.extension_mounts)
-        ssh_setup_mock.assert_called_once_with(
-            context, "codex", resolved.reporter, interactive=False
-        )
-        gpg_setup_mock.assert_called_once_with(
-            context, "codex", resolved.reporter, interactive=False
-        )
 
     def test_configure_run_applies_git_mount_defaults_for_run(self) -> None:
         resolved = _none_interaction._NoneInteraction(mock.Mock())
