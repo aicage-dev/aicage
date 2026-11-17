@@ -73,9 +73,9 @@ concurrent creation. Ensuring SSH and GnuPG in the same run must resolve/update 
 
 ## Commit 3: `aicage` forwarding selection and sidecar lifecycle
 
-**Status: complete.** The public credential-agent forwarding coordinator now selects a reachable Unix agent socket
-for direct GnuPG forwarding and otherwise uses the persistent sidecar (always on Windows). SSH always uses its
-persistent sidecar. It adds protocol-specific named
+**Status: complete.** The public credential-agent forwarding coordinator now selects a prepared Linux host SSH agent
+and a reachable Unix GnuPG agent socket for direct forwarding, and otherwise uses the persistent sidecar (always on
+Windows). It adds protocol-specific named
 volume mounts and environments to `DockerRunArgs`, preserves SSH/GnuPG public support mounts, mounts credential homes
 read-only only in sidecars, uses the target-container runtime UID/GID for sidecars, and removes the Windows OpenSSH
 service-management path and direct GnuPG resolver. Global and tree configuration saves ensure required SSH sidecars.
@@ -84,8 +84,8 @@ credential-sidecar mounts, resource replacement and lock errors, and target iden
 
 Replace the current separate SSH and GnuPG forwarding paths with one protocol-aware coordinator:
 
-- Unix: always use the SSH sidecar. Retain direct GnuPG forwarding when its host agent socket is reachable and
-  bind-mountable; select the GnuPG sidecar otherwise.
+- Linux: prefer the prepared host SSH agent; select the SSH sidecar when unavailable. Retain direct GnuPG forwarding
+  when its host agent socket is reachable and bind-mountable; select the GnuPG sidecar otherwise.
 - Windows: always select the sidecar; never start or modify the Windows OpenSSH service and never mount a Windows named
   pipe.
 - Ensure the required image once, then volume and singleton sidecar for each selected protocol, and verify its socket
@@ -133,8 +133,9 @@ contract still needs to define those cases.
 
 ## Commit 5: `aicage` integration and platform coverage
 
-**Status: complete.** The live Docker matrix covers SSH sidecar forwarding and GnuPG signing. Linux covers
-both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required sidecar-only GnuPG path. The
+**Status: complete.** The live Docker matrix covers direct-host SSH forwarding, SSH sidecar fallback, and GnuPG
+signing. Linux covers both direct GnuPG forwarding and a forced sidecar fallback; Windows covers its required
+sidecar-only GnuPG path. The
 host-key discovery and mount defaults are independent of Git configuration, so Git signing is not required to use a
 forwarded GnuPG agent. The SSH test verifies agent-backed signing, verification, isolated SSH authentication,
 target private-key-path absence,
