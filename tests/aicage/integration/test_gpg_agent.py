@@ -267,7 +267,7 @@ def _force_gpg_sidecar(root: Path, env: dict[str, str]) -> None:
                 f"  printf '%s\\n' {shlex.quote(str(missing_socket))}",
                 "  exit 0",
                 "fi",
-                f"exec {shlex.quote(gpgconf)} \"$@\"",
+                f'exec {shlex.quote(gpgconf)} "$@"',
                 "",
             ]
         ),
