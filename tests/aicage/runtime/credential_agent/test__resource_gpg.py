@@ -20,9 +20,7 @@ class ResourceGpgTests(TestCase):
             mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
             mock.patch.object(_resource_gpg, "_find_container", return_value=container),
         ):
-            self.assertTrue(
-                _resource_gpg._gpg_key_is_usable(resource, "FINGERPRINT")
-            )
+            self.assertTrue(_resource_gpg._gpg_key_is_usable(resource, "FINGERPRINT"))
 
         client.api.exec_create.assert_called_once_with(
             container.id,
