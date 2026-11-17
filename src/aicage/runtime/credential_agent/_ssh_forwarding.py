@@ -1,6 +1,8 @@
 """SSH credential-forwarding operations."""
 
+import os
 import subprocess  # nosec B404 -- SSH key inspection uses fixed local commands.
+import sys
 from pathlib import Path, PurePosixPath
 from shutil import which
 
@@ -25,11 +27,16 @@ _SSH_SOCKET_DIRECTORY = PurePosixPath("/run/credential-agent")
 _SSH_SOCKET = _SSH_SOCKET_DIRECTORY / "ssh-agent.sock"
 _SSH_FINGERPRINT_FIELD = 1
 _SSH_FINGERPRINT_FIELD_COUNT = 2
+_SSH_ADD = which("ssh-add")
 _SSH_KEYGEN = which("ssh-keygen")
 
 
-def _ssh_forwarding() -> tuple[list[BindMountSpec], list[EnvVar], bool]:
+def _ssh_forwarding(*, interactive: bool) -> tuple[list[BindMountSpec], list[EnvVar], bool]:
     support_mounts = _ssh_support_mounts()
+    direct_args = _direct_ssh_target_args(interactive=interactive)
+    if direct_args is not None:
+        mounts, env = direct_args
+        return [*mounts, *support_mounts], env, False
     if not _resolve_ssh_key_files() and not HOST_SSH_DIR.is_dir():
         return support_mounts, [], False
     return support_mounts, [], True
@@ -49,6 +56,111 @@ def _ssh_support_mounts() -> list[BindMountSpec]:
         BindMountSpec(path, container_project_path(path), True)
         for path in _resolve_ssh_support_files()
     ]
+
+
+def _direct_ssh_target_args(
+    *, interactive: bool
+) -> tuple[list[BindMountSpec], list[EnvVar]] | None:
+    socket = _direct_ssh_socket()
+    if socket is None:
+        return None
+    if not _prepare_host_ssh_agent(socket, interactive=interactive):
+        return None
+    return (
+        [BindMountSpec(socket, _SSH_SOCKET)],
+        [EnvVar(_SSH_AUTH_SOCK, _SSH_SOCKET.as_posix())],
+    )
+
+
+def _direct_ssh_socket() -> Path | None:
+    if sys.platform != "linux" or _SSH_ADD is None:
+        return None
+    socket_path = os.environ.get(_SSH_AUTH_SOCK)
+    if not socket_path:
+        return None
+    socket = Path(socket_path)
+    if not socket.is_socket():
+        return None
+    result = subprocess.run(
+        [_SSH_ADD, "-l"],
+        env=_host_ssh_env(socket),
+        check=False,
+        capture_output=True,
+        text=True,
+    )  # nosec B603 -- fixed local SSH agent probe.
+    return socket if result.returncode in {0, 1} else None
+
+
+def _prepare_host_ssh_agent(socket: Path, *, interactive: bool) -> bool:
+    identities = _host_ssh_identities(socket)
+    if identities is None:
+        return False
+    loaded_fingerprints = {
+        _ssh_identity_fingerprint(identity) for identity in identities
+    }
+    for key in _resolve_ssh_key_files():
+        fingerprint = _ssh_key_fingerprint(key)
+        if fingerprint in loaded_fingerprints:
+            continue
+        if _ssh_key_is_encrypted(key) and not interactive:
+            raise RuntimeError(
+                f"SSH key '{key.name}' is not loaded in the host SSH agent. "
+                "Open the terminal configuration UI to load this key."
+            )
+        if not _load_host_ssh_key(socket, key, interactive=interactive):
+            return False
+        loaded_fingerprints.add(fingerprint)
+    return True
+
+
+def _host_ssh_identities(socket: Path) -> list[str] | None:
+    if _SSH_ADD is None:
+        return None
+    result = subprocess.run(
+        [_SSH_ADD, "-L"],
+        env=_host_ssh_env(socket),
+        check=False,
+        capture_output=True,
+        text=True,
+    )  # nosec B603 -- fixed local SSH agent query.
+    if result.returncode == 1:
+        return []
+    if result.returncode != 0:
+        return None
+    return result.stdout.splitlines()
+
+
+def _load_host_ssh_key(socket: Path, key: Path, *, interactive: bool) -> bool:
+    if _SSH_ADD is None:
+        return False
+    if interactive:
+        return subprocess.run(
+            [_SSH_ADD, str(key)],
+            env=_host_ssh_env(socket),
+            check=False,
+        ).returncode == 0  # nosec B603 -- key paths are discovered from host SSH configuration.
+    return subprocess.run(
+        [_SSH_ADD, str(key)],
+        env=_host_ssh_env(socket),
+        check=False,
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+    ).returncode == 0  # nosec B603 -- key paths are discovered from host SSH configuration.
+
+
+def _host_ssh_env(socket: Path) -> dict[str, str]:
+    return {**os.environ, _SSH_AUTH_SOCK: str(socket)}
+
+
+def _ssh_key_is_encrypted(key: Path) -> bool:
+    result = subprocess.run(
+        [_ssh_keygen(), "-y", "-P", "", "-f", str(key)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )  # nosec B603 -- fixed local SSH key inspection.
+    return result.returncode != 0
 
 
 def _reload_ssh_keys(

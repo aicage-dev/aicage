@@ -2,6 +2,7 @@ import os
 import re
 import shlex
 import subprocess
+import sys
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -32,6 +33,8 @@ def test_ssh_agent_is_available_in_container(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    if sys.platform != "linux":
+        pytest.skip("Direct host SSH forwarding is Linux-only.")
     require_integration()
     initial_cwd = Path.cwd()
     temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
@@ -60,12 +63,6 @@ def test_ssh_agent_is_available_in_container(
             _enable_ssh_mount(workspace)
 
             with _ssh_agent(root / "agent.sock") as agent_env:
-                subprocess.run(
-                    ["ssh-add", *(str(key) for key in keys.private_paths)],
-                    check=True,
-                    capture_output=True,
-                    env={**os.environ, **agent_env},
-                )
                 env.update(agent_env)
                 command = " && ".join(
                     [
@@ -110,27 +107,16 @@ def test_ssh_agent_is_available_in_container(
                 )
 
             assert exit_code == 0, output
-            _assert_ssh_authentication(workspace, env, keys.public_paths[0])
-            subprocess.run(
-                ["docker", "stop", _ssh_resource_name()],
+            identities = subprocess.run(
+                ["ssh-add", "-L"],
                 check=True,
                 capture_output=True,
-            )
-            exit_code, output = run_cli_pty(
-                [
-                    "--menu",
-                    "none",
-                    "-e",
-                    "AICAGE_ENTRYPOINT_CMD=bash",
-                    "--",
-                    "copilot",
-                    "-lc",
-                    command,
-                ],
-                env=env,
-                cwd=workspace,
-            )
-            assert exit_code == 0, output
+                text=True,
+                env={**os.environ, **agent_env},
+            ).stdout
+            for public_key in keys.public_keys:
+                assert public_key in identities
+            _assert_ssh_authentication(workspace, env, keys.public_paths[0])
         finally:
             monkeypatch.chdir(initial_cwd)
 
@@ -157,6 +143,7 @@ def test_ssh_sidecar_removes_deleted_host_keys(
                 workspace_path=root / "workspace",
             )
             _enable_ssh_mount(workspace)
+            env.pop("SSH_AUTH_SOCK", None)
 
             _run_credential_setup(workspace, env)
             for identity in identities:

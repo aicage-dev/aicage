@@ -24,7 +24,7 @@ class CredentialAgentForwardingTests(TestCase):
         with (
             mock.patch.object(
                 forwarding, "_ssh_forwarding", return_value=([], [], True)
-            ),
+            ) as ssh_mock,
             mock.patch.object(forwarding, "_gpg_enabled", return_value=True),
             mock.patch.object(forwarding, "_gpg_forwarding", return_value=gpg_plan),
             mock.patch.object(
@@ -47,6 +47,7 @@ class CredentialAgentForwardingTests(TestCase):
             gpg_plan.credential_home,
             reconcile=mock.ANY,
         )
+        ssh_mock.assert_called_once_with(interactive=True)
 
     def test_credential_forwarding_adds_ssh_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
@@ -69,6 +70,35 @@ class CredentialAgentForwardingTests(TestCase):
                 [EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")],
                 env,
             )
+
+    def test_prepare_credentials_uses_direct_ssh_without_sidecar_resources(
+        self,
+    ) -> None:
+        context = mock.Mock()
+        context.project_cfg.agents = {
+            "codex": AgentConfig(mounts=_AgentMounts(ssh=True))
+        }
+        socket_mount = mock.Mock()
+        ssh_env = EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")
+        with (
+            mock.patch.object(
+                forwarding,
+                "_ssh_forwarding",
+                return_value=([socket_mount], [ssh_env], False),
+            ),
+            mock.patch.object(forwarding, "_gpg_enabled", return_value=False),
+            mock.patch.object(forwarding, "_credential_image") as image_mock,
+            mock.patch.object(forwarding, "_ensure_resources") as resources_mock,
+        ):
+            setup = forwarding.prepare_credentials(
+                context, "codex", mock.Mock(), interactive=False
+            )
+
+        self.assertEqual([socket_mount], setup.plan.mounts)
+        self.assertEqual([ssh_env], setup.plan.env)
+        self.assertEqual([], setup.resources)
+        image_mock.assert_not_called()
+        resources_mock.assert_not_called()
 
     def test_credential_forwarding_uses_direct_gpg_target_args(self) -> None:
         gpg_plan = _gpg_forwarding._GpgForwardingPlan(

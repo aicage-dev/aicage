@@ -49,7 +49,7 @@ def prepare_credentials(
     *,
     interactive: bool,
 ) -> CredentialSetup:
-    plan = _credential_plan(context, agent)
+    plan = _credential_plan(context, agent, interactive=interactive)
     return CredentialSetup(plan, _prepare_plan(plan, reporter, interactive=interactive))
 
 
@@ -82,14 +82,16 @@ def credential_forwarding(
         yield mounts, env
 
 
-def _credential_plan(context: ConfigContext, agent: str) -> _CredentialPlan:
+def _credential_plan(
+    context: ConfigContext, agent: str, *, interactive: bool
+) -> _CredentialPlan:
     agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
     mounts: list[MountSpec] = []
     env: list[EnvVar] = []
     protocols: list[_CredentialProtocol] = []
     gpg_plan: _GpgForwardingPlan | None = None
     if agent_cfg.mounts.ssh is True:
-        ssh_mounts, ssh_env, ssh_sidecar = _ssh_forwarding()
+        ssh_mounts, ssh_env, ssh_sidecar = _ssh_forwarding(interactive=interactive)
         mounts.extend(ssh_mounts)
         env.extend(ssh_env)
         if ssh_sidecar:
