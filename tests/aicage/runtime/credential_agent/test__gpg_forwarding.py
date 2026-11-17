@@ -360,7 +360,11 @@ class GpgForwardingTests(TestCase):
                 return_value=(["FINGERPRINT"], {"KEY"}),
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
-            mock.patch.object(_gpg_forwarding, "_gpg_key_is_usable", return_value=False),
-            self.assertRaisesRegex(RuntimeError, "not available for noninteractive signing"),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_key_is_usable", return_value=False
+            ),
+            self.assertRaisesRegex(
+                RuntimeError, "not available for noninteractive signing"
+            ),
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)

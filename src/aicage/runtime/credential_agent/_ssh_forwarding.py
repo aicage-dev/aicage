@@ -31,7 +31,9 @@ _SSH_ADD = which("ssh-add")
 _SSH_KEYGEN = which("ssh-keygen")
 
 
-def _ssh_forwarding(*, interactive: bool) -> tuple[list[BindMountSpec], list[EnvVar], bool]:
+def _ssh_forwarding(
+    *, interactive: bool
+) -> tuple[list[BindMountSpec], list[EnvVar], bool]:
     support_mounts = _ssh_support_mounts()
     direct_args = _direct_ssh_target_args(interactive=interactive)
     if direct_args is not None:
@@ -134,19 +136,25 @@ def _load_host_ssh_key(socket: Path, key: Path, *, interactive: bool) -> bool:
     if _SSH_ADD is None:
         return False
     if interactive:
-        return subprocess.run(
+        return (
+            subprocess.run(
+                [_SSH_ADD, str(key)],
+                env=_host_ssh_env(socket),
+                check=False,
+            ).returncode
+            == 0
+        )  # nosec B603 -- key paths are discovered from host SSH configuration.
+    return (
+        subprocess.run(
             [_SSH_ADD, str(key)],
             env=_host_ssh_env(socket),
             check=False,
-        ).returncode == 0  # nosec B603 -- key paths are discovered from host SSH configuration.
-    return subprocess.run(
-        [_SSH_ADD, str(key)],
-        env=_host_ssh_env(socket),
-        check=False,
-        stdin=subprocess.DEVNULL,
-        capture_output=True,
-        text=True,
-    ).returncode == 0  # nosec B603 -- key paths are discovered from host SSH configuration.
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+        ).returncode
+        == 0
+    )  # nosec B603 -- key paths are discovered from host SSH configuration.
 
 
 def _host_ssh_env(socket: Path) -> dict[str, str]:
