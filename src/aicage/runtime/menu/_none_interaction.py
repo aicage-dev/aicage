@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from aicage.cli_types import ConfigUpdateArgs
 from aicage.config.context import ConfigContext
 from aicage.config.run_config import RunConfig
@@ -91,6 +93,9 @@ class _NoneInteraction:
             update_approved=update_approved,
             reporter=self.reporter,
         )
+
+    def execute_operation(self, operation: Callable[[OperationReporter], None]) -> None:
+        operation(self.reporter)
 
 
 class _NonInteractiveSelectionInteraction:

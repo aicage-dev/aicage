@@ -205,6 +205,17 @@ class ExecuteImageSetupTests(TestCase):
         )
 
 
+class ExecuteOperationTests(TestCase):
+    def test_execute_operation(self) -> None:
+        reporter = mock.Mock()
+        resolved = _none_interaction._NoneInteraction(reporter)
+        operation = mock.Mock()
+
+        resolved.execute_operation(operation)
+
+        operation.assert_called_once_with(reporter)
+
+
 class RuntimeUpdateTests(TestCase):
     def test_confirm_aicage_update(self) -> None:
         resolved = _none_interaction._NoneInteraction(mock.Mock())

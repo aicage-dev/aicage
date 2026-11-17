@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from copy import deepcopy
 
 from aicage.config.context import ConfigContext
@@ -50,6 +51,11 @@ class TextualInteraction:
             update_approved,
             self._reporter,
         ).run(inline=True)
+        if isinstance(result, BaseException):
+            raise result
+
+    def execute_operation(self, operation: Callable[[OperationReporter], None]) -> None:
+        result = ExecutionApp(None, False, self._reporter, operation).run(inline=True)
         if isinstance(result, BaseException):
             raise result
 

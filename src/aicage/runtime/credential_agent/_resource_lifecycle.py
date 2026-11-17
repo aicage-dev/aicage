@@ -115,24 +115,25 @@ def _ssh_tmpfs_mounts(
 
 
 def _ensure_ready(
-    client: DockerClient, resource: _CredentialResource, volume: Volume, image_ref: str
+    client: DockerClient, resource: _CredentialResource, container: Container
 ) -> None:
     try:
-        client.containers.run(
-            image_ref,
-            [resource.protocol.value, "ready"],
-            remove=True,
-            volumes={
-                volume.name: {
-                    "bind": resource.socket_directory.as_posix(),
-                    "mode": "ro",
-                }
-            },
+        created = client.api.exec_create(
+            container.id,
+            ["credential-agent", resource.protocol.value, "ready"],
+            user=resource.user,
         )
+        execution_id = created["Id"]
+        client.api.exec_start(execution_id)
+        result = client.api.exec_inspect(execution_id)
     except DockerException as exc:
         raise DockerError(
             f"Credential sidecar '{resource.container_name}' did not become ready."
         ) from exc
+    if result.get("ExitCode") != 0:
+        raise DockerError(
+            f"Credential sidecar '{resource.container_name}' did not become ready."
+        )
 
 
 def _is_stopped(container: Container) -> bool:

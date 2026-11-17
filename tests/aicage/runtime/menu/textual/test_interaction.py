@@ -52,6 +52,21 @@ class ExecuteImageSetupTests(TestCase):
         run_mock.assert_called_once_with(inline=True)
 
 
+class ExecuteOperationTests(TestCase):
+    def test_execute_operation(self) -> None:
+        reporter = ExecutionReporter()
+        resolved = interaction.TextualInteraction(reporter)
+        operation = mock.Mock()
+
+        with mock.patch(
+            "aicage.runtime.menu.textual.interaction.ExecutionApp.run",
+            return_value=None,
+        ) as run_mock:
+            resolved.execute_operation(operation)
+
+        run_mock.assert_called_once_with(inline=True)
+
+
 class TextualInteractionTests(TestCase):
     def test_reporter(self) -> None:
         reporter = ExecutionReporter()

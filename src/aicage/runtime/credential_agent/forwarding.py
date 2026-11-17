@@ -109,7 +109,7 @@ def _prepare_plan(
         _prepare_direct_gpg_keys(plan.gpg_plan.credential_home, interactive=interactive)
     if not plan.protocols:
         return []
-    image_ref, image_id = _credential_image(reporter)
+    image_ref, image_id = _credential_image()
     return _ensure_resources(
         plan.protocols,
         _ImageSpec(image_ref, image_id, resolve_container_user()),

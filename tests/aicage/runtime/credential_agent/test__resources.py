@@ -38,7 +38,7 @@ class CredentialAgentResourcesTests(TestCase):
         client.volumes.get.side_effect = NotFound("missing")
         client.volumes.create.return_value = volume
         client.containers.get.side_effect = NotFound("missing")
-        client.containers.run.side_effect = [container, None]
+        client.containers.run.return_value = container
 
         with self._client(client):
             resources = _resources._ensure_resources(
@@ -54,7 +54,12 @@ class CredentialAgentResourcesTests(TestCase):
                 "org.aicage.credential-agent.owner": self._resource.owner,
             },
         )
-        self.assertEqual(2, client.containers.run.call_count)
+        client.containers.run.assert_called_once()
+        client.api.exec_create.assert_called_once_with(
+            container.id,
+            ["credential-agent", "ssh", "ready"],
+            user=self._resource.user,
+        )
 
     def test__ensure_resources_restarts_stopped_owned_sidecar(self) -> None:
         client = mock.Mock()
@@ -81,7 +86,7 @@ class CredentialAgentResourcesTests(TestCase):
 
         container.start.assert_called_once()
         container.remove.assert_not_called()
-        self.assertEqual(1, client.containers.run.call_count)
+        client.containers.run.assert_not_called()
 
     def test__ensure_resources_keeps_windows_docker_desktop_sidecar(self) -> None:
         client = mock.Mock()
@@ -126,10 +131,7 @@ class CredentialAgentResourcesTests(TestCase):
                 container = self._container(labels=labels, state=state)
                 client.volumes.get.return_value = volume
                 client.containers.get.return_value = container
-                client.containers.run.side_effect = [
-                    self._container(status="running"),
-                    None,
-                ]
+                client.containers.run.return_value = self._container(status="running")
 
                 with self._client(client):
                     _resources._ensure_resources(
@@ -168,7 +170,7 @@ class CredentialAgentResourcesTests(TestCase):
         credentials = Path("/test-tmp/.ssh")
         client.volumes.get.return_value = volume
         client.containers.get.side_effect = NotFound("missing")
-        client.containers.run.side_effect = [self._container(status="running"), None]
+        client.containers.run.return_value = self._container(status="running")
 
         with (
             self._client(client),
@@ -197,10 +199,8 @@ class CredentialAgentResourcesTests(TestCase):
         volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
         client.volumes.get.return_value = volume
         client.containers.get.side_effect = NotFound("missing")
-        client.containers.run.side_effect = [
-            self._container(status="running"),
-            DockerException("not ready"),
-        ]
+        client.containers.run.return_value = self._container(status="running")
+        client.api.exec_create.side_effect = DockerException("not ready")
 
         with (
             self._client(client),
@@ -265,6 +265,8 @@ class CredentialAgentResourcesTests(TestCase):
 
     @contextmanager
     def _client(self, client: mock.Mock) -> Iterator[None]:
+        client.api.exec_create.return_value = {"Id": "credential-ready"}
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
         with (
             mock.patch(
                 "aicage.runtime.credential_agent._resources.get_docker_client",

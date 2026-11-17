@@ -1,5 +1,7 @@
 """Utility-image update operations."""
 
+from enum import Enum
+
 from aicage.constants import IMAGE_REGISTRY
 from aicage.docker.pull import run_pull
 from aicage.docker.query import cleanup_old_digest, get_local_repo_digest_for_repo
@@ -9,13 +11,32 @@ from aicage.registry.digest.remote_digest import get_remote_digest
 from aicage.reporting import OperationReporter
 
 
-def ensure_util_image(image_ref: str, reporter: OperationReporter) -> None:
+class UtilImageSetupAction(Enum):
+    SKIP = "skip"
+    SETUP = "setup"
+
+
+def util_image_setup_action(image_ref: str) -> UtilImageSetupAction:
     repository = _repository(image_ref)
     local_digest = get_local_repo_digest_for_repo(image_ref, repository)
     if local_digest is not None:
         remote_digest = get_remote_digest(image_ref)
         if remote_digest is None or remote_digest == local_digest:
-            return
+            return UtilImageSetupAction.SKIP
+    return UtilImageSetupAction.SETUP
+
+
+def ensure_util_image(
+    image_ref: str,
+    reporter: OperationReporter,
+    *,
+    setup_action: UtilImageSetupAction | None = None,
+) -> None:
+    action = setup_action or util_image_setup_action(image_ref)
+    if action is UtilImageSetupAction.SKIP:
+        return
+    repository = _repository(image_ref)
+    local_digest = get_local_repo_digest_for_repo(image_ref, repository)
     resolve_verified_digest(image_ref, reporter=reporter)
     run_pull(image_ref, pull_log_path(image_ref), reporter=reporter)
     cleanup_old_digest(repository, local_digest, image_ref)

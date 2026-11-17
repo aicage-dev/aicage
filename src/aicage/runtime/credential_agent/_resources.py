@@ -51,7 +51,7 @@ def _ensure_resources(
                 )
             elif _is_stopped(container):
                 container.start()
-            _ensure_ready(client, resource, volume, image.image_ref)
+            _ensure_ready(client, resource, container)
     if reconcile is not None:
         reconcile(requested)
     return requested
