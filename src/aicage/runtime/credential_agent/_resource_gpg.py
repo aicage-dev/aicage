@@ -8,11 +8,9 @@ from aicage.docker.errors import DockerError
 from aicage.docker.execution.cli import run_docker_command
 from aicage.docker.execution.client import get_docker_client
 
+from ._resource_exec import terminal_streams
 from ._resource_lifecycle import _find_container
 from ._resource_models import _CredentialResource
-from ._resource_ssh import (
-    _terminal_streams,
-)
 
 
 def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bool:
@@ -89,7 +87,7 @@ def _run_gpg_command(
 def _load_gpg_key_interactively(
     resource: _CredentialResource, fingerprint: str
 ) -> None:
-    with _terminal_streams() as (stdin, stdout):
+    with terminal_streams() as (stdin, stdout):
         result = run_docker_command(
             [
                 "docker",

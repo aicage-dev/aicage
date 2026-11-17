@@ -95,7 +95,7 @@ class ResourceGpgTests(TestCase):
         streams = mock.MagicMock()
         streams.__enter__.return_value = (mock.Mock(), mock.Mock())
         with (
-            mock.patch.object(_resource_gpg, "_terminal_streams", return_value=streams),
+            mock.patch.object(_resource_gpg, "terminal_streams", return_value=streams),
             mock.patch.object(
                 _resource_gpg,
                 "run_docker_command",
