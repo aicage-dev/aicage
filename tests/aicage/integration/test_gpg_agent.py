@@ -3,15 +3,13 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
 from aicage.config.config_store import SettingsStore
-from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.docker.execution.env import resolve_container_user
-from aicage.runtime.credential_agent import _gpg_forwarding, _resources, forwarding
+from aicage.runtime.credential_agent import _resources
 from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
     _CredentialResource,
@@ -100,6 +98,7 @@ def test_cached_protected_gpg_key_signs_through_direct_agent(
 
 def test_gpg_sidecar_removes_deleted_host_keys(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     require_integration()
     initial_cwd = Path.cwd()
@@ -111,35 +110,20 @@ def test_gpg_sidecar_removes_deleted_host_keys(
             home.mkdir()
             _set_home(monkeypatch, home)
             gpg_home = home / ".gnupg"
+            workspace, env = setup_workspace(
+                monkeypatch,
+                tmp_path,
+                "copilot",
+                workspace_path=root / "workspace",
+            )
+            _enable_gnupg_mount(workspace)
+            _run_credential_setup(workspace, env)
             _create_gpg_sidecar_fixture(gpg_home)
-            context = mock.Mock()
-            context.project_cfg.path = str(root / "workspace")
-            context.project_cfg.agents = {
-                "copilot": AgentConfig(mounts=_AgentMounts(gnupg=True))
-            }
-
-            with (
-                mock.patch.object(
-                    _gpg_forwarding, "resolve_gpg_home", return_value=gpg_home
-                ),
-                mock.patch.object(
-                    _gpg_forwarding, "_direct_gpg_socket", return_value=None
-                ),
-                mock.patch.object(
-                    _gpg_forwarding,
-                    "resolve_gpg_secret_key_state",
-                    side_effect=lambda: _gpg_secret_key_state(gpg_home),
-                ),
-            ):
-                forwarding.prepare_credentials(
-                    context, "copilot", mock.Mock(), interactive=False
-                )
-                _assert_gpg_sidecar_has_keygrips()
-                shutil.rmtree(gpg_home / "private-keys-v1.d")
-                forwarding.prepare_credentials(
-                    context, "copilot", mock.Mock(), interactive=False
-                )
-                _assert_gpg_sidecar_has_no_keygrips()
+            _run_credential_setup(workspace, env)
+            _assert_gpg_sidecar_has_keygrips()
+            shutil.rmtree(gpg_home / "private-keys-v1.d")
+            _run_credential_setup(workspace, env)
+            _assert_gpg_sidecar_has_no_keygrips()
         finally:
             monkeypatch.chdir(initial_cwd)
 
@@ -164,14 +148,14 @@ def _assert_gpg_agent_signs(
                 "copilot",
                 workspace_path=root / "workspace",
             )
+            _enable_gnupg_mount(workspace)
 
             if use_sidecar:
+                _run_credential_setup(workspace, env)
                 fingerprint = _create_gpg_sidecar_fixture(home / ".gnupg")
-                _force_gpg_sidecar(root, env, home / ".gnupg")
             else:
                 fingerprint = _create_gpg_fixture(home / ".gnupg")
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
-            _enable_gnupg_mount(workspace)
 
             exit_code, output = run_cli_pty(
                 [
@@ -233,6 +217,24 @@ def _enable_gnupg_mount(workspace: Path) -> None:
     project_cfg = store.load_project(workspace)
     project_cfg.agents["copilot"].mounts.gnupg = True
     store.save_project(workspace, project_cfg)
+
+
+def _run_credential_setup(workspace: Path, env: dict[str, str]) -> None:
+    exit_code, output = run_cli_pty(
+        [
+            "--menu",
+            "none",
+            "-e",
+            "AICAGE_ENTRYPOINT_CMD=bash",
+            "--",
+            "copilot",
+            "-lc",
+            "true",
+        ],
+        env=env,
+        cwd=workspace,
+    )
+    assert exit_code == 0, output
 
 
 def _set_home(monkeypatch: pytest.MonkeyPatch, home: Path) -> None:
@@ -580,24 +582,6 @@ def _prime_host_gpg_agent(gpg_home: Path, fingerprint: str) -> None:
     )
     if fingerprint not in result.stdout:
         raise AssertionError("Host GnuPG did not find the generated secret key.")
-
-
-def _force_gpg_sidecar(root: Path, env: dict[str, str], gpg_home: Path) -> None:
-    if os.name == "nt":
-        return
-    bin_dir = root / "bin"
-    bin_dir.mkdir()
-    gpgconf = bin_dir / "gpgconf"
-    gpgconf.write_text(
-        "#!/bin/sh\n"
-        'if [ "$1 $2" = "--list-dirs homedir" ]; then\n'
-        '  printf "%s\\n" "$GNUPGHOME"\n'
-        "fi\n",
-        encoding="utf-8",
-    )
-    gpgconf.chmod(0o755)
-    env["GNUPGHOME"] = str(gpg_home)
-    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
 
 
 def _gpg_command() -> list[str]:

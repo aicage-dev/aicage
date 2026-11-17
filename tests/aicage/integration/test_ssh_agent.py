@@ -6,15 +6,12 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
 from aicage.config.config_store import SettingsStore
-from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.paths import container_project_path
-from aicage.runtime import _ssh_agent as ssh_agent_module
-from aicage.runtime.credential_agent import _resources, _ssh_forwarding, forwarding
+from aicage.runtime.credential_agent import _resources
 from aicage.runtime.credential_agent._resource_models import _CredentialProtocol
 
 from ._helpers import (
@@ -140,6 +137,7 @@ def test_ssh_agent_is_available_in_container(
 
 def test_ssh_sidecar_removes_deleted_host_keys(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     require_integration()
     initial_cwd = Path.cwd()
@@ -152,25 +150,22 @@ def test_ssh_sidecar_removes_deleted_host_keys(
             _set_home(monkeypatch, home)
             keys = _configure_ssh_keys(home)
             identities = [_ssh_public_identity(path) for path in keys.private_paths]
-            context = mock.Mock()
-            context.project_cfg.path = str(root / "workspace")
-            context.project_cfg.agents = {
-                "copilot": AgentConfig(mounts=_AgentMounts(ssh=True))
-            }
+            workspace, env = setup_workspace(
+                monkeypatch,
+                tmp_path,
+                "copilot",
+                workspace_path=root / "workspace",
+            )
+            _enable_ssh_mount(workspace)
 
-            with _host_ssh_directory(home / ".ssh"):
-                forwarding.prepare_credentials(
-                    context, "copilot", mock.Mock(), interactive=False
-                )
-                for identity in identities:
-                    _assert_ssh_sidecar_has_identity(identity)
-                for key in [*keys.private_paths, *keys.public_paths]:
-                    key.unlink()
-                forwarding.prepare_credentials(
-                    context, "copilot", mock.Mock(), interactive=False
-                )
-                for identity in identities:
-                    _assert_ssh_sidecar_lacks_identity(identity)
+            _run_credential_setup(workspace, env)
+            for identity in identities:
+                _assert_ssh_sidecar_has_identity(identity)
+            for key in [*keys.private_paths, *keys.public_paths]:
+                key.unlink()
+            _run_credential_setup(workspace, env)
+            for identity in identities:
+                _assert_ssh_sidecar_lacks_identity(identity)
         finally:
             monkeypatch.chdir(initial_cwd)
 
@@ -221,16 +216,6 @@ def _configure_protected_ssh_key(home: Path) -> Path:
     return key
 
 
-@contextmanager
-def _host_ssh_directory(ssh_dir: Path) -> Iterator[None]:
-    with (
-        mock.patch.object(ssh_agent_module, "HOST_SSH_DIR", ssh_dir),
-        mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", ssh_dir),
-        mock.patch.object(_resources, "HOST_SSH_DIR", ssh_dir),
-    ):
-        yield
-
-
 def _assert_ssh_sidecar_has_key(key: Path) -> None:
     _assert_ssh_sidecar_has_identity(_ssh_public_identity(key))
 
@@ -278,6 +263,24 @@ def _enable_ssh_mount(workspace: Path) -> None:
     project_cfg = store.load_project(workspace)
     project_cfg.agents["copilot"].mounts.ssh = True
     store.save_project(workspace, project_cfg)
+
+
+def _run_credential_setup(workspace: Path, env: dict[str, str]) -> None:
+    exit_code, output = run_cli_pty(
+        [
+            "--menu",
+            "none",
+            "-e",
+            "AICAGE_ENTRYPOINT_CMD=bash",
+            "--",
+            "copilot",
+            "-lc",
+            "true",
+        ],
+        env=env,
+        cwd=workspace,
+    )
+    assert exit_code == 0, output
 
 
 def _assert_ssh_authentication(
