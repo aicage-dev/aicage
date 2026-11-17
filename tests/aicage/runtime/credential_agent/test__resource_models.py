@@ -18,8 +18,8 @@ class CredentialResourceModelsTests(TestCase):
             mock.patch.object(
                 _resource_models, "resolve_host_user_id", return_value=None
             ),
-            mock.patch.object(Path, "home", return_value=Path("C:/Users/Tester")),
+            mock.patch.object(Path, "home", return_value=Path("Tester")),
         ):
             owner = _resource_models._resource_owner()
 
-        self.assertEqual("w04aba42b7c8e", owner)
+        self.assertEqual("w9bba5c53a054", owner)
