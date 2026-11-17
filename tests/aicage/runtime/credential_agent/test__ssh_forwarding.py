@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
@@ -226,6 +227,161 @@ class SshForwardingTests(TestCase):
             self.assertIsNone(
                 _ssh_forwarding._direct_ssh_target_args(interactive=False)
             )
+
+    def test_direct_ssh_target_args_falls_back_without_a_host_socket(self) -> None:
+        with mock.patch.object(_ssh_forwarding, "_direct_ssh_socket", return_value=None):
+            self.assertIsNone(
+                _ssh_forwarding._direct_ssh_target_args(interactive=False)
+            )
+
+    def test_direct_ssh_target_args_mounts_a_prepared_host_agent(self) -> None:
+        socket = Path("/test-tmp/ssh-agent.sock")
+        with (
+            mock.patch.object(_ssh_forwarding, "_direct_ssh_socket", return_value=socket),
+            mock.patch.object(
+                _ssh_forwarding, "_prepare_host_ssh_agent", return_value=True
+            ),
+        ):
+            result = _ssh_forwarding._direct_ssh_target_args(interactive=False)
+
+        self.assertEqual(
+            (
+                [
+                    BindMountSpec(
+                        socket,
+                        PurePosixPath("/run/credential-agent/ssh-agent.sock"),
+                    )
+                ],
+                [EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")],
+            ),
+            result,
+        )
+
+    def test_direct_ssh_socket_rejects_missing_or_non_socket_paths(self) -> None:
+        with (
+            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
+            mock.patch.dict(_ssh_forwarding.os.environ, {}, clear=True),
+        ):
+            self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
+
+        with (
+            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
+            mock.patch.dict(
+                _ssh_forwarding.os.environ,
+                {"SSH_AUTH_SOCK": "/test-tmp/not-a-socket"},
+                clear=True,
+            ),
+            mock.patch.object(Path, "is_socket", return_value=False),
+        ):
+            self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
+
+    def test_host_ssh_identities_handles_agent_results(self) -> None:
+        socket = Path("/test-tmp/ssh-agent.sock")
+        with mock.patch.object(_ssh_forwarding, "_SSH_ADD", None):
+            self.assertIsNone(_ssh_forwarding._host_ssh_identities(socket))
+
+        with (
+            mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                side_effect=[
+                    mock.Mock(returncode=1, stdout=""),
+                    mock.Mock(returncode=0, stdout="ssh-ed25519 AAAA one\nssh-rsa BBBB two\n"),
+                    mock.Mock(returncode=2, stdout=""),
+                ],
+            ),
+        ):
+            self.assertEqual([], _ssh_forwarding._host_ssh_identities(socket))
+            self.assertEqual(
+                ["ssh-ed25519 AAAA one", "ssh-rsa BBBB two"],
+                _ssh_forwarding._host_ssh_identities(socket),
+            )
+            self.assertIsNone(_ssh_forwarding._host_ssh_identities(socket))
+
+    def test_prepare_host_ssh_agent_falls_back_on_identity_or_load_failure(
+        self,
+    ) -> None:
+        socket = Path("/test-tmp/ssh-agent.sock")
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with mock.patch.object(
+            _ssh_forwarding, "_host_ssh_identities", return_value=None
+        ):
+            self.assertFalse(
+                _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
+            )
+
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_host_ssh_identities", return_value=[]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(_ssh_forwarding, "_ssh_key_is_encrypted", return_value=False),
+            mock.patch.object(
+                _ssh_forwarding, "_load_host_ssh_key", return_value=False
+            ),
+        ):
+            self.assertFalse(
+                _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
+            )
+
+    def test_load_host_ssh_key_uses_interactive_and_noninteractive_modes(
+        self,
+    ) -> None:
+        socket = Path("/test-tmp/ssh-agent.sock")
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                side_effect=[mock.Mock(returncode=0), mock.Mock(returncode=1)],
+            ) as run_mock,
+        ):
+            self.assertTrue(
+                _ssh_forwarding._load_host_ssh_key(socket, key, interactive=True)
+            )
+            self.assertFalse(
+                _ssh_forwarding._load_host_ssh_key(socket, key, interactive=False)
+            )
+
+        self.assertEqual(
+            ["/usr/bin/ssh-add", str(key)],
+            run_mock.call_args_list[0].args[0],
+        )
+        self.assertEqual(subprocess.DEVNULL, run_mock.call_args_list[1].kwargs["stdin"])
+
+    def test_load_host_ssh_key_rejects_a_missing_host_tool(self) -> None:
+        with mock.patch.object(_ssh_forwarding, "_SSH_ADD", None):
+            self.assertFalse(
+                _ssh_forwarding._load_host_ssh_key(
+                    Path("/test-tmp/ssh-agent.sock"),
+                    Path("/test-tmp/.ssh/id_ed25519"),
+                    interactive=False,
+                )
+            )
+
+    def test_ssh_key_is_encrypted_interprets_host_keygen_result(self) -> None:
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_keygen", return_value="/usr/bin/ssh-keygen"
+            ),
+            mock.patch.object(
+                _ssh_forwarding.subprocess,
+                "run",
+                side_effect=[mock.Mock(returncode=0), mock.Mock(returncode=1)],
+            ),
+        ):
+            self.assertFalse(_ssh_forwarding._ssh_key_is_encrypted(key))
+            self.assertTrue(_ssh_forwarding._ssh_key_is_encrypted(key))
 
     def test_append_ssh_target_args_adds_socket_volume_and_environment(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
