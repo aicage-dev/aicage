@@ -117,8 +117,8 @@ def test_gpg_sidecar_removes_deleted_host_keys(
                 workspace_path=root / "workspace",
             )
             _enable_gnupg_mount(workspace)
-            _run_credential_setup(workspace, env)
             _create_gpg_sidecar_fixture(gpg_home)
+            _force_gpg_sidecar(root, env)
             _run_credential_setup(workspace, env)
             _assert_gpg_sidecar_has_keygrips()
             shutil.rmtree(gpg_home / "private-keys-v1.d")
@@ -151,8 +151,8 @@ def _assert_gpg_agent_signs(
             _enable_gnupg_mount(workspace)
 
             if use_sidecar:
-                _run_credential_setup(workspace, env)
                 fingerprint = _create_gpg_sidecar_fixture(home / ".gnupg")
+                _force_gpg_sidecar(root, env)
             else:
                 fingerprint = _create_gpg_fixture(home / ".gnupg")
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
@@ -247,6 +247,34 @@ def _set_home(monkeypatch: pytest.MonkeyPatch, home: Path) -> None:
         if drive:
             monkeypatch.setenv("HOMEDRIVE", drive)
             monkeypatch.setenv("HOMEPATH", tail or "\\")
+
+
+def _force_gpg_sidecar(root: Path, env: dict[str, str]) -> None:
+    if os.name == "nt":
+        return
+    gpgconf = shutil.which("gpgconf")
+    if gpgconf is None:
+        raise AssertionError("gpgconf is required to force the GnuPG sidecar.")
+    bin_dir = root / "bin"
+    bin_dir.mkdir()
+    shim = bin_dir / "gpgconf"
+    missing_socket = root / "missing-gpg-agent.sock"
+    shim.write_text(
+        "\n".join(
+            [
+                "#!/bin/sh",
+                'if [ "$1" = "--list-dirs" ] && [ "$2" = "agent-socket" ]; then',
+                f"  printf '%s\\n' {shlex.quote(str(missing_socket))}",
+                "  exit 0",
+                "fi",
+                f"exec {shlex.quote(gpgconf)} \"$@\"",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    shim.chmod(0o755)
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
 
 
 def _create_gpg_fixture(gpg_home: Path) -> str:

@@ -64,33 +64,7 @@ def test_ssh_agent_is_available_in_container(
 
             with _ssh_agent(root / "agent.sock") as agent_env:
                 env.update(agent_env)
-                command = " && ".join(
-                    [
-                        *[
-                            f"ssh-add -L | grep -F -- {shlex.quote(public_key)}"
-                            for public_key in keys.public_keys
-                        ],
-                        *[
-                            f"test -r {shlex.quote(container_project_path(path).as_posix())}"
-                            for path in keys.public_paths
-                        ],
-                        *[
-                            f"! test -e {shlex.quote(container_project_path(path).as_posix())}"
-                            for path in keys.private_paths
-                        ],
-                        "printf '%s\\n' signed > signing-message",
-                        "rm -f signing-message.sig",
-                        (
-                            "ssh-keygen -Y sign -U "
-                            f"-f {shlex.quote(container_project_path(keys.public_paths[0]).as_posix())} "
-                            "-n aicage signing-message"
-                        ),
-                        (
-                            "ssh-keygen -Y verify -f allowed_signers -I aicage "
-                            "-n aicage -s signing-message.sig < signing-message"
-                        ),
-                    ]
-                )
+                command = _ssh_target_command(keys)
                 exit_code, output = run_cli_pty(
                     [
                         "--menu",
@@ -106,17 +80,93 @@ def test_ssh_agent_is_available_in_container(
                     cwd=workspace,
                 )
 
-            assert exit_code == 0, output
-            identities = subprocess.run(
-                ["ssh-add", "-L"],
+                assert exit_code == 0, output
+                identities = subprocess.run(
+                    ["ssh-add", "-L"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    env={**os.environ, **agent_env},
+                ).stdout
+                for public_key in keys.public_keys:
+                    assert public_key in identities
+                _assert_ssh_authentication(workspace, env, keys.public_paths[0])
+        finally:
+            monkeypatch.chdir(initial_cwd)
+
+
+def test_ssh_agent_is_available_in_container_through_sidecar(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    require_integration()
+    initial_cwd = Path.cwd()
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
+    temp_root.mkdir(exist_ok=True)
+    with temporary_test_root(temp_root) as root:
+        home = root / "home"
+        try:
+            home.mkdir()
+            _set_home(monkeypatch, home)
+            workspace, env = setup_workspace(
+                monkeypatch,
+                tmp_path,
+                "copilot",
+                workspace_path=root / "workspace",
+            )
+            subprocess.run(
+                ["git", "init", "--quiet"],
+                cwd=workspace,
                 check=True,
                 capture_output=True,
-                text=True,
-                env={**os.environ, **agent_env},
-            ).stdout
-            for public_key in keys.public_keys:
-                assert public_key in identities
+            )
+            keys = _configure_ssh_keys(home)
+            (workspace / "allowed_signers").write_text(
+                f"aicage {keys.public_keys[0]}\n", encoding="utf-8"
+            )
+            _enable_ssh_mount(workspace)
+            env.pop("SSH_AUTH_SOCK", None)
+            command = _ssh_target_command(keys)
+
+            exit_code, output = run_cli_pty(
+                [
+                    "--menu",
+                    "none",
+                    "-e",
+                    "AICAGE_ENTRYPOINT_CMD=bash",
+                    "--",
+                    "copilot",
+                    "-lc",
+                    command,
+                ],
+                env=env,
+                cwd=workspace,
+            )
+
+            assert exit_code == 0, output
+            for key in keys.private_paths:
+                _assert_ssh_sidecar_has_key(key)
             _assert_ssh_authentication(workspace, env, keys.public_paths[0])
+            subprocess.run(
+                ["docker", "stop", _ssh_resource_name()],
+                check=True,
+                capture_output=True,
+            )
+            exit_code, output = run_cli_pty(
+                [
+                    "--menu",
+                    "none",
+                    "-e",
+                    "AICAGE_ENTRYPOINT_CMD=bash",
+                    "--",
+                    "copilot",
+                    "-lc",
+                    command,
+                ],
+                env=env,
+                cwd=workspace,
+            )
+            assert exit_code == 0, output
         finally:
             monkeypatch.chdir(initial_cwd)
 
@@ -167,6 +217,36 @@ class _SshKeys:
             " ".join(path.read_text(encoding="utf-8").split()[:2])
             for path in self.public_paths
         ]
+
+
+def _ssh_target_command(keys: _SshKeys) -> str:
+    return " && ".join(
+        [
+            *[
+                f"ssh-add -L | grep -F -- {shlex.quote(public_key)}"
+                for public_key in keys.public_keys
+            ],
+            *[
+                f"test -r {shlex.quote(container_project_path(path).as_posix())}"
+                for path in keys.public_paths
+            ],
+            *[
+                f"! test -e {shlex.quote(container_project_path(path).as_posix())}"
+                for path in keys.private_paths
+            ],
+            "printf '%s\\n' signed > signing-message",
+            "rm -f signing-message.sig",
+            (
+                "ssh-keygen -Y sign -U "
+                f"-f {shlex.quote(container_project_path(keys.public_paths[0]).as_posix())} "
+                "-n aicage signing-message"
+            ),
+            (
+                "ssh-keygen -Y verify -f allowed_signers -I aicage "
+                "-n aicage -s signing-message.sig < signing-message"
+            ),
+        ]
+    )
 
 
 def _configure_ssh_keys(home: Path) -> _SshKeys:
