@@ -12,17 +12,18 @@ from aicage.runtime.credential_agent._resource_lifecycle import _resource_lock
 from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
     _CredentialResource,
+    _ImageSpec,
 )
 from aicage.runtime.credential_agent._resource_models import (
     _resources as _resource_definitions,
 )
-from aicage.runtime.credential_agent._resources import ResourceSetup
 
 
 class CredentialAgentResourcesTests(TestCase):
     def setUp(self) -> None:
         self._ssh = _CredentialProtocol.SSH
         self._resource = _resource_definitions([self._ssh])[0]
+        self._image = _ImageSpec("image:tag", "image-id", "1000:1000")
         self._labels = {
             "org.aicage.resource": "credential-agent",
             "org.aicage.credential-agent.protocol": "ssh",
@@ -40,7 +41,7 @@ class CredentialAgentResourcesTests(TestCase):
 
         with self._client(client):
             resources = _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
+                [self._ssh], self._image
             )
 
         self.assertEqual([self._resource], resources)
@@ -73,7 +74,7 @@ class CredentialAgentResourcesTests(TestCase):
             mock.patch.object(Path, "is_dir", return_value=True),
         ):
             _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
+                [self._ssh], self._image
             )
 
         container.start.assert_called_once()
@@ -102,7 +103,9 @@ class CredentialAgentResourcesTests(TestCase):
                 "aicage.runtime.credential_agent._resource_lifecycle._os_name", "nt"
             ),
         ):
-            _resources._ensure_resources([self._ssh], "image:tag", "image-id", "0:0")
+            _resources._ensure_resources(
+                [self._ssh], _ImageSpec("image:tag", "image-id", "0:0")
+            )
 
         container.remove.assert_not_called()
 
@@ -129,7 +132,7 @@ class CredentialAgentResourcesTests(TestCase):
 
                 with self._client(client):
                     _resources._ensure_resources(
-                        [self._ssh], "image:tag", "image-id", "1000:1000"
+                        [self._ssh], self._image
                     )
 
                 container.remove.assert_called_once_with(force=True)
@@ -144,7 +147,7 @@ class CredentialAgentResourcesTests(TestCase):
 
         with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
             _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
+                [self._ssh], self._image
             )
 
     def test__ensure_resources_rejects_unowned_sidecar(self) -> None:
@@ -155,7 +158,7 @@ class CredentialAgentResourcesTests(TestCase):
 
         with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
             _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
+                [self._ssh], self._image
             )
 
     def test__ensure_resources_mounts_credentials_only_in_sidecar(self) -> None:
@@ -177,9 +180,7 @@ class CredentialAgentResourcesTests(TestCase):
         ):
             _resources._ensure_resources(
                 [self._ssh],
-                "image:tag",
-                "image-id",
-                "1000:1000",
+                self._image,
             )
 
         sidecar_call = client.containers.run.call_args_list[1]
@@ -210,7 +211,7 @@ class CredentialAgentResourcesTests(TestCase):
             self.assertRaisesRegex(DockerError, "did not become ready"),
         ):
             _resources._ensure_resources(
-                [self._ssh], "image:tag", "image-id", "1000:1000"
+                [self._ssh], self._image
             )
 
     def test__ensure_resources_reconciles_after_releasing_resources_lock(self) -> None:
@@ -236,10 +237,8 @@ class CredentialAgentResourcesTests(TestCase):
         ):
             _resources._ensure_resources(
                 [self._ssh],
-                "image:tag",
-                "image-id",
-                "1000:1000",
-                ResourceSetup(reconcile=reconcile),
+                self._image,
+                reconcile=reconcile,
             )
 
         self.assertEqual(["locked", "released", "reconciled"], events)
@@ -261,6 +260,12 @@ class CredentialAgentResourcesTests(TestCase):
         )
 
         self.assertEqual(1, len(resources))
+
+    def test__ensure_resources_skips_empty_protocols(self) -> None:
+        with mock.patch.object(_resources, "get_docker_client") as client:
+            self.assertEqual([], _resources._ensure_resources([], self._image))
+
+        client.assert_not_called()
 
     @contextmanager
     def _client(self, client: mock.Mock) -> Iterator[None]:

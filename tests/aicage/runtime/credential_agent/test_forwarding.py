@@ -32,14 +32,14 @@ class CredentialAgentForwardingTests(TestCase):
             ) as image_mock,
             mock.patch.object(
                 forwarding,
-                "_ensure_sidecars",
+                "_ensure_resources",
                 return_value=[ssh_resource, gpg_resource],
-            ) as sidecars_mock,
+            ) as resources_mock,
         ):
             forwarding.prepare_credentials(context, "codex", mock.Mock(), interactive=True)
 
         image_mock.assert_called_once()
-        sidecars_mock.assert_called_once_with(
+        resources_mock.assert_called_once_with(
             [_CredentialProtocol.SSH, _CredentialProtocol.GPG],
             mock.ANY,
             gpg_plan.credential_home,

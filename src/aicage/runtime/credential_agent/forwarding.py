@@ -20,7 +20,7 @@ from ._gpg_forwarding import (
 )
 from ._image import _credential_image
 from ._resource_models import _CredentialProtocol, _CredentialResource, _ImageSpec
-from ._sidecars import _ensure_sidecars
+from ._resources import _ensure_resources
 from ._ssh_forwarding import (
     _append_ssh_target_args,
     _reload_ssh_keys,
@@ -110,7 +110,7 @@ def _prepare_plan(
     if not plan.protocols:
         return []
     image_ref, image_id = _credential_image(reporter)
-    return _ensure_sidecars(
+    return _ensure_resources(
         plan.protocols,
         _ImageSpec(image_ref, image_id, resolve_container_user()),
         plan.gpg_plan.credential_home if plan.gpg_plan is not None else None,
