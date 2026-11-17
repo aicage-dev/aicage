@@ -21,7 +21,9 @@ class EnsureUtilImageTests(TestCase):
 
         self.assertIs(ensure_util_image.UtilImageSetupAction.SKIP, action)
 
-    def test_util_image_setup_action_skips_when_remote_digest_is_unavailable(self) -> None:
+    def test_util_image_setup_action_skips_when_remote_digest_is_unavailable(
+        self,
+    ) -> None:
         with (
             mock.patch.object(
                 ensure_util_image,
@@ -36,7 +38,9 @@ class EnsureUtilImageTests(TestCase):
 
         self.assertIs(ensure_util_image.UtilImageSetupAction.SKIP, action)
 
-    def test_util_image_setup_action_requires_setup_for_missing_or_stale_images(self) -> None:
+    def test_util_image_setup_action_requires_setup_for_missing_or_stale_images(
+        self,
+    ) -> None:
         cases = ((None, None), ("sha256:old", "sha256:current"))
         for local_digest, remote_digest in cases:
             with self.subTest(local_digest=local_digest, remote_digest=remote_digest):
@@ -74,7 +78,9 @@ class EnsureUtilImageTests(TestCase):
 
     def test_ensure_util_image_uses_a_supplied_setup_action(self) -> None:
         with (
-            mock.patch.object(ensure_util_image, "util_image_setup_action") as plan_mock,
+            mock.patch.object(
+                ensure_util_image, "util_image_setup_action"
+            ) as plan_mock,
             mock.patch.object(
                 ensure_util_image, "get_local_repo_digest_for_repo", return_value=None
             ),

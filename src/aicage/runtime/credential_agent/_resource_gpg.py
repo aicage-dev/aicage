@@ -19,7 +19,8 @@ def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bo
     container = _sidecar_container(client, resource)
     output = _run_gpg_command(
         client,
-        container, resource,
+        container,
+        resource,
         ["credential-agent", "gpg", "protected", fingerprint],
         fingerprint,
     )
@@ -31,7 +32,8 @@ def _gpg_key_is_cached(resource: _CredentialResource, fingerprint: str) -> bool:
     container = _sidecar_container(client, resource)
     output = _run_gpg_command(
         client,
-        container, resource,
+        container,
+        resource,
         ["credential-agent", "gpg", "cached", fingerprint],
         fingerprint,
     )
@@ -43,7 +45,8 @@ def _gpg_keygrips(resource: _CredentialResource) -> set[str]:
     container = _sidecar_container(client, resource)
     output = _run_gpg_command(
         client,
-        container, resource,
+        container,
+        resource,
         ["credential-agent", "gpg", "keygrips"],
         resource.container_name,
     )
@@ -55,7 +58,8 @@ def _reset_gpg_agent(resource: _CredentialResource) -> None:
     container = _sidecar_container(client, resource)
     _run_gpg_command(
         client,
-        container, resource,
+        container,
+        resource,
         ["credential-agent", "gpg", "reset"],
         resource.container_name,
     )

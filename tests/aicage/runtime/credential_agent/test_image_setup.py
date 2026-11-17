@@ -62,7 +62,9 @@ class CredentialImageSetupTests(TestCase):
         )
         interaction = mock.Mock()
         reporter = mock.Mock()
-        interaction.execute_operation.side_effect = lambda operation: operation(reporter)
+        interaction.execute_operation.side_effect = lambda operation: operation(
+            reporter
+        )
 
         with (
             mock.patch.object(

@@ -42,8 +42,7 @@ class MountsTests(TestCase):
         self.assertEqual(
             [
                 "--mount",
-                f"type=volume,src={volume_name},"
-                "dst=/run/credential-agent,readonly",
+                f"type=volume,src={volume_name}," "dst=/run/credential-agent,readonly",
             ],
             args,
         )

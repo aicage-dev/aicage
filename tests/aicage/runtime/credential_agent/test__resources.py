@@ -41,9 +41,7 @@ class CredentialAgentResourcesTests(TestCase):
         client.containers.run.return_value = container
 
         with self._client(client):
-            resources = _resources._ensure_resources(
-                [self._ssh], self._image
-            )
+            resources = _resources._ensure_resources([self._ssh], self._image)
 
         self.assertEqual([self._resource], resources)
         client.volumes.create.assert_called_once_with(
@@ -80,9 +78,7 @@ class CredentialAgentResourcesTests(TestCase):
             mock.patch.object(_resources, "HOST_SSH_DIR", credentials),
             mock.patch.object(Path, "is_dir", return_value=True),
         ):
-            _resources._ensure_resources(
-                [self._ssh], self._image
-            )
+            _resources._ensure_resources([self._ssh], self._image)
 
         container.start.assert_called_once()
         container.remove.assert_not_called()
@@ -134,9 +130,7 @@ class CredentialAgentResourcesTests(TestCase):
                 client.containers.run.return_value = self._container(status="running")
 
                 with self._client(client):
-                    _resources._ensure_resources(
-                        [self._ssh], self._image
-                    )
+                    _resources._ensure_resources([self._ssh], self._image)
 
                 container.remove.assert_called_once_with(force=True)
                 client.volumes.create.assert_not_called()
@@ -149,9 +143,7 @@ class CredentialAgentResourcesTests(TestCase):
         )
 
         with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
-            _resources._ensure_resources(
-                [self._ssh], self._image
-            )
+            _resources._ensure_resources([self._ssh], self._image)
 
     def test__ensure_resources_rejects_unowned_sidecar(self) -> None:
         client = mock.Mock()
@@ -160,9 +152,7 @@ class CredentialAgentResourcesTests(TestCase):
         client.containers.get.return_value = self._container(labels={})
 
         with self._client(client), self.assertRaisesRegex(DockerError, "not owned"):
-            _resources._ensure_resources(
-                [self._ssh], self._image
-            )
+            _resources._ensure_resources([self._ssh], self._image)
 
     def test__ensure_resources_mounts_credentials_only_in_sidecar(self) -> None:
         client = mock.Mock()
@@ -206,9 +196,7 @@ class CredentialAgentResourcesTests(TestCase):
             self._client(client),
             self.assertRaisesRegex(DockerError, "did not become ready"),
         ):
-            _resources._ensure_resources(
-                [self._ssh], self._image
-            )
+            _resources._ensure_resources([self._ssh], self._image)
 
     def test__ensure_resources_reconciles_after_releasing_resources_lock(self) -> None:
         client = mock.Mock()

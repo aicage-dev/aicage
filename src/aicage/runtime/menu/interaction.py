@@ -36,7 +36,9 @@ class RuntimeInteraction(Protocol):
         self, run_config: RunConfig, update_approved: bool
     ) -> None: ...
 
-    def execute_operation(self, operation: Callable[[OperationReporter], None]) -> None: ...
+    def execute_operation(
+        self, operation: Callable[[OperationReporter], None]
+    ) -> None: ...
 
 
 def create_runtime_interaction(menu: MenuMode) -> RuntimeInteraction:

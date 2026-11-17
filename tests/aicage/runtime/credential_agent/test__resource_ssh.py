@@ -167,9 +167,7 @@ class ResourceSshTests(TestCase):
             mock.patch.object(
                 _resource_ssh, "_find_container", return_value=mock.Mock()
             ),
-            mock.patch(
-                "aicage.runtime.credential_agent._resource_exec.time.sleep"
-            ),
+            mock.patch("aicage.runtime.credential_agent._resource_exec.time.sleep"),
         ):
             _resource_ssh._load_ssh_key(
                 resource, PurePosixPath("/credential/ssh/id_ed25519"), ""
