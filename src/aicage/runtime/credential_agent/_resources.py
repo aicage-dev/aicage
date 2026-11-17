@@ -12,7 +12,6 @@ from ._resource_lifecycle import (
     _ensure_volume,
     _find_container,
     _is_stopped,
-    _prepare_volume,
     _requires_replacement,
     _resource_lock,
 )
@@ -30,14 +29,13 @@ def _ensure_resources(
     gpg_home: Path | None = None,
     reconcile: Callable[[list[_CredentialResource]], None] | None = None,
 ) -> list[_CredentialResource]:
-    requested = _resources(protocols)
+    requested = _resources(protocols, image.user)
     if not requested:
         return []
     with _resource_lock():
         client = get_docker_client()
         for resource in requested:
             volume = _ensure_volume(client, resource)
-            _prepare_volume(client, resource, volume, image)
             container = _find_container(client, resource)
             credential_path = _credential_path(resource, gpg_home)
             if container is None or _requires_replacement(

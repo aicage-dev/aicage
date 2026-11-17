@@ -2,6 +2,12 @@ from pathlib import Path, PurePosixPath
 from unittest import TestCase
 
 from aicage.docker.execution.mounts import mount_args
+from aicage.runtime.credential_agent._resource_models import (
+    _CredentialProtocol,
+)
+from aicage.runtime.credential_agent._resource_models import (
+    _resources as _credential_resources,
+)
 from aicage.runtime.run_args import BindMountSpec, MountSpec, VolumeMountSpec
 
 
@@ -23,10 +29,11 @@ class MountsTests(TestCase):
         )
 
     def test_mount_args_returns_a_read_only_volume_mount(self) -> None:
+        volume_name = _credential_resources([_CredentialProtocol.SSH])[0].volume_name
         args = mount_args(
             [
                 VolumeMountSpec(
-                    "aicage-credential-agent-ssh-socket",
+                    volume_name,
                     PurePosixPath("/run/credential-agent"),
                     read_only=True,
                 )
@@ -35,7 +42,7 @@ class MountsTests(TestCase):
         self.assertEqual(
             [
                 "--mount",
-                "type=volume,src=aicage-credential-agent-ssh-socket,"
+                f"type=volume,src={volume_name},"
                 "dst=/run/credential-agent,readonly",
             ],
             args,

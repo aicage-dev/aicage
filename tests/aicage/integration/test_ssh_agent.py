@@ -15,6 +15,7 @@ from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.paths import container_project_path
 from aicage.runtime import _ssh_agent as ssh_agent_module
 from aicage.runtime.credential_agent import _resources, _ssh_forwarding, forwarding
+from aicage.runtime.credential_agent._resource_models import _CredentialProtocol
 
 from ._helpers import (
     require_integration,
@@ -24,6 +25,10 @@ from ._helpers import (
 )
 
 pytestmark = pytest.mark.integration
+
+
+def _ssh_resource_name() -> str:
+    return _resources._resources([_CredentialProtocol.SSH])[0].container_name
 
 
 def test_ssh_agent_is_available_in_container(
@@ -110,7 +115,7 @@ def test_ssh_agent_is_available_in_container(
             assert exit_code == 0, output
             _assert_ssh_authentication(workspace, env, keys.public_paths[0])
             subprocess.run(
-                ["docker", "stop", "aicage-credential-agent-ssh"],
+                ["docker", "stop", _ssh_resource_name()],
                 check=True,
                 capture_output=True,
             )
@@ -239,7 +244,7 @@ def _assert_ssh_sidecar_has_identity(identity: str) -> None:
         [
             "docker",
             "exec",
-            "aicage-credential-agent-ssh",
+            _ssh_resource_name(),
             "sh",
             "-c",
             "SSH_AUTH_SOCK=/run/credential-agent/ssh-agent.sock ssh-add -L",
@@ -256,7 +261,7 @@ def _assert_ssh_sidecar_lacks_identity(identity: str) -> None:
         [
             "docker",
             "exec",
-            "aicage-credential-agent-ssh",
+            _ssh_resource_name(),
             "credential-agent",
             "ssh",
             "list",

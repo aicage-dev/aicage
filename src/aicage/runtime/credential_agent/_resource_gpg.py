@@ -19,7 +19,7 @@ def _gpg_key_is_protected(resource: _CredentialResource, fingerprint: str) -> bo
     container = _sidecar_container(client, resource)
     output = _run_gpg_command(
         client,
-        container,
+        container, resource,
         ["credential-agent", "gpg", "protected", fingerprint],
         fingerprint,
     )
@@ -31,7 +31,7 @@ def _gpg_key_is_cached(resource: _CredentialResource, fingerprint: str) -> bool:
     container = _sidecar_container(client, resource)
     output = _run_gpg_command(
         client,
-        container,
+        container, resource,
         ["credential-agent", "gpg", "cached", fingerprint],
         fingerprint,
     )
@@ -43,7 +43,7 @@ def _gpg_keygrips(resource: _CredentialResource) -> set[str]:
     container = _sidecar_container(client, resource)
     output = _run_gpg_command(
         client,
-        container,
+        container, resource,
         ["credential-agent", "gpg", "keygrips"],
         resource.container_name,
     )
@@ -55,17 +55,21 @@ def _reset_gpg_agent(resource: _CredentialResource) -> None:
     container = _sidecar_container(client, resource)
     _run_gpg_command(
         client,
-        container,
+        container, resource,
         ["credential-agent", "gpg", "reset"],
         resource.container_name,
     )
 
 
 def _run_gpg_command(
-    client: DockerClient, container: Container, command: list[str], identifier: str
+    client: DockerClient,
+    container: Container,
+    resource: _CredentialResource,
+    command: list[str],
+    identifier: str,
 ) -> str:
     try:
-        created = client.api.exec_create(container.id, command)
+        created = client.api.exec_create(container.id, command, user=resource.user)
         execution_id = created["Id"]
         output = client.api.exec_start(execution_id)
         result = client.api.exec_inspect(execution_id)
@@ -92,6 +96,8 @@ def _load_gpg_key_interactively(
             [
                 "docker",
                 "exec",
+                "--user",
+                resource.user,
                 "-it",
                 resource.container_name,
                 "credential-agent",

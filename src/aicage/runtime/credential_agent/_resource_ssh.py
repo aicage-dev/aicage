@@ -42,6 +42,7 @@ def _load_ssh_key(
                 (target_path or key_path).as_posix(),
             ],
             stdin=True,
+            user=resource.user,
         )
         execution_id = created["Id"]
         stream = client.api.exec_start(execution_id, socket=True)
@@ -70,6 +71,8 @@ def _load_ssh_key_interactively(
             [
                 "docker",
                 "exec",
+                "--user",
+                resource.user,
                 "-it",
                 resource.container_name,
                 "credential-agent",
@@ -100,6 +103,7 @@ def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
         created = client.api.exec_create(
             container.id,
             ["credential-agent", "ssh", "list"],
+            user=resource.user,
         )
         execution_id = created["Id"]
         output = client.api.exec_start(execution_id)
@@ -127,6 +131,7 @@ def _remove_ssh_identity(resource: _CredentialResource, identity: str) -> None:
             container.id,
             ["credential-agent", "ssh", "remove"],
             stdin=True,
+            user=resource.user,
         )
         execution_id = created["Id"]
         stream = client.api.exec_start(execution_id, socket=True)

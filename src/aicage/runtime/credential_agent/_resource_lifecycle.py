@@ -16,6 +16,7 @@ from aicage.paths import CREDENTIAL_AGENT_LOCK_PATH, container_project_path
 
 from ._resource_models import (
     _IMAGE_ID_LABEL,
+    _OWNER_LABEL,
     _PROTOCOL_LABEL,
     _RESOURCE_LABEL,
     _RESOURCE_VALUE,
@@ -89,8 +90,8 @@ def _create_container(
         [resource.protocol.value, "serve"],
         detach=True,
         name=resource.container_name,
-        user=image.user,
         labels=_labels(resource, image.image_id),
+        environment=_credential_agent_environment(image.user),
         volumes=volumes,
         tmpfs=tmpfs,
     )
@@ -111,31 +112,6 @@ def _ssh_tmpfs_mounts(
             f"rw,uid={uid},gid={gid},mode=0700"
         )
     }
-
-
-def _prepare_volume(
-    client: DockerClient,
-    resource: _CredentialResource,
-    volume: Volume,
-    image: _ImageSpec,
-) -> None:
-    try:
-        client.containers.run(
-            image.image_ref,
-            ["-c", f"chown {image.user} {resource.socket_directory.as_posix()}"],
-            entrypoint="/bin/sh",
-            remove=True,
-            volumes={
-                volume.name: {
-                    "bind": resource.socket_directory.as_posix(),
-                    "mode": "rw",
-                }
-            },
-        )
-    except DockerException as exc:
-        raise DockerError(
-            f"Failed to prepare credential socket volume '{resource.volume_name}'."
-        ) from exc
 
 
 def _ensure_ready(
@@ -168,6 +144,7 @@ def _labels(resource: _CredentialResource, image_id: str | None) -> dict[str, st
     labels = {
         _RESOURCE_LABEL: _RESOURCE_VALUE,
         _PROTOCOL_LABEL: resource.protocol.value,
+        _OWNER_LABEL: resource.owner,
     }
     if image_id is not None:
         labels[_IMAGE_ID_LABEL] = image_id
@@ -179,6 +156,7 @@ def _is_owned(resource: Container | Volume, expected: _CredentialResource) -> bo
     return (
         labels.get(_RESOURCE_LABEL) == _RESOURCE_VALUE
         and labels.get(_PROTOCOL_LABEL) == expected.protocol.value
+        and labels.get(_OWNER_LABEL) == expected.owner
     )
 
 
@@ -251,6 +229,11 @@ def _credential_mount_matches(
         source.as_posix().casefold()
         == _docker_desktop_host_path(credential_path).as_posix().casefold()
     )
+
+
+def _credential_agent_environment(user: str) -> dict[str, str]:
+    uid, _, gid = user.partition(":")
+    return {"AICAGE_UID": uid, "AICAGE_GID": gid or uid}
 
 
 def _docker_desktop_host_path(path: Path) -> PurePosixPath:

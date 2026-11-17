@@ -4,6 +4,12 @@ from pathlib import Path, PurePosixPath
 from unittest import TestCase, mock
 
 from aicage.docker import run
+from aicage.runtime.credential_agent._resource_models import (
+    _CredentialProtocol,
+)
+from aicage.runtime.credential_agent._resource_models import (
+    _resources as _credential_resources,
+)
 from aicage.runtime.run_args import (
     BindMountSpec,
     DockerRunArgs,
@@ -175,6 +181,7 @@ class RunCommandTests(TestCase):
         self.assertNotIn("AICAGE_AGENT_CONFIG_PATH", " ".join(cmd))
 
     def test_assemble_includes_a_volume_mount(self) -> None:
+        volume_name = _credential_resources([_CredentialProtocol.SSH])[0].volume_name
         with mock.patch("aicage.docker.run.resolve_user_ids", return_value=[]):
             cmd = run._assemble_docker_run(
                 DockerRunArgs(
@@ -183,7 +190,7 @@ class RunCommandTests(TestCase):
                     agent_args=[],
                     mounts=[
                         VolumeMountSpec(
-                            volume_name="aicage-credential-agent-ssh",
+                            volume_name=volume_name,
                             container_path=PurePosixPath("/run/credentials"),
                             read_only=True,
                         )
@@ -192,7 +199,7 @@ class RunCommandTests(TestCase):
             )
 
         self.assertIn(
-            "type=volume,src=aicage-credential-agent-ssh,dst=/run/credentials,readonly",
+            f"type=volume,src={volume_name},dst=/run/credentials,readonly",
             cmd,
         )
 

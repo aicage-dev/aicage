@@ -11,7 +11,11 @@ from aicage.config.config_store import SettingsStore
 from aicage.config.project_config import AgentConfig, _AgentMounts
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.docker.execution.env import resolve_container_user
-from aicage.runtime.credential_agent import _gpg_forwarding, forwarding
+from aicage.runtime.credential_agent import _gpg_forwarding, _resources, forwarding
+from aicage.runtime.credential_agent._resource_models import (
+    _CredentialProtocol,
+    _CredentialResource,
+)
 
 from ._helpers import (
     require_integration,
@@ -23,6 +27,10 @@ from ._helpers import (
 pytestmark = pytest.mark.integration
 
 _GPG_FINGERPRINT_FIELD = 9
+
+
+def _gpg_resource() -> _CredentialResource:
+    return _resources._resources([_CredentialProtocol.GPG])[0]
 
 
 def test_gpg_agent_signs_through_direct_agent(
@@ -190,7 +198,7 @@ def _assert_gpg_agent_signs(
             assert exit_code == 0, output
             if use_sidecar:
                 subprocess.run(
-                    ["docker", "stop", "aicage-credential-agent-gpg"],
+                    ["docker", "stop", _gpg_resource().container_name],
                     check=True,
                     capture_output=True,
                 )
@@ -448,7 +456,7 @@ def _assert_gpg_sidecar_key_is_protected(fingerprint: str) -> None:
         [
             "docker",
             "exec",
-            "aicage-credential-agent-gpg",
+            _gpg_resource().container_name,
             "credential-agent",
             "gpg",
             "protected",
@@ -466,7 +474,7 @@ def _assert_gpg_sidecar_key_is_cached(fingerprint: str) -> None:
         [
             "docker",
             "exec",
-            "aicage-credential-agent-gpg",
+            _gpg_resource().container_name,
             "credential-agent",
             "gpg",
             "cached",
@@ -489,7 +497,7 @@ def _assert_gpg_sidecar_has_keygrips() -> None:
         [
             "docker",
             "exec",
-            "aicage-credential-agent-gpg",
+            _gpg_resource().container_name,
             "credential-agent",
             "gpg",
             "keygrips",
@@ -506,7 +514,7 @@ def _assert_gpg_sidecar_has_no_keygrips() -> None:
         [
             "docker",
             "exec",
-            "aicage-credential-agent-gpg",
+            _gpg_resource().container_name,
             "credential-agent",
             "gpg",
             "keygrips",
@@ -538,7 +546,7 @@ def _assert_gpg_sidecar_client_signs(
             "--entrypoint",
             "/bin/sh",
             "--mount",
-            "type=volume,src=aicage-credential-agent-gpg-socket,"
+            f"type=volume,src={_gpg_resource().volume_name},"
             "dst=/run/credential-agent,readonly",
             "--mount",
             f"type=bind,src={client_home},dst=/client-gnupg",

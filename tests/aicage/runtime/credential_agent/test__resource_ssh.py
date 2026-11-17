@@ -39,6 +39,7 @@ class ResourceSshTests(TestCase):
                 "/credential/ssh/id_ed25519",
             ],
             stdin=True,
+            user=resource.user,
         )
 
     def test_load_ssh_key_rejects_missing_sidecar(self) -> None:
@@ -75,6 +76,8 @@ class ResourceSshTests(TestCase):
             [
                 "docker",
                 "exec",
+                "--user",
+                resource.user,
                 "-it",
                 resource.container_name,
                 "credential-agent",
@@ -106,6 +109,7 @@ class ResourceSshTests(TestCase):
         client.api.exec_create.assert_called_once_with(
             container.id,
             ["credential-agent", "ssh", "list"],
+            user=resource.user,
         )
 
     def test_remove_ssh_identity_streams_public_key_to_sidecar(self) -> None:
@@ -127,6 +131,7 @@ class ResourceSshTests(TestCase):
             container.id,
             ["credential-agent", "ssh", "remove"],
             stdin=True,
+            user=resource.user,
         )
 
     def test_load_ssh_key_rejects_a_failed_exec(self) -> None:

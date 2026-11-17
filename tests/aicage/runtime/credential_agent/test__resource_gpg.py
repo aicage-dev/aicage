@@ -27,6 +27,7 @@ class ResourceGpgTests(TestCase):
         client.api.exec_create.assert_called_once_with(
             container.id,
             ["credential-agent", "gpg", "protected", "FINGERPRINT"],
+            user=resource.user,
         )
 
     def test_gpg_key_is_protected_rejects_a_failed_exec(self) -> None:
@@ -88,6 +89,7 @@ class ResourceGpgTests(TestCase):
         client.api.exec_create.assert_called_once_with(
             container.id,
             ["credential-agent", "gpg", "reset"],
+            user=resource.user,
         )
 
     def test_load_gpg_key_interactively_attaches_to_the_terminal(self) -> None:
@@ -108,6 +110,8 @@ class ResourceGpgTests(TestCase):
             [
                 "docker",
                 "exec",
+                "--user",
+                resource.user,
                 "-it",
                 resource.container_name,
                 "credential-agent",
