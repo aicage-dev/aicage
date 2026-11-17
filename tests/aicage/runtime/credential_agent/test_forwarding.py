@@ -36,7 +36,9 @@ class CredentialAgentForwardingTests(TestCase):
                 return_value=[ssh_resource, gpg_resource],
             ) as resources_mock,
         ):
-            forwarding.prepare_credentials(context, "codex", mock.Mock(), interactive=True)
+            forwarding.prepare_credentials(
+                context, "codex", mock.Mock(), interactive=True
+            )
 
         image_mock.assert_called_once()
         resources_mock.assert_called_once_with(
@@ -49,7 +51,8 @@ class CredentialAgentForwardingTests(TestCase):
     def test_credential_forwarding_adds_ssh_target_args(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         setup = forwarding.CredentialSetup(
-            forwarding._CredentialPlan([], [], [_CredentialProtocol.SSH], None), [resource]
+            forwarding._CredentialPlan([], [], [_CredentialProtocol.SSH], None),
+            [resource],
         )
         with forwarding.credential_forwarding(setup) as (mounts, env):
             self.assertEqual(
@@ -74,7 +77,9 @@ class CredentialAgentForwardingTests(TestCase):
         setup = forwarding.CredentialSetup(
             forwarding._CredentialPlan([], [], [], gpg_plan), []
         )
-        with mock.patch.object(gpg_plan, "direct_target_args", return_value=nullcontext([])):
+        with mock.patch.object(
+            gpg_plan, "direct_target_args", return_value=nullcontext([])
+        ):
             with forwarding.credential_forwarding(setup) as (mounts, env):
                 self.assertEqual([], mounts)
                 self.assertEqual([], env)
