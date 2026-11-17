@@ -134,19 +134,19 @@ def _load_host_ssh_key(socket: Path, key: Path, *, interactive: bool) -> bool:
     if _SSH_ADD is None:
         return False
     if interactive:
-        return subprocess.run(
+        return subprocess.run(  # nosec B603 -- resolved local ssh-add receives argv without shell evaluation.
             [_SSH_ADD, str(key)],
             env=_host_ssh_env(socket),
             check=False,
-        ).returncode == 0  # nosec B603 -- key paths are discovered from host SSH configuration.
-    return subprocess.run(
+        ).returncode == 0
+    return subprocess.run(  # nosec B603 -- resolved local ssh-add receives argv without shell evaluation.
         [_SSH_ADD, str(key)],
         env=_host_ssh_env(socket),
         check=False,
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
-    ).returncode == 0  # nosec B603 -- key paths are discovered from host SSH configuration.
+    ).returncode == 0
 
 
 def _host_ssh_env(socket: Path) -> dict[str, str]:
