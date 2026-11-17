@@ -138,7 +138,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     "git_support",
                     "ssh",
-                    "SSH agent (for SSH access)",
+                    "SSH agent",
                     None,
                     None,
                     True,
@@ -158,7 +158,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     "git_support",
                     "ssh",
-                    "(Auto) SSH agent (for SSH access)",
+                    "(Auto) SSH agent",
                     None,
                     None,
                     True,

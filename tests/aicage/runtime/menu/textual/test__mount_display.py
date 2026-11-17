@@ -25,7 +25,7 @@ class MountDisplayTests(TestCase):
     def test_git_support_config_label_describes_ssh_agent(self) -> None:
         value = _mount_display.git_support_config_label(MOUNT_SSH_KEY)
 
-        self.assertEqual("SSH agent (for SSH access)", value)
+        self.assertEqual("SSH agent", value)
 
     def test_git_support_config_label_describes_gnupg_agent(self) -> None:
         value = _mount_display.git_support_config_label(MOUNT_GNUPG_KEY)

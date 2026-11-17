@@ -1,7 +1,6 @@
 """Credential-sidecar resource orchestration."""
 
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
 from pathlib import Path
 
 from aicage.docker.execution.client import get_docker_client
@@ -25,33 +24,22 @@ from ._resource_models import (
 )
 
 
-@dataclass(frozen=True)
-class ResourceSetup:
-    gpg_home: Path | None = None
-    reconcile: Callable[[list[_CredentialResource]], None] | None = None
-
-
-_DEFAULT_RESOURCE_SETUP = ResourceSetup()
-
-
 def _ensure_resources(
     protocols: Iterable[_CredentialProtocol],
-    image_ref: str,
-    image_id: str,
-    user: str,
-    setup: ResourceSetup = _DEFAULT_RESOURCE_SETUP,
+    image: _ImageSpec,
+    gpg_home: Path | None = None,
+    reconcile: Callable[[list[_CredentialResource]], None] | None = None,
 ) -> list[_CredentialResource]:
     requested = _resources(protocols)
     if not requested:
         return []
-    image = _ImageSpec(image_ref=image_ref, image_id=image_id, user=user)
     with _resource_lock():
         client = get_docker_client()
         for resource in requested:
             volume = _ensure_volume(client, resource)
             _prepare_volume(client, resource, volume, image)
             container = _find_container(client, resource)
-            credential_path = _credential_path(resource, setup.gpg_home)
+            credential_path = _credential_path(resource, gpg_home)
             if container is None or _requires_replacement(
                 container,
                 resource,
@@ -66,8 +54,8 @@ def _ensure_resources(
             elif _is_stopped(container):
                 container.start()
             _ensure_ready(client, resource, volume, image.image_ref)
-    if setup.reconcile is not None:
-        setup.reconcile(requested)
+    if reconcile is not None:
+        reconcile(requested)
     return requested
 
 
