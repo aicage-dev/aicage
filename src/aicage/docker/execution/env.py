@@ -67,10 +67,10 @@ def _resolve_host_user() -> str:
 
 
 def _resolve_host_user_ids() -> tuple[int | None, int | None]:
-    return _resolve_host_user_id("getuid"), _resolve_host_user_id("getgid")
+    return resolve_host_user_id("getuid"), resolve_host_user_id("getgid")
 
 
-def _resolve_host_user_id(method_name: str) -> int | None:
+def resolve_host_user_id(method_name: str) -> int | None:
     method = vars(os).get(method_name)
     if not callable(method):
         return None

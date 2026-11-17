@@ -1,12 +1,12 @@
 """Credential-sidecar resource definitions."""
 
-import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 from hashlib import sha256
-from os import name as _os_name
 from pathlib import Path, PurePosixPath
+
+from aicage.docker.execution.env import resolve_host_user_id
 
 _RESOURCE_LABEL = "org.aicage.resource"
 _RESOURCE_VALUE = "credential-agent"
@@ -80,7 +80,8 @@ def _resource(
 
 
 def _resource_owner() -> str:
-    if _os_name != "nt":
-        return f"u{os.getuid()}"
+    uid = resolve_host_user_id("getuid")
+    if uid is not None:
+        return f"u{uid}"
     profile = str(Path.home()).casefold().encode("utf-8")
     return f"w{sha256(profile).hexdigest()[:12]}"
