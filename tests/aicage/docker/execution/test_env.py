@@ -10,7 +10,9 @@ from aicage.docker.execution.env import (
 
 class EnvTests(TestCase):
     def test_resolve_host_user_id_returns_a_supported_os_value(self) -> None:
-        with mock.patch("aicage.docker.execution.env.os.getuid", return_value=1000):
+        with mock.patch(
+            "aicage.docker.execution.env.os.getuid", return_value=1000, create=True
+        ):
             user_id = resolve_host_user_id("getuid")
 
         self.assertEqual(1000, user_id)
