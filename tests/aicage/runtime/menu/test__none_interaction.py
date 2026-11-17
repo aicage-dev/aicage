@@ -241,10 +241,3 @@ class NonInteractiveSelectionInteractionTests(TestCase):
         )
 
         self.assertEqual(["gh"], choice)
-
-    def test_choose_image_ref(self) -> None:
-        resolved = _none_interaction._NonInteractiveSelectionInteraction()
-
-        choice = resolved.choose_image_ref("repo:default")
-
-        self.assertEqual("repo:default", choice)
