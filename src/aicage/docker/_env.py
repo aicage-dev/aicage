@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from aicage.docker.runtime import _is_rootless_docker
+from aicage.docker.runtime import is_rootless_docker
 from aicage.paths import container_project_path
 from aicage.runtime.env_vars import (
     AICAGE_GID,
@@ -34,7 +34,7 @@ def resolve_user_ids() -> list[str]:
         return env_flags
 
     uid, gid = _resolve_host_user_ids()
-    is_rootless = _is_rootless_docker()
+    is_rootless = is_rootless_docker()
 
     user = _resolve_host_user()
     if uid is not None and not is_rootless:
@@ -53,24 +53,15 @@ def resolve_user_ids() -> list[str]:
     return env_flags
 
 
-def resolve_container_user() -> str:
-    if os.name == "nt" or _is_rootless_docker():
-        return "0:0"
-    uid, gid = _resolve_host_user_ids()
-    if uid is None or gid is None:
-        return "0:0"
-    return f"{uid}:{gid}"
-
-
 def _resolve_host_user() -> str:
     return os.environ.get("USERNAME") or os.environ.get("USER") or "aicage"
 
 
 def _resolve_host_user_ids() -> tuple[int | None, int | None]:
-    return resolve_host_user_id("getuid"), resolve_host_user_id("getgid")
+    return _resolve_host_user_id("getuid"), _resolve_host_user_id("getgid")
 
 
-def resolve_host_user_id(method_name: str) -> int | None:
+def _resolve_host_user_id(method_name: str) -> int | None:
     method = vars(os).get(method_name)
     if not callable(method):
         return None

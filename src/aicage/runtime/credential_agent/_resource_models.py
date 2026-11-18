@@ -6,7 +6,7 @@ from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path, PurePosixPath
 
-from aicage.docker.execution.env import resolve_host_user_id
+from ._env import _resolve_host_user_id
 
 _RESOURCE_LABEL = "org.aicage.resource"
 _RESOURCE_VALUE = "credential-agent"
@@ -80,7 +80,7 @@ def _resource(
 
 
 def _resource_owner() -> str:
-    uid = resolve_host_user_id("getuid")
+    uid = _resolve_host_user_id("getuid")
     if uid is not None:
         return f"u{uid}"
     profile = str(Path.home()).casefold().encode("utf-8")

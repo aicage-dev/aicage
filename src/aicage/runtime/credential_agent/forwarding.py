@@ -7,10 +7,10 @@ from functools import partial
 
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
-from aicage.docker.execution.env import resolve_container_user
 from aicage.reporting import OperationReporter
 from aicage.runtime.run_args import EnvVar, MountSpec
 
+from ._env import _credential_agent_user
 from ._gpg_forwarding import (
     _gpg_enabled,
     _gpg_forwarding,
@@ -123,7 +123,7 @@ def _prepare_plan(
     image_ref, image_id = _credential_image()
     return _ensure_resources(
         plan.protocols,
-        _ImageSpec(image_ref, image_id, resolve_container_user()),
+        _ImageSpec(image_ref, image_id, _credential_agent_user()),
         plan.gpg_plan.credential_home if plan.gpg_plan is not None else None,
         reconcile=partial(_reload_credentials, interactive=interactive),
     )

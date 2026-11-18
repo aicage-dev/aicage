@@ -8,8 +8,8 @@ import pytest
 
 from aicage.config.config_store import SettingsStore
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
-from aicage.docker.execution.env import resolve_container_user
 from aicage.runtime.credential_agent import _resources
+from aicage.runtime.credential_agent._env import _credential_agent_user
 from aicage.runtime.credential_agent._resource_models import (
     _CredentialProtocol,
     _CredentialResource,
@@ -467,7 +467,7 @@ def _gpg_key_fingerprint(stdout: str) -> str:
 def _create_gpg_sidecar_fixture(gpg_home: Path, *, passphrase: str = "") -> str:
     gpg_home.mkdir(mode=0o700)
     mount = f"type=bind,src={gpg_home},dst=/credential/gnupg"
-    user = resolve_container_user()
+    user = _credential_agent_user()
     generate_key = (
         "gpg --batch --passphrase '' "
         "--quick-generate-key 'Aicage Integration <integration@example.com>' "
@@ -578,7 +578,7 @@ def _assert_gpg_sidecar_client_signs(
             "run",
             "--rm",
             "--user",
-            resolve_container_user(),
+            _credential_agent_user(),
             "--entrypoint",
             "/bin/sh",
             "--mount",

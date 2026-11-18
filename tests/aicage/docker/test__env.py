@@ -1,68 +1,26 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.docker.execution.env import (
-    resolve_container_user,
-    resolve_host_user_id,
-    resolve_user_ids,
-)
+from aicage.docker._env import resolve_user_ids
 
 
 class EnvTests(TestCase):
-    def test_resolve_host_user_id_returns_a_supported_os_value(self) -> None:
-        with mock.patch(
-            "aicage.docker.execution.env.os.getuid", return_value=1000, create=True
-        ):
-            user_id = resolve_host_user_id("getuid")
-
-        self.assertEqual(1000, user_id)
-
-    def test_resolve_host_user_id_returns_none_when_unavailable(self) -> None:
-        with mock.patch.dict(
-            "aicage.docker.execution.env.os.__dict__", {"getuid": None}
-        ):
-            user_id = resolve_host_user_id("getuid")
-
-        self.assertIsNone(user_id)
-
-    def test_resolve_container_user_uses_target_identity_rules(self) -> None:
-        with (
-            mock.patch("aicage.docker.execution.env.os.name", "posix"),
-            mock.patch(
-                "aicage.docker.execution.env._resolve_host_user_ids",
-                return_value=(1000, 1001),
-            ),
-            mock.patch(
-                "aicage.docker.execution.env._is_rootless_docker",
-                return_value=False,
-            ),
-        ):
-            self.assertEqual("1000:1001", resolve_container_user())
-        with (
-            mock.patch("aicage.docker.execution.env.os.name", "nt"),
-            mock.patch(
-                "aicage.docker.execution.env._is_rootless_docker",
-                return_value=False,
-            ),
-        ):
-            self.assertEqual("0:0", resolve_container_user())
-
     def test_resolve_user_ids_handles_missing(self) -> None:
         with (
-            mock.patch("aicage.docker.execution.env.os.getuid", None, create=True),
-            mock.patch("aicage.docker.execution.env.os.getgid", None, create=True),
+            mock.patch("aicage.docker._env.os.getuid", None, create=True),
+            mock.patch("aicage.docker._env.os.getgid", None, create=True),
             mock.patch.dict(
-                "aicage.docker.execution.env.os.environ",
+                "aicage.docker._env.os.environ",
                 {"USER": "tester"},
                 clear=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.Path.home",
+                "aicage.docker._env.Path.home",
                 return_value=Path("/home/tester"),
             ),
-            mock.patch("aicage.docker.execution.env.os.name", "posix"),
+            mock.patch("aicage.docker._env.os.name", "posix"),
             mock.patch(
-                "aicage.docker.execution.env._is_rootless_docker",
+                "aicage.docker._env.is_rootless_docker",
                 return_value=False,
             ),
         ):
@@ -80,27 +38,27 @@ class EnvTests(TestCase):
     def test_resolve_user_ids_includes_uid_gid(self) -> None:
         with (
             mock.patch(
-                "aicage.docker.execution.env.os.getuid",
+                "aicage.docker._env.os.getuid",
                 return_value=1000,
                 create=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.os.getgid",
+                "aicage.docker._env.os.getgid",
                 return_value=1001,
                 create=True,
             ),
             mock.patch.dict(
-                "aicage.docker.execution.env.os.environ",
+                "aicage.docker._env.os.environ",
                 {"USER": "tester"},
                 clear=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.Path.home",
+                "aicage.docker._env.Path.home",
                 return_value=Path("/home/tester"),
             ),
-            mock.patch("aicage.docker.execution.env.os.name", "posix"),
+            mock.patch("aicage.docker._env.os.name", "posix"),
             mock.patch(
-                "aicage.docker.execution.env._is_rootless_docker",
+                "aicage.docker._env.is_rootless_docker",
                 return_value=False,
             ),
         ):
@@ -122,27 +80,27 @@ class EnvTests(TestCase):
     def test_resolve_user_ids_rootless_linux_uses_root_with_mount_home(self) -> None:
         with (
             mock.patch(
-                "aicage.docker.execution.env.os.getuid",
+                "aicage.docker._env.os.getuid",
                 return_value=1000,
                 create=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.os.getgid",
+                "aicage.docker._env.os.getgid",
                 return_value=1001,
                 create=True,
             ),
             mock.patch.dict(
-                "aicage.docker.execution.env.os.environ",
+                "aicage.docker._env.os.environ",
                 {"USER": "tester"},
                 clear=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.Path.home",
+                "aicage.docker._env.Path.home",
                 return_value=Path("/home/tester"),
             ),
-            mock.patch("aicage.docker.execution.env.os.name", "posix"),
+            mock.patch("aicage.docker._env.os.name", "posix"),
             mock.patch(
-                "aicage.docker.execution.env._is_rootless_docker",
+                "aicage.docker._env.is_rootless_docker",
                 return_value=True,
             ),
         ):
@@ -166,25 +124,25 @@ class EnvTests(TestCase):
     def test_resolve_user_ids_sets_root_on_windows(self) -> None:
         with (
             mock.patch(
-                "aicage.docker.execution.env.os.getuid",
+                "aicage.docker._env.os.getuid",
                 side_effect=AttributeError,
                 create=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.os.getgid",
+                "aicage.docker._env.os.getgid",
                 side_effect=AttributeError,
                 create=True,
             ),
             mock.patch.dict(
-                "aicage.docker.execution.env.os.environ",
+                "aicage.docker._env.os.environ",
                 {"USER": "tester"},
                 clear=True,
             ),
             mock.patch(
-                "aicage.docker.execution.env.Path.home",
+                "aicage.docker._env.Path.home",
                 return_value=Path(r"D:\Users\tester"),
             ),
-            mock.patch("aicage.docker.execution.env.os.name", "nt"),
+            mock.patch("aicage.docker._env.os.name", "nt"),
         ):
             env_flags = resolve_user_ids()
         self.assertEqual(

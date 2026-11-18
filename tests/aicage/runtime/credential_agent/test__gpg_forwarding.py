@@ -135,7 +135,9 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding, "get_docker_client", return_value=client
             ),
             mock.patch.object(
-                _gpg_forwarding, "resolve_container_user", return_value="1000:1001"
+                _gpg_forwarding,
+                "_credential_agent_user",
+                return_value="1000:1001",
             ),
         ):
             _gpg_forwarding._create_gpg_socket_link(resource, client_home)

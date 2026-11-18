@@ -17,7 +17,6 @@ from aicage.config.project_config import AgentConfig
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.docker.errors import DockerError
 from aicage.docker.execution.client import get_docker_client
-from aicage.docker.execution.env import resolve_container_user
 from aicage.paths import container_project_path
 from aicage.runtime.docker_args.support.git_support import (
     resolve_gpg_agent_socket,
@@ -27,6 +26,7 @@ from aicage.runtime.docker_args.support.git_support import (
 )
 from aicage.runtime.run_args import BindMountSpec, MountSpec, VolumeMountSpec
 
+from ._env import _credential_agent_user
 from ._resource_gpg import (
     _gpg_key_is_usable,
     _gpg_keygrips,
@@ -230,7 +230,7 @@ def _create_gpg_socket_link(resource: _CredentialResource, client_home: Path) ->
             ],
             entrypoint="/bin/sh",
             remove=True,
-            user=resolve_container_user(),
+            user=_credential_agent_user(),
             volumes={
                 str(client_home): {
                     "bind": _GPG_STAGING_HOME.as_posix(),
