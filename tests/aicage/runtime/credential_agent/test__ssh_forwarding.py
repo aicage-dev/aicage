@@ -119,7 +119,8 @@ class SshForwardingTests(TestCase):
                 return_value=mock.Mock(returncode=2),
             ),
         ):
-            self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
+            with self.assertRaisesRegex(RuntimeError, "Cannot communicate"):
+                _ssh_forwarding._direct_ssh_socket()
 
     def test_prepare_host_ssh_agent_loads_missing_unprotected_key(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
@@ -139,9 +140,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_load_host_ssh_key", return_value=True
             ) as load_mock,
         ):
-            self.assertTrue(
-                _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
-            )
+            _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
 
         load_mock.assert_called_once_with(socket, key, interactive=False)
 
@@ -167,13 +166,11 @@ class SshForwardingTests(TestCase):
             ),
             mock.patch.object(_ssh_forwarding, "_load_host_ssh_key") as load_mock,
         ):
-            self.assertTrue(
-                _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
-            )
+            _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
 
         load_mock.assert_not_called()
 
-    def test_prepare_host_ssh_agent_rejects_missing_protected_key_noninteractively(
+    def test_prepare_host_ssh_agent_skips_missing_protected_key_noninteractively(
         self,
     ) -> None:
         key = Path("/test-tmp/.ssh/id_ed25519")
@@ -188,11 +185,12 @@ class SshForwardingTests(TestCase):
             mock.patch.object(
                 _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
             ),
-            self.assertRaisesRegex(RuntimeError, "host SSH agent"),
+            self.assertLogs("aicage", "WARNING") as logs,
         ):
             _ssh_forwarding._prepare_host_ssh_agent(
                 Path("/test-tmp/ssh-agent.sock"), interactive=False
             )
+        self.assertIn("continuing without it", logs.output[0])
 
     def test_prepare_host_ssh_agent_loads_missing_protected_key_interactively(
         self,
@@ -214,27 +212,33 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_load_host_ssh_key", return_value=True
             ) as load_mock,
         ):
-            self.assertTrue(
-                _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=True)
-            )
+            _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=True)
 
         load_mock.assert_called_once_with(socket, key, interactive=True)
 
-    def test_direct_ssh_target_args_falls_back_when_host_preparation_fails(
-        self,
-    ) -> None:
+    def test_prepare_host_ssh_agent_skips_cancelled_protected_key(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
+        key = Path("/test-tmp/.ssh/id_ed25519")
         with (
+            mock.patch.object(_ssh_forwarding, "_host_ssh_identities", return_value=[]),
             mock.patch.object(
-                _ssh_forwarding, "_direct_ssh_socket", return_value=socket
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_prepare_host_ssh_agent", return_value=False
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
             ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_load_host_ssh_key", return_value=False
+            ) as load_mock,
+            self.assertLogs("aicage", "WARNING") as logs,
         ):
-            self.assertIsNone(
-                _ssh_forwarding._direct_ssh_target_args(interactive=False)
-            )
+            _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=True)
+
+        load_mock.assert_called_once_with(socket, key, interactive=True)
+        self.assertIn("continuing without it", logs.output[0])
 
     def test_direct_ssh_target_args_falls_back_without_a_host_socket(self) -> None:
         with mock.patch.object(
@@ -251,7 +255,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_direct_ssh_socket", return_value=socket
             ),
             mock.patch.object(
-                _ssh_forwarding, "_prepare_host_ssh_agent", return_value=True
+                _ssh_forwarding, "_prepare_host_ssh_agent"
             ),
         ):
             result = _ssh_forwarding._direct_ssh_target_args(interactive=False)
@@ -287,7 +291,8 @@ class SshForwardingTests(TestCase):
             ),
             mock.patch.object(Path, "is_socket", return_value=False),
         ):
-            self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
+            with self.assertRaisesRegex(RuntimeError, "does not refer to a Unix socket"):
+                _ssh_forwarding._direct_ssh_socket()
 
     def test_host_ssh_identities_handles_agent_results(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
@@ -315,7 +320,7 @@ class SshForwardingTests(TestCase):
             )
             self.assertIsNone(_ssh_forwarding._host_ssh_identities(socket))
 
-    def test_prepare_host_ssh_agent_falls_back_on_identity_or_load_failure(
+    def test_prepare_host_ssh_agent_rejects_identity_or_unprotected_load_failure(
         self,
     ) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
@@ -323,9 +328,8 @@ class SshForwardingTests(TestCase):
         with mock.patch.object(
             _ssh_forwarding, "_host_ssh_identities", return_value=None
         ):
-            self.assertFalse(
+            with self.assertRaisesRegex(RuntimeError, "Cannot list identities"):
                 _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
-            )
 
         with (
             mock.patch.object(_ssh_forwarding, "_host_ssh_identities", return_value=[]),
@@ -342,9 +346,8 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_load_host_ssh_key", return_value=False
             ),
         ):
-            self.assertFalse(
+            with self.assertRaisesRegex(RuntimeError, "Failed to load unprotected"):
                 _ssh_forwarding._prepare_host_ssh_agent(socket, interactive=False)
-            )
 
     def test_load_host_ssh_key_uses_interactive_and_noninteractive_modes(
         self,
@@ -461,6 +464,9 @@ class SshForwardingTests(TestCase):
                 side_effect=DockerError("passphrase required"),
             ),
             mock.patch.object(
+                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+            ),
+            mock.patch.object(
                 _ssh_forwarding, "_load_ssh_key_interactively"
             ) as prompt_mock,
         ):
@@ -471,6 +477,69 @@ class SshForwardingTests(TestCase):
             resource.credential_directory / "id_ed25519",
             PurePosixPath("/test-tmp/.ssh/id_ed25519"),
         )
+
+    def test_reload_ssh_keys_skips_unavailable_protected_key_noninteractively(
+        self,
+    ) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_load_ssh_key",
+                side_effect=DockerError("passphrase required"),
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_load_ssh_key_interactively"
+            ) as prompt_mock,
+            self.assertLogs("aicage", "WARNING") as logs,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=False)
+
+        prompt_mock.assert_not_called()
+        self.assertIn("continuing without it", logs.output[0])
+
+    def test_reload_ssh_keys_skips_cancelled_protected_key(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        key = Path("/test-tmp/.ssh/id_ed25519")
+        with (
+            mock.patch.object(_ssh_forwarding, "HOST_SSH_DIR", key.parent),
+            mock.patch.object(
+                _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+            ),
+            mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_load_ssh_key",
+                side_effect=DockerError("passphrase required"),
+            ),
+            mock.patch.object(
+                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+            ),
+            mock.patch.object(
+                _ssh_forwarding,
+                "_load_ssh_key_interactively",
+                side_effect=DockerError("cancelled"),
+            ),
+            self.assertLogs("aicage", "WARNING") as logs,
+        ):
+            _ssh_forwarding._reload_ssh_keys([resource], interactive=True)
+
+        self.assertIn("continuing without it", logs.output[0])
 
     def test_reload_ssh_keys_removes_stale_and_keeps_loaded_identities(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]

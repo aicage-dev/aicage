@@ -207,6 +207,36 @@ def test_ssh_sidecar_removes_deleted_host_keys(
             monkeypatch.chdir(initial_cwd)
 
 
+def test_protected_ssh_sidecar_key_does_not_block_noninteractive_run(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    require_integration()
+    initial_cwd = Path.cwd()
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
+    temp_root.mkdir(exist_ok=True)
+    with temporary_test_root(temp_root) as root:
+        home = root / "home"
+        home.mkdir()
+        try:
+            _set_home(monkeypatch, home)
+            key = _configure_protected_ssh_key(home)
+            workspace, env = setup_workspace(
+                monkeypatch,
+                tmp_path,
+                "copilot",
+                workspace_path=root / "workspace",
+            )
+            _enable_ssh_mount(workspace)
+            env.pop("SSH_AUTH_SOCK", None)
+
+            _run_credential_setup(workspace, env)
+
+            _assert_ssh_sidecar_lacks_identity(_ssh_public_identity(key))
+        finally:
+            monkeypatch.chdir(initial_cwd)
+
+
 class _SshKeys:
     def __init__(self, private_paths: list[Path]) -> None:
         self.private_paths = private_paths

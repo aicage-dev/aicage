@@ -128,6 +128,37 @@ def test_gpg_sidecar_removes_deleted_host_keys(
             monkeypatch.chdir(initial_cwd)
 
 
+def test_protected_gpg_sidecar_key_does_not_block_noninteractive_run(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    require_integration()
+    initial_cwd = Path.cwd()
+    temp_root = Path(__file__).resolve().parents[4] / ".aicage-test-tmp"
+    temp_root.mkdir(exist_ok=True)
+    with temporary_test_root(temp_root) as root:
+        home = root / "home"
+        try:
+            home.mkdir()
+            _set_home(monkeypatch, home)
+            gpg_home = home / ".gnupg"
+            fingerprint = _create_gpg_sidecar_fixture(gpg_home, passphrase="secret")
+            workspace, env = setup_workspace(
+                monkeypatch,
+                tmp_path,
+                "copilot",
+                workspace_path=root / "workspace",
+            )
+            _enable_gnupg_mount(workspace)
+            _force_gpg_sidecar(root, env)
+
+            _run_credential_setup(workspace, env)
+
+            _assert_gpg_sidecar_key_is_unusable(fingerprint)
+        finally:
+            monkeypatch.chdir(initial_cwd)
+
+
 def _assert_gpg_agent_signs(
     monkeypatch: pytest.MonkeyPatch,
     *,
@@ -258,13 +289,11 @@ def _force_gpg_sidecar(root: Path, env: dict[str, str]) -> None:
     bin_dir = root / "bin"
     bin_dir.mkdir()
     shim = bin_dir / "gpgconf"
-    missing_socket = root / "missing-gpg-agent.sock"
     shim.write_text(
         "\n".join(
             [
                 "#!/bin/sh",
                 'if [ "$1" = "--list-dirs" ] && [ "$2" = "agent-socket" ]; then',
-                f"  printf '%s\\n' {shlex.quote(str(missing_socket))}",
                 "  exit 0",
                 "fi",
                 f'exec {shlex.quote(gpgconf)} "$@"',
@@ -513,6 +542,24 @@ def _assert_gpg_sidecar_has_no_keygrips() -> None:
         text=True,
     )
     assert not result.stdout.strip()
+
+
+def _assert_gpg_sidecar_key_is_unusable(fingerprint: str) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            _gpg_resource().container_name,
+            "credential-agent",
+            "gpg",
+            "usable",
+            fingerprint,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.strip() == "unusable"
 
 
 def _assert_gpg_sidecar_client_signs(

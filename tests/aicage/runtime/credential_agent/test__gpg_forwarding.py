@@ -240,7 +240,7 @@ class GpgForwardingTests(TestCase):
             self.assertFalse(call.kwargs["check"])
             self.assertTrue(call.kwargs["capture_output"])
 
-    def test_prepare_direct_gpg_keys_rejects_uncached_noninteractive_key(self) -> None:
+    def test_prepare_direct_gpg_keys_warns_for_uncached_noninteractive_key(self) -> None:
         home = Path("/test-tmp/gnupg")
         with (
             mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
@@ -253,10 +253,11 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding.subprocess, "run", return_value=mock.Mock(returncode=2)
             ) as run_mock,
         ):
-            with self.assertRaisesRegex(RuntimeError, "not cached"):
+            with self.assertLogs("aicage", "WARNING") as logs:
                 _gpg_forwarding._prepare_direct_gpg_keys(home, interactive=False)
 
         run_mock.assert_called_once()
+        self.assertIn("continuing without it", logs.output[0])
 
     def test_prepare_direct_gpg_keys_uses_host_gpg_interactively(self) -> None:
         home = Path("/test-tmp/gnupg")
@@ -320,7 +321,7 @@ class GpgForwardingTests(TestCase):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
         reset_mock.assert_called_once_with(resource)
 
-    def test_reload_gpg_keys_rejects_an_interactively_loaded_unusable_key(self) -> None:
+    def test_reload_gpg_keys_warns_for_an_interactively_loaded_unusable_key(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
@@ -333,9 +334,32 @@ class GpgForwardingTests(TestCase):
                 _gpg_forwarding, "_gpg_key_is_usable", side_effect=[False, False]
             ),
             mock.patch.object(_gpg_forwarding, "_load_gpg_key_interactively"),
-            self.assertRaisesRegex(RuntimeError, "Failed to make GnuPG key"),
+            self.assertLogs("aicage", "WARNING") as logs,
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=True)
+        self.assertIn("continuing without it", logs.output[0])
+
+    def test_reload_gpg_keys_skips_cancelled_interactive_load(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        with (
+            mock.patch.object(
+                _gpg_forwarding,
+                "resolve_gpg_secret_key_state",
+                return_value=(["FINGERPRINT"], {"KEY"}),
+            ),
+            mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
+            mock.patch.object(
+                _gpg_forwarding, "_gpg_key_is_usable", return_value=False
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_load_gpg_key_interactively",
+                side_effect=DockerError("cancelled"),
+            ),
+            self.assertLogs("aicage", "WARNING") as logs,
+        ):
+            _gpg_forwarding._reload_gpg_keys([resource], interactive=True)
+        self.assertIn("continuing without it", logs.output[0])
 
     def test_reload_gpg_keys_skips_usable_keys(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
@@ -351,7 +375,7 @@ class GpgForwardingTests(TestCase):
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
 
-    def test_reload_gpg_keys_rejects_unusable_keys_noninteractively(self) -> None:
+    def test_reload_gpg_keys_warns_for_unusable_keys_noninteractively(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
@@ -363,8 +387,7 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(
                 _gpg_forwarding, "_gpg_key_is_usable", return_value=False
             ),
-            self.assertRaisesRegex(
-                RuntimeError, "not available for noninteractive signing"
-            ),
+            self.assertLogs("aicage", "WARNING") as logs,
         ):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
+        self.assertIn("continuing without it", logs.output[0])

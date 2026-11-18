@@ -6,6 +6,7 @@ import sys
 from pathlib import Path, PurePosixPath
 from shutil import which
 
+from aicage._logging import get_logger
 from aicage.docker.errors import DockerError
 from aicage.paths import HOST_SSH_DIR, container_project_path
 from aicage.runtime._ssh_agent import (
@@ -66,8 +67,7 @@ def _direct_ssh_target_args(
     socket = _direct_ssh_socket()
     if socket is None:
         return None
-    if not _prepare_host_ssh_agent(socket, interactive=interactive):
-        return None
+    _prepare_host_ssh_agent(socket, interactive=interactive)
     return (
         [BindMountSpec(socket, _SSH_SOCKET)],
         [EnvVar(_SSH_AUTH_SOCK, _SSH_SOCKET.as_posix())],
@@ -82,7 +82,9 @@ def _direct_ssh_socket() -> Path | None:
         return None
     socket = Path(socket_path)
     if not socket.is_socket():
-        return None
+        raise RuntimeError(
+            f"SSH_AUTH_SOCK does not refer to a Unix socket: '{socket}'."
+        )
     result = subprocess.run(
         [_SSH_ADD, "-l"],
         env=_host_ssh_env(socket),
@@ -90,13 +92,15 @@ def _direct_ssh_socket() -> Path | None:
         capture_output=True,
         text=True,
     )  # nosec B603 -- fixed local SSH agent probe.
-    return socket if result.returncode in {0, 1} else None
+    if result.returncode not in {0, 1}:
+        raise RuntimeError(f"Cannot communicate with the host SSH agent at '{socket}'.")
+    return socket
 
 
-def _prepare_host_ssh_agent(socket: Path, *, interactive: bool) -> bool:
+def _prepare_host_ssh_agent(socket: Path, *, interactive: bool) -> None:
     identities = _host_ssh_identities(socket)
     if identities is None:
-        return False
+        raise RuntimeError(f"Cannot list identities in the host SSH agent at '{socket}'.")
     loaded_fingerprints = {
         _ssh_identity_fingerprint(identity) for identity in identities
     }
@@ -104,15 +108,18 @@ def _prepare_host_ssh_agent(socket: Path, *, interactive: bool) -> bool:
         fingerprint = _ssh_key_fingerprint(key)
         if fingerprint in loaded_fingerprints:
             continue
-        if _ssh_key_is_encrypted(key) and not interactive:
-            raise RuntimeError(
-                f"SSH key '{key.name}' is not loaded in the host SSH agent. "
-                "Open the terminal configuration UI to load this key."
-            )
+        if _ssh_key_is_encrypted(key):
+            if not interactive:
+                _warn_unavailable_ssh_key(key, "host SSH agent")
+                continue
+            if not _load_host_ssh_key(socket, key, interactive=True):
+                _warn_unavailable_ssh_key(key, "host SSH agent")
+                continue
+            loaded_fingerprints.add(fingerprint)
+            continue
         if not _load_host_ssh_key(socket, key, interactive=interactive):
-            return False
+            raise RuntimeError(f"Failed to load unprotected SSH key '{key.name}'.")
         loaded_fingerprints.add(fingerprint)
-    return True
 
 
 def _host_ssh_identities(socket: Path) -> list[str] | None:
@@ -204,13 +211,26 @@ def _reload_ssh_keys(
             try:
                 _load_ssh_key(resource, sidecar_key, "", target_key)
             except DockerError:
-                if interactive:
-                    _load_ssh_key_interactively(resource, sidecar_key, target_key)
-                else:
+                if not _ssh_key_is_encrypted(key):
                     raise RuntimeError(
-                        f"SSH key '{key.name}' is not loaded in the credential sidecar. "
-                        "Open the terminal configuration UI to load this key."
+                        f"Failed to load unprotected SSH key '{key.name}' into the "
+                        "credential sidecar."
                     ) from None
+                if interactive:
+                    try:
+                        _load_ssh_key_interactively(resource, sidecar_key, target_key)
+                    except DockerError:
+                        _warn_unavailable_ssh_key(key, "credential sidecar")
+                else:
+                    _warn_unavailable_ssh_key(key, "credential sidecar")
+
+
+def _warn_unavailable_ssh_key(key: Path, destination: str) -> None:
+    get_logger().warning(
+        "SSH key '%s' is unavailable in the %s; continuing without it.",
+        key.name,
+        destination,
+    )
 
 
 def _ssh_key_fingerprint(key: Path) -> str:

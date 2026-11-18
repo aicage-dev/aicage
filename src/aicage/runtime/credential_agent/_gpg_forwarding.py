@@ -11,6 +11,7 @@ from shutil import copy2, which
 
 from docker.errors import DockerException
 
+from aicage._logging import get_logger
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
@@ -99,23 +100,19 @@ def _reload_gpg_keys(
         if _gpg_key_is_usable(resource, fingerprint):
             continue
         if not interactive:
-            raise RuntimeError(
-                "GnuPG key "
-                f"'{fingerprint}' is not available for noninteractive signing in the "
-                "credential sidecar. Open the terminal configuration UI to load this key."
-            )
-        _load_gpg_key_interactively(resource, fingerprint)
+            _warn_unavailable_gpg_key(fingerprint, "credential sidecar")
+            continue
+        try:
+            _load_gpg_key_interactively(resource, fingerprint)
+        except DockerError:
+            _warn_unavailable_gpg_key(fingerprint, "credential sidecar")
+            continue
         if not _gpg_key_is_usable(resource, fingerprint):
-            raise RuntimeError(
-                f"Failed to make GnuPG key '{fingerprint}' available for noninteractive "
-                "signing in the credential sidecar."
-            )
+            _warn_unavailable_gpg_key(fingerprint, "credential sidecar")
 
 
 def _prepare_direct_gpg_keys(gpg_home: Path, *, interactive: bool) -> None:
-    """Unlock configured host keys before the target container starts."""
-    if _GPG is None:
-        raise RuntimeError("GnuPG is required to prepare GnuPG credentials.")
+    """Make host keys available when possible without blocking startup."""
     fingerprints, _keygrips = resolve_gpg_secret_key_state()
     with tempfile.TemporaryDirectory(prefix="aicage-gpg-") as directory:
         message = Path(directory) / "message"
@@ -125,16 +122,12 @@ def _prepare_direct_gpg_keys(gpg_home: Path, *, interactive: bool) -> None:
             if _sign_with_direct_gpg(gpg_home, fingerprint, message, signature):
                 continue
             if not interactive:
-                raise RuntimeError(
-                    f"GnuPG key '{fingerprint}' is not cached in the host agent. "
-                    "Open the terminal configuration UI to load this key."
-                )
+                _warn_unavailable_gpg_key(fingerprint, "host GnuPG agent")
+                continue
             if not _sign_with_direct_gpg_interactively(
                 gpg_home, fingerprint, message, signature
             ):
-                raise RuntimeError(
-                    f"Failed to unlock GnuPG key '{fingerprint}' before starting the agent."
-                )
+                _warn_unavailable_gpg_key(fingerprint, "host GnuPG agent")
 
 
 def _sign_with_direct_gpg(
@@ -197,6 +190,14 @@ def _gpg() -> str:
     if _GPG is None:
         raise RuntimeError("GnuPG is required to prepare GnuPG credentials.")
     return _GPG
+
+
+def _warn_unavailable_gpg_key(fingerprint: str, destination: str) -> None:
+    get_logger().warning(
+        "GnuPG key '%s' is unavailable in the %s; continuing without it.",
+        fingerprint,
+        destination,
+    )
 
 
 @contextmanager
@@ -287,15 +288,21 @@ def _external_gpg_support_mounts(gpg_home: Path) -> list[BindMountSpec]:
 
 
 def _direct_gpg_socket() -> Path | None:
-    if os.name == "nt":
+    if os.name == "nt" or _GPG is None or _GPG_CONNECT_AGENT is None:
         return None
     socket = resolve_gpg_agent_socket()
-    if socket is None or _GPG_CONNECT_AGENT is None or not socket.is_socket():
+    if socket is None:
         return None
+    if not socket.is_socket():
+        raise RuntimeError(
+            f"The configured host GnuPG agent socket is not a Unix socket: '{socket}'."
+        )
     result = subprocess.run(
         [_GPG_CONNECT_AGENT, "--raw-socket", str(socket), "/bye"],
         check=False,
         capture_output=True,
         text=True,
     )  # nosec B603 -- The fixed gpg-connect-agent executable receives an argument vector, never a shell command.
-    return socket if result.returncode == 0 else None
+    if result.returncode != 0:
+        raise RuntimeError(f"Cannot communicate with the host GnuPG agent at '{socket}'.")
+    return socket
