@@ -56,9 +56,7 @@ def _ssh_forwarding() -> _SshForwardingPlan:
     return _SshForwardingPlan(support_mounts, [], True, None)
 
 
-def _prepare_ssh_forwarding(
-    plan: _SshForwardingPlan, *, interactive: bool
-) -> None:
+def _prepare_ssh_forwarding(plan: _SshForwardingPlan, *, interactive: bool) -> None:
     if plan.direct_socket is not None:
         _prepare_host_ssh_agent(plan.direct_socket, interactive=interactive)
 
