@@ -198,6 +198,23 @@ class CredentialAgentResourcesTests(TestCase):
         ):
             _resources._ensure_resources([self._ssh], self._image)
 
+    def test__ensure_resources_retries_transient_readiness_failure(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        client.volumes.get.return_value = volume
+        client.containers.get.side_effect = NotFound("missing")
+        client.containers.run.return_value = self._container(status="running")
+        client.api.exec_inspect.side_effect = [{"ExitCode": 1}, {"ExitCode": 0}]
+
+        with (
+            self._client(client),
+            mock.patch("aicage.runtime.credential_agent._resource_lifecycle.time.sleep") as sleep,
+        ):
+            _resources._ensure_resources([self._ssh], self._image)
+
+        self.assertEqual(2, client.api.exec_create.call_count)
+        sleep.assert_called_once_with(0.1)
+
     def test__ensure_resources_reconciles_after_releasing_resources_lock(self) -> None:
         client = mock.Mock()
         volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
