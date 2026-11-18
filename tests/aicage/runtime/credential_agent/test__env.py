@@ -7,9 +7,7 @@ class CredentialAgentEnvTests(TestCase):
     def test_credential_agent_user_uses_host_ids_on_posix(self) -> None:
         with (
             mock.patch.object(_env.os, "name", "posix"),
-            mock.patch.object(
-                _env, "_resolve_host_user_id", side_effect=[1000, 1001]
-            ),
+            mock.patch.object(_env, "_resolve_host_user_id", side_effect=[1000, 1001]),
             mock.patch.object(_env, "is_rootless_docker", return_value=False),
         ):
             self.assertEqual("1000:1001", _env._credential_agent_user())
