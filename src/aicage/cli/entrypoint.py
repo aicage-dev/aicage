@@ -19,7 +19,10 @@ from aicage.docker.errors import DockerError
 from aicage.docker.run import print_run_command, run_container
 from aicage.errors import AicageError
 from aicage.paths import GLOBAL_LOG_PATH
-from aicage.runtime.credential_agent.forwarding import prepare_credentials
+from aicage.runtime.credential_agent.forwarding import (
+    plan_credentials,
+    prepare_credentials,
+)
 from aicage.runtime.credential_agent.image_setup import prepare_credential_image
 from aicage.runtime.image_setup import prepare_image
 from aicage.runtime.menu.interaction import create_runtime_interaction
@@ -50,10 +53,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             if run_config is None:
                 return exit_code
             logger.info("Resolved run config for agent %s", run_config.agent)
-            prepare_credential_image(run_config, interaction)
+            credential_plan = plan_credentials(run_config.context, run_config.agent)
+            prepare_credential_image(credential_plan, interaction)
             credentials = prepare_credentials(
-                run_config.context,
-                run_config.agent,
+                credential_plan,
                 interaction.reporter,
                 interactive=parsed.menu != "none",
             )

@@ -23,8 +23,10 @@ from ._resource_models import _CredentialProtocol, _CredentialResource, _ImageSp
 from ._resources import _ensure_resources
 from ._ssh_forwarding import (
     _append_ssh_target_args,
+    _prepare_ssh_forwarding,
     _reload_ssh_keys,
     _ssh_forwarding,
+    _SshForwardingPlan,
 )
 
 
@@ -40,16 +42,22 @@ class _CredentialPlan:
     env: list[EnvVar]
     protocols: list[_CredentialProtocol]
     gpg_plan: _GpgForwardingPlan | None
+    ssh_plan: _SshForwardingPlan | None
+
+
+def plan_credentials(
+    context: ConfigContext,
+    agent: str,
+) -> _CredentialPlan:
+    return _credential_plan(context, agent)
 
 
 def prepare_credentials(
-    context: ConfigContext,
-    agent: str,
+    plan: _CredentialPlan,
     reporter: OperationReporter,
     *,
     interactive: bool,
 ) -> CredentialSetup:
-    plan = _credential_plan(context, agent, interactive=interactive)
     return CredentialSetup(plan, _prepare_plan(plan, reporter, interactive=interactive))
 
 
@@ -82,31 +90,32 @@ def credential_forwarding(
         yield mounts, env
 
 
-def _credential_plan(
-    context: ConfigContext, agent: str, *, interactive: bool
-) -> _CredentialPlan:
+def _credential_plan(context: ConfigContext, agent: str) -> _CredentialPlan:
     agent_cfg = context.project_cfg.agents.get(agent, AgentConfig())
     mounts: list[MountSpec] = []
     env: list[EnvVar] = []
     protocols: list[_CredentialProtocol] = []
     gpg_plan: _GpgForwardingPlan | None = None
+    ssh_plan: _SshForwardingPlan | None = None
     if agent_cfg.mounts.ssh is True:
-        ssh_mounts, ssh_env, ssh_sidecar = _ssh_forwarding(interactive=interactive)
-        mounts.extend(ssh_mounts)
-        env.extend(ssh_env)
-        if ssh_sidecar:
+        ssh_plan = _ssh_forwarding()
+        mounts.extend(ssh_plan.mounts)
+        env.extend(ssh_plan.env)
+        if ssh_plan.requires_sidecar:
             protocols.append(_CredentialProtocol.SSH)
 
     if _gpg_enabled(context, agent):
         gpg_plan = _gpg_forwarding()
         if gpg_plan is not None and gpg_plan.requires_sidecar:
             protocols.append(_CredentialProtocol.GPG)
-    return _CredentialPlan(mounts, env, protocols, gpg_plan)
+    return _CredentialPlan(mounts, env, protocols, gpg_plan, ssh_plan)
 
 
 def _prepare_plan(
     plan: _CredentialPlan, reporter: OperationReporter, *, interactive: bool
 ) -> list[_CredentialResource]:
+    if plan.ssh_plan is not None:
+        _prepare_ssh_forwarding(plan.ssh_plan, interactive=interactive)
     if plan.gpg_plan is not None and not plan.gpg_plan.requires_sidecar:
         _prepare_direct_gpg_keys(plan.gpg_plan.credential_home, interactive=interactive)
     if not plan.protocols:

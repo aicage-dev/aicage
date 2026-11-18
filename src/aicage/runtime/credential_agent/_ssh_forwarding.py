@@ -3,6 +3,7 @@
 import os
 import subprocess  # nosec B404 -- SSH key inspection uses fixed local commands.
 import sys
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from shutil import which
 
@@ -32,17 +33,34 @@ _SSH_ADD = which("ssh-add")
 _SSH_KEYGEN = which("ssh-keygen")
 
 
-def _ssh_forwarding(
-    *, interactive: bool
-) -> tuple[list[BindMountSpec], list[EnvVar], bool]:
+@dataclass(frozen=True)
+class _SshForwardingPlan:
+    mounts: list[BindMountSpec]
+    env: list[EnvVar]
+    requires_sidecar: bool
+    direct_socket: Path | None
+
+
+def _ssh_forwarding() -> _SshForwardingPlan:
     support_mounts = _ssh_support_mounts()
-    direct_args = _direct_ssh_target_args(interactive=interactive)
-    if direct_args is not None:
-        mounts, env = direct_args
-        return [*mounts, *support_mounts], env, False
+    socket = _direct_ssh_socket()
+    if socket is not None:
+        return _SshForwardingPlan(
+            [BindMountSpec(socket, _SSH_SOCKET), *support_mounts],
+            [EnvVar(_SSH_AUTH_SOCK, _SSH_SOCKET.as_posix())],
+            False,
+            socket,
+        )
     if not _resolve_ssh_key_files() and not HOST_SSH_DIR.is_dir():
-        return support_mounts, [], False
-    return support_mounts, [], True
+        return _SshForwardingPlan(support_mounts, [], False, None)
+    return _SshForwardingPlan(support_mounts, [], True, None)
+
+
+def _prepare_ssh_forwarding(
+    plan: _SshForwardingPlan, *, interactive: bool
+) -> None:
+    if plan.direct_socket is not None:
+        _prepare_host_ssh_agent(plan.direct_socket, interactive=interactive)
 
 
 def _append_ssh_target_args(
@@ -59,19 +77,6 @@ def _ssh_support_mounts() -> list[BindMountSpec]:
         BindMountSpec(path, container_project_path(path), True)
         for path in _resolve_ssh_support_files()
     ]
-
-
-def _direct_ssh_target_args(
-    *, interactive: bool
-) -> tuple[list[BindMountSpec], list[EnvVar]] | None:
-    socket = _direct_ssh_socket()
-    if socket is None:
-        return None
-    _prepare_host_ssh_agent(socket, interactive=interactive)
-    return (
-        [BindMountSpec(socket, _SSH_SOCKET)],
-        [EnvVar(_SSH_AUTH_SOCK, _SSH_SOCKET.as_posix())],
-    )
 
 
 def _direct_ssh_socket() -> Path | None:

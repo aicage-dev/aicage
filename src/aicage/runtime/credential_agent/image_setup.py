@@ -1,6 +1,5 @@
 """Credential utility-image preparation."""
 
-from aicage.config.run_config import RunConfig
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.registry.ensure_util_image import (
     UtilImageSetupAction,
@@ -9,12 +8,13 @@ from aicage.registry.ensure_util_image import (
 )
 from aicage.runtime.menu.interaction import RuntimeInteraction
 
+from .forwarding import _CredentialPlan
+
 
 def prepare_credential_image(
-    run_config: RunConfig, interaction: RuntimeInteraction
+    plan: _CredentialPlan, interaction: RuntimeInteraction
 ) -> None:
-    agent_cfg = run_config.context.project_cfg.agents.get(run_config.agent)
-    if agent_cfg is None or not (agent_cfg.mounts.ssh or agent_cfg.mounts.gnupg):
+    if not plan.protocols:
         return
     setup_action = util_image_setup_action(CREDENTIAL_AGENT_IMAGE)
     if setup_action is UtilImageSetupAction.SKIP:

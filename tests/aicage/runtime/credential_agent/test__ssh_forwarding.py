@@ -15,7 +15,7 @@ class SshForwardingTests(TestCase):
     def test_ssh_forwarding_skips_sidecar_without_keys_or_ssh_home(self) -> None:
         with (
             mock.patch.object(
-                _ssh_forwarding, "_direct_ssh_target_args", return_value=None
+                _ssh_forwarding, "_direct_ssh_socket", return_value=None
             ),
             mock.patch.object(
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[]
@@ -26,13 +26,14 @@ class SshForwardingTests(TestCase):
             mock.patch.object(Path, "is_dir", return_value=False),
         ):
             self.assertEqual(
-                ([], [], False), _ssh_forwarding._ssh_forwarding(interactive=False)
+                _ssh_forwarding._SshForwardingPlan([], [], False, None),
+                _ssh_forwarding._ssh_forwarding(),
             )
 
     def test_ssh_forwarding_uses_a_sidecar_for_ssh_keys_or_home(self) -> None:
         with (
             mock.patch.object(
-                _ssh_forwarding, "_direct_ssh_target_args", return_value=None
+                _ssh_forwarding, "_direct_ssh_socket", return_value=None
             ),
             mock.patch.object(
                 _ssh_forwarding,
@@ -44,7 +45,8 @@ class SshForwardingTests(TestCase):
             ),
         ):
             self.assertEqual(
-                ([], [], True), _ssh_forwarding._ssh_forwarding(interactive=False)
+                _ssh_forwarding._SshForwardingPlan([], [], True, None),
+                _ssh_forwarding._ssh_forwarding(),
             )
 
     def test_ssh_forwarding_uses_direct_linux_host_agent(self) -> None:
@@ -57,8 +59,8 @@ class SshForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _ssh_forwarding,
-                "_direct_ssh_target_args",
-                return_value=([direct_mount], [direct_env]),
+                "_direct_ssh_socket",
+                return_value=socket,
             ),
             mock.patch.object(
                 _ssh_forwarding,
@@ -66,19 +68,15 @@ class SshForwardingTests(TestCase):
                 return_value=[public_key],
             ),
         ):
-            mounts, env, sidecar = _ssh_forwarding._ssh_forwarding(interactive=False)
+            plan = _ssh_forwarding._ssh_forwarding()
 
         self.assertEqual(
-            [
-                direct_mount,
-                BindMountSpec(
-                    public_key, PurePosixPath("/test-tmp/id_ed25519.pub"), True
-                ),
-            ],
-            mounts,
+            [direct_mount, BindMountSpec(public_key, PurePosixPath("/test-tmp/id_ed25519.pub"), True)],
+            plan.mounts,
         )
-        self.assertEqual([direct_env], env)
-        self.assertFalse(sidecar)
+        self.assertEqual([direct_env], plan.env)
+        self.assertFalse(plan.requires_sidecar)
+        self.assertEqual(socket, plan.direct_socket)
 
     def test_direct_ssh_socket_requires_a_reachable_linux_unix_socket(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
@@ -240,36 +238,24 @@ class SshForwardingTests(TestCase):
         load_mock.assert_called_once_with(socket, key, interactive=True)
         self.assertIn("continuing without it", logs.output[0])
 
-    def test_direct_ssh_target_args_falls_back_without_a_host_socket(self) -> None:
-        with mock.patch.object(
-            _ssh_forwarding, "_direct_ssh_socket", return_value=None
-        ):
-            self.assertIsNone(
-                _ssh_forwarding._direct_ssh_target_args(interactive=False)
-            )
-
-    def test_direct_ssh_target_args_mounts_a_prepared_host_agent(self) -> None:
+    def test_prepare_ssh_forwarding_prepares_a_direct_host_agent(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
-        with (
-            mock.patch.object(
-                _ssh_forwarding, "_direct_ssh_socket", return_value=socket
-            ),
-            mock.patch.object(_ssh_forwarding, "_prepare_host_ssh_agent"),
-        ):
-            result = _ssh_forwarding._direct_ssh_target_args(interactive=False)
+        plan = _ssh_forwarding._SshForwardingPlan([], [], False, socket)
+        with mock.patch.object(
+            _ssh_forwarding, "_prepare_host_ssh_agent"
+        ) as prepare_mock:
+            _ssh_forwarding._prepare_ssh_forwarding(plan, interactive=False)
 
-        self.assertEqual(
-            (
-                [
-                    BindMountSpec(
-                        socket,
-                        PurePosixPath("/run/credential-agent/ssh-agent.sock"),
-                    )
-                ],
-                [EnvVar("SSH_AUTH_SOCK", "/run/credential-agent/ssh-agent.sock")],
-            ),
-            result,
-        )
+        prepare_mock.assert_called_once_with(socket, interactive=False)
+
+    def test_prepare_ssh_forwarding_skips_a_sidecar_plan(self) -> None:
+        plan = _ssh_forwarding._SshForwardingPlan([], [], True, None)
+        with mock.patch.object(
+            _ssh_forwarding, "_prepare_host_ssh_agent"
+        ) as prepare_mock:
+            _ssh_forwarding._prepare_ssh_forwarding(plan, interactive=False)
+
+        prepare_mock.assert_not_called()
 
     def test_direct_ssh_socket_rejects_missing_or_non_socket_paths(self) -> None:
         with (
