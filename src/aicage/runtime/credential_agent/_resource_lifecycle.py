@@ -1,5 +1,6 @@
 """Docker lifecycle operations for credential sidecars."""
 
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from os import name as _os_name
@@ -26,6 +27,8 @@ from ._resource_models import (
 )
 
 _LOCK_TIMEOUT_SECONDS = 30
+_READY_TIMEOUT_SECONDS = 10
+_READY_POLL_SECONDS = 0.1
 
 
 def _ensure_volume(client: DockerClient, resource: _CredentialResource) -> Volume:
@@ -117,23 +120,28 @@ def _ssh_tmpfs_mounts(
 def _ensure_ready(
     client: DockerClient, resource: _CredentialResource, container: Container
 ) -> None:
-    try:
-        created = client.api.exec_create(
-            container.id,
-            ["credential-agent", resource.protocol.value, "ready"],
-            user=resource.user,
-        )
-        execution_id = created["Id"]
-        client.api.exec_start(execution_id)
-        result = client.api.exec_inspect(execution_id)
-    except DockerException as exc:
-        raise DockerError(
-            f"Credential sidecar '{resource.container_name}' did not become ready."
-        ) from exc
-    if result.get("ExitCode") != 0:
-        raise DockerError(
-            f"Credential sidecar '{resource.container_name}' did not become ready."
-        )
+    deadline = time.monotonic() + _READY_TIMEOUT_SECONDS
+    while True:
+        try:
+            created = client.api.exec_create(
+                container.id,
+                ["credential-agent", resource.protocol.value, "ready"],
+                user=resource.user,
+            )
+            execution_id = created["Id"]
+            client.api.exec_start(execution_id)
+            result = client.api.exec_inspect(execution_id)
+            if result.get("ExitCode") == 0:
+                return
+        except DockerException as exc:
+            raise DockerError(
+                f"Credential sidecar '{resource.container_name}' did not become ready."
+            ) from exc
+        if time.monotonic() >= deadline:
+            raise DockerError(
+                f"Credential sidecar '{resource.container_name}' did not become ready."
+            )
+        time.sleep(_READY_POLL_SECONDS)
 
 
 def _is_stopped(container: Container) -> bool:
