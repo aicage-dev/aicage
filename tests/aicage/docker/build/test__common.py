@@ -44,9 +44,7 @@ class CommonBuildTests(TestCase):
         log_handle = mock.Mock()
 
         with (
-            mock.patch.dict(
-                "aicage.docker.execution.cli.os.environ", {}, clear=True
-            ),
+            mock.patch.dict("aicage.docker.execution.cli.os.environ", {}, clear=True),
             mock.patch(
                 "aicage.docker.build._common.subprocess.Popen",
                 return_value=popen_context,

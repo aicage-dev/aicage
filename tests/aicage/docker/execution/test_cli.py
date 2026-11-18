@@ -19,9 +19,7 @@ class DockerCliTests(TestCase):
         process_context.__enter__ = mock.Mock(return_value=process)
         process_context.__exit__ = mock.Mock(return_value=None)
         with (
-            mock.patch.dict(
-                "aicage.docker.execution.cli.os.environ", {}, clear=True
-            ),
+            mock.patch.dict("aicage.docker.execution.cli.os.environ", {}, clear=True),
             mock.patch(
                 "aicage.docker.execution.cli.subprocess.Popen",
                 return_value=process_context,
@@ -90,9 +88,7 @@ class DockerCliTests(TestCase):
         process_context.__enter__ = mock.Mock(return_value=process)
         process_context.__exit__ = mock.Mock(return_value=None)
         with (
-            mock.patch.dict(
-                "aicage.docker.execution.cli.os.environ", {}, clear=True
-            ),
+            mock.patch.dict("aicage.docker.execution.cli.os.environ", {}, clear=True),
             mock.patch(
                 "aicage.docker.execution.cli.subprocess.Popen",
                 return_value=process_context,

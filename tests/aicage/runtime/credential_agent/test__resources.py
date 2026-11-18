@@ -208,7 +208,9 @@ class CredentialAgentResourcesTests(TestCase):
 
         with (
             self._client(client),
-            mock.patch("aicage.runtime.credential_agent._resource_lifecycle.time.sleep") as sleep,
+            mock.patch(
+                "aicage.runtime.credential_agent._resource_lifecycle.time.sleep"
+            ) as sleep,
         ):
             _resources._ensure_resources([self._ssh], self._image)
 
