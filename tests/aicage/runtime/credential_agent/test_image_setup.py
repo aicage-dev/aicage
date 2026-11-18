@@ -17,9 +17,7 @@ class CredentialImageSetupTests(TestCase):
 
     def test_prepare_credential_image_skips_a_current_image(self) -> None:
         interaction = mock.Mock()
-        plan = forwarding._CredentialPlan(
-            [], [], [_CredentialProtocol.SSH], None, None
-        )
+        plan = forwarding._CredentialPlan([], [], [_CredentialProtocol.SSH], None, None)
 
         with mock.patch.object(
             image_setup,
@@ -32,9 +30,7 @@ class CredentialImageSetupTests(TestCase):
 
     def test_prepare_credential_image_executes_required_setup(self) -> None:
         interaction = mock.Mock()
-        plan = forwarding._CredentialPlan(
-            [], [], [_CredentialProtocol.GPG], None, None
-        )
+        plan = forwarding._CredentialPlan([], [], [_CredentialProtocol.GPG], None, None)
         reporter = mock.Mock()
         interaction.execute_operation.side_effect = lambda operation: operation(
             reporter

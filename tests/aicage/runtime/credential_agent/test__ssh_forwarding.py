@@ -14,9 +14,7 @@ from aicage.runtime.run_args import BindMountSpec, EnvVar, MountSpec, VolumeMoun
 class SshForwardingTests(TestCase):
     def test_ssh_forwarding_skips_sidecar_without_keys_or_ssh_home(self) -> None:
         with (
-            mock.patch.object(
-                _ssh_forwarding, "_direct_ssh_socket", return_value=None
-            ),
+            mock.patch.object(_ssh_forwarding, "_direct_ssh_socket", return_value=None),
             mock.patch.object(
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[]
             ),
@@ -32,9 +30,7 @@ class SshForwardingTests(TestCase):
 
     def test_ssh_forwarding_uses_a_sidecar_for_ssh_keys_or_home(self) -> None:
         with (
-            mock.patch.object(
-                _ssh_forwarding, "_direct_ssh_socket", return_value=None
-            ),
+            mock.patch.object(_ssh_forwarding, "_direct_ssh_socket", return_value=None),
             mock.patch.object(
                 _ssh_forwarding,
                 "_resolve_ssh_key_files",
@@ -71,7 +67,12 @@ class SshForwardingTests(TestCase):
             plan = _ssh_forwarding._ssh_forwarding()
 
         self.assertEqual(
-            [direct_mount, BindMountSpec(public_key, PurePosixPath("/test-tmp/id_ed25519.pub"), True)],
+            [
+                direct_mount,
+                BindMountSpec(
+                    public_key, PurePosixPath("/test-tmp/id_ed25519.pub"), True
+                ),
+            ],
             plan.mounts,
         )
         self.assertEqual([direct_env], plan.env)
