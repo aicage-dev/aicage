@@ -304,5 +304,7 @@ def _direct_gpg_socket() -> Path | None:
         text=True,
     )  # nosec B603 -- The fixed gpg-connect-agent executable receives an argument vector, never a shell command.
     if result.returncode != 0:
-        raise RuntimeError(f"Cannot communicate with the host GnuPG agent at '{socket}'.")
+        raise RuntimeError(
+            f"Cannot communicate with the host GnuPG agent at '{socket}'."
+        )
     return socket

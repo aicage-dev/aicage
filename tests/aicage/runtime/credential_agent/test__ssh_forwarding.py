@@ -254,9 +254,7 @@ class SshForwardingTests(TestCase):
             mock.patch.object(
                 _ssh_forwarding, "_direct_ssh_socket", return_value=socket
             ),
-            mock.patch.object(
-                _ssh_forwarding, "_prepare_host_ssh_agent"
-            ),
+            mock.patch.object(_ssh_forwarding, "_prepare_host_ssh_agent"),
         ):
             result = _ssh_forwarding._direct_ssh_target_args(interactive=False)
 
@@ -291,7 +289,9 @@ class SshForwardingTests(TestCase):
             ),
             mock.patch.object(Path, "is_socket", return_value=False),
         ):
-            with self.assertRaisesRegex(RuntimeError, "does not refer to a Unix socket"):
+            with self.assertRaisesRegex(
+                RuntimeError, "does not refer to a Unix socket"
+            ):
                 _ssh_forwarding._direct_ssh_socket()
 
     def test_host_ssh_identities_handles_agent_results(self) -> None:

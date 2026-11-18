@@ -100,7 +100,9 @@ def _direct_ssh_socket() -> Path | None:
 def _prepare_host_ssh_agent(socket: Path, *, interactive: bool) -> None:
     identities = _host_ssh_identities(socket)
     if identities is None:
-        raise RuntimeError(f"Cannot list identities in the host SSH agent at '{socket}'.")
+        raise RuntimeError(
+            f"Cannot list identities in the host SSH agent at '{socket}'."
+        )
     loaded_fingerprints = {
         _ssh_identity_fingerprint(identity) for identity in identities
     }

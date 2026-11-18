@@ -240,7 +240,9 @@ class GpgForwardingTests(TestCase):
             self.assertFalse(call.kwargs["check"])
             self.assertTrue(call.kwargs["capture_output"])
 
-    def test_prepare_direct_gpg_keys_warns_for_uncached_noninteractive_key(self) -> None:
+    def test_prepare_direct_gpg_keys_warns_for_uncached_noninteractive_key(
+        self,
+    ) -> None:
         home = Path("/test-tmp/gnupg")
         with (
             mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
@@ -321,7 +323,9 @@ class GpgForwardingTests(TestCase):
             _gpg_forwarding._reload_gpg_keys([resource], interactive=False)
         reset_mock.assert_called_once_with(resource)
 
-    def test_reload_gpg_keys_warns_for_an_interactively_loaded_unusable_key(self) -> None:
+    def test_reload_gpg_keys_warns_for_an_interactively_loaded_unusable_key(
+        self,
+    ) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with (
             mock.patch.object(
