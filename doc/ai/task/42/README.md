@@ -6,14 +6,14 @@ See [test coverage](TEST_COVERAGE.md) for the current evidence and the division 
 ## Current implementation status
 
 Commits 1 through 4 are complete. `aicage-image-util` provides the published `credential-agent` helper image, and
-`aicage` always manages a persistent SSH sidecar and selects direct Unix GnuPG forwarding where possible. Protected
-key passphrases are entered directly into the credential sidecar during interactive setup; Aicage does not read, store,
-or reload them.
+`aicage` forwards a prepared Linux host SSH agent when available and otherwise manages a persistent SSH sidecar. It
+selects direct Unix GnuPG forwarding where possible. Protected key passphrases are entered directly into the selected
+agent during interactive setup; Aicage does not read, store, or reload them.
 
-Commit 5 is complete. The CI matrix proves SSH sidecar forwarding and GnuPG signing on Linux and Windows:
-Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required sidecar-only path. SSH and
-GnuPG sidecars are restarted and unprotected keys are reloaded successfully, and target credential homes remain
-private-key-free.
+Commit 5 is complete. The CI matrix proves Linux direct-host SSH forwarding, SSH sidecar fallback, and GnuPG signing
+on Linux and Windows. Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required
+sidecar-only path. SSH and GnuPG sidecars are restarted and unprotected keys are reloaded successfully, and target
+credential homes remain private-key-free.
 SSH and GnuPG sharing is discovered from available host keys, independently of Git configuration; Git signing is one
 consumer of the forwarded agents, not an activation requirement.
 Protected SSH and GnuPG keys require interactive setup whenever their sidecar cache is empty. This keeps passphrases
@@ -23,8 +23,9 @@ The integration matrix again uses normal non-proxy test discovery rather than a 
 ## Problem
 
 The SSH and GnuPG refactors replaced mounting host credential homes directly into agent containers with agent-socket
-forwarding. SSH always uses Aicage's sidecar. Direct GnuPG forwarding remains the preferred Unix path because a host
-agent socket can be bind mounted without exposing private keys.
+forwarding. Linux SSH and Unix GnuPG prefer a usable host agent socket because it can be bind mounted without exposing
+private keys. SSH falls back to Aicage's sidecar when host-agent forwarding is unavailable; Windows always uses the
+sidecar.
 
 It does not work for a native Windows host running Linux containers through Docker Desktop:
 
@@ -39,13 +40,21 @@ It does not work for a native Windows host running Linux containers through Dock
 
 ## Desired design
 
-SSH always uses a persistent, aicage-managed sidecar and socket volume on every platform. GnuPG uses a sidecar when
-direct host-agent forwarding is unavailable; Windows always uses the GnuPG sidecar. Both sidecars use one dedicated
+Linux SSH forwards the current host `SSH_AUTH_SOCK` after reconciling Aicage-discovered identities into that agent;
+the identities remain in the host agent. It uses a persistent, aicage-managed sidecar when that path cannot be
+prepared. GnuPG uses a sidecar when direct host-agent forwarding is unavailable; Windows always uses both sidecars.
+Both sidecars use one dedicated
 `aicage-image-util:credential-agent` image, invoked explicitly in an SSH or GnuPG mode. This uses the existing image
 release, signature, and update lifecycle without adding a helper image per protocol.
 
 ```text
-host ~/.ssh  (mounted only into utility sidecar)
+Linux host SSH_AUTH_SOCK
+       |
+       | bind mount when reachable and prepared
+       v
+one or more aicage agent containers
+
+host ~/.ssh  (mounted only into utility sidecar fallback)
        |
        v
 aicage-image-util:credential-agent ssh sidecar
@@ -64,8 +73,9 @@ aicage-image-util:credential-agent gpg sidecar
 one or more aicage agent containers
 ```
 
-Target containers mount only the socket volumes for the enabled protocols. SSH containers receive `SSH_AUTH_SOCK` and
-retain Aicage's existing read-only mounts for SSH configuration, known-hosts files, and public-key files. GnuPG
+Target containers receive either a direct host-socket bind mount or a socket volume for each enabled protocol. SSH
+containers receive `SSH_AUTH_SOCK` and retain Aicage's existing read-only mounts for SSH configuration, known-hosts
+files, and public-key files. GnuPG
 containers receive the GnuPG agent socket and retain its existing read-only public keyring, trust, and configuration
 files. They never receive private-key files.
 
@@ -112,11 +122,11 @@ owns sidecar behavior when the sidecar path is selected.
 ## Passphrase handling
 
 When SSH sharing is enabled in the terminal configuration UI, its existing confirmation dialog also authorizes SSH
-setup. Aicage creates/updates the sidecar there. For an encrypted key, the sidecar prompts directly; Aicage never
-receives the passphrase. There is no separate setup command.
+setup. On Linux with a usable host agent, `ssh-add` prompts directly for an encrypted missing key; otherwise the
+sidecar prompts directly. Aicage never receives the passphrase. There is no separate setup command.
 
-After a reboot, the sidecar agent is empty. Aicage reloads unencrypted keys before starting a target container.
-Encrypted keys require the terminal configuration UI to load them again directly into the sidecar.
+After a reboot, an empty host agent or sidecar receives unencrypted keys before starting a target container. Encrypted
+keys require the terminal configuration UI to load them directly into the selected agent.
 
 A noninteractive invocation must never prompt. If it finds an encrypted key that is not loaded in the sidecar, it stops
 before starting the target container and tells the user to open the normal terminal configuration UI to load that key.
@@ -140,8 +150,8 @@ the sidecar. The socket volumes never contain private keys or passphrases.
 
 ### `aicage`
 
-- Always select the SSH sidecar. Prefer direct GnuPG forwarding on Unix and select the GnuPG sidecar when direct
-  forwarding is unavailable; Windows always selects the GnuPG sidecar.
+- Prefer direct Linux SSH and Unix GnuPG forwarding; select the relevant sidecar when direct forwarding is
+  unavailable. Windows always selects sidecars.
 - Add a Docker resource manager for the labelled SSH and GnuPG singleton volumes and sidecars.
 - Reuse the established helper-image digest, signature verification, pull, and old-digest cleanup code once for the
   shared credential image.
@@ -157,8 +167,8 @@ the sidecar. The socket volumes never contain private keys or passphrases.
 - Unit tests for resource inspection, creation, replacement, lock behavior, and protocol-specific socket mount
   arguments.
 - Utility-image tests for SSH and GnuPG mode startup, readiness, and credential-loading behavior.
-- Linux integration tests: SSH signing uses the volume-backed sidecar socket; direct GnuPG forwarding remains
-  functional when the host socket is bind-mountable.
+- Linux integration tests: SSH and GnuPG direct forwarding remain functional when host sockets are bind-mountable;
+  forced sidecar fallback remains functional for both protocols.
 - Windows integration test: Docker Desktop/WSL target container sees the same identities through the volume-backed
   socket; it must not mount a Windows named pipe or require the Windows OpenSSH service.
 - GnuPG integration tests: target container signs through the volume-backed GnuPG agent on Linux and Windows without
