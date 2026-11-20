@@ -85,8 +85,9 @@ behavior.
 
 - Resource inspection, ownership rejection, creation, stopped/unhealthy/obsolete replacement, retained volumes,
   readiness failures, lock contention, and one shared image resolution for both protocols.
-- Protocol selection: SSH always selects a sidecar; GnuPG uses direct Unix forwarding when usable and a sidecar
-  otherwise; Windows always selects sidecars and never requests a Windows named-pipe mount.
+- Protocol selection: Linux SSH forwards a prepared host agent when usable and otherwise selects a sidecar; GnuPG uses
+  direct Unix forwarding when usable and a sidecar otherwise; Windows always selects sidecars and never requests a
+  Windows named-pipe mount.
 - `DockerRunArgs` volume mounts and protocol environment for each selection, with no target private-key mounts.
 - SSH/GnuPG host support files retained read-only in the target container.
 - Protected-key sidecar-cache checks and clear noninteractive missing-key errors.
@@ -95,8 +96,8 @@ behavior.
 
 Completed live coverage:
 
-- Linux direct GnuPG forwarding remains functional when the host socket is bind-mountable; forced fallback-sidecar
-  GnuPG signing is also covered.
+- Linux direct SSH and GnuPG forwarding remain functional when host sockets are bind-mountable; forced fallback
+  sidecars are also covered.
 - Windows Docker Desktop/WSL covers the required sidecar-only GnuPG path and SSH sidecar identity availability.
 - A target container signs through the volume-backed GnuPG socket on Linux and Windows without private-key files in
   its temporary GnuPG home.
