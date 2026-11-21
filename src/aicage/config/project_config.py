@@ -15,7 +15,6 @@ _AGENT_EXTENSIONS_KEY: str = "extensions"
 _AGENT_SHARES_KEY: str = "shares"
 _AGENT_EXTENSION_MOUNTS_KEY: str = "extension_mounts"
 
-# todo: can this be an Enum?
 MOUNT_GITCONFIG_KEY: str = "gitconfig"
 MOUNT_GITROOT_KEY: str = "gitroot"
 MOUNT_GNUPG_KEY: str = "gnupg"

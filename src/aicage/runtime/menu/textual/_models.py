@@ -10,7 +10,6 @@ class BuiltInShareSource(Enum):
 
 @dataclass(frozen=True)
 class BuiltInShareValue:
-    # todo: do we even need this? if so use an Enum, not random strings
     source: BuiltInShareSource
     key: str
     label: str

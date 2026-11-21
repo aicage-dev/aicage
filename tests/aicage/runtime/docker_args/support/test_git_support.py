@@ -19,22 +19,30 @@ class GitSupportTests(TestCase):
 
     def test_resolve_git_root_prefers_superproject(self) -> None:
         with mock.patch(f"{_MODULE}.capture_stdout", return_value="/repo\n"):
-            self.assertEqual(Path("/repo"), git_support.resolve_git_root(Path("/repo/sub")))
+            self.assertEqual(
+                Path("/repo").resolve(),
+                git_support.resolve_git_root(Path("/repo/sub")),
+            )
 
     def test_resolve_git_root_falls_back_to_toplevel(self) -> None:
         with mock.patch(f"{_MODULE}.capture_stdout", side_effect=["", "/repo\n"]):
-            self.assertEqual(Path("/repo"), git_support.resolve_git_root(Path("/repo/sub")))
+            self.assertEqual(
+                Path("/repo").resolve(),
+                git_support.resolve_git_root(Path("/repo/sub")),
+            )
 
     def test__git_support_prompt_items_only_contains_git_mounts(self) -> None:
+        git_config = Path("/home/user/.gitconfig")
+        git_root = Path("/repo/root")
         with (
-            mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=Path("/home/user/.gitconfig")),
-            mock.patch(f"{_MODULE}.resolve_git_root", return_value=Path("/repo/root")),
+            mock.patch(f"{_MODULE}.resolve_git_config_path", return_value=git_config),
+            mock.patch(f"{_MODULE}.resolve_git_root", return_value=git_root),
             mock.patch("pathlib.Path.exists", return_value=True),
         ):
             self.assertEqual(
                 [
-                    (MOUNT_GITCONFIG_KEY, "Git config (name/email): /home/user/.gitconfig"),
-                    (MOUNT_GITROOT_KEY, "Git root (repository access): /repo/root"),
+                    (MOUNT_GITCONFIG_KEY, f"Git config (name/email): {git_config}"),
+                    (MOUNT_GITROOT_KEY, f"Git root (repository access): {git_root}"),
                 ],
                 git_support._git_support_prompt_items(Path("/repo"), _AgentMounts()),
             )
