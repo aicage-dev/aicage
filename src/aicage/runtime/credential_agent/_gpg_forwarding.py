@@ -17,13 +17,13 @@ from aicage.config.project_config import AgentConfig
 from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.docker.errors import DockerError
 from aicage.docker.execution.client import get_docker_client
-from aicage.paths import container_project_path
-from aicage.runtime.docker_args.support.git_support import (
+from aicage.gpg import (
     resolve_gpg_agent_socket,
     resolve_gpg_home,
     resolve_gpg_public_files,
     resolve_gpg_secret_key_state,
 )
+from aicage.paths import container_project_path
 from aicage.runtime.run_args import BindMountSpec, MountSpec, VolumeMountSpec
 
 from ._env import _credential_agent_user

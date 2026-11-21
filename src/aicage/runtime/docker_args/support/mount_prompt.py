@@ -7,9 +7,11 @@ from aicage.config.project_config import AgentConfig
 from aicage.runtime.mounts.shares import ShareSpec, resolve_share_specs
 
 from .git_support import _git_support_prompt_items
+from .ssh_gnupg import _ssh_gnupg_prompt_items
 
+# todo: better modelling
 MountSelectionPrompt = Callable[
-    [list[tuple[str, str]], list[tuple[str, str]]], list[str]
+    [list[tuple[str, str]], list[tuple[str, str]], list[tuple[str, str]]], list[str]
 ]
 
 
@@ -22,6 +24,7 @@ class _ExtensionMountPromptItem:
 @dataclass(frozen=True)
 class _MountPromptPrefs:
     git_mounts: set[str]
+    ssh_gnupg_mounts: set[str]
     extension_mounts: dict[str, bool]
 
 
@@ -32,23 +35,28 @@ def resolve_mount_prompt_prefs(
     select_mounts: MountSelectionPrompt,
 ) -> _MountPromptPrefs | None:
     git_items = _git_support_prompt_items(project_path, agent_cfg.mounts)
+    ssh_gnupg_items = _ssh_gnupg_prompt_items(agent_cfg.mounts)
     extension_items = _extension_mount_prompt_items(
         project_path,
         agent_cfg.extensions,
         agent_cfg.extension_mounts,
         available_extensions,
     )
-    if not git_items and not extension_items:
+    if not git_items and not ssh_gnupg_items and not extension_items:
         return None
 
     selected = set(
         select_mounts(
             list(git_items),
+            list(ssh_gnupg_items),
             _format_extension_prompt_items(extension_items),
         )
     )
     return _MountPromptPrefs(
         git_mounts={key for key, _description in git_items if key in selected},
+        ssh_gnupg_mounts={
+            key for key, _description in ssh_gnupg_items if key in selected
+        },
         extension_mounts={
             item.extension_id: item.extension_id in selected for item in extension_items
         },

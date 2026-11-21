@@ -69,11 +69,11 @@ class ShareSupportTests(TestCase):
                 return_value=Path("/repo"),
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.has_ssh_support",
+                "aicage.runtime.menu.textual.services._share_support._has_ssh_keys",
                 return_value=False,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.has_gpg_support",
+                "aicage.runtime.menu.textual.services._share_support.has_gpg_keys",
                 return_value=False,
             ),
             mock.patch("pathlib.Path.exists", return_value=True),
@@ -93,12 +93,7 @@ class ShareSupportTests(TestCase):
                     True,
                 ),
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT,
-                    "gitroot",
-                    "Git root",
-                    str(Path("/repo")),
-                    None,
-                    True,
+                    BuiltInShareSource.GIT_SUPPORT, "gitroot", "Git root", str(Path("/repo")), None, True
                 ),
             ],
             values,
@@ -184,11 +179,11 @@ class ShareSupportTests(TestCase):
                 return_value=None,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.has_ssh_support",
+                "aicage.runtime.menu.textual.services._share_support._has_ssh_keys",
                 return_value=True,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.has_gpg_support",
+                "aicage.runtime.menu.textual.services._share_support.has_gpg_keys",
                 return_value=False,
             ),
         ):
@@ -198,7 +193,7 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                BuiltInShareSource.GIT_SUPPORT,
+                BuiltInShareSource.SSH_GNUPG,
                 "ssh",
                 "SSH agent",
                 "SSH agent",
@@ -226,11 +221,11 @@ class ShareSupportTests(TestCase):
                 return_value=None,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.has_ssh_support",
+                "aicage.runtime.menu.textual.services._share_support._has_ssh_keys",
                 return_value=False,
             ),
             mock.patch(
-                "aicage.runtime.menu.textual.services._share_support.has_gpg_support",
+                "aicage.runtime.menu.textual.services._share_support.has_gpg_keys",
                 return_value=True,
             ),
             mock.patch(
@@ -244,7 +239,7 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                BuiltInShareSource.GIT_SUPPORT,
+                BuiltInShareSource.SSH_GNUPG,
                 "gnupg",
                 "GnuPG agent",
                 "GnuPG agent",

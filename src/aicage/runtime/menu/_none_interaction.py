@@ -15,6 +15,7 @@ from aicage.runtime.docker_args.mount_preferences import (
     apply_extension_mount_defaults,
     apply_git_mount_defaults,
     apply_mount_preferences,
+    apply_ssh_gnupg_mount_defaults,
     disable_git_mounts,
 )
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
@@ -54,6 +55,7 @@ class _NoneInteraction:
                 apply_git_mount_defaults(context, draft.agent_cfg)
             else:
                 disable_git_mounts(draft.agent_cfg)
+        apply_ssh_gnupg_mount_defaults(draft.agent_cfg)
         if isinstance(draft.parsed, ConfigUpdateArgs):
             apply_extension_mount_defaults(context, draft.agent_cfg)
         else:
@@ -120,6 +122,7 @@ def _always_confirm(*args: object) -> bool:
 
 def _select_all_mounts(
     git_items: list[tuple[str, str]],
+    ssh_gnupg_items: list[tuple[str, str]],
     extension_items: list[tuple[str, str]],
 ) -> list[str]:
-    return [item[0] for item in [*git_items, *extension_items]]
+    return [item[0] for item in [*git_items, *ssh_gnupg_items, *extension_items]]

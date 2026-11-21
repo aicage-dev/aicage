@@ -4,11 +4,13 @@ from enum import Enum
 
 class BuiltInShareSource(Enum):
     GIT_SUPPORT = "git_support"
+    SSH_GNUPG = "ssh_gnupg"
     EXTENSION = "extension"
 
 
 @dataclass(frozen=True)
 class BuiltInShareValue:
+    # todo: do we even need this? if so use an Enum, not random strings
     source: BuiltInShareSource
     key: str
     label: str
@@ -51,7 +53,8 @@ class DockerOptionValue:
 @dataclass(frozen=True)
 class HostAccessConfirmValues:
     docker_options: list[DockerOptionValue]
-    git_support_shares: list[BuiltInShareValue]
+    git_shares: list[BuiltInShareValue]
+    ssh_gnupg_shares: list[BuiltInShareValue]
     extension_shares: list[BuiltInShareValue]
 
 

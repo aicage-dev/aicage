@@ -22,14 +22,11 @@ class MountPromptTests(TestCase):
         git_items = [
             (MOUNT_GITCONFIG_KEY, "Git config (name/email): /test-tmp/gitconfig"),
             (MOUNT_GITROOT_KEY, "Git root (repository access): /test-tmp/root"),
-            (
-                MOUNT_GNUPG_KEY,
-                "GnuPG agent (for Git signing): /test-tmp/S.gpg-agent.extra",
-            ),
         ]
 
         with (
             mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=git_items),
+            mock.patch(f"{_MODULE}._ssh_gnupg_prompt_items", return_value=[]),
         ):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 project_path,
@@ -44,7 +41,7 @@ class MountPromptTests(TestCase):
 
         assert prefs is not None
         self.assertEqual(
-            {MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, MOUNT_GNUPG_KEY}, prefs.git_mounts
+            {MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY}, prefs.git_mounts
         )
         self.assertEqual({}, prefs.extension_mounts)
 
@@ -52,7 +49,10 @@ class MountPromptTests(TestCase):
         agent_cfg = AgentConfig(mounts=_AgentMounts())
 
         select_mounts = mock.Mock()
-        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
+        with (
+            mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]),
+            mock.patch(f"{_MODULE}._ssh_gnupg_prompt_items", return_value=[]),
+        ):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {}, select_mounts
             )
@@ -84,6 +84,7 @@ class MountPromptTests(TestCase):
                 mock.patch(
                     f"{_MODULE}._git_support_prompt_items", return_value=git_items
                 ),
+                mock.patch(f"{_MODULE}._ssh_gnupg_prompt_items", return_value=[]),
             ):
                 select_mounts = mock.Mock(return_value=[MOUNT_GITCONFIG_KEY, "gh"])
                 prefs = mount_prompt_module.resolve_mount_prompt_prefs(
@@ -95,7 +96,7 @@ class MountPromptTests(TestCase):
 
         assert prefs is not None
         git_prompt_items = select_mounts.call_args.args[0]
-        extension_prompt_items = select_mounts.call_args.args[1]
+        extension_prompt_items = select_mounts.call_args.args[2]
         self.assertEqual(MOUNT_GITCONFIG_KEY, git_prompt_items[0][0])
         self.assertEqual("gh", extension_prompt_items[0][0])
         self.assertIn("Extension gh shares:", extension_prompt_items[0][1])
@@ -116,7 +117,10 @@ class MountPromptTests(TestCase):
             dockerfile_path=None,
         )
 
-        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
+        with (
+            mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]),
+            mock.patch(f"{_MODULE}._ssh_gnupg_prompt_items", return_value=[]),
+        ):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"gh": extension}, lambda *_args: []
             )
@@ -166,7 +170,10 @@ class MountPromptTests(TestCase):
         )
 
         select_mounts = mock.Mock(return_value=["sample"])
-        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
+        with (
+            mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]),
+            mock.patch(f"{_MODULE}._ssh_gnupg_prompt_items", return_value=[]),
+        ):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"sample": extension}, select_mounts
             )
@@ -179,7 +186,7 @@ class MountPromptTests(TestCase):
                     f"Extension sample shares: {Path.home().resolve() / '.sample'}",
                 )
             ],
-            select_mounts.call_args.args[1],
+            select_mounts.call_args.args[2],
         )
         self.assertEqual({"sample": True}, prefs.extension_mounts)
 
@@ -198,7 +205,10 @@ class MountPromptTests(TestCase):
         )
 
         select_mounts = mock.Mock()
-        with mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]):
+        with (
+            mock.patch(f"{_MODULE}._git_support_prompt_items", return_value=[]),
+            mock.patch(f"{_MODULE}._ssh_gnupg_prompt_items", return_value=[]),
+        ):
             prefs = mount_prompt_module.resolve_mount_prompt_prefs(
                 Path("/repo"), agent_cfg, {"empty": extension}, select_mounts
             )

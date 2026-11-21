@@ -44,13 +44,13 @@ class SshAgentTests(TestCase):
             support_files,
         )
 
-    def test_has_ssh_support_uses_private_key_files(self) -> None:
+    def test_has_ssh_keys_uses_private_key_files(self) -> None:
         with mock.patch(
             f"{_MODULE}._resolve_ssh_key_files", return_value=[Path("key")]
         ):
-            self.assertTrue(_ssh_agent._has_ssh_support())
+            self.assertTrue(_ssh_agent._has_ssh_keys())
         with mock.patch(f"{_MODULE}._resolve_ssh_key_files", return_value=[]):
-            self.assertFalse(_ssh_agent._has_ssh_support())
+            self.assertFalse(_ssh_agent._has_ssh_keys())
 
     def test_config_values_preserves_windows_identity_file_backslashes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

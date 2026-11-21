@@ -18,7 +18,7 @@ _NON_KEY_FILENAMES = {
 _CONFIG_OPTION_VALUE_COUNT = 2
 
 
-def _has_ssh_support() -> bool:
+def _has_ssh_keys() -> bool:
     return bool(_resolve_ssh_key_files())
 
 
