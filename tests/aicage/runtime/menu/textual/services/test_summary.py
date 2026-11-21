@@ -45,7 +45,12 @@ class OverviewSummaryTests(TestCase):
             ParsedArgs(False, "", "codex", [], False, []),
         )
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", True, True
+            BuiltInShareSource.GIT_SUPPORT,
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            True,
+            True,
         )
 
         with mock.patch(

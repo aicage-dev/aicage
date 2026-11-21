@@ -117,7 +117,12 @@ class BuiltInShareConfirmScreenTests(TestCase):
                 ],
                 git_support_shares=[
                     BuiltInShareValue(
-                        BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/home/user/.ssh", None, True
+                        BuiltInShareSource.GIT_SUPPORT,
+                        "ssh",
+                        "SSH",
+                        "/home/user/.ssh",
+                        None,
+                        True,
                     ),
                     BuiltInShareValue(
                         BuiltInShareSource.GIT_SUPPORT,
@@ -146,7 +151,12 @@ class BuiltInShareConfirmScreenTests(TestCase):
             [],
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/home/user/.ssh", None, True
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "ssh",
+                    "SSH",
+                    "/home/user/.ssh",
+                    None,
+                    True,
                 ),
                 BuiltInShareValue(
                     BuiltInShareSource.GIT_SUPPORT,
@@ -181,7 +191,11 @@ class BuiltInShareConfirmScreenTests(TestCase):
     def test_compose_formats_pathless_git_support_setting(self) -> None:
         screen = host_access_confirm_screen.HostAccessConfirmScreen(
             [],
-            [BuiltInShareValue(BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", None, None, True)],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", None, None, True
+                )
+            ],
             [],
         )
 
@@ -272,12 +286,19 @@ class BuiltInShareConfirmScreenTests(TestCase):
 
 
 def _share() -> BuiltInShareValue:
-    return BuiltInShareValue(BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/home/user/.ssh", None, True)
+    return BuiltInShareValue(
+        BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/home/user/.ssh", None, True
+    )
 
 
 def _extension_share() -> BuiltInShareValue:
     return BuiltInShareValue(
-        BuiltInShareSource.EXTENSION, "gh", "Extension gh", "/home/user/.config/gh", None, True
+        BuiltInShareSource.EXTENSION,
+        "gh",
+        "Extension gh",
+        "/home/user/.config/gh",
+        None,
+        True,
     )
 
 

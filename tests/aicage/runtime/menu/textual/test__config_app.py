@@ -384,7 +384,12 @@ class ConfigAppTests(TestCase):
         self,
     ) -> None:
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", None, True
+            BuiltInShareSource.GIT_SUPPORT,
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            None,
+            True,
         )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()
@@ -500,7 +505,12 @@ class ConfigAppTests(TestCase):
         self,
     ) -> None:
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", None, True
+            BuiltInShareSource.GIT_SUPPORT,
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            None,
+            True,
         )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()

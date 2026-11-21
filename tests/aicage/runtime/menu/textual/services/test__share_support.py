@@ -101,7 +101,12 @@ class ShareSupportTests(TestCase):
                     True,
                 ),
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "gitroot", "Git root", str(Path("/repo")), None, True
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "gitroot",
+                    "Git root",
+                    str(Path("/repo")),
+                    None,
+                    True,
                 ),
             ],
             values,
@@ -210,7 +215,12 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", str(Path("/test-tmp/ssh")), None, True
+                BuiltInShareSource.GIT_SUPPORT,
+                "ssh",
+                "SSH",
+                str(Path("/test-tmp/ssh")),
+                None,
+                True,
             ),
             values,
         )

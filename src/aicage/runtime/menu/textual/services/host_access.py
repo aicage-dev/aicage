@@ -49,7 +49,10 @@ def built_in_group_selection_values(
         ),
         None,
     )
-    if selected_item is None or selected_item.source is not BuiltInShareSource.EXTENSION:
+    if (
+        selected_item is None
+        or selected_item.source is not BuiltInShareSource.EXTENSION
+    ):
         return []
     group_identity = built_in_identity(selected_item.source, selected_item.key)
     return [

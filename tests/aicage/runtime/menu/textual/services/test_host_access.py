@@ -35,7 +35,12 @@ class HostAccessTests(TestCase):
             {"builtin:git_support:ssh"},
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    False,
                 )
             ],
         )
@@ -43,7 +48,12 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
                 )
             ],
             values,
@@ -141,10 +151,20 @@ class HostAccessTests(TestCase):
     def test_build_confirmation_request_filters_newly_enabled_values(self) -> None:
         built_in_shares = [
             BuiltInShareValue(
-                BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                BuiltInShareSource.GIT_SUPPORT,
+                "ssh",
+                "SSH",
+                "/test-tmp/.ssh",
+                None,
+                True,
             ),
             BuiltInShareValue(
-                BuiltInShareSource.EXTENSION, "gh", "Extension gh", "/test-tmp/.config/gh", False, True
+                BuiltInShareSource.EXTENSION,
+                "gh",
+                "Extension gh",
+                "/test-tmp/.config/gh",
+                False,
+                True,
             ),
         ]
         docker_options = [
@@ -161,7 +181,14 @@ class HostAccessTests(TestCase):
 
     def test_merge_confirmed_host_access_applies_confirmed_values(self) -> None:
         built_in_shares = [
-            BuiltInShareValue(BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True)
+            BuiltInShareValue(
+                BuiltInShareSource.GIT_SUPPORT,
+                "ssh",
+                "SSH",
+                "/test-tmp/.ssh",
+                None,
+                True,
+            )
         ]
         docker_options = [
             DockerOptionValue("docker", "Docker socket", None, None, True),
@@ -172,7 +199,12 @@ class HostAccessTests(TestCase):
             ],
             git_support_shares=[
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    False,
                 )
             ],
             extension_shares=[],
@@ -187,7 +219,12 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    False,
                 )
             ],
             merged_shares,
@@ -209,7 +246,12 @@ class HostAccessTests(TestCase):
             draft,
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
                 ),
                 BuiltInShareValue(
                     BuiltInShareSource.EXTENSION,
