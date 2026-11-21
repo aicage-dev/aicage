@@ -3,6 +3,7 @@ from unittest import TestCase
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
 from aicage.runtime.menu.textual._models import (
+    BuiltInShareSource,
     BuiltInShareValue,
     CustomShareValue,
     DockerOptionValue,
@@ -17,7 +18,7 @@ class HostAccessTests(TestCase):
     def test_built_in_selection_value_returns_row_key_when_present(self) -> None:
         value = host_access.built_in_selection_value(
             BuiltInShareValue(
-                "extension",
+                BuiltInShareSource.EXTENSION,
                 "gcloud",
                 "Extension gcloud",
                 "/test-tmp/gcloud",
@@ -34,7 +35,7 @@ class HostAccessTests(TestCase):
             {"builtin:git_support:ssh"},
             [
                 BuiltInShareValue(
-                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, False
                 )
             ],
         )
@@ -42,7 +43,7 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 )
             ],
             values,
@@ -53,7 +54,7 @@ class HostAccessTests(TestCase):
             {"builtin:extension:gcloud:/test-tmp/gcloud"},
             [
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gcloud",
                     "Extension gcloud",
                     "/test-tmp/gcloud",
@@ -62,7 +63,7 @@ class HostAccessTests(TestCase):
                     "gcloud:/test-tmp/gcloud",
                 ),
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gcloud",
                     "Extension gcloud",
                     "/test-tmp/boto",
@@ -76,7 +77,7 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gcloud",
                     "Extension gcloud",
                     "/test-tmp/gcloud",
@@ -85,7 +86,7 @@ class HostAccessTests(TestCase):
                     "gcloud:/test-tmp/gcloud",
                 ),
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gcloud",
                     "Extension gcloud",
                     "/test-tmp/boto",
@@ -109,7 +110,7 @@ class HostAccessTests(TestCase):
             "builtin:extension:gcloud:/test-tmp/gcloud",
             [
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gcloud",
                     "Extension gcloud",
                     "/test-tmp/gcloud",
@@ -118,7 +119,7 @@ class HostAccessTests(TestCase):
                     "gcloud:/test-tmp/gcloud",
                 ),
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gcloud",
                     "Extension gcloud",
                     "/test-tmp/boto",
@@ -140,10 +141,10 @@ class HostAccessTests(TestCase):
     def test_build_confirmation_request_filters_newly_enabled_values(self) -> None:
         built_in_shares = [
             BuiltInShareValue(
-                "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True
             ),
             BuiltInShareValue(
-                "extension", "gh", "Extension gh", "/test-tmp/.config/gh", False, True
+                BuiltInShareSource.EXTENSION, "gh", "Extension gh", "/test-tmp/.config/gh", False, True
             ),
         ]
         docker_options = [
@@ -160,7 +161,7 @@ class HostAccessTests(TestCase):
 
     def test_merge_confirmed_host_access_applies_confirmed_values(self) -> None:
         built_in_shares = [
-            BuiltInShareValue("git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True)
+            BuiltInShareValue(BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True)
         ]
         docker_options = [
             DockerOptionValue("docker", "Docker socket", None, None, True),
@@ -171,7 +172,7 @@ class HostAccessTests(TestCase):
             ],
             git_support_shares=[
                 BuiltInShareValue(
-                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, False
                 )
             ],
             extension_shares=[],
@@ -186,7 +187,7 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, False
                 )
             ],
             merged_shares,
@@ -208,10 +209,10 @@ class HostAccessTests(TestCase):
             draft,
             [
                 BuiltInShareValue(
-                    "git_support", "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.GIT_SUPPORT, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 ),
                 BuiltInShareValue(
-                    "extension",
+                    BuiltInShareSource.EXTENSION,
                     "gh",
                     "Extension gh",
                     "/test-tmp/.config/gh",
