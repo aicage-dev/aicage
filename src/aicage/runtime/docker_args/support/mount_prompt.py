@@ -38,7 +38,9 @@ def resolve_mount_prompt_prefs(
 ) -> _MountPromptPrefs | None:
     git_items = [
         _MountPromptItem(key, description)
-        for key, description in _git_support_prompt_items(project_path, agent_cfg.mounts)
+        for key, description in _git_support_prompt_items(
+            project_path, agent_cfg.mounts
+        )
     ]
     extension_items = _extension_mount_prompt_items(
         project_path,
@@ -52,9 +54,7 @@ def resolve_mount_prompt_prefs(
     selected = set(select_mounts(_MountSelectionRequest(git_items, extension_items)))
     return _MountPromptPrefs(
         git_mounts={item.key for item in git_items if item.key in selected},
-        extension_mounts={
-            item.key: item.key in selected for item in extension_items
-        },
+        extension_mounts={item.key: item.key in selected for item in extension_items},
     )
 
 
