@@ -6,6 +6,13 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, SelectionList, Static
 from textual.widgets.selection_list import Selection
 
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    MOUNT_GNUPG_KEY,
+    MOUNT_SSH_KEY,
+)
+
 from ..._ids import built_in_identity
 from ..._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
 from ..._mount_display import (
@@ -17,8 +24,8 @@ from ..._mount_display import (
 from ..._state import OverviewState
 from ._selection_list import _OverviewSelectionList
 
-_GIT_MOUNT_KEYS: tuple[str, ...] = ("gitconfig", "gitroot")
-_CREDENTIAL_MOUNT_KEYS: tuple[str, ...] = ("ssh", "gnupg")
+_GIT_MOUNT_KEYS: tuple[str, ...] = (MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY)
+_CREDENTIAL_MOUNT_KEYS: tuple[str, ...] = (MOUNT_SSH_KEY, MOUNT_GNUPG_KEY)
 _GIT_BUTTON_PREFIX = "git_mount_"
 _CREDENTIAL_BUTTON_PREFIX = "credential_mount_"
 
