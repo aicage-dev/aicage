@@ -18,23 +18,23 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         docker_options: list[DockerOptionValue],
         git_shares: list[BuiltInShareValue],
         extension_shares: list[BuiltInShareValue],
-        ssh_gnupg_shares: list[BuiltInShareValue] | str | None = None,
+        credential_shares: list[BuiltInShareValue] | str | None = None,
         scope: str = "project",
     ) -> None:
         super().__init__()
         self._docker_options = docker_options
         self._git_shares = git_shares
-        if isinstance(ssh_gnupg_shares, str):
-            scope = ssh_gnupg_shares
-            ssh_gnupg_shares = None
-        self._ssh_gnupg_shares = ssh_gnupg_shares or []
+        if isinstance(credential_shares, str):
+            scope = credential_shares
+            credential_shares = None
+        self._credential_shares = credential_shares or []
         self._extension_shares = extension_shares
         self._scope = scope
 
     def compose(self) -> ComposeResult:
         docker_section = self._docker_section()
         git_section = self._git_section()
-        ssh_gnupg_section = self._ssh_gnupg_section()
+        credential_section = self._credential_section()
         extension_section = self._extension_section()
         yield Container(
             Container(
@@ -46,7 +46,7 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
                 ),
                 *(docker_section if docker_section is not None else []),
                 *(git_section if git_section is not None else []),
-                *(ssh_gnupg_section if ssh_gnupg_section is not None else []),
+                *(credential_section if credential_section is not None else []),
                 *(extension_section if extension_section is not None else []),
                 Horizontal(
                     Button("Cancel", id="cancel", variant="default"),
@@ -62,7 +62,7 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         self.query_one("#ok", Button).focus()
         self._clear_initial_highlight("#docker_confirm_list")
         self._clear_initial_highlight("#git_confirm_list")
-        self._clear_initial_highlight("#ssh_gnupg_confirm_list")
+        self._clear_initial_highlight("#credential_confirm_list")
         self._clear_initial_highlight("#extension_confirm_list")
 
     def action_accept(self) -> None:
@@ -89,13 +89,13 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
                 ),
                 self._git_shares,
             )
-        confirmed_ssh_gnupg_shares = []
-        if self._ssh_gnupg_shares:
-            confirmed_ssh_gnupg_shares = current_built_in_shares(
+        confirmed_credential_shares = []
+        if self._credential_shares:
+            confirmed_credential_shares = current_built_in_shares(
                 set(
-                    self.query_one("#ssh_gnupg_confirm_list", SelectionList).selected
+                    self.query_one("#credential_confirm_list", SelectionList).selected
                 ),
-                self._ssh_gnupg_shares,
+                self._credential_shares,
             )
         confirmed_extension_shares = []
         if self._extension_shares:
@@ -107,7 +107,7 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
             HostAccessConfirmValues(
                 docker_options=confirmed_docker_options,
                 git_shares=confirmed_git_shares,
-                ssh_gnupg_shares=confirmed_ssh_gnupg_shares,
+                credential_shares=confirmed_credential_shares,
                 extension_shares=confirmed_extension_shares,
             )
         )
@@ -180,22 +180,22 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
             )
         return "Bind mounts host files used by Git."
 
-    def _ssh_gnupg_section(self) -> list[Static | Vertical] | None:
-        if not self._ssh_gnupg_shares:
+    def _credential_section(self) -> list[Static | Vertical] | None:
+        if not self._credential_shares:
             return None
         return [
-            Static("SSH and GnuPG", classes="screen_subtitle"),
+            Static("Credentials", classes="screen_subtitle"),
             Static(
-                self._ssh_gnupg_hint(),
+                self._credential_hint(),
                 classes="screen_hint confirm_hint",
             ),
             Vertical(
-                self._ssh_gnupg_selection_list(),
+                self._credential_selection_list(),
                 classes="checkbox_group confirm_section",
             ),
         ]
 
-    def _ssh_gnupg_hint(self) -> str:
+    def _credential_hint(self) -> str:
         if self._scope == "global":
             return "Persists SSH and GnuPG settings for every project."
         if self._scope == "tree":
@@ -251,10 +251,10 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
             compact=True,
         )
 
-    def _ssh_gnupg_selection_list(self) -> SelectionList:
+    def _credential_selection_list(self) -> SelectionList:
         return SelectionList(
-            *mount_selection_rows(confirm_mount_list_items(self._ssh_gnupg_shares)),
-            id="ssh_gnupg_confirm_list",
+            *mount_selection_rows(confirm_mount_list_items(self._credential_shares)),
+            id="credential_confirm_list",
             compact=True,
         )
 

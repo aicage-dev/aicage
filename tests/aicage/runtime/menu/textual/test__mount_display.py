@@ -12,8 +12,8 @@ from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShare
 
 
 class MountDisplayTests(TestCase):
-    def test_ssh_gnupg_label_returns_known_label(self) -> None:
-        self.assertEqual("SSH agent", _mount_display.ssh_gnupg_label(MOUNT_SSH_KEY))
+    def test_credential_label_returns_known_label(self) -> None:
+        self.assertEqual("SSH agent", _mount_display.credential_label(MOUNT_SSH_KEY))
 
     def test_git_support_label_returns_known_label(self) -> None:
         value = _mount_display.git_support_label(MOUNT_GITCONFIG_KEY)
@@ -25,13 +25,13 @@ class MountDisplayTests(TestCase):
 
         self.assertEqual("Git configuration (identity, aliases, and settings)", value)
 
-    def test_ssh_gnupg_config_label_describes_ssh_agent(self) -> None:
-        value = _mount_display.ssh_gnupg_config_label(MOUNT_SSH_KEY)
+    def test_credential_config_label_describes_ssh_agent(self) -> None:
+        value = _mount_display.credential_config_label(MOUNT_SSH_KEY)
 
         self.assertEqual("SSH agent", value)
 
-    def test_ssh_gnupg_config_label_describes_gnupg_agent(self) -> None:
-        value = _mount_display.ssh_gnupg_config_label(MOUNT_GNUPG_KEY)
+    def test_credential_config_label_describes_gnupg_agent(self) -> None:
+        value = _mount_display.credential_config_label(MOUNT_GNUPG_KEY)
 
         self.assertEqual("GnuPG agent", value)
 
@@ -44,7 +44,7 @@ class MountDisplayTests(TestCase):
         values = _mount_display.overview_mount_list_items(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 )
             ],
             [CustomShareValue("/test-tmp/logs:ro"), CustomShareValue("/test-tmp/data")],
@@ -52,7 +52,7 @@ class MountDisplayTests(TestCase):
 
         self.assertEqual("SSH", values[0].prefix)
         self.assertEqual("/test-tmp/.ssh", values[0].path)
-        self.assertEqual("builtin:ssh_gnupg:ssh", values[0].selection_key)
+        self.assertEqual("builtin:credentials:ssh", values[0].selection_key)
         self.assertTrue(values[0].enabled)
         self.assertEqual("Read-only", values[1].prefix)
         self.assertEqual("/test-tmp/logs", values[1].path)
@@ -86,18 +86,18 @@ class MountDisplayTests(TestCase):
     def test_mount_selection_rows_displays_pathless_git_support_label(self) -> None:
         rows = _mount_display.mount_selection_rows(
             _mount_display.confirm_mount_list_items(
-                [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", None, None, True)]
+                [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", None, None, True)]
             )
         )
 
-        self.assertEqual([("SSH", "builtin:ssh_gnupg:ssh", True)], rows)
+        self.assertEqual([("SSH", "builtin:credentials:ssh", True)], rows)
 
     def test_mount_selection_rows_aligns_prefixes(self) -> None:
         rows = _mount_display.mount_selection_rows(
             _mount_display.overview_mount_list_items(
                 [
                     BuiltInShareValue(
-                        BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
                     )
                 ],
                 [CustomShareValue("/test-tmp/data")],
@@ -106,7 +106,7 @@ class MountDisplayTests(TestCase):
 
         self.assertEqual(
             [
-                ("SSH: /test-tmp/.ssh", "builtin:ssh_gnupg:ssh", True),
+                ("SSH: /test-tmp/.ssh", "builtin:credentials:ssh", True),
                 ("   : /test-tmp/data", "custom:/test-tmp/data", True),
             ],
             rows,

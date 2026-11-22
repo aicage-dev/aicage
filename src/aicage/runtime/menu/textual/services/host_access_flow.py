@@ -28,7 +28,7 @@ async def confirm_and_apply_host_access(
     if (
         confirmation_request.docker_options
         or confirmation_request.git_shares
-        or confirmation_request.ssh_gnupg_shares
+        or confirmation_request.credential_shares
         or confirmation_request.extension_shares
     ):
         confirmed = await confirm_host_access(confirmation_request)

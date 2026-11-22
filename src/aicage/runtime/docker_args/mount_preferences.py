@@ -13,6 +13,8 @@ from aicage.config.project_config import (
     MOUNT_SSH_KEY,
     AgentConfig,
 )
+from aicage.gpg import has_gpg_keys, resolve_gpg_home
+from aicage.runtime._ssh_agent import _has_ssh_keys
 
 from .support.git_support import git_mount_defaults
 from .support.mount_prompt import (
@@ -20,7 +22,6 @@ from .support.mount_prompt import (
     extension_mount_defaults,
     resolve_mount_prompt_prefs,
 )
-from .support.ssh_gnupg import ssh_gnupg_mount_defaults
 
 _ConfirmPreference: TypeAlias = Callable[[], bool]
 
@@ -66,9 +67,11 @@ def apply_git_mount_defaults(context: ConfigContext, agent_cfg: AgentConfig) -> 
         setattr(agent_cfg.mounts, key, True)
 
 
-def apply_ssh_gnupg_mount_defaults(agent_cfg: AgentConfig) -> None:
-    for key in ssh_gnupg_mount_defaults(agent_cfg.mounts):
-        setattr(agent_cfg.mounts, key, True)
+def apply_credential_mount_defaults(agent_cfg: AgentConfig) -> None:
+    if _ssh_mount_default(agent_cfg):
+        agent_cfg.mounts.ssh = True
+    if _gnupg_mount_default(agent_cfg):
+        agent_cfg.mounts.gnupg = True
 
 
 def disable_git_mounts(agent_cfg: AgentConfig) -> None:
@@ -101,7 +104,7 @@ def _apply_git_and_extension_mount_preferences(
             setattr(
                 agent_cfg.mounts,
                 key,
-                key in mount_prompt_prefs.ssh_gnupg_mounts,
+                key in mount_prompt_prefs.credential_mounts,
             )
     agent_cfg.extension_mounts.update(mount_prompt_prefs.extension_mounts)
 
@@ -119,3 +122,15 @@ def _apply_docker_socket_preference(
         return
     if confirm_persist_docker_socket():
         setattr(agent_cfg.mounts, MOUNT_DOCKER_KEY, True)
+
+
+def _ssh_mount_default(agent_cfg: AgentConfig) -> bool:
+    return agent_cfg.mounts.ssh is None and _has_ssh_keys()
+
+
+def _gnupg_mount_default(agent_cfg: AgentConfig) -> bool:
+    return (
+        agent_cfg.mounts.gnupg is None
+        and has_gpg_keys()
+        and resolve_gpg_home() is not None
+    )

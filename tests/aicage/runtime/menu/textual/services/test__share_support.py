@@ -193,7 +193,7 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                BuiltInShareSource.SSH_GNUPG,
+                BuiltInShareSource.CREDENTIALS,
                 "ssh",
                 "SSH agent",
                 "SSH agent",
@@ -239,7 +239,7 @@ class ShareSupportTests(TestCase):
 
         self.assertIn(
             BuiltInShareValue(
-                BuiltInShareSource.SSH_GNUPG,
+                BuiltInShareSource.CREDENTIALS,
                 "gnupg",
                 "GnuPG agent",
                 "GnuPG agent",

@@ -9,7 +9,7 @@ class LayoutTests(TestCase):
         width = _layout.shell_width(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 )
             ],
             [CustomShareValue("/test-tmp/logs")],

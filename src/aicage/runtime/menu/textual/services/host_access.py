@@ -94,10 +94,10 @@ def _build_confirmation_request(
             and item.enabled
             and item.persisted is not True
         ],
-        ssh_gnupg_shares=[
+        credential_shares=[
             item
             for item in built_in_shares
-            if item.source == BuiltInShareSource.SSH_GNUPG
+            if item.source == BuiltInShareSource.CREDENTIALS
             and item.enabled
             and item.persisted is not True
         ],
@@ -120,7 +120,7 @@ def _merge_confirmed_host_access(
         built_in_identity(item.source, item.key): item.enabled
         for item in [
             *confirmed.git_shares,
-            *confirmed.ssh_gnupg_shares,
+            *confirmed.credential_shares,
             *confirmed.extension_shares,
         ]
     }
@@ -174,7 +174,7 @@ def apply_host_access(
     for item in built_in_shares:
         if item.inherited:
             continue
-        if item.source in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.SSH_GNUPG}:
+        if item.source in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.CREDENTIALS}:
             setattr(draft.agent_cfg.mounts, item.key, item.enabled)
         elif item.source == BuiltInShareSource.EXTENSION:
             draft.agent_cfg.extension_mounts[item.key] = item.enabled

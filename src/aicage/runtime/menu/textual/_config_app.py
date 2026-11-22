@@ -26,7 +26,7 @@ from aicage.runtime.menu.scope_change import ConfigScopeChange
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
 from ._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue, HostAccessConfirmValues
-from ._mount_display import git_support_config_label, ssh_gnupg_config_label
+from ._mount_display import credential_config_label, git_support_config_label
 from ._state import OverviewState
 from ._textual_app import TextualApp
 from .services.base_support import base_metadata_for_draft, ensure_base_default
@@ -48,7 +48,7 @@ _GIT_MOUNT_KEYS: tuple[str, ...] = (
     MOUNT_GITCONFIG_KEY,
     MOUNT_GITROOT_KEY,
 )
-_SSH_GNUPG_MOUNT_KEYS: tuple[str, ...] = (
+_CREDENTIAL_MOUNT_KEYS: tuple[str, ...] = (
     MOUNT_GNUPG_KEY,
     MOUNT_SSH_KEY,
 )
@@ -279,7 +279,7 @@ class ConfigApp(
             key
             for key in [
                 *self._draft.pending_git_mounts,
-                *self._draft.pending_ssh_gnupg_mounts,
+                *self._draft.pending_credential_mounts,
             ]
             if getattr(self._draft.agent_cfg.mounts, key) is None
         }
@@ -325,19 +325,19 @@ class ConfigApp(
             and item.enabled
             and item.persisted is not True
         }
-        pending_ssh_gnupg_mounts = {
+        pending_credential_mounts = {
             item.key
             for item in current_built_in_shares
-            if item.source == BuiltInShareSource.SSH_GNUPG
+            if item.source == BuiltInShareSource.CREDENTIALS
             and item.enabled
             and item.persisted is not True
         }
         if self._uses_host_access_screen():
             self._draft.pending_git_mounts.update(pending_git_mounts)
-            self._draft.pending_ssh_gnupg_mounts.update(pending_ssh_gnupg_mounts)
+            self._draft.pending_credential_mounts.update(pending_credential_mounts)
         else:
             self._draft.pending_git_mounts = pending_git_mounts
-            self._draft.pending_ssh_gnupg_mounts = pending_ssh_gnupg_mounts
+            self._draft.pending_credential_mounts = pending_credential_mounts
         self._draft.pending_extension_mounts = {
             item.key
             for item in current_built_in_shares
@@ -374,7 +374,7 @@ class ConfigApp(
                 values.docker_options,
                 values.git_shares,
                 values.extension_shares,
-                values.ssh_gnupg_shares,
+                values.credential_shares,
                 self._draft.scope,
             )
         )
@@ -412,8 +412,8 @@ class ConfigApp(
                 is True
             ),
             git_values=self._git_values() if self._uses_host_access_screen() else {},
-            ssh_gnupg_values=(
-                self._ssh_gnupg_values() if self._uses_host_access_screen() else {}
+            credential_values=(
+                self._credential_values() if self._uses_host_access_screen() else {}
             ),
         )
 
@@ -426,8 +426,8 @@ class ConfigApp(
                     and item.key in self._draft.pending_git_mounts
                 )
                 or (
-                    item.source == BuiltInShareSource.SSH_GNUPG
-                    and item.key in self._draft.pending_ssh_gnupg_mounts
+                    item.source == BuiltInShareSource.CREDENTIALS
+                    and item.key in self._draft.pending_credential_mounts
                 )
                 or (
                     item.source == BuiltInShareSource.EXTENSION
@@ -438,7 +438,7 @@ class ConfigApp(
             for item in shares_values(self._draft, self._config_context).built_in_shares
             if not (
                 self._uses_host_access_screen()
-                and item.source in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.SSH_GNUPG}
+                and item.source in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.CREDENTIALS}
             )
         ]
 
@@ -457,10 +457,10 @@ class ConfigApp(
                 git_support_config_label,
             ),
             *self._pending_mount_shares(
-                BuiltInShareSource.SSH_GNUPG,
-                _SSH_GNUPG_MOUNT_KEYS,
-                self._draft.pending_ssh_gnupg_mounts,
-                ssh_gnupg_config_label,
+                BuiltInShareSource.CREDENTIALS,
+                _CREDENTIAL_MOUNT_KEYS,
+                self._draft.pending_credential_mounts,
+                credential_config_label,
             ),
         ]
 
@@ -494,10 +494,10 @@ class ConfigApp(
             key: getattr(self._draft.agent_cfg.mounts, key) for key in _GIT_MOUNT_KEYS
         }
 
-    def _ssh_gnupg_values(self) -> dict[str, bool | None]:
+    def _credential_values(self) -> dict[str, bool | None]:
         return {
             key: getattr(self._draft.agent_cfg.mounts, key)
-            for key in _SSH_GNUPG_MOUNT_KEYS
+            for key in _CREDENTIAL_MOUNT_KEYS
         }
 
     def _apply_git_cli_preference(self) -> None:
@@ -523,9 +523,9 @@ class ConfigApp(
             for key in _GIT_MOUNT_KEYS
             if getattr(self._draft.agent_cfg.mounts, key) is None
         )
-        self._draft.pending_ssh_gnupg_mounts.update(
+        self._draft.pending_credential_mounts.update(
             key
-            for key in _SSH_GNUPG_MOUNT_KEYS
+            for key in _CREDENTIAL_MOUNT_KEYS
             if getattr(self._draft.agent_cfg.mounts, key) is None
         )
 
@@ -536,7 +536,7 @@ class ConfigApp(
         return (
             self._draft.pending_git_mounts
             if source == BuiltInShareSource.GIT_SUPPORT
-            else self._draft.pending_ssh_gnupg_mounts
+            else self._draft.pending_credential_mounts
         )
 
     def _docker_socket_value_for_confirmation(self) -> bool | None:

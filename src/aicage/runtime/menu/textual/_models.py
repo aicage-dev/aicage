@@ -4,7 +4,7 @@ from enum import Enum
 
 class BuiltInShareSource(Enum):
     GIT_SUPPORT = "git_support"
-    SSH_GNUPG = "ssh_gnupg"
+    CREDENTIALS = "credentials"
     EXTENSION = "extension"
 
 
@@ -53,7 +53,7 @@ class DockerOptionValue:
 class HostAccessConfirmValues:
     docker_options: list[DockerOptionValue]
     git_shares: list[BuiltInShareValue]
-    ssh_gnupg_shares: list[BuiltInShareValue]
+    credential_shares: list[BuiltInShareValue]
     extension_shares: list[BuiltInShareValue]
 
 

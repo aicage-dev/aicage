@@ -11,4 +11,4 @@ class OverviewState:
     docker_socket_enabled: bool
     docker_socket_inherited: bool = False
     git_values: dict[str, bool | None] = field(default_factory=dict)
-    ssh_gnupg_values: dict[str, bool | None] = field(default_factory=dict)
+    credential_values: dict[str, bool | None] = field(default_factory=dict)

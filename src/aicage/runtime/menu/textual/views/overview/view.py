@@ -332,7 +332,7 @@ class Overview(Container):
         values = (
             self._state.git_values
             if source is BuiltInShareSource.GIT_SUPPORT
-            else self._state.ssh_gnupg_values
+            else self._state.credential_values
         )
         value = next_mount_value(values.get(key))
         values[key] = value

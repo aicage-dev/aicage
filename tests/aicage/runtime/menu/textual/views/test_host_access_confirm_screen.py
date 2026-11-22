@@ -31,7 +31,7 @@ class BuiltInShareConfirmScreenTests(TestCase):
             if selector in {
                 "#docker_confirm_list",
                 "#git_confirm_list",
-                "#ssh_gnupg_confirm_list",
+                "#credential_confirm_list",
                 "#extension_confirm_list",
             }:
                 raise host_access_confirm_screen.NoMatches("not present")
@@ -53,7 +53,7 @@ class BuiltInShareConfirmScreenTests(TestCase):
         ok_button = mock.Mock()
         docker_selection_list = mock.Mock()
         git_support_selection_list = mock.Mock()
-        ssh_gnupg_selection_list = mock.Mock()
+        credential_selection_list = mock.Mock()
         extension_selection_list = mock.Mock()
 
         def query_one_side_effect(selector: str, _expected_type: object) -> mock.Mock:
@@ -63,8 +63,8 @@ class BuiltInShareConfirmScreenTests(TestCase):
                 return docker_selection_list
             if selector == "#git_confirm_list":
                 return git_support_selection_list
-            if selector == "#ssh_gnupg_confirm_list":
-                return ssh_gnupg_selection_list
+            if selector == "#credential_confirm_list":
+                return credential_selection_list
             if selector == "#extension_confirm_list":
                 return extension_selection_list
             self.fail(f"Unexpected selector: {selector}")
@@ -74,7 +74,7 @@ class BuiltInShareConfirmScreenTests(TestCase):
 
         self.assertEqual(None, docker_selection_list.highlighted)
         self.assertEqual(None, git_support_selection_list.highlighted)
-        self.assertEqual(None, ssh_gnupg_selection_list.highlighted)
+        self.assertEqual(None, credential_selection_list.highlighted)
         self.assertEqual(None, extension_selection_list.highlighted)
 
     def test_action_accept_dismisses_selected_host_access_values(self) -> None:
@@ -97,8 +97,8 @@ class BuiltInShareConfirmScreenTests(TestCase):
         docker_selection_list.selected = ["docker"]
         git_support_selection_list = mock.Mock()
         git_support_selection_list.selected = []
-        ssh_gnupg_selection_list = mock.Mock()
-        ssh_gnupg_selection_list.selected = ["builtin:ssh_gnupg:ssh"]
+        credential_selection_list = mock.Mock()
+        credential_selection_list.selected = ["builtin:credentials:ssh"]
         extension_selection_list = mock.Mock()
         extension_selection_list.selected = ["builtin:extension:gh"]
 
@@ -107,8 +107,8 @@ class BuiltInShareConfirmScreenTests(TestCase):
                 return docker_selection_list
             if selector == "#git_confirm_list":
                 return git_support_selection_list
-            if selector == "#ssh_gnupg_confirm_list":
-                return ssh_gnupg_selection_list
+            if selector == "#credential_confirm_list":
+                return credential_selection_list
             if selector == "#extension_confirm_list":
                 return extension_selection_list
             self.fail(f"Unexpected selector: {selector}")
@@ -134,9 +134,9 @@ class BuiltInShareConfirmScreenTests(TestCase):
                         False,
                     ),
                 ],
-                ssh_gnupg_shares=[
+                credential_shares=[
                     BuiltInShareValue(
-                        BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/home/user/.ssh", None, True
+                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/home/user/.ssh", None, True
                     )
                 ],
                 extension_shares=[
@@ -175,15 +175,15 @@ class BuiltInShareConfirmScreenTests(TestCase):
                     True,
                 )
             ],
-            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/home/user/.ssh", None, True)],
+            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/home/user/.ssh", None, True)],
         )
 
         git_rows = list(screen._git_selection_list()._options)
         extension_rows = list(screen._extension_selection_list()._options)
 
-        ssh_gnupg_rows = list(screen._ssh_gnupg_selection_list()._options)
+        credential_rows = list(screen._credential_selection_list()._options)
         self.assertEqual("Git config: /home/user/.gitconfig", git_rows[0].prompt)
-        self.assertEqual("SSH: /home/user/.ssh", ssh_gnupg_rows[0].prompt)
+        self.assertEqual("SSH: /home/user/.ssh", credential_rows[0].prompt)
         self.assertEqual(
             "Extension gh: Read-only: /home/user/.config/gh", extension_rows[0].prompt
         )
@@ -193,10 +193,10 @@ class BuiltInShareConfirmScreenTests(TestCase):
             [],
             [],
             [],
-            [BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", None, None, True)],
+            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", None, None, True)],
         )
 
-        git_rows = list(screen._ssh_gnupg_selection_list()._options)
+        git_rows = list(screen._credential_selection_list()._options)
 
         self.assertEqual("SSH", git_rows[0].prompt)
 
@@ -283,7 +283,7 @@ class BuiltInShareConfirmScreenTests(TestCase):
 
 
 def _share() -> BuiltInShareValue:
-    return BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/home/user/.ssh", None, True)
+    return BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/home/user/.ssh", None, True)
 
 
 def _extension_share() -> BuiltInShareValue:

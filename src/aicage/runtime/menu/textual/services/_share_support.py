@@ -23,7 +23,7 @@ from aicage.runtime.mounts.shares import (
 )
 
 from .._models import BuiltInShareSource, BuiltInShareValue
-from .._mount_display import extension_label, git_support_label, ssh_gnupg_label
+from .._mount_display import credential_label, extension_label, git_support_label
 
 
 def normalize_shares_from_editor(
@@ -84,9 +84,9 @@ def built_in_share_values(
     if _has_ssh_keys():
         built_in_shares.append(
             BuiltInShareValue(
-                source=BuiltInShareSource.SSH_GNUPG,
+                source=BuiltInShareSource.CREDENTIALS,
                 key=MOUNT_SSH_KEY,
-                label=ssh_gnupg_label(MOUNT_SSH_KEY),
+                label=credential_label(MOUNT_SSH_KEY),
                 path="SSH agent",
                 persisted=mounts_cfg.ssh,
                 enabled=_built_in_share_enabled(mounts_cfg.ssh),
@@ -99,9 +99,9 @@ def built_in_share_values(
         if gpg_home:
             built_in_shares.append(
                 BuiltInShareValue(
-                    source=BuiltInShareSource.SSH_GNUPG,
+                    source=BuiltInShareSource.CREDENTIALS,
                     key=MOUNT_GNUPG_KEY,
-                    label=ssh_gnupg_label(MOUNT_GNUPG_KEY),
+                    label=credential_label(MOUNT_GNUPG_KEY),
                     path="GnuPG agent",
                     persisted=mounts_cfg.gnupg,
                     enabled=_built_in_share_enabled(mounts_cfg.gnupg),

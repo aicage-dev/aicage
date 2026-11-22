@@ -105,7 +105,7 @@ class ConfigAppTests(TestCase):
         )
         self.assertEqual(
             {"gnupg", "ssh"},
-            app._draft.pending_ssh_gnupg_mounts,
+            app._draft.pending_credential_mounts,
         )
 
     def test_on_overview_host_access_changed_saves_value_and_marks_new_access_pending(
@@ -134,17 +134,17 @@ class ConfigAppTests(TestCase):
     def test__pending_git_shares_uses_pathless_values(self) -> None:
         app = _build_app(scope="global")
         app._draft.agent_cfg.mounts.ssh = True
-        app._draft.pending_ssh_gnupg_mounts.add("ssh")
+        app._draft.pending_credential_mounts.add("ssh")
 
         shares = app._pending_mount_shares(
-            BuiltInShareSource.SSH_GNUPG, ("ssh", "gnupg"), app._draft.pending_ssh_gnupg_mounts,
-            _config_app.ssh_gnupg_config_label,
+            BuiltInShareSource.CREDENTIALS, ("ssh", "gnupg"), app._draft.pending_credential_mounts,
+            _config_app.credential_config_label,
         )
 
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG,
+                    BuiltInShareSource.CREDENTIALS,
                     "ssh",
                     "SSH agent",
                     None,
@@ -157,17 +157,17 @@ class ConfigAppTests(TestCase):
 
     def test__pending_git_shares_labels_auto_values(self) -> None:
         app = _build_app(scope="global")
-        app._draft.pending_ssh_gnupg_mounts.add("ssh")
+        app._draft.pending_credential_mounts.add("ssh")
 
         shares = app._pending_mount_shares(
-            BuiltInShareSource.SSH_GNUPG, ("ssh", "gnupg"), app._draft.pending_ssh_gnupg_mounts,
-            _config_app.ssh_gnupg_config_label,
+            BuiltInShareSource.CREDENTIALS, ("ssh", "gnupg"), app._draft.pending_credential_mounts,
+            _config_app.credential_config_label,
         )
 
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG,
+                    BuiltInShareSource.CREDENTIALS,
                     "ssh",
                     "(Auto) SSH agent",
                     None,
@@ -421,7 +421,7 @@ class ConfigAppTests(TestCase):
                             )
                         ],
                         git_shares=[built_in_share],
-                        ssh_gnupg_shares=[],
+                        credential_shares=[],
                         extension_shares=[],
                     )
                 ),
@@ -464,7 +464,7 @@ class ConfigAppTests(TestCase):
                     return_value=HostAccessConfirmValues(
                         docker_options=[],
                         git_shares=[auto_git_mount],
-                        ssh_gnupg_shares=[],
+                        credential_shares=[],
                         extension_shares=[],
                     )
                 ),
@@ -499,7 +499,7 @@ class ConfigAppTests(TestCase):
                             )
                         ],
                         git_shares=[],
-                        ssh_gnupg_shares=[],
+                        credential_shares=[],
                         extension_shares=[],
                     )
                 ),
@@ -563,7 +563,7 @@ class ConfigAppTests(TestCase):
                     return_value=HostAccessConfirmValues(
                         docker_options=[],
                         git_shares=[],
-                        ssh_gnupg_shares=[],
+                        credential_shares=[],
                         extension_shares=[extension_share],
                     )
                 ),

@@ -9,18 +9,18 @@ from textual.widgets.selection_list import Selection
 from ..._ids import built_in_identity
 from ..._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
 from ..._mount_display import (
+    credential_config_label,
     git_support_config_label,
     mount_selection_rows,
     overview_mount_list_items,
-    ssh_gnupg_config_label,
 )
 from ..._state import OverviewState
 from ._selection_list import _OverviewSelectionList
 
 _GIT_MOUNT_KEYS: tuple[str, ...] = ("gitconfig", "gitroot")
-_SSH_GNUPG_MOUNT_KEYS: tuple[str, ...] = ("ssh", "gnupg")
+_CREDENTIAL_MOUNT_KEYS: tuple[str, ...] = ("ssh", "gnupg")
 _GIT_BUTTON_PREFIX = "git_mount_"
-_SSH_GNUPG_BUTTON_PREFIX = "ssh_gnupg_mount_"
+_CREDENTIAL_BUTTON_PREFIX = "credential_mount_"
 
 
 @dataclass(frozen=True)
@@ -77,9 +77,9 @@ def refresh_shares(
             container.query_one(f"#{_git_button_id(key)}", Button).label = (
                 _mount_value_label(state.git_values.get(key))
             )
-        for key in _SSH_GNUPG_MOUNT_KEYS:
-            container.query_one(f"#{_ssh_gnupg_button_id(key)}", Button).label = (
-                _mount_value_label(state.ssh_gnupg_values.get(key))
+        for key in _CREDENTIAL_MOUNT_KEYS:
+            container.query_one(f"#{_credential_button_id(key)}", Button).label = (
+                _mount_value_label(state.credential_values.get(key))
             )
 
 
@@ -136,9 +136,9 @@ def host_access_button_key(
         return BuiltInShareSource.GIT_SUPPORT, button_id.removeprefix(
             _GIT_BUTTON_PREFIX
         )
-    if button_id.startswith(_SSH_GNUPG_BUTTON_PREFIX):
-        return BuiltInShareSource.SSH_GNUPG, button_id.removeprefix(
-            _SSH_GNUPG_BUTTON_PREFIX
+    if button_id.startswith(_CREDENTIAL_BUTTON_PREFIX):
+        return BuiltInShareSource.CREDENTIALS, button_id.removeprefix(
+            _CREDENTIAL_BUTTON_PREFIX
         )
     return None
 
@@ -161,8 +161,8 @@ def _host_access_widgets(state: OverviewState) -> list[Vertical]:
         ),
         _mount_widgets(
             _MountSection(
-                "SSH and GnuPG", _SSH_GNUPG_MOUNT_KEYS, state.ssh_gnupg_values,
-                _ssh_gnupg_button_id, ssh_gnupg_config_label, "ssh_gnupg",
+                "Credentials", _CREDENTIAL_MOUNT_KEYS, state.credential_values,
+                _credential_button_id, credential_config_label, "credentials",
             )
         ),
     ]
@@ -193,8 +193,8 @@ def _git_button_id(key: str) -> str:
     return f"{_GIT_BUTTON_PREFIX}{key}"
 
 
-def _ssh_gnupg_button_id(key: str) -> str:
-    return f"{_SSH_GNUPG_BUTTON_PREFIX}{key}"
+def _credential_button_id(key: str) -> str:
+    return f"{_CREDENTIAL_BUTTON_PREFIX}{key}"
 
 
 def _mount_value_label(value: bool | None) -> str:

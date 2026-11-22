@@ -32,10 +32,10 @@ class HostAccessTests(TestCase):
 
     def test_current_built_in_shares_updates_enabled_state(self) -> None:
         values = host_access.current_built_in_shares(
-            {"builtin:ssh_gnupg:ssh"},
+            {"builtin:credentials:ssh"},
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, False
                 )
             ],
         )
@@ -43,7 +43,7 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 )
             ],
             values,
@@ -141,7 +141,7 @@ class HostAccessTests(TestCase):
     def test_build_confirmation_request_filters_newly_enabled_values(self) -> None:
         built_in_shares = [
             BuiltInShareValue(
-                BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
             ),
             BuiltInShareValue(
                 BuiltInShareSource.EXTENSION, "gh", "Extension gh", "/test-tmp/.config/gh", False, True
@@ -157,12 +157,12 @@ class HostAccessTests(TestCase):
 
         self.assertEqual([], values.docker_options)
         self.assertEqual([], values.git_shares)
-        self.assertEqual([built_in_shares[0]], values.ssh_gnupg_shares)
+        self.assertEqual([built_in_shares[0]], values.credential_shares)
         self.assertEqual([built_in_shares[1]], values.extension_shares)
 
     def test_merge_confirmed_host_access_applies_confirmed_values(self) -> None:
         built_in_shares = [
-            BuiltInShareValue(BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True)
+            BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True)
         ]
         docker_options = [
             DockerOptionValue("docker", "Docker socket", None, None, True),
@@ -172,9 +172,9 @@ class HostAccessTests(TestCase):
                 DockerOptionValue("docker", "Docker socket", None, None, False),
             ],
             git_shares=[],
-            ssh_gnupg_shares=[
+            credential_shares=[
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, False
                 )
             ],
             extension_shares=[],
@@ -189,7 +189,7 @@ class HostAccessTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, False
                 )
             ],
             merged_shares,
@@ -211,7 +211,7 @@ class HostAccessTests(TestCase):
             draft,
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.SSH_GNUPG, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
                 ),
                 BuiltInShareValue(
                     BuiltInShareSource.EXTENSION,
