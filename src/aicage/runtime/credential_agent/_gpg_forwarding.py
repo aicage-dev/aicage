@@ -21,15 +21,19 @@ from aicage.gpg import (
     resolve_gpg_agent_socket,
     resolve_gpg_home,
     resolve_gpg_public_files,
-    resolve_gpg_secret_key_state,
+)
+from aicage.gpg import (
+    resolve_gpg_secret_key_state as _resolve_host_gpg_secret_key_state,
 )
 from aicage.paths import container_project_path
 from aicage.runtime.run_args import BindMountSpec, MountSpec, VolumeMountSpec
 
 from ._env import _credential_agent_user
 from ._resource_gpg import (
+    _gpg_fingerprints,
     _gpg_key_is_usable,
     _gpg_keygrips,
+    _gpg_source_keygrips,
     _load_gpg_key_interactively,
     _reset_gpg_agent,
 )
@@ -93,9 +97,10 @@ def _reload_gpg_keys(
     )
     if resource is None:
         return
-    fingerprints, keygrips = resolve_gpg_secret_key_state()
+    keygrips = _gpg_source_keygrips(resource)
     if _gpg_keygrips(resource) != keygrips:
         _reset_gpg_agent(resource)
+    fingerprints = _gpg_fingerprints(resource)
     for fingerprint in fingerprints:
         if _gpg_key_is_usable(resource, fingerprint):
             continue
@@ -113,7 +118,7 @@ def _reload_gpg_keys(
 
 def _prepare_direct_gpg_keys(gpg_home: Path, *, interactive: bool) -> None:
     """Make host keys available when possible without blocking startup."""
-    fingerprints, _keygrips = resolve_gpg_secret_key_state()
+    fingerprints, _keygrips = _resolve_host_gpg_secret_key_state()
     with tempfile.TemporaryDirectory(prefix="aicage-gpg-") as directory:
         message = Path(directory) / "message"
         message.write_text("aicage GnuPG credential preparation\n", encoding="utf-8")

@@ -16,6 +16,18 @@ class GpgTests(TestCase):
         ):
             self.assertIsNone(gpg.resolve_gpg_home())
 
+    def test_resolve_gpg_home_falls_back_when_gpgconf_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            gpg_home = Path(tmp_dir) / ".gnupg"
+            gpg_home.mkdir()
+            with (
+                mock.patch(f"{_MODULE}.HOST_GNUPG_DIR", gpg_home),
+                mock.patch(
+                    f"{_MODULE}.subprocess.run", side_effect=FileNotFoundError
+                ),
+            ):
+                self.assertEqual(gpg_home, gpg.resolve_gpg_home())
+
     def test_resolve_gpg_public_files_returns_existing_files(self) -> None:
         with mock.patch("pathlib.Path.is_file", return_value=False):
             self.assertEqual([], gpg.resolve_gpg_public_files(Path("/test-tmp/gnupg")))
@@ -165,6 +177,19 @@ class GpgTests(TestCase):
     def test_has_gpg_keys_requires_a_secret_key(self) -> None:
         with (
             mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=Path("/test-tmp/gnupg")),
-            mock.patch(f"{_MODULE}._resolve_gpg_secret_key_fingerprints", return_value=[]),
         ):
             self.assertFalse(gpg.has_gpg_keys())
+
+    def test_has_gpg_keys_uses_the_private_key_directory_without_host_gpg(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            gpg_home = Path(tmp_dir) / "gnupg"
+            private_keys = gpg_home / "private-keys-v1.d"
+            private_keys.mkdir(parents=True)
+            (private_keys / "KEYGRIP.key").touch()
+            with (
+                mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=gpg_home),
+                mock.patch(f"{_MODULE}.subprocess.run") as run_mock,
+            ):
+                self.assertTrue(gpg.has_gpg_keys())
+
+        run_mock.assert_not_called()

@@ -42,9 +42,11 @@ def resolve_gpg_public_files(gpg_home: Path) -> list[Path]:
 
 
 def has_gpg_keys() -> bool:
-    if resolve_gpg_home() is None:
+    gpg_home = resolve_gpg_home()
+    if gpg_home is None:
         return False
-    return bool(_resolve_gpg_secret_key_fingerprints())
+    private_keys = gpg_home / "private-keys-v1.d"
+    return private_keys.is_dir() and any(private_keys.iterdir())
 
 
 def resolve_gpg_secret_key_state() -> tuple[list[str], set[str]]:
@@ -69,7 +71,10 @@ def resolve_gpg_secret_key_state() -> tuple[list[str], set[str]]:
 
 
 def _capture_stdout(command: list[str]) -> str | None:
-    result = subprocess.run(command, check=False, capture_output=True, text=True)  # nosec B603
+    try:
+        result = subprocess.run(command, check=False, capture_output=True, text=True)  # nosec B603
+    except FileNotFoundError:
+        return None
     return result.stdout if result.returncode == 0 else None
 
 

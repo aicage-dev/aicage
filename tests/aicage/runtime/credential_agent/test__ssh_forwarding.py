@@ -121,6 +121,17 @@ class SshForwardingTests(TestCase):
             with self.assertRaisesRegex(RuntimeError, "Cannot communicate"):
                 _ssh_forwarding._direct_ssh_socket()
 
+    def test_direct_ssh_socket_uses_the_sidecar_without_host_keygen(self) -> None:
+        with (
+            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
+            mock.patch.object(_ssh_forwarding, "_SSH_KEYGEN", None),
+            mock.patch.object(_ssh_forwarding.subprocess, "run") as run_mock,
+        ):
+            self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
+
+        run_mock.assert_not_called()
+
     def test_prepare_host_ssh_agent_loads_missing_unprotected_key(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
         key = Path("/test-tmp/.ssh/id_ed25519")
@@ -418,7 +429,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
@@ -442,7 +453,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(
@@ -451,7 +462,7 @@ class SshForwardingTests(TestCase):
                 side_effect=DockerError("passphrase required"),
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+                _ssh_forwarding, "_sidecar_ssh_key_is_encrypted", return_value=True
             ),
             mock.patch.object(
                 _ssh_forwarding, "_load_ssh_key_interactively"
@@ -476,7 +487,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(
@@ -485,7 +496,7 @@ class SshForwardingTests(TestCase):
                 side_effect=DockerError("passphrase required"),
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+                _ssh_forwarding, "_sidecar_ssh_key_is_encrypted", return_value=True
             ),
             mock.patch.object(
                 _ssh_forwarding, "_load_ssh_key_interactively"
@@ -506,7 +517,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(
@@ -515,7 +526,7 @@ class SshForwardingTests(TestCase):
                 side_effect=DockerError("passphrase required"),
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_is_encrypted", return_value=True
+                _ssh_forwarding, "_sidecar_ssh_key_is_encrypted", return_value=True
             ),
             mock.patch.object(
                 _ssh_forwarding,
@@ -539,7 +550,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_ssh_key_fingerprint", return_value="SHA256:current"
+                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:current"
             ),
             mock.patch.object(
                 _ssh_forwarding,
@@ -548,7 +559,7 @@ class SshForwardingTests(TestCase):
             ),
             mock.patch.object(
                 _ssh_forwarding,
-                "_ssh_identity_fingerprint",
+                "_sidecar_ssh_identity_fingerprint",
                 side_effect=["SHA256:current", "SHA256:stale"],
             ),
             mock.patch.object(_ssh_forwarding, "_remove_ssh_identity") as remove_mock,

@@ -112,6 +112,51 @@ class ResourceSshTests(TestCase):
             user=resource.user,
         )
 
+    def test_ssh_key_fingerprint_reads_the_sidecar_result(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        client = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "fingerprint"}
+        client.api.exec_start.return_value = b"SHA256:key\n"
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        container = mock.Mock()
+        with (
+            mock.patch.object(_resource_ssh, "get_docker_client", return_value=client),
+            mock.patch.object(_resource_ssh, "_find_container", return_value=container),
+        ):
+            fingerprint = _resource_ssh._ssh_key_fingerprint(
+                resource, PurePosixPath("/credential/ssh/id_ed25519")
+            )
+
+        self.assertEqual("SHA256:key", fingerprint)
+        client.api.exec_create.assert_called_once_with(
+            container.id,
+            [
+                "credential-agent",
+                "ssh",
+                "fingerprint",
+                "/credential/ssh/id_ed25519",
+            ],
+            user=resource.user,
+        )
+
+    def test_ssh_key_is_encrypted_reads_the_sidecar_result(self) -> None:
+        resource = _resources([_CredentialProtocol.SSH])[0]
+        client = mock.Mock()
+        client.api.exec_create.return_value = {"Id": "encrypted"}
+        client.api.exec_start.return_value = b"encrypted\n"
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        with (
+            mock.patch.object(_resource_ssh, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _resource_ssh, "_find_container", return_value=mock.Mock()
+            ),
+        ):
+            self.assertTrue(
+                _resource_ssh._ssh_key_is_encrypted(
+                    resource, PurePosixPath("/credential/ssh/id_ed25519")
+                )
+            )
+
     def test_remove_ssh_identity_streams_public_key_to_sidecar(self) -> None:
         resource = _resources([_CredentialProtocol.SSH])[0]
         client = mock.Mock()

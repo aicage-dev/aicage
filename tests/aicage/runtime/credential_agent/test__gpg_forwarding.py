@@ -63,6 +63,17 @@ class GpgForwardingTests(TestCase):
         with mock.patch.object(_gpg_forwarding.os, "name", "nt"):
             self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
 
+    def test_direct_gpg_socket_uses_the_sidecar_without_host_tools(self) -> None:
+        with (
+            mock.patch.object(_gpg_forwarding.os, "name", "posix"),
+            mock.patch.object(_gpg_forwarding, "_GPG", None),
+            mock.patch.object(_gpg_forwarding, "_GPG_CONNECT_AGENT", None),
+            mock.patch.object(_gpg_forwarding.subprocess, "run") as run_mock,
+        ):
+            self.assertIsNone(_gpg_forwarding._direct_gpg_socket())
+
+        run_mock.assert_not_called()
+
     def test_sidecar_target_args_uses_a_private_client_home(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         with tempfile.TemporaryDirectory() as directory:
@@ -218,7 +229,7 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
+                "_resolve_host_gpg_secret_key_state",
                 return_value=(["FIRST", "SECOND"], set()),
             ),
             mock.patch.object(
@@ -250,7 +261,7 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
+                "_resolve_host_gpg_secret_key_state",
                 return_value=(["FINGERPRINT"], set()),
             ),
             mock.patch.object(
@@ -269,7 +280,7 @@ class GpgForwardingTests(TestCase):
             mock.patch.object(_gpg_forwarding, "_GPG", "/usr/bin/gpg"),
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
+                "_resolve_host_gpg_secret_key_state",
                 return_value=(["FINGERPRINT"], set()),
             ),
             mock.patch.object(
@@ -288,8 +299,13 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=(["FIRST", "SECOND"], {"ONE"}),
+                "_gpg_source_keygrips",
+                return_value={"ONE"},
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_fingerprints",
+                return_value=["FIRST", "SECOND"],
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"ONE"}),
             mock.patch.object(
@@ -316,8 +332,13 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=([], {"HOST"}),
+                "_gpg_source_keygrips",
+                return_value={"HOST"},
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_fingerprints",
+                return_value=[],
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"STALE"}),
             mock.patch.object(_gpg_forwarding, "_reset_gpg_agent") as reset_mock,
@@ -332,8 +353,13 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=(["FINGERPRINT"], {"KEY"}),
+                "_gpg_source_keygrips",
+                return_value={"KEY"},
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_fingerprints",
+                return_value=["FINGERPRINT"],
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
             mock.patch.object(
@@ -350,8 +376,13 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=(["FINGERPRINT"], {"KEY"}),
+                "_gpg_source_keygrips",
+                return_value={"KEY"},
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_fingerprints",
+                return_value=["FINGERPRINT"],
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
             mock.patch.object(
@@ -372,8 +403,13 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=(["FINGERPRINT"], {"KEY"}),
+                "_gpg_source_keygrips",
+                return_value={"KEY"},
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_fingerprints",
+                return_value=["FINGERPRINT"],
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
             mock.patch.object(_gpg_forwarding, "_gpg_key_is_usable", return_value=True),
@@ -386,8 +422,13 @@ class GpgForwardingTests(TestCase):
         with (
             mock.patch.object(
                 _gpg_forwarding,
-                "resolve_gpg_secret_key_state",
-                return_value=(["FINGERPRINT"], {"KEY"}),
+                "_gpg_source_keygrips",
+                return_value={"KEY"},
+            ),
+            mock.patch.object(
+                _gpg_forwarding,
+                "_gpg_fingerprints",
+                return_value=["FINGERPRINT"],
             ),
             mock.patch.object(_gpg_forwarding, "_gpg_keygrips", return_value={"KEY"}),
             mock.patch.object(

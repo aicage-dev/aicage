@@ -23,6 +23,15 @@ from ._resource_ssh import (
     _load_ssh_key_interactively,
     _remove_ssh_identity,
 )
+from ._resource_ssh import (
+    _ssh_identity_fingerprint as _sidecar_ssh_identity_fingerprint,
+)
+from ._resource_ssh import (
+    _ssh_key_fingerprint as _sidecar_ssh_key_fingerprint,
+)
+from ._resource_ssh import (
+    _ssh_key_is_encrypted as _sidecar_ssh_key_is_encrypted,
+)
 
 _SSH_AUTH_SOCK = "SSH_AUTH_SOCK"
 _SSH_SOCKET_DIRECTORY = PurePosixPath("/run/credential-agent")
@@ -78,7 +87,7 @@ def _ssh_support_mounts() -> list[BindMountSpec]:
 
 
 def _direct_ssh_socket() -> Path | None:
-    if sys.platform != "linux" or _SSH_ADD is None:
+    if sys.platform != "linux" or _SSH_ADD is None or _SSH_KEYGEN is None:
         return None
     socket_path = os.environ.get(_SSH_AUTH_SOCK)
     if not socket_path:
@@ -199,13 +208,14 @@ def _reload_ssh_keys(
             raise RuntimeError(
                 f"SSH key '{key}' is outside {HOST_SSH_DIR} and cannot be shared safely."
             ) from exc
-        desired_keys[_ssh_key_fingerprint(key)] = (
+        sidecar_key = resource.credential_directory / relative_key
+        desired_keys[_sidecar_ssh_key_fingerprint(resource, sidecar_key)] = (
             key,
-            resource.credential_directory / relative_key,
+            sidecar_key,
             container_project_path(key),
         )
     sidecar_keys = {
-        _ssh_identity_fingerprint(identity): identity
+        _sidecar_ssh_identity_fingerprint(resource, identity): identity
         for identity in _list_ssh_identities(resource)
     }
     for fingerprint, identity in sidecar_keys.items():
@@ -216,7 +226,7 @@ def _reload_ssh_keys(
             try:
                 _load_ssh_key(resource, sidecar_key, "", target_key)
             except DockerError:
-                if not _ssh_key_is_encrypted(key):
+                if not _sidecar_ssh_key_is_encrypted(resource, sidecar_key):
                     raise RuntimeError(
                         f"Failed to load unprotected SSH key '{key.name}' into the "
                         "credential sidecar."

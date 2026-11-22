@@ -93,6 +93,43 @@ def _load_ssh_key_interactively(
 
 
 def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
+    return _ssh_command_output(resource, ["credential-agent", "ssh", "list"]).splitlines()
+
+
+def _ssh_key_fingerprint(
+    resource: _CredentialResource, key_path: PurePosixPath
+) -> str:
+    return _ssh_command_output(
+        resource,
+        ["credential-agent", "ssh", "fingerprint", key_path.as_posix()],
+    )
+
+
+def _ssh_identity_fingerprint(resource: _CredentialResource, identity: str) -> str:
+    return _ssh_command_output(
+        resource,
+        ["credential-agent", "ssh", "identity-fingerprint", identity],
+    )
+
+
+def _ssh_key_is_encrypted(
+    resource: _CredentialResource, key_path: PurePosixPath
+) -> bool:
+    output = _ssh_command_output(
+        resource,
+        ["credential-agent", "ssh", "encrypted", key_path.as_posix()],
+    )
+    if output == "encrypted":
+        return True
+    if output == "unencrypted":
+        return False
+    raise DockerError(
+        f"Unexpected SSH encryption result for key '{key_path.name}' in the "
+        "credential sidecar."
+    )
+
+
+def _ssh_command_output(resource: _CredentialResource, command: list[str]) -> str:
     client = get_docker_client()
     container = _find_container(client, resource)
     if container is None:
@@ -102,7 +139,7 @@ def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
     try:
         created = client.api.exec_create(
             container.id,
-            ["credential-agent", "ssh", "list"],
+            command,
             user=resource.user,
         )
         execution_id = created["Id"]
@@ -114,9 +151,9 @@ def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
         ) from exc
     if result.get("ExitCode") != 0:
         raise DockerError(
-            f"Failed to list SSH identities in credential sidecar '{resource.container_name}'."
+            f"Failed to inspect SSH credentials in sidecar '{resource.container_name}'."
         )
-    return [line for line in output.decode("utf-8").splitlines() if line]
+    return output.decode("utf-8").strip()
 
 
 def _remove_ssh_identity(resource: _CredentialResource, identity: str) -> None:

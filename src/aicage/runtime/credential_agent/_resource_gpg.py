@@ -48,6 +48,32 @@ def _gpg_keygrips(resource: _CredentialResource) -> set[str]:
     return set(output.splitlines())
 
 
+def _gpg_fingerprints(resource: _CredentialResource) -> list[str]:
+    client = get_docker_client()
+    container = _sidecar_container(client, resource)
+    output = _run_gpg_command(
+        client,
+        container,
+        resource,
+        ["credential-agent", "gpg", "fingerprints"],
+        resource.container_name,
+    )
+    return output.splitlines()
+
+
+def _gpg_source_keygrips(resource: _CredentialResource) -> set[str]:
+    client = get_docker_client()
+    container = _sidecar_container(client, resource)
+    output = _run_gpg_command(
+        client,
+        container,
+        resource,
+        ["credential-agent", "gpg", "source-keygrips"],
+        resource.container_name,
+    )
+    return set(output.splitlines())
+
+
 def _reset_gpg_agent(resource: _CredentialResource) -> None:
     client = get_docker_client()
     container = _sidecar_container(client, resource)

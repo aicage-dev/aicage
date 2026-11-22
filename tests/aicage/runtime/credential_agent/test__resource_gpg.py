@@ -72,6 +72,25 @@ class ResourceGpgTests(TestCase):
         ):
             self.assertEqual({"FIRST", "SECOND"}, _resource_gpg._gpg_keygrips(resource))
 
+    def test_gpg_metadata_reads_active_and_source_sidecar_state(self) -> None:
+        resource = _resources([_CredentialProtocol.GPG])[0]
+        client = mock.Mock()
+        client.api.exec_create.side_effect = [{"Id": "fingerprints"}, {"Id": "keygrips"}]
+        client.api.exec_start.side_effect = [b"FIRST\nSECOND\n", b"ONE\nTWO\n"]
+        client.api.exec_inspect.return_value = {"ExitCode": 0}
+        with (
+            mock.patch.object(_resource_gpg, "get_docker_client", return_value=client),
+            mock.patch.object(
+                _resource_gpg, "_find_container", return_value=mock.Mock()
+            ),
+        ):
+            self.assertEqual(
+                ["FIRST", "SECOND"], _resource_gpg._gpg_fingerprints(resource)
+            )
+            self.assertEqual(
+                {"ONE", "TWO"}, _resource_gpg._gpg_source_keygrips(resource)
+            )
+
     def test_reset_gpg_agent_runs_the_sidecar_reset_command(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         client = mock.Mock()
