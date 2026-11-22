@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, HorizontalGroup, Vertical, VerticalGroup
 from textual.widgets import Button, SelectionList, Static
 from textual.widgets.selection_list import Selection
 
@@ -43,7 +43,7 @@ class _MountSection:
 def share_widgets(
     state: OverviewState,
     include_host_access: bool = False,
-) -> list[Horizontal | SelectionList | Vertical]:
+) -> list[Horizontal | SelectionList | VerticalGroup]:
     return [
         Horizontal(
             Static("Bind Mounts", id="shares_overview_title"),
@@ -158,7 +158,7 @@ def next_mount_value(value: bool | None) -> bool | None:
     return None
 
 
-def _host_access_widgets(state: OverviewState) -> list[Vertical]:
+def _host_access_widgets(state: OverviewState) -> list[VerticalGroup]:
     return [
         _mount_widgets(
             _MountSection(
@@ -175,12 +175,12 @@ def _host_access_widgets(state: OverviewState) -> list[Vertical]:
     ]
 
 
-def _mount_widgets(section: _MountSection) -> Vertical:
-    return Vertical(
+def _mount_widgets(section: _MountSection) -> VerticalGroup:
+    return VerticalGroup(
         Static(section.title, classes="host_access_title"),
-        Vertical(
+        VerticalGroup(
             *[
-                Horizontal(
+                HorizontalGroup(
                     Button(
                         _mount_value_label(section.values.get(key)),
                         id=section.button_id(key),

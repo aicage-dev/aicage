@@ -1,5 +1,7 @@
 from unittest import TestCase, mock
 
+from textual.containers import VerticalGroup
+
 from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
 from aicage.runtime.menu.textual._state import OverviewState
 from aicage.runtime.menu.textual.views.overview import _shares
@@ -24,6 +26,12 @@ class SharesOverviewTests(TestCase):
         widgets = _shares.share_widgets(OverviewState(None, [], [], False))
 
         self.assertEqual(2, len(widgets))
+
+    def test_share_widgets_uses_non_expanding_groups_for_host_access(self) -> None:
+        widgets = _shares.share_widgets(OverviewState(None, [], [], False), True)
+
+        self.assertIsInstance(widgets[1], VerticalGroup)
+        self.assertIsInstance(widgets[2], VerticalGroup)
 
     def test_refresh_shares_updates_visible_widgets(self) -> None:
         container = mock.Mock()
