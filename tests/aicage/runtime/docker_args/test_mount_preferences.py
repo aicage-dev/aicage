@@ -98,7 +98,9 @@ class MountPreferencesTests(TestCase):
         agent_cfg = AgentConfig()
         context = _build_context(agent_cfg)
 
-        with mock.patch(f"{_MODULE}.git_mount_defaults", return_value={MOUNT_GITCONFIG_KEY}):
+        with mock.patch(
+            f"{_MODULE}.git_mount_defaults", return_value={MOUNT_GITCONFIG_KEY}
+        ):
             apply_git_mount_defaults(context, agent_cfg)
 
         self.assertTrue(agent_cfg.mounts.gitconfig)

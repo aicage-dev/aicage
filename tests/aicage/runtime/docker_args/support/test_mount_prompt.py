@@ -52,9 +52,7 @@ class MountPromptTests(TestCase):
             )
 
         assert prefs is not None
-        self.assertEqual(
-            {MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY}, prefs.git_mounts
-        )
+        self.assertEqual({MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY}, prefs.git_mounts)
         self.assertEqual({}, prefs.extension_mounts)
 
     def test_resolve_mount_prompt_prefs_skips_when_no_items(self) -> None:
@@ -96,7 +94,9 @@ class MountPromptTests(TestCase):
                 mock.patch(
                     f"{_MODULE}._git_support_prompt_items", return_value=git_items
                 ),
-                mock.patch(f"{_MODULE}._credential_mount_prompt_items", return_value=[]),
+                mock.patch(
+                    f"{_MODULE}._credential_mount_prompt_items", return_value=[]
+                ),
             ):
                 select_mounts = mock.Mock(return_value=[MOUNT_GITCONFIG_KEY, "gh"])
                 prefs = mount_prompt_module.resolve_mount_prompt_prefs(

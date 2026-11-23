@@ -162,14 +162,22 @@ def _host_access_widgets(state: OverviewState) -> list[VerticalGroup]:
     return [
         _mount_widgets(
             _MountSection(
-                "Git", _GIT_MOUNT_KEYS, state.git_values, _git_button_id,
-                git_support_config_label, "git_support",
+                "Git",
+                _GIT_MOUNT_KEYS,
+                state.git_values,
+                _git_button_id,
+                git_support_config_label,
+                "git_support",
             )
         ),
         _mount_widgets(
             _MountSection(
-                "Credentials", _CREDENTIAL_MOUNT_KEYS, state.credential_values,
-                _credential_button_id, credential_config_label, "credentials",
+                "Credentials",
+                _CREDENTIAL_MOUNT_KEYS,
+                state.credential_values,
+                _credential_button_id,
+                credential_config_label,
+                "credentials",
             )
         ),
     ]

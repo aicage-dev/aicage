@@ -114,7 +114,9 @@ class ConfigAppTests(TestCase):
         app = _build_app(scope="global")
 
         app.on_overview_host_access_changed(
-            Overview.HostAccessChanged(BuiltInShareSource.GIT_SUPPORT, "gitconfig", True)
+            Overview.HostAccessChanged(
+                BuiltInShareSource.GIT_SUPPORT, "gitconfig", True
+            )
         )
 
         self.assertTrue(app._draft.agent_cfg.mounts.gitconfig)
@@ -125,7 +127,9 @@ class ConfigAppTests(TestCase):
         app._draft.agent_cfg.mounts.gitconfig = False
 
         app.on_overview_host_access_changed(
-            Overview.HostAccessChanged(BuiltInShareSource.GIT_SUPPORT, "gitconfig", None)
+            Overview.HostAccessChanged(
+                BuiltInShareSource.GIT_SUPPORT, "gitconfig", None
+            )
         )
 
         self.assertIsNone(app._draft.agent_cfg.mounts.gitconfig)
@@ -137,7 +141,9 @@ class ConfigAppTests(TestCase):
         app._draft.pending_credential_mounts.add("ssh")
 
         shares = app._pending_mount_shares(
-            BuiltInShareSource.CREDENTIALS, ("ssh", "gnupg"), app._draft.pending_credential_mounts,
+            BuiltInShareSource.CREDENTIALS,
+            ("ssh", "gnupg"),
+            app._draft.pending_credential_mounts,
             _config_app.credential_config_label,
         )
 
@@ -160,7 +166,9 @@ class ConfigAppTests(TestCase):
         app._draft.pending_credential_mounts.add("ssh")
 
         shares = app._pending_mount_shares(
-            BuiltInShareSource.CREDENTIALS, ("ssh", "gnupg"), app._draft.pending_credential_mounts,
+            BuiltInShareSource.CREDENTIALS,
+            ("ssh", "gnupg"),
+            app._draft.pending_credential_mounts,
             _config_app.credential_config_label,
         )
 
@@ -395,7 +403,12 @@ class ConfigAppTests(TestCase):
         self,
     ) -> None:
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", None, True
+            BuiltInShareSource.GIT_SUPPORT,
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            None,
+            True,
         )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()
@@ -514,7 +527,12 @@ class ConfigAppTests(TestCase):
         self,
     ) -> None:
         built_in_share = BuiltInShareValue(
-            BuiltInShareSource.GIT_SUPPORT, "gitconfig", "Git config", "/test-tmp/gitconfig", None, True
+            BuiltInShareSource.GIT_SUPPORT,
+            "gitconfig",
+            "Git config",
+            "/test-tmp/gitconfig",
+            None,
+            True,
         )
         app = _build_app(built_in_shares=[built_in_share])
         overview = mock.Mock()

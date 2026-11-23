@@ -75,7 +75,10 @@ class ResourceGpgTests(TestCase):
     def test_gpg_metadata_reads_active_and_source_sidecar_state(self) -> None:
         resource = _resources([_CredentialProtocol.GPG])[0]
         client = mock.Mock()
-        client.api.exec_create.side_effect = [{"Id": "fingerprints"}, {"Id": "keygrips"}]
+        client.api.exec_create.side_effect = [
+            {"Id": "fingerprints"},
+            {"Id": "keygrips"},
+        ]
         client.api.exec_start.side_effect = [b"FIRST\nSECOND\n", b"ONE\nTWO\n"]
         client.api.exec_inspect.return_value = {"ExitCode": 0}
         with (

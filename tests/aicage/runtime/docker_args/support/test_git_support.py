@@ -1,7 +1,11 @@
 from pathlib import Path
 from unittest import TestCase, mock
 
-from aicage.config.project_config import MOUNT_GITCONFIG_KEY, MOUNT_GITROOT_KEY, _AgentMounts
+from aicage.config.project_config import (
+    MOUNT_GITCONFIG_KEY,
+    MOUNT_GITROOT_KEY,
+    _AgentMounts,
+)
 from aicage.runtime.docker_args.support import git_support
 
 _MODULE = "aicage.runtime.docker_args.support.git_support"
@@ -9,9 +13,13 @@ _MODULE = "aicage.runtime.docker_args.support.git_support"
 
 class GitSupportTests(TestCase):
     def test_resolve_git_config_path_parses_first_file(self) -> None:
-        output = "file:/home/user/.gitconfig user.name=Name\nfile:/tmp/other key=value\n"
+        output = (
+            "file:/home/user/.gitconfig user.name=Name\nfile:/tmp/other key=value\n"
+        )
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=output):
-            self.assertEqual(Path("/home/user/.gitconfig"), git_support.resolve_git_config_path())
+            self.assertEqual(
+                Path("/home/user/.gitconfig"), git_support.resolve_git_config_path()
+            )
 
     def test_resolve_git_config_path_handles_empty(self) -> None:
         with mock.patch(f"{_MODULE}.capture_stdout", return_value=""):
@@ -54,7 +62,9 @@ class GitSupportTests(TestCase):
         ):
             self.assertEqual(
                 {MOUNT_GITROOT_KEY},
-                git_support.git_mount_defaults(Path("/repo"), _AgentMounts(gitconfig=False)),
+                git_support.git_mount_defaults(
+                    Path("/repo"), _AgentMounts(gitconfig=False)
+                ),
             )
 
     def test_detected_git_mounts_ignores_mount_preferences(self) -> None:
@@ -62,4 +72,6 @@ class GitSupportTests(TestCase):
             f"{_MODULE}._git_support_prompt_items",
             return_value=[(MOUNT_GITCONFIG_KEY, "Git config")],
         ):
-            self.assertEqual({MOUNT_GITCONFIG_KEY}, git_support.detected_git_mounts(Path("/repo")))
+            self.assertEqual(
+                {MOUNT_GITCONFIG_KEY}, git_support.detected_git_mounts(Path("/repo"))
+            )

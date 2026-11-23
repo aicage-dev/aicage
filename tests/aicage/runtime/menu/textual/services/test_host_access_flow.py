@@ -22,7 +22,12 @@ class HostAccessFlowTests(IsolatedAsyncioTestCase):
         )
         built_in_shares = [
             BuiltInShareValue(
-                BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", True, True
+                BuiltInShareSource.CREDENTIALS,
+                "ssh",
+                "SSH",
+                "/test-tmp/.ssh",
+                True,
+                True,
             ),
         ]
         docker_options = [

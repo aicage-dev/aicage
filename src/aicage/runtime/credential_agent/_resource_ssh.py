@@ -93,12 +93,12 @@ def _load_ssh_key_interactively(
 
 
 def _list_ssh_identities(resource: _CredentialResource) -> list[str]:
-    return _ssh_command_output(resource, ["credential-agent", "ssh", "list"]).splitlines()
+    return _ssh_command_output(
+        resource, ["credential-agent", "ssh", "list"]
+    ).splitlines()
 
 
-def _ssh_key_fingerprint(
-    resource: _CredentialResource, key_path: PurePosixPath
-) -> str:
+def _ssh_key_fingerprint(resource: _CredentialResource, key_path: PurePosixPath) -> str:
     return _ssh_command_output(
         resource,
         ["credential-agent", "ssh", "fingerprint", key_path.as_posix()],

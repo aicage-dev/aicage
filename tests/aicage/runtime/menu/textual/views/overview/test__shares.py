@@ -2,7 +2,11 @@ from unittest import TestCase, mock
 
 from textual.containers import VerticalGroup
 
-from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
+from aicage.runtime.menu.textual._models import (
+    BuiltInShareSource,
+    BuiltInShareValue,
+    CustomShareValue,
+)
 from aicage.runtime.menu.textual._state import OverviewState
 from aicage.runtime.menu.textual.views.overview import _shares
 
@@ -10,7 +14,8 @@ from aicage.runtime.menu.textual.views.overview import _shares
 class SharesOverviewTests(TestCase):
     def test_host_access_button_key_identifies_host_access_button(self) -> None:
         self.assertEqual(
-            (BuiltInShareSource.GIT_SUPPORT, "gitconfig"), _shares.host_access_button_key("git_mount_gitconfig")
+            (BuiltInShareSource.GIT_SUPPORT, "gitconfig"),
+            _shares.host_access_button_key("git_mount_gitconfig"),
         )
         self.assertEqual(
             (BuiltInShareSource.CREDENTIALS, "ssh"),
@@ -49,7 +54,16 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
+                )
+            ],
             [CustomShareValue("/test-tmp/logs")],
             False,
         )
@@ -98,7 +112,16 @@ class SharesOverviewTests(TestCase):
         container.query_one.side_effect = query_one_side_effect
         state = OverviewState(
             None,
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
+                )
+            ],
             [CustomShareValue("/test-tmp/logs")],
             False,
         )
@@ -114,19 +137,64 @@ class SharesOverviewTests(TestCase):
 
     def test_merge_built_in_shares_preserves_current_enabled_state(self) -> None:
         values = _shares.merge_built_in_shares(
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, False)],
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    False,
+                )
+            ],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
+                )
+            ],
         )
 
         self.assertEqual(
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True)],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
+                )
+            ],
             values,
         )
 
     def test_merge_built_in_shares_preserves_pending_confirmation(self) -> None:
         values = _shares.merge_built_in_shares(
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "gnupg", "GnuPG", "/test-tmp/gnupg", True, True)],
-            [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "gnupg", "GnuPG", "/test-tmp/gnupg", None, True)],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "gnupg",
+                    "GnuPG",
+                    "/test-tmp/gnupg",
+                    True,
+                    True,
+                )
+            ],
+            [
+                BuiltInShareValue(
+                    BuiltInShareSource.CREDENTIALS,
+                    "gnupg",
+                    "GnuPG",
+                    "/test-tmp/gnupg",
+                    None,
+                    True,
+                )
+            ],
         )
 
         self.assertIsNone(values[0].persisted)

@@ -29,9 +29,13 @@ def resolve_gpg_public_files(gpg_home: Path) -> list[Path]:
     paths = [
         path
         for path in (
-            gpg_home / "common.conf", gpg_home / "gpg.conf", gpg_home / "pubring.kbx",
-            gpg_home / "pubring.gpg", gpg_home / "public-keys.d" / "pubring.db",
-            gpg_home / "trustdb.gpg", gpg_home / "tofu.db",
+            gpg_home / "common.conf",
+            gpg_home / "gpg.conf",
+            gpg_home / "pubring.kbx",
+            gpg_home / "pubring.gpg",
+            gpg_home / "public-keys.d" / "pubring.db",
+            gpg_home / "trustdb.gpg",
+            gpg_home / "tofu.db",
         )
         if path.is_file()
     ]
@@ -50,7 +54,9 @@ def has_gpg_keys() -> bool:
 
 
 def resolve_gpg_secret_key_state() -> tuple[list[str], set[str]]:
-    output = _capture_stdout(["gpg", "--batch", "--with-colons", "--with-keygrip", "--list-secret-keys"])
+    output = _capture_stdout(
+        ["gpg", "--batch", "--with-colons", "--with-keygrip", "--list-secret-keys"]
+    )
     if output is None:
         return [], set()
     fingerprints: list[str] = []
@@ -72,7 +78,9 @@ def resolve_gpg_secret_key_state() -> tuple[list[str], set[str]]:
 
 def _capture_stdout(command: list[str]) -> str | None:
     try:
-        result = subprocess.run(command, check=False, capture_output=True, text=True)  # nosec B603
+        result = subprocess.run(
+            command, check=False, capture_output=True, text=True
+        )  # nosec B603
     except FileNotFoundError:
         return None
     return result.stdout if result.returncode == 0 else None

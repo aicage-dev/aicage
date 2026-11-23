@@ -22,9 +22,7 @@ class GpgTests(TestCase):
             gpg_home.mkdir()
             with (
                 mock.patch(f"{_MODULE}.HOST_GNUPG_DIR", gpg_home),
-                mock.patch(
-                    f"{_MODULE}.subprocess.run", side_effect=FileNotFoundError
-                ),
+                mock.patch(f"{_MODULE}.subprocess.run", side_effect=FileNotFoundError),
             ):
                 self.assertEqual(gpg_home, gpg.resolve_gpg_home())
 
@@ -35,7 +33,9 @@ class GpgTests(TestCase):
     def test_has_gpg_keys_skips_lookup_without_gpg_home(self) -> None:
         with (
             mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=None),
-            mock.patch(f"{_MODULE}._resolve_gpg_secret_key_fingerprints") as resolve_keys,
+            mock.patch(
+                f"{_MODULE}._resolve_gpg_secret_key_fingerprints"
+            ) as resolve_keys,
         ):
             self.assertFalse(gpg.has_gpg_keys())
         resolve_keys.assert_not_called()
@@ -176,7 +176,9 @@ class GpgTests(TestCase):
 
     def test_has_gpg_keys_requires_a_secret_key(self) -> None:
         with (
-            mock.patch(f"{_MODULE}.resolve_gpg_home", return_value=Path("/test-tmp/gnupg")),
+            mock.patch(
+                f"{_MODULE}.resolve_gpg_home", return_value=Path("/test-tmp/gnupg")
+            ),
         ):
             self.assertFalse(gpg.has_gpg_keys())
 

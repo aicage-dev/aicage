@@ -84,17 +84,13 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         confirmed_git_shares = []
         if self._git_shares:
             confirmed_git_shares = current_built_in_shares(
-                set(
-                    self.query_one("#git_confirm_list", SelectionList).selected
-                ),
+                set(self.query_one("#git_confirm_list", SelectionList).selected),
                 self._git_shares,
             )
         confirmed_credential_shares = []
         if self._credential_shares:
             confirmed_credential_shares = current_built_in_shares(
-                set(
-                    self.query_one("#credential_confirm_list", SelectionList).selected
-                ),
+                set(self.query_one("#credential_confirm_list", SelectionList).selected),
                 self._credential_shares,
             )
         confirmed_extension_shares = []
@@ -175,9 +171,7 @@ class HostAccessConfirmScreen(CancelableScreen[HostAccessConfirmValues | None]):
         if self._scope == "global":
             return "Persists Git settings for every project."
         if self._scope == "tree":
-            return (
-                "Persists Git settings for this directory and its descendants."
-            )
+            return "Persists Git settings for this directory and its descendants."
         return "Bind mounts host files used by Git."
 
     def _credential_section(self) -> list[Static | Vertical] | None:

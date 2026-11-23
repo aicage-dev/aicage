@@ -93,7 +93,12 @@ class ShareSupportTests(TestCase):
                     True,
                 ),
                 BuiltInShareValue(
-                    BuiltInShareSource.GIT_SUPPORT, "gitroot", "Git root", str(Path("/repo")), None, True
+                    BuiltInShareSource.GIT_SUPPORT,
+                    "gitroot",
+                    "Git root",
+                    str(Path("/repo")),
+                    None,
+                    True,
                 ),
             ],
             values,

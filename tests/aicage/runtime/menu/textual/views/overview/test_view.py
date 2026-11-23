@@ -7,7 +7,11 @@ from textual.widgets import Button, SelectionList, Static
 
 from aicage.cli_types import ParsedArgs
 from aicage.config.project_config import AgentConfig
-from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
+from aicage.runtime.menu.textual._models import (
+    BuiltInShareSource,
+    BuiltInShareValue,
+    CustomShareValue,
+)
 from aicage.runtime.menu.textual._state import OverviewState
 from aicage.runtime.menu.textual.views.overview._selection_list import (
     _OverviewSelectionList,
@@ -131,7 +135,12 @@ class OverviewTests(TestCase):
             None,
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
                 )
             ],
             [],
@@ -329,7 +338,12 @@ class OverviewTests(TestCase):
             shares_values.return_value = mock.Mock(
                 built_in_shares=[
                     BuiltInShareValue(
-                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                        BuiltInShareSource.CREDENTIALS,
+                        "ssh",
+                        "SSH",
+                        "/test-tmp/.ssh",
+                        None,
+                        True,
                     )
                 ]
             )
@@ -356,8 +370,7 @@ class OverviewTests(TestCase):
         extensions_button = mock.Mock()
         extras_button = mock.Mock()
         git_support_buttons = {
-            f"#git_mount_{key}": mock.Mock()
-            for key in ("gitconfig", "gitroot")
+            f"#git_mount_{key}": mock.Mock() for key in ("gitconfig", "gitroot")
         }
         git_support_buttons["#credential_mount_ssh"] = mock.Mock()
         git_support_buttons["#credential_mount_gnupg"] = mock.Mock()
@@ -406,7 +419,12 @@ class OverviewTests(TestCase):
             shares_values.return_value = mock.Mock(
                 built_in_shares=[
                     BuiltInShareValue(
-                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                        BuiltInShareSource.CREDENTIALS,
+                        "ssh",
+                        "SSH",
+                        "/test-tmp/.ssh",
+                        None,
+                        True,
                     )
                 ]
             )
@@ -415,7 +433,12 @@ class OverviewTests(TestCase):
         self.assertEqual(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
                 )
             ],
             overview._state.built_in_shares,
@@ -429,7 +452,12 @@ class OverviewTests(TestCase):
                 None,
                 [
                     BuiltInShareValue(
-                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                        BuiltInShareSource.CREDENTIALS,
+                        "ssh",
+                        "SSH",
+                        "/test-tmp/.ssh",
+                        None,
+                        True,
                     )
                 ],
                 [CustomShareValue("/test-tmp/logs")],
@@ -497,7 +525,12 @@ class OverviewTests(TestCase):
                 None,
                 [
                     BuiltInShareValue(
-                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, False
+                        BuiltInShareSource.CREDENTIALS,
+                        "ssh",
+                        "SSH",
+                        "/test-tmp/.ssh",
+                        None,
+                        False,
                     )
                 ],
                 [],

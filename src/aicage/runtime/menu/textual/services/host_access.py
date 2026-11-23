@@ -174,7 +174,10 @@ def apply_host_access(
     for item in built_in_shares:
         if item.inherited:
             continue
-        if item.source in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.CREDENTIALS}:
+        if item.source in {
+            BuiltInShareSource.GIT_SUPPORT,
+            BuiltInShareSource.CREDENTIALS,
+        }:
             setattr(draft.agent_cfg.mounts, item.key, item.enabled)
         elif item.source == BuiltInShareSource.EXTENSION:
             draft.agent_cfg.extension_mounts[item.key] = item.enabled

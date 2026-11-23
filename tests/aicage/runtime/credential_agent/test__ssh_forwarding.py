@@ -429,7 +429,9 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding,
+                "_sidecar_ssh_key_fingerprint",
+                return_value="SHA256:key",
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(_ssh_forwarding, "_load_ssh_key") as load_mock,
@@ -453,7 +455,9 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding,
+                "_sidecar_ssh_key_fingerprint",
+                return_value="SHA256:key",
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(
@@ -487,7 +491,9 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding,
+                "_sidecar_ssh_key_fingerprint",
+                return_value="SHA256:key",
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(
@@ -517,7 +523,9 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:key"
+                _ssh_forwarding,
+                "_sidecar_ssh_key_fingerprint",
+                return_value="SHA256:key",
             ),
             mock.patch.object(_ssh_forwarding, "_list_ssh_identities", return_value=[]),
             mock.patch.object(
@@ -550,7 +558,9 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding, "_resolve_ssh_key_files", return_value=[key]
             ),
             mock.patch.object(
-                _ssh_forwarding, "_sidecar_ssh_key_fingerprint", return_value="SHA256:current"
+                _ssh_forwarding,
+                "_sidecar_ssh_key_fingerprint",
+                return_value="SHA256:current",
             ),
             mock.patch.object(
                 _ssh_forwarding,

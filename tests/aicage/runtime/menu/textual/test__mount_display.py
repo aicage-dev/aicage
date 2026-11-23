@@ -8,7 +8,11 @@ from aicage.config.project_config import (
     MOUNT_SSH_KEY,
 )
 from aicage.runtime.menu.textual import _mount_display
-from aicage.runtime.menu.textual._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue
+from aicage.runtime.menu.textual._models import (
+    BuiltInShareSource,
+    BuiltInShareValue,
+    CustomShareValue,
+)
 
 
 class MountDisplayTests(TestCase):
@@ -44,7 +48,12 @@ class MountDisplayTests(TestCase):
         values = _mount_display.overview_mount_list_items(
             [
                 BuiltInShareValue(
-                    BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                    BuiltInShareSource.CREDENTIALS,
+                    "ssh",
+                    "SSH",
+                    "/test-tmp/.ssh",
+                    None,
+                    True,
                 )
             ],
             [CustomShareValue("/test-tmp/logs:ro"), CustomShareValue("/test-tmp/data")],
@@ -86,7 +95,11 @@ class MountDisplayTests(TestCase):
     def test_mount_selection_rows_displays_pathless_git_support_label(self) -> None:
         rows = _mount_display.mount_selection_rows(
             _mount_display.confirm_mount_list_items(
-                [BuiltInShareValue(BuiltInShareSource.CREDENTIALS, "ssh", "SSH", None, None, True)]
+                [
+                    BuiltInShareValue(
+                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", None, None, True
+                    )
+                ]
             )
         )
 
@@ -97,7 +110,12 @@ class MountDisplayTests(TestCase):
             _mount_display.overview_mount_list_items(
                 [
                     BuiltInShareValue(
-                        BuiltInShareSource.CREDENTIALS, "ssh", "SSH", "/test-tmp/.ssh", None, True
+                        BuiltInShareSource.CREDENTIALS,
+                        "ssh",
+                        "SSH",
+                        "/test-tmp/.ssh",
+                        None,
+                        True,
                     )
                 ],
                 [CustomShareValue("/test-tmp/data")],

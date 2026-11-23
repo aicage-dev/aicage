@@ -26,12 +26,8 @@ from ._resource_ssh import (
 from ._resource_ssh import (
     _ssh_identity_fingerprint as _sidecar_ssh_identity_fingerprint,
 )
-from ._resource_ssh import (
-    _ssh_key_fingerprint as _sidecar_ssh_key_fingerprint,
-)
-from ._resource_ssh import (
-    _ssh_key_is_encrypted as _sidecar_ssh_key_is_encrypted,
-)
+from ._resource_ssh import _ssh_key_fingerprint as _sidecar_ssh_key_fingerprint
+from ._resource_ssh import _ssh_key_is_encrypted as _sidecar_ssh_key_is_encrypted
 
 _SSH_AUTH_SOCK = "SSH_AUTH_SOCK"
 _SSH_SOCKET_DIRECTORY = PurePosixPath("/run/credential-agent")

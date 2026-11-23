@@ -25,7 +25,12 @@ from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.scope_change import ConfigScopeChange
 
 from ._ids import ROW_BASE, ROW_EXTENSIONS, ROW_EXTRAS
-from ._models import BuiltInShareSource, BuiltInShareValue, CustomShareValue, HostAccessConfirmValues
+from ._models import (
+    BuiltInShareSource,
+    BuiltInShareValue,
+    CustomShareValue,
+    HostAccessConfirmValues,
+)
 from ._mount_display import credential_config_label, git_support_config_label
 from ._state import OverviewState
 from ._textual_app import TextualApp
@@ -386,7 +391,8 @@ class ConfigApp(
             built_in_shares = [
                 (
                     replace(item, enabled=True)
-                    if item.source == BuiltInShareSource.GIT_SUPPORT and item.key in detected_mounts
+                    if item.source == BuiltInShareSource.GIT_SUPPORT
+                    and item.key in detected_mounts
                     else item
                 )
                 for item in built_in_shares
@@ -438,7 +444,8 @@ class ConfigApp(
             for item in shares_values(self._draft, self._config_context).built_in_shares
             if not (
                 self._uses_host_access_screen()
-                and item.source in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.CREDENTIALS}
+                and item.source
+                in {BuiltInShareSource.GIT_SUPPORT, BuiltInShareSource.CREDENTIALS}
             )
         ]
 
