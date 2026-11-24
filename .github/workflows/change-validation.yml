@@ -40,6 +40,12 @@ jobs:
     name: Integration Proxy Tests
     uses: ./.github/workflows/integration-test-proxy.yml
 
+  integration-test-openrouter:
+    needs: verify-tagged-commit
+    uses: ./.github/workflows/integration-test-openrouter.yml
+    secrets:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
   required-status-checks:
     name: "Required Status Checks"  # do not change, used in ruleset "Required Status Checks"
     if: ${{ always() }}
@@ -49,6 +55,7 @@ jobs:
       - integration-test
       - integration-test-windows
       - integration-test-proxy
+      - integration-test-openrouter
     runs-on: ubuntu-latest
     steps:
       - name: Check validation job results
