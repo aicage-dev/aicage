@@ -11,6 +11,10 @@ Current menu:
 
 I'd like this to clearer. like `SSH keys : SSH agent` and `GPG keys : GnuPG agent`. Right now it's a repetition while my suggestion indicates sort of what is shared and how. The first part must be short, if we add more info then to the second part.
 
+## Bug: Treat macOS like Linux for SSH/GPG handling
+
+Right now parts of the code check "if os != linux" thus excluding macOS. unless there is a reson to treat macOS differently, we should treat it like Linux.
+
 ## Why does odex keep linking ssh/gpg strongly to git? we may need to clean up some docs
 
 ### Me to Codex
