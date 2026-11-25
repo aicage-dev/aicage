@@ -1,5 +1,16 @@
 # Notes from 2026-11-26
 
+## SSH/GPG in Textual menu
+
+Current menu:
+
+```text
+  ┃  ▐X▌ SSH agent   : SSH agent                                                             ┃ 
+  ┃  ▐X▌ GnuPG agent : GnuPG agent                                                           ┃
+```
+
+I'd like this to clearer. like `SSH keys : SSH agent` and `GPG keys : GnuPG agent`. Right now it's a repetition while my suggestion indicates sort of what is shared and how. The first part must be short, if we add more info then to the second part.
+
 ## Why does odex keep linking ssh/gpg strongly to git? we may need to clean up some docs
 
 ### Me to Codex
