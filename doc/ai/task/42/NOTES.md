@@ -15,6 +15,14 @@ I'd like this to clearer. like `SSH keys : SSH socket` and `GPG keys : GnuPG soc
 
 Right now parts of the code check "if os != linux" thus excluding macOS. unless there is a reson to treat macOS differently, we should treat it like Linux.
 
+## Cleanup: dead Docker-health replacement path
+
+`_requires_replacement()` checks whether a credential container has Docker health status `unhealthy` and would replace it.
+
+The `credential-agent` image defines no Docker `HEALTHCHECK`, so this state is never produced. Aicage instead runs its own `credential-agent {ssh|gpg} ready` check on every use; readiness failure raises an error and does not trigger replacement.
+
+Remove the unused Docker-health branch unless a real image health check is added.
+
 ## Why does odex keep linking ssh/gpg strongly to git? we may need to clean up some docs
 
 ### Me to Codex
