@@ -9,7 +9,7 @@ Current menu:
   ┃  ▐X▌ GnuPG agent : GnuPG agent                                                           ┃
 ```
 
-I'd like this to clearer. like `SSH keys : SSH agent` and `GPG keys : GnuPG agent`. Right now it's a repetition while my suggestion indicates sort of what is shared and how. The first part must be short, if we add more info then to the second part.
+I'd like this to clearer. like `SSH keys : SSH socket` and `GPG keys : GnuPG socket`. Right now it's a repetition while my suggestion indicates sort of what is shared and how. The first part must be short, if we add more info then to the second part.
 
 ## Bug: Treat macOS like Linux for SSH/GPG handling
 
