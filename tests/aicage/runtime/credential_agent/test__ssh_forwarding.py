@@ -79,7 +79,9 @@ class SshForwardingTests(TestCase):
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(socket, plan.direct_socket)
 
-    def test_direct_ssh_socket_requires_a_reachable_non_windows_unix_socket(self) -> None:
+    def test_direct_ssh_socket_requires_a_reachable_non_windows_unix_socket(
+        self,
+    ) -> None:
         with (
             mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),

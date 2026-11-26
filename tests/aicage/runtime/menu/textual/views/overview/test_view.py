@@ -433,7 +433,7 @@ class OverviewTests(TestCase):
                         "/test-tmp/.ssh",
                         None,
                         True,
-                    )
+                    ),
                 ]
             )
             overview.refresh_from(draft, _build_context())

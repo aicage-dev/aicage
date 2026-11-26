@@ -141,7 +141,9 @@ class MountPreferencesTests(TestCase):
         self.assertFalse(agent_cfg.mounts.ssh)
         self.assertTrue(agent_cfg.mounts.gnupg)
 
-    def test_apply_cli_credential_mount_preferences_leaves_unspecified_values(self) -> None:
+    def test_apply_cli_credential_mount_preferences_leaves_unspecified_values(
+        self,
+    ) -> None:
         agent_cfg = AgentConfig()
 
         apply_cli_credential_mount_preferences(agent_cfg, _build_parsed())
