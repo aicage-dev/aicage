@@ -10,6 +10,7 @@ from aicage.config.project_config import (
     _ProjectConfig,
 )
 from aicage.runtime.docker_args.mount_preferences import (
+    apply_cli_credential_mount_preferences,
     apply_credential_mount_defaults,
     apply_extension_mount_defaults,
     apply_git_mount_defaults,
@@ -131,6 +132,23 @@ class MountPreferencesTests(TestCase):
         self.assertIsNone(agent_cfg.mounts.ssh)
         self.assertTrue(agent_cfg.mounts.gnupg)
 
+    def test_apply_cli_credential_mount_preferences_overrides_both_values(self) -> None:
+        agent_cfg = AgentConfig()
+        parsed = _build_parsed(ssh=False, gpg=True)
+
+        apply_cli_credential_mount_preferences(agent_cfg, parsed)
+
+        self.assertFalse(agent_cfg.mounts.ssh)
+        self.assertTrue(agent_cfg.mounts.gnupg)
+
+    def test_apply_cli_credential_mount_preferences_leaves_unspecified_values(self) -> None:
+        agent_cfg = AgentConfig()
+
+        apply_cli_credential_mount_preferences(agent_cfg, _build_parsed())
+
+        self.assertIsNone(agent_cfg.mounts.ssh)
+        self.assertIsNone(agent_cfg.mounts.gnupg)
+
     def test_disable_git_mounts_disables_all_git_mounts(self) -> None:
         agent_cfg = AgentConfig()
 
@@ -153,5 +171,9 @@ def _build_context(agent_cfg: AgentConfig) -> ConfigContext:
     )
 
 
-def _build_parsed(docker_socket: bool = False) -> ParsedArgs:
-    return ParsedArgs(False, "", "codex", [], docker_socket, [])
+def _build_parsed(
+    docker_socket: bool = False,
+    ssh: bool | None = None,
+    gpg: bool | None = None,
+) -> ParsedArgs:
+    return ParsedArgs(False, "", "codex", [], docker_socket, [], ssh=ssh, gpg=gpg)

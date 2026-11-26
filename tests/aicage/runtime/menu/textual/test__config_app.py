@@ -34,6 +34,17 @@ class ConfigAppTests(TestCase):
         self.assertIsNone(app._draft.agent_cfg.mounts.gnupg)
         self.assertIsNone(app._draft.agent_cfg.mounts.ssh)
 
+    def test_init_applies_cli_credential_preferences(self) -> None:
+        draft = _build_draft(
+            AgentConfig(base="ubuntu"),
+            ParsedArgs(False, "", "codex", [], False, [], ssh=False, gpg=True),
+            project_path=Path.cwd(),
+        )
+        app = _config_app.ConfigApp(draft, _build_context(), ExecutionReporter())
+
+        self.assertFalse(app._draft.agent_cfg.mounts.ssh)
+        self.assertTrue(app._draft.agent_cfg.mounts.gnupg)
+
     def test_command_palette_is_disabled(self) -> None:
         self.assertFalse(_config_app.ConfigApp.ENABLE_COMMAND_PALETTE)
 

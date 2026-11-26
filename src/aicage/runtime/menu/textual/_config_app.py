@@ -19,7 +19,10 @@ from aicage.config.project_config import (
 )
 from aicage.config.run_config_draft import RunConfigDraft
 from aicage.registry.image_selection.interaction import ExtensionChoiceOption
-from aicage.runtime.docker_args.mount_preferences import disable_git_mounts
+from aicage.runtime.docker_args.mount_preferences import (
+    apply_cli_credential_mount_preferences,
+    disable_git_mounts,
+)
 from aicage.runtime.docker_args.support.git_support import detected_git_mounts
 from aicage.runtime.menu._interaction_types import ConfigSelectionResult
 from aicage.runtime.menu.scope_change import ConfigScopeChange
@@ -79,6 +82,9 @@ class ConfigApp(
         self._config_context = context
         self._reporter = reporter
         self._apply_git_cli_preference()
+        apply_cli_credential_mount_preferences(
+            self._draft.agent_cfg, self._draft.parsed
+        )
         self._mark_new_config_auto_mounts_pending()
         self._state = self._initial_state()
 

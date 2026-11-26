@@ -74,6 +74,18 @@ def apply_credential_mount_defaults(agent_cfg: AgentConfig) -> None:
         agent_cfg.mounts.gnupg = True
 
 
+def apply_cli_credential_mount_preferences(
+    agent_cfg: AgentConfig,
+    parsed: ParsedArgs | None,
+) -> None:
+    if parsed is None:
+        return
+    if parsed.ssh is not None:
+        agent_cfg.mounts.ssh = parsed.ssh
+    if parsed.gpg is not None:
+        agent_cfg.mounts.gnupg = parsed.gpg
+
+
 def disable_git_mounts(agent_cfg: AgentConfig) -> None:
     for key in (
         MOUNT_GITCONFIG_KEY,
