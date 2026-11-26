@@ -80,11 +80,9 @@ class SshForwardingTests(TestCase):
         self.assertEqual(socket, plan.direct_socket)
 
     def test_direct_ssh_socket_requires_a_reachable_non_windows_unix_socket(self) -> None:
-        socket = Path("/test-tmp/ssh-agent.sock")
         with (
             mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
-            mock.patch.dict(_ssh_forwarding.os.environ, {"SSH_AUTH_SOCK": str(socket)}),
             mock.patch.object(Path, "is_socket", return_value=True),
             mock.patch.object(
                 _ssh_forwarding.subprocess,
@@ -92,7 +90,11 @@ class SshForwardingTests(TestCase):
                 return_value=mock.Mock(returncode=1),
             ) as run_mock,
         ):
-            self.assertEqual(socket, _ssh_forwarding._direct_ssh_socket())
+            socket = Path("/test-tmp/ssh-agent.sock")
+            with mock.patch.dict(
+                _ssh_forwarding.os.environ, {"SSH_AUTH_SOCK": str(socket)}
+            ):
+                self.assertEqual(socket, _ssh_forwarding._direct_ssh_socket())
 
         run_mock.assert_called_once_with(
             ["/usr/bin/ssh-add", "-l"],
