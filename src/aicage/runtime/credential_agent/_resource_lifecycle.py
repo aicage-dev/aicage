@@ -65,9 +65,8 @@ def _requires_replacement(
             f"Credential sidecar '{resource.container_name}' is not owned by aicage."
         )
     labels = _labels_for(container)
-    return (
-        labels.get(_IMAGE_ID_LABEL) != image_id
-        or not _credential_mount_matches(container, resource, credential_path)
+    return labels.get(_IMAGE_ID_LABEL) != image_id or not _credential_mount_matches(
+        container, resource, credential_path
     )
 
 
