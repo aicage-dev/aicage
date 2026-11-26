@@ -2,6 +2,9 @@
 
 ## Restrict networking of credential containers
 
+<!-- pyml disable line-length,no-inline-html -->
+<!-- markdownlint-disable line-length -->
+
 1. silly question: should we by network configuration restrict the credential containers from accessing the internet?
 2. Response:
    - Yes. The credential containers only read credential material, run ssh-agent/gpg-agent, and expose Unix sockets through a volume; they should not need network access.
@@ -15,7 +18,7 @@
 
 gut feeling notes when reading this:
 
-- full of aicage internal lingo. does not take first-time-readers/new-users point of view. 
+- full of aicage internal lingo. does not take first-time-readers/new-users point of view.
 - talks about sidecar as if the whole world knew wtf a sidecar here is.
 - on line 6 use `agent` not `container`.
 - why does this see ssh/gpg as only git related? that is one use of it and historically ssh/gpg were linked to git in aicage - but task42 removes the last piece of connecting those and I thought the current code or docs would not make taht strict or even strong connection anymore. why do you still get that idea? (I want to know to remove those pieces in the code or docs as this is not the first time you keep making this connection more than weak and every time you do this it now costs lost work).
@@ -26,7 +29,6 @@ gut feeling notes when reading this:
 I did not yet cover the lower about half of the doc. I think you should refactor the doc taking the above gut-feeling points into account before I review again.
 
 ### Response by codex
-
 
 You’re right: I wrote from the old documentation framing instead of the current runtime model, and I also overloaded “agent” badly. I’m checking the current option ownership and menu wording now so the next revision uses the product’s actual language rather than carrying Git-era assumptions forward.
 
@@ -52,3 +54,5 @@ The rewrite will also use unambiguous terms:
 And it will replace the current opening with a first-reader explanation of the outcome, define “sidecar container” when first introduced, collapse the “Enable it” section into one sentence, and tone the direct-forwarding text down without hiding the architectural facts.
 
 I will not touch the wider stale Git framing or the legacy `--git` behavior without your direction; that is a separate documentation/code-scope decision from this page rewrite.
+<!-- markdownlint-enable line-length -->
+<!-- pyml enable line-length,no-inline-html -->
