@@ -1,9 +1,5 @@
 # Notes from 2026-11-26
 
-## Bug: Treat macOS like Linux for SSH/GPG handling
-
-Right now parts of the code check "if os != linux" thus excluding macOS. unless there is a reson to treat macOS differently, we should treat it like Linux.
-
 ## Cleanup: dead Docker-health replacement path
 
 `_requires_replacement()` checks whether a credential container has Docker health status `unhealthy` and would replace it.

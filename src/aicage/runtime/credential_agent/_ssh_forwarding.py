@@ -2,7 +2,6 @@
 
 import os
 import subprocess  # nosec B404 -- SSH key inspection uses fixed local commands.
-import sys
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from shutil import which
@@ -83,7 +82,7 @@ def _ssh_support_mounts() -> list[BindMountSpec]:
 
 
 def _direct_ssh_socket() -> Path | None:
-    if sys.platform != "linux" or _SSH_ADD is None or _SSH_KEYGEN is None:
+    if os.name == "nt" or _SSH_ADD is None or _SSH_KEYGEN is None:
         return None
     socket_path = os.environ.get(_SSH_AUTH_SOCK)
     if not socket_path:

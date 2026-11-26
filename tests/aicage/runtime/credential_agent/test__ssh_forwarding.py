@@ -45,7 +45,7 @@ class SshForwardingTests(TestCase):
                 _ssh_forwarding._ssh_forwarding(),
             )
 
-    def test_ssh_forwarding_uses_direct_linux_host_agent(self) -> None:
+    def test_ssh_forwarding_uses_direct_host_agent(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
         public_key = Path("/test-tmp/id_ed25519.pub")
         direct_mount = BindMountSpec(
@@ -79,10 +79,10 @@ class SshForwardingTests(TestCase):
         self.assertFalse(plan.requires_sidecar)
         self.assertEqual(socket, plan.direct_socket)
 
-    def test_direct_ssh_socket_requires_a_reachable_linux_unix_socket(self) -> None:
+    def test_direct_ssh_socket_requires_a_reachable_non_windows_unix_socket(self) -> None:
         socket = Path("/test-tmp/ssh-agent.sock")
         with (
-            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
             mock.patch.dict(_ssh_forwarding.os.environ, {"SSH_AUTH_SOCK": str(socket)}),
             mock.patch.object(Path, "is_socket", return_value=True),
@@ -102,13 +102,13 @@ class SshForwardingTests(TestCase):
             text=True,
         )
 
-    def test_direct_ssh_socket_rejects_non_linux_or_unreachable_agents(self) -> None:
-        with mock.patch.object(_ssh_forwarding.sys, "platform", "darwin"):
+    def test_direct_ssh_socket_rejects_windows_or_unreachable_agents(self) -> None:
+        with mock.patch.object(_ssh_forwarding.os, "name", "nt"):
             self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
 
         socket = Path("/test-tmp/ssh-agent.sock")
         with (
-            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
             mock.patch.dict(_ssh_forwarding.os.environ, {"SSH_AUTH_SOCK": str(socket)}),
             mock.patch.object(Path, "is_socket", return_value=True),
@@ -123,7 +123,7 @@ class SshForwardingTests(TestCase):
 
     def test_direct_ssh_socket_uses_the_sidecar_without_host_keygen(self) -> None:
         with (
-            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
             mock.patch.object(_ssh_forwarding, "_SSH_KEYGEN", None),
             mock.patch.object(_ssh_forwarding.subprocess, "run") as run_mock,
@@ -271,14 +271,14 @@ class SshForwardingTests(TestCase):
 
     def test_direct_ssh_socket_rejects_missing_or_non_socket_paths(self) -> None:
         with (
-            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
             mock.patch.dict(_ssh_forwarding.os.environ, {}, clear=True),
         ):
             self.assertIsNone(_ssh_forwarding._direct_ssh_socket())
 
         with (
-            mock.patch.object(_ssh_forwarding.sys, "platform", "linux"),
+            mock.patch.object(_ssh_forwarding.os, "name", "posix"),
             mock.patch.object(_ssh_forwarding, "_SSH_ADD", "/usr/bin/ssh-add"),
             mock.patch.dict(
                 _ssh_forwarding.os.environ,
