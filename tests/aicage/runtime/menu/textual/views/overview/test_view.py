@@ -355,7 +355,7 @@ class OverviewTests(TestCase):
         self.assertEqual(None, shares_list.highlighted)
         self.assertEqual(None, docker_list.highlighted)
 
-    def test_refresh_from_hides_git_support_mounts_for_global_configuration(
+    def test_refresh_from_hides_host_access_mounts_for_global_configuration(
         self,
     ) -> None:
         overview = Overview(
@@ -419,6 +419,14 @@ class OverviewTests(TestCase):
             shares_values.return_value = mock.Mock(
                 built_in_shares=[
                     BuiltInShareValue(
+                        BuiltInShareSource.GIT_SUPPORT,
+                        "gitconfig",
+                        "Git config",
+                        "/test-tmp/gitconfig",
+                        None,
+                        True,
+                    ),
+                    BuiltInShareValue(
                         BuiltInShareSource.CREDENTIALS,
                         "ssh",
                         "SSH",
@@ -430,19 +438,7 @@ class OverviewTests(TestCase):
             )
             overview.refresh_from(draft, _build_context())
 
-        self.assertEqual(
-            [
-                BuiltInShareValue(
-                    BuiltInShareSource.CREDENTIALS,
-                    "ssh",
-                    "SSH",
-                    "/test-tmp/.ssh",
-                    None,
-                    True,
-                )
-            ],
-            overview._state.built_in_shares,
-        )
+        self.assertEqual([], overview._state.built_in_shares)
 
     def test_apply_shell_width_sets_fixed_width(self) -> None:
         overview = Overview(

@@ -214,7 +214,11 @@ class Overview(Container):
             built_in_shares = [
                 item
                 for item in built_in_shares
-                if item.source is not BuiltInShareSource.GIT_SUPPORT
+                if item.source
+                not in {
+                    BuiltInShareSource.GIT_SUPPORT,
+                    BuiltInShareSource.CREDENTIALS,
+                }
             ]
         self._state.built_in_shares = merge_built_in_shares(
             built_in_shares,

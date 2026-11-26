@@ -206,7 +206,7 @@ The complete user documentation lives in the [aicage.wiki](https://github.com/ai
 - Share additional host folders:
   - Use `Shares` or extension-provided shares in the setup UI.
 - Use SSH or GnuPG credentials in the coding agent:
-  - Enable `SSH agent` or `GnuPG agent` in the Credentials section. See
+  - Select `SSH keys` or `GnuPG keys` in `Bind Mounts`. See
     [SSH and GnuPG](https://github.com/aicage/aicage/wiki/SSH-and-GnuPG).
 - Use proxies:
   - `aicage` forwards `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY`.
