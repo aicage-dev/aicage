@@ -1,16 +1,5 @@
 # Notes from 2026-11-26
 
-## SSH/GPG in Textual menu
-
-Current menu:
-
-```text
-  ┃  ▐X▌ SSH agent   : SSH agent                                                             ┃ 
-  ┃  ▐X▌ GnuPG agent : GnuPG agent                                                           ┃
-```
-
-I'd like this to clearer. like `SSH keys : SSH socket` and `GPG keys : GnuPG socket`. Right now it's a repetition while my suggestion indicates sort of what is shared and how. The first part must be short, if we add more info then to the second part.
-
 ## Bug: Treat macOS like Linux for SSH/GPG handling
 
 Right now parts of the code check "if os != linux" thus excluding macOS. unless there is a reson to treat macOS differently, we should treat it like Linux.

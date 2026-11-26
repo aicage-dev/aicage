@@ -17,7 +17,7 @@ from aicage.runtime.menu.textual._models import (
 
 class MountDisplayTests(TestCase):
     def test_credential_label_returns_known_label(self) -> None:
-        self.assertEqual("SSH agent", _mount_display.credential_label(MOUNT_SSH_KEY))
+        self.assertEqual("SSH keys", _mount_display.credential_label(MOUNT_SSH_KEY))
 
     def test_git_support_label_returns_known_label(self) -> None:
         value = _mount_display.git_support_label(MOUNT_GITCONFIG_KEY)
@@ -29,15 +29,15 @@ class MountDisplayTests(TestCase):
 
         self.assertEqual("Git configuration (identity, aliases, and settings)", value)
 
-    def test_credential_config_label_describes_ssh_agent(self) -> None:
+    def test_credential_config_label_describes_ssh_keys(self) -> None:
         value = _mount_display.credential_config_label(MOUNT_SSH_KEY)
 
-        self.assertEqual("SSH agent", value)
+        self.assertEqual("SSH keys", value)
 
-    def test_credential_config_label_describes_gnupg_agent(self) -> None:
+    def test_credential_config_label_describes_gnupg_keys(self) -> None:
         value = _mount_display.credential_config_label(MOUNT_GNUPG_KEY)
 
-        self.assertEqual("GnuPG agent", value)
+        self.assertEqual("GnuPG keys", value)
 
     def test_extension_label_returns_prefixed_label(self) -> None:
         value = _mount_display.extension_label("gh")

@@ -200,8 +200,8 @@ class ShareSupportTests(TestCase):
             BuiltInShareValue(
                 BuiltInShareSource.CREDENTIALS,
                 "ssh",
-                "SSH agent",
-                "SSH agent",
+                "SSH keys",
+                "SSH socket",
                 None,
                 True,
             ),
@@ -246,8 +246,8 @@ class ShareSupportTests(TestCase):
             BuiltInShareValue(
                 BuiltInShareSource.CREDENTIALS,
                 "gnupg",
-                "GnuPG agent",
-                "GnuPG agent",
+                "GnuPG keys",
+                "GnuPG socket",
                 None,
                 True,
             ),

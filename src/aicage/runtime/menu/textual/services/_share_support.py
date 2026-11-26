@@ -87,7 +87,7 @@ def built_in_share_values(
                 source=BuiltInShareSource.CREDENTIALS,
                 key=MOUNT_SSH_KEY,
                 label=credential_label(MOUNT_SSH_KEY),
-                path="SSH agent",
+                path="SSH socket",
                 persisted=mounts_cfg.ssh,
                 enabled=_built_in_share_enabled(mounts_cfg.ssh),
                 inherited=_is_inherited_mount(local_mounts.ssh, inherited_mounts.ssh),
@@ -102,7 +102,7 @@ def built_in_share_values(
                     source=BuiltInShareSource.CREDENTIALS,
                     key=MOUNT_GNUPG_KEY,
                     label=credential_label(MOUNT_GNUPG_KEY),
-                    path="GnuPG agent",
+                    path="GnuPG socket",
                     persisted=mounts_cfg.gnupg,
                     enabled=_built_in_share_enabled(mounts_cfg.gnupg),
                     inherited=_is_inherited_mount(

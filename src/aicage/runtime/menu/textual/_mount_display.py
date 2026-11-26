@@ -20,16 +20,16 @@ _GIT_SUPPORT_LABELS: dict[str, str] = {
     MOUNT_GITROOT_KEY: "Git root",
 }
 _CREDENTIAL_LABELS: dict[str, str] = {
-    MOUNT_SSH_KEY: "SSH agent",
-    MOUNT_GNUPG_KEY: "GnuPG agent",
+    MOUNT_SSH_KEY: "SSH keys",
+    MOUNT_GNUPG_KEY: "GnuPG keys",
 }
 _GIT_SUPPORT_CONFIG_LABELS: dict[str, str] = {
     MOUNT_GITCONFIG_KEY: "Git configuration (identity, aliases, and settings)",
     MOUNT_GITROOT_KEY: "Git repository root (when launched from a subdirectory)",
 }
 _CREDENTIAL_CONFIG_LABELS: dict[str, str] = {
-    MOUNT_GNUPG_KEY: "GnuPG agent",
-    MOUNT_SSH_KEY: "SSH agent",
+    MOUNT_GNUPG_KEY: "GnuPG keys",
+    MOUNT_SSH_KEY: "SSH keys",
 }
 
 
