@@ -23,6 +23,15 @@ The `credential-agent` image defines no Docker `HEALTHCHECK`, so this state is n
 
 Remove the unused Docker-health branch unless a real image health check is added.
 
+## Restrict networking of credential containers
+
+1. silly question: should we by network configuration restrict the credential containers from accessing the internet?
+2. Response:
+   - Yes. The credential containers only read credential material, run ssh-agent/gpg-agent, and expose Unix sockets through a volume; they should not need network access.
+   - Currently they use Docker’s default network because _create_container() supplies no network setting.
+   - I would later set network_disabled=True (Docker’s equivalent of --network none) for both the long-running credential container and the short-lived GnuPG socket-link helper.
+   - That is sensible defense in depth, not a user-facing documentation concern.
+
 ## Why does Codex keep linking ssh/gpg strongly to git? we may need to clean up some docs
 
 ### Me to Codex
