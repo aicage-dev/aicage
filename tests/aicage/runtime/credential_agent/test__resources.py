@@ -53,6 +53,7 @@ class CredentialAgentResourcesTests(TestCase):
             },
         )
         client.containers.run.assert_called_once()
+        self.assertTrue(client.containers.run.call_args.kwargs["network_disabled"])
         client.api.exec_create.assert_called_once_with(
             container.id,
             ["credential-agent", "ssh", "ready"],

@@ -96,6 +96,7 @@ def _create_container(
         environment=_credential_agent_environment(image.user),
         volumes=volumes,
         tmpfs=tmpfs,
+        network_disabled=True,
     )
 
 

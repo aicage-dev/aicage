@@ -236,6 +236,7 @@ def _create_gpg_socket_link(resource: _CredentialResource, client_home: Path) ->
             entrypoint="/bin/sh",
             remove=True,
             user=_credential_agent_user(),
+            network_disabled=True,
             volumes={
                 str(client_home): {
                     "bind": _GPG_STAGING_HOME.as_posix(),

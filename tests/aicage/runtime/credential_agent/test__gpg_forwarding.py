@@ -163,6 +163,7 @@ class GpgForwardingTests(TestCase):
             entrypoint="/bin/sh",
             remove=True,
             user="1000:1001",
+            network_disabled=True,
             volumes={
                 str(client_home): {
                     "bind": "/run/aicage/gnupg-staging",
