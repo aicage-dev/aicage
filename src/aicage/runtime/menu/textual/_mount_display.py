@@ -28,8 +28,8 @@ _GIT_SUPPORT_CONFIG_LABELS: dict[str, str] = {
     MOUNT_GITROOT_KEY: "Git repository root (when launched from a subdirectory)",
 }
 _CREDENTIAL_CONFIG_LABELS: dict[str, str] = {
-    MOUNT_GNUPG_KEY: "GnuPG keys",
-    MOUNT_SSH_KEY: "SSH keys",
+    MOUNT_GNUPG_KEY: "GnuPG keys : GnuPG socket",
+    MOUNT_SSH_KEY: "SSH keys : SSH socket",
 }
 
 

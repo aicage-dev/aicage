@@ -152,7 +152,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     BuiltInShareSource.CREDENTIALS,
                     "ssh",
-                    "SSH keys",
+                    "SSH keys : SSH socket",
                     None,
                     None,
                     True,
@@ -177,7 +177,7 @@ class ConfigAppTests(TestCase):
                 BuiltInShareValue(
                     BuiltInShareSource.CREDENTIALS,
                     "ssh",
-                    "(Auto) SSH keys",
+                    "(Auto) SSH keys : SSH socket",
                     None,
                     None,
                     True,

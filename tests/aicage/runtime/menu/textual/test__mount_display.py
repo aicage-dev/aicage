@@ -32,12 +32,12 @@ class MountDisplayTests(TestCase):
     def test_credential_config_label_describes_ssh_keys(self) -> None:
         value = _mount_display.credential_config_label(MOUNT_SSH_KEY)
 
-        self.assertEqual("SSH keys", value)
+        self.assertEqual("SSH keys : SSH socket", value)
 
     def test_credential_config_label_describes_gnupg_keys(self) -> None:
         value = _mount_display.credential_config_label(MOUNT_GNUPG_KEY)
 
-        self.assertEqual("GnuPG keys", value)
+        self.assertEqual("GnuPG keys : GnuPG socket", value)
 
     def test_extension_label_returns_prefixed_label(self) -> None:
         value = _mount_display.extension_label("gh")
