@@ -1,13 +1,5 @@
 # Notes from 2026-11-26
 
-## Cleanup: dead Docker-health replacement path
-
-`_requires_replacement()` checks whether a credential container has Docker health status `unhealthy` and would replace it.
-
-The `credential-agent` image defines no Docker `HEALTHCHECK`, so this state is never produced. Aicage instead runs its own `credential-agent {ssh|gpg} ready` check on every use; readiness failure raises an error and does not trigger replacement.
-
-Remove the unused Docker-health branch unless a real image health check is added.
-
 ## Restrict networking of credential containers
 
 1. silly question: should we by network configuration restrict the credential containers from accessing the internet?

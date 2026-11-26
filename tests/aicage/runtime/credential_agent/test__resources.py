@@ -112,28 +112,22 @@ class CredentialAgentResourcesTests(TestCase):
 
         container.remove.assert_not_called()
 
-    def test__ensure_resources_replaces_unhealthy_or_obsolete_sidecar(self) -> None:
-        cases: tuple[tuple[dict[str, str], dict[str, object]], ...] = (
-            (self._labels, {"Status": "running", "Health": {"Status": "unhealthy"}}),
-            (
-                {**self._labels, "org.aicage.credential-agent.image-id": "old"},
-                {"Status": "running"},
-            ),
+    def test__ensure_resources_replaces_an_obsolete_sidecar(self) -> None:
+        client = mock.Mock()
+        volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
+        container = self._container(
+            labels={**self._labels, "org.aicage.credential-agent.image-id": "old"},
+            state={"Status": "running"},
         )
-        for labels, state in cases:
-            with self.subTest(labels=labels, state=state):
-                client = mock.Mock()
-                volume = mock.Mock(name=self._resource.volume_name, labels=self._labels)
-                container = self._container(labels=labels, state=state)
-                client.volumes.get.return_value = volume
-                client.containers.get.return_value = container
-                client.containers.run.return_value = self._container(status="running")
+        client.volumes.get.return_value = volume
+        client.containers.get.return_value = container
+        client.containers.run.return_value = self._container(status="running")
 
-                with self._client(client):
-                    _resources._ensure_resources([self._ssh], self._image)
+        with self._client(client):
+            _resources._ensure_resources([self._ssh], self._image)
 
-                container.remove.assert_called_once_with(force=True)
-                client.volumes.create.assert_not_called()
+        container.remove.assert_called_once_with(force=True)
+        client.volumes.create.assert_not_called()
 
     def test__ensure_resources_rejects_unowned_volume(self) -> None:
         client = mock.Mock()

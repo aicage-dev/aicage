@@ -68,7 +68,6 @@ def _requires_replacement(
     return (
         labels.get(_IMAGE_ID_LABEL) != image_id
         or not _credential_mount_matches(container, resource, credential_path)
-        or _is_unhealthy(container)
     )
 
 
@@ -167,12 +166,6 @@ def _is_owned(resource: Container | Volume, expected: _CredentialResource) -> bo
         and labels.get(_PROTOCOL_LABEL) == expected.protocol.value
         and labels.get(_OWNER_LABEL) == expected.owner
     )
-
-
-def _is_unhealthy(container: Container) -> bool:
-    container.reload()
-    health = _state_for(container).get("Health")
-    return isinstance(health, dict) and health.get("Status") == "unhealthy"
 
 
 def _labels_for(resource: Container | Volume) -> dict[str, str]:
