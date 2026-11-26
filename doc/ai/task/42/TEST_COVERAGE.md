@@ -92,6 +92,8 @@ behavior.
 
 Completed live coverage:
 
+- `--git`, `--ssh`, and `--gpg` override an explicitly disabled saved project mount setting in no-menu runs. The Git
+  case also retains coverage for its automatic discovery default.
 - Linux direct SSH and GnuPG forwarding remain functional when host sockets are bind-mountable; forced fallback
   sidecars are also covered.
 - Windows Docker Desktop/WSL covers the required sidecar-only GnuPG path and SSH sidecar identity availability.

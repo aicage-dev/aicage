@@ -1,7 +1,6 @@
 # Task 42 design decisions
 
-This document records the decisions that remain relevant to the completed implementation. The working code is the
-source of truth.
+This document records the decisions that remain relevant to the completed implementation.
 
 ## Sidecar runtime identity
 
@@ -15,8 +14,7 @@ default user.
 
 ## Protected keys and passphrases
 
-The discarded platform-keyring design must not be reintroduced implicitly. Aicage does not read, store, or reload
-private-key passphrases.
+Aicage does not read, store, or reload private-key passphrases.
 
 - An interactive run may let `ssh-add` or GnuPG pinentry ask for a protected key's passphrase directly in the selected
   host credential service or sidecar.
@@ -24,6 +22,3 @@ private-key passphrases.
   coding-agent container without that identity.
 - An unprotected SSH key is reloaded when a selected host service or sidecar is empty.
 - Socket volumes contain sockets only; they contain neither credential files nor passphrases.
-
-This behavior is intentionally different from the earlier proposed native Keychain, Credential Manager, and Secret
-Service integration. Those investigations were planning material only and are not part of the implementation.
