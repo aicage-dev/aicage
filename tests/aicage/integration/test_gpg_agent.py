@@ -179,7 +179,6 @@ def _assert_gpg_agent_signs(
                 "copilot",
                 workspace_path=root / "workspace",
             )
-            _enable_gnupg_mount(workspace)
 
             if use_sidecar:
                 fingerprint = _create_gpg_sidecar_fixture(home / ".gnupg")
@@ -187,11 +186,15 @@ def _assert_gpg_agent_signs(
             else:
                 fingerprint = _create_gpg_fixture(home / ".gnupg")
                 _prime_host_gpg_agent(home / ".gnupg", fingerprint)
+                _enable_gnupg_mount(workspace)
 
+            # The sidecar run uses the CLI preference over the saved setting, which is off.
+            credential_option = ["--gpg"] if use_sidecar else []
             exit_code, output = run_cli_pty(
                 [
                     "--menu",
                     "none",
+                    *credential_option,
                     "-e",
                     "AICAGE_ENTRYPOINT_CMD=bash",
                     "--",

@@ -124,14 +124,15 @@ def test_ssh_agent_is_available_in_container_through_sidecar(
             (workspace / "allowed_signers").write_text(
                 f"aicage {keys.public_keys[0]}\n", encoding="utf-8"
             )
-            _enable_ssh_mount(workspace)
             env.pop("SSH_AUTH_SOCK", None)
             command = _ssh_target_command(keys)
 
+            # The CLI preference overrides the saved SSH mount setting, which is off.
             exit_code, output = run_cli_pty(
                 [
                     "--menu",
                     "none",
+                    "--ssh",
                     "-e",
                     "AICAGE_ENTRYPOINT_CMD=bash",
                     "--",
