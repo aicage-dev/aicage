@@ -7,7 +7,7 @@ end-to-end Aicage coverage.
 Both repositories should test cross-container SSH and GnuPG use. They exercise different contracts:
 
 - `aicage-image-util` proves the credential-agent image with synthetic credentials, Docker containers, and named
-  volumes. It must be independent of a real user's keys, host agent, keyring, or project configuration.
+  volumes. It must be independent of a real user's keys, host credential service, or project configuration.
 - `aicage` proves that its configuration, host inspection, Docker resource manager, and target
   container mount layout select and invoke that image correctly on supported hosts.
 
@@ -52,7 +52,7 @@ and arm64 builders. It currently covers:
   key case also scans all client-home regular files for the supplied passphrase. GnuPG may create an otherwise empty
   `private-keys-v1.d` directory even for a public-only home.
 
-This is live image coverage, not a mock suite. It does not use a real host credential directory or keyring.
+This is live image coverage, not a mock suite. It does not use a real host credential directory.
 
 ## Current `aicage` unit coverage
 
@@ -63,18 +63,14 @@ test modules include:
 - `tests/aicage/runtime/credential_agent/test__resource_lifecycle.py` for labelled singleton resources, replacement,
   locks, retained volumes, and readiness;
 - `test__ssh_forwarding.py` and `test__gpg_forwarding.py` for forwarding selection and target arguments;
-- configuration tests for interactive setup and noninteractive reload behavior.
-
-On 2026-11-07, `pytest --cov=src --cov-report=term-missing` completed with 1002 passed, 42 skipped, and 94% total
-line coverage. The four implemented platform/SSH modules named in the Commit 4 status have 100% targeted line
-coverage. This is unit evidence only; the required integration cases remain pending.
+- configuration tests for interactive setup and noninteractive warning-and-continue behavior.
 
 ## Required `aicage-image-util` coverage
 
 None currently identified. A completed container test cannot inspect transient process memory.
 
-The image repository does not need to test host SSH configuration discovery, a real operating-system keyring, Windows
-named pipes, or Aicage configuration scopes. Those are Aicage responsibilities.
+The image repository does not need to test host SSH configuration discovery, Windows named pipes, or Aicage
+configuration scopes. Those are Aicage responsibilities.
 
 ## Required `aicage` coverage
 
@@ -83,14 +79,14 @@ behavior.
 
 ### Unit tests
 
-- Resource inspection, ownership rejection, creation, stopped/unhealthy/obsolete replacement, retained volumes,
+- Resource inspection, ownership rejection, creation, stopped/obsolete replacement, retained volumes,
   readiness failures, lock contention, and one shared image resolution for both protocols.
-- Protocol selection: Linux SSH forwards a prepared host agent when usable and otherwise selects a sidecar; GnuPG uses
+- Protocol selection: Linux SSH forwards a prepared host socket when usable and otherwise selects a sidecar; GnuPG uses
   direct Unix forwarding when usable and a sidecar otherwise; Windows always selects sidecars and never requests a
   Windows named-pipe mount.
 - `DockerRunArgs` volume mounts and protocol environment for each selection, with no target private-key mounts.
 - SSH/GnuPG host support files retained read-only in the target container.
-- Protected-key sidecar-cache checks and clear noninteractive missing-key errors.
+- Protected-key sidecar-cache checks and noninteractive warning-and-continue behavior.
 
 ### Integration and platform tests
 
@@ -107,8 +103,8 @@ Completed live coverage:
 - Stopping the SSH sidecar preserves its volume; the next Aicage run restarts it, reloads keys, and signs again.
 - Stopping the GnuPG sidecar preserves its volume; the next Aicage run restarts it and signs a second message without
   private-key files in the target GnuPG home.
-- Protected SSH and GnuPG keys are loaded through interactive sidecar setup. A noninteractive run fails before target
-  startup when the required protected key is absent from the sidecar cache.
+- Protected SSH and GnuPG keys are loaded through interactive setup. A noninteractive run does not prompt and starts
+  without a protected identity that is unavailable.
 - The temporary credential-focused CI matrix filter has been removed, so CI again discovers the normal non-proxy
   integration suite.
 

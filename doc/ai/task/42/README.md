@@ -5,27 +5,25 @@ See [test coverage](TEST_COVERAGE.md) for the current evidence and the division 
 
 ## Current implementation status
 
-Commits 1 through 4 are complete. `aicage-image-util` provides the published `credential-agent` helper image, and
-`aicage` forwards a prepared Linux host SSH agent when available and otherwise manages a persistent SSH sidecar. It
-selects direct Unix GnuPG forwarding where possible. Protected key passphrases are entered directly into the selected
-agent during interactive setup; Aicage does not read, store, or reload them.
+Task 42 is complete. `aicage-image-util` provides the published `credential-agent` helper image. Aicage selects a
+usable direct Unix socket where possible and otherwise uses a persistent SSH or GnuPG sidecar; Windows always uses
+sidecars. The live Linux and Windows matrix covers direct forwarding, fallback sidecars, signing/authentication,
+restart/reload, and target private-key isolation.
 
-Commit 5 is complete. The CI matrix proves Linux direct-host SSH forwarding, SSH sidecar fallback, and GnuPG signing
-on Linux and Windows. Linux covers direct-agent and forced-sidecar GnuPG paths, while Windows covers its required
-sidecar-only path. SSH and GnuPG sidecars are restarted and unprotected keys are reloaded successfully, and target
-credential homes remain private-key-free.
-SSH and GnuPG sharing is discovered from available host keys, independently of Git configuration; Git signing is one
-consumer of the forwarded agents, not an activation requirement.
-Protected SSH and GnuPG keys require interactive setup whenever their sidecar cache is empty. This keeps passphrases
-out of Aicage process memory and platform credential stores.
-The integration matrix again uses normal non-proxy test discovery rather than a temporary credential-only filter.
+SSH and GnuPG are independent credential options. Host credentials make the corresponding `Bind Mounts` row available
+in the setup UI; the saved SSH/GnuPG setting decides whether Aicage forwards its socket. Git configuration, remotes,
+and signing settings do not participate in that decision.
+
+Protected-key passphrases are entered directly into `ssh-add` or GnuPG pinentry during an interactive run. Aicage does
+not read, store, or reload them. A noninteractive run never prompts: it warns and starts without an unavailable
+protected identity. Unprotected SSH keys are reloaded into an empty selected host service or sidecar.
 
 ## Problem
 
-The SSH and GnuPG refactors replaced mounting host credential homes directly into agent containers with agent-socket
-forwarding. Linux SSH and Unix GnuPG prefer a usable host agent socket because it can be bind mounted without exposing
-private keys. SSH falls back to Aicage's sidecar when host-agent forwarding is unavailable; Windows always uses the
-sidecar.
+The SSH and GnuPG refactors replaced mounting host credential homes directly into coding-agent containers with
+credential-socket forwarding. Linux SSH and Unix GnuPG prefer a usable host socket because it can be bind mounted
+without exposing private keys. SSH falls back to Aicage's sidecar when direct forwarding is unavailable; Windows
+always uses the sidecar.
 
 It does not work for a native Windows host running Linux containers through Docker Desktop:
 
@@ -40,9 +38,9 @@ It does not work for a native Windows host running Linux containers through Dock
 
 ## Desired design
 
-Linux SSH forwards the current host `SSH_AUTH_SOCK` after reconciling Aicage-discovered identities into that agent;
-the identities remain in the host agent. It uses a persistent, aicage-managed sidecar when that path cannot be
-prepared. GnuPG uses a sidecar when direct host-agent forwarding is unavailable; Windows always uses both sidecars.
+Linux SSH forwards the current host `SSH_AUTH_SOCK` after reconciling Aicage-discovered identities into the host SSH
+service; the identities remain there. It uses a persistent, aicage-managed sidecar when that path cannot be prepared.
+GnuPG uses a sidecar when direct host-socket forwarding is unavailable; Windows always uses both sidecars.
 Both sidecars use one dedicated
 `aicage-image-util:credential-agent` image, invoked explicitly in an SSH or GnuPG mode. This uses the existing image
 release, signature, and update lifecycle without adding a helper image per protocol.
@@ -52,7 +50,7 @@ Linux host SSH_AUTH_SOCK
        |
        | bind mount when reachable and prepared
        v
-one or more aicage agent containers
+one or more coding-agent containers
 
 host ~/.ssh  (mounted only into utility sidecar fallback)
        |
@@ -61,7 +59,7 @@ aicage-image-util:credential-agent ssh sidecar
        |
        | SSH Unix socket in a persistent named volume
        v
-one or more aicage agent containers
+one or more coding-agent containers
 
 host GNUPGHOME  (mounted only into utility sidecar)
        |
@@ -70,28 +68,30 @@ aicage-image-util:credential-agent gpg sidecar
        |
        | normal GnuPG-agent Unix socket relayed into a persistent named volume
        v
-one or more aicage agent containers
+one or more coding-agent containers
 ```
 
 Target containers receive either a direct host-socket bind mount or a socket volume for each enabled protocol. SSH
 containers receive `SSH_AUTH_SOCK` and retain Aicage's existing read-only mounts for SSH configuration, known-hosts
 files, and public-key files. GnuPG
-containers receive the GnuPG agent socket and retain its existing read-only public keyring, trust, and configuration
-files. They never receive private-key files.
+containers receive the GnuPG credential socket and retain its existing read-only public keyring, trust, and
+configuration files. They never receive private-key files.
 
 ### Persistent singleton resources
 
 Use separate stable names and aicage ownership labels, for example:
 
-- SSH container: `aicage-credential-agent-ssh`; volume: `aicage-credential-agent-ssh-socket`
-- GnuPG container: `aicage-credential-agent-gpg`; volume: `aicage-credential-agent-gpg-socket`
-- labels: `org.aicage.resource=credential-agent`, a protocol label, and a helper-image/protocol version label
+- SSH container: `aicage-credential-agent-<owner>-ssh`; volume:
+  `aicage-credential-agent-<owner>-ssh-socket`
+- GnuPG container: `aicage-credential-agent-<owner>-gpg`; volume:
+  `aicage-credential-agent-<owner>-gpg-socket`
+- labels: `org.aicage.resource=credential-agent`, owner, protocol, and helper-image identity
 
 They intentionally survive ordinary aicage exits. When a run requires either sidecar, aicage should:
 
 1. Resolve and update the shared credential-helper image once using the existing image digest/signature/pull lifecycle.
 2. For each enabled protocol, ensure its named volume and singleton sidecar exist.
-3. Replace an absent, stopped, unhealthy, or obsolete sidecar while retaining its volume.
+3. Create a missing sidecar, restart a stopped sidecar, or replace an obsolete sidecar while retaining its volume.
 4. Verify each required socket before starting the target agent container.
 5. Mount each required volume in the target container and set its protocol environment.
 
@@ -116,27 +116,26 @@ pull Node and Python. The credential image has one small dispatcher invoked as `
 
 One credential-image digest check covers both sidecars, so enabling both protocols does not add a second helper-image
 update request. Do not add this helper to `aicage-image-base` unless a later design need proves it necessary. Target
-images need only their existing SSH and GnuPG clients plus the relevant volume-backed agent sockets; the utility image
-owns sidecar behavior when the sidecar path is selected.
+images need only their existing SSH and GnuPG clients plus the relevant volume-backed credential sockets; the utility
+image owns sidecar behavior when the sidecar path is selected.
 
 ## Passphrase handling
 
-When SSH sharing is enabled in the terminal configuration UI, its existing confirmation dialog also authorizes SSH
-setup. On Linux with a usable host agent, `ssh-add` prompts directly for an encrypted missing key; otherwise the
-sidecar prompts directly. Aicage never receives the passphrase. There is no separate setup command.
+When SSH is selected in the terminal configuration UI, its existing confirmation dialog also authorizes SSH setup. On
+Linux with a usable host socket, `ssh-add` prompts directly for an encrypted missing key; otherwise the sidecar
+prompts directly. Aicage never receives the passphrase. There is no separate setup command.
 
-After a reboot, an empty host agent or sidecar receives unencrypted keys before starting a target container. Encrypted
-keys require the terminal configuration UI to load them directly into the selected agent.
+After a reboot, an empty host service or sidecar receives unencrypted keys before starting a target container.
+Encrypted keys require an interactive run to load them directly into the selected service.
 
-A noninteractive invocation must never prompt. If it finds an encrypted key that is not loaded in the sidecar, it stops
-before starting the target container and tells the user to open the normal terminal configuration UI to load that key.
+A noninteractive invocation never prompts. If an encrypted key is unavailable, it logs a warning and starts the target
+container without that identity.
 
-Global and tree shared-configuration edits must perform the same terminal SSH setup when SSH sharing is enabled, even
-though they do not start a target agent container.
+Global and tree configuration preserve the SSH/GnuPG `Auto`/`On`/`Off` inheritance model. `Auto` leaves the global
+setting unset or, at a nested scope, does not override its parent; it is not Git detection.
 
-The GnuPG sidecar owns its GnuPG agent lifecycle and pinentry behavior. Its noninteractive behavior must likewise never
-prompt. A protected GnuPG key must already be cached in the sidecar; otherwise interactive setup delegates pinentry to
-the sidecar. The socket volumes never contain private keys or passphrases.
+The GnuPG sidecar owns its GnuPG service lifecycle and pinentry behavior. Its noninteractive behavior likewise never
+prompts. The socket volumes never contain private keys or passphrases.
 
 ## Implementation areas
 
@@ -144,7 +143,7 @@ the sidecar. The socket volumes never contain private keys or passphrases.
 
 - Build and release `aicage-image-util:credential-agent`, separate from `agent-version`.
 - Include OpenSSH and GnuPG tools plus a dispatcher with `ssh` and `gpg` modes.
-- Define and test a focused startup and readiness command for each agent socket.
+- Define and test a focused startup and readiness command for each credential socket.
 - Publish it through the existing `aicage-image-util` release and image workflow.
 - Do not mount host credential material into either socket volume.
 
@@ -159,8 +158,8 @@ the sidecar. The socket volumes never contain private keys or passphrases.
 - Add each enabled protocol's volume mount and agent environment to `DockerRunArgs`.
 - Retain the existing read-only target-container mounts for SSH configuration, known-hosts files, and public-key
   files, plus the existing GnuPG public keyring, trust, and configuration mounts; remove only direct private-key and
-  host-agent-socket mounts.
-- Remove direct host agent-socket bind mounts on Windows.
+  host credential-socket mounts.
+- Remove direct host credential-socket bind mounts on Windows.
 
 ### Tests
 
@@ -175,14 +174,14 @@ the sidecar. The socket volumes never contain private keys or passphrases.
   private-key mounts.
 - Restart integration tests: remove/stop either sidecar and verify the next relevant run recreates it while retaining
   its named volume.
-- Test SSH initial passphrase setup, post-reboot keyring reload, and the noninteractive missing-passphrase error.
+- Test interactive protected-key setup, unprotected-key reload, and noninteractive no-prompt warning behavior.
 
 ## Non-goals and constraints
 
 - Never change Windows service state/startup policy.
 - Never change Windows key permissions/ACLs.
 - Never require an additional host-side credential tool.
-- Never mount private keys in target agent containers.
+- Never mount private keys in target coding-agent containers.
 - Do not create per-run sidecars or per-run volumes.
 - Do not delete either singleton socket volume during ordinary aicage shutdown.
 - Discuss with the user before modifying `aicage-image-base`, especially `scripts/entrypoint.sh`.
