@@ -23,7 +23,7 @@ The `credential-agent` image defines no Docker `HEALTHCHECK`, so this state is n
 
 Remove the unused Docker-health branch unless a real image health check is added.
 
-## Why does odex keep linking ssh/gpg strongly to git? we may need to clean up some docs
+## Why does Codex keep linking ssh/gpg strongly to git? we may need to clean up some docs
 
 ### Me to Codex
 
