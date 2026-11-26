@@ -9,14 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from shutil import copy2, which
 
-from docker.errors import DockerException
-
 from aicage._logging import get_logger
 from aicage.config.context import ConfigContext
 from aicage.config.project_config import AgentConfig
-from aicage.constants import CREDENTIAL_AGENT_IMAGE
 from aicage.docker.errors import DockerError
-from aicage.docker.execution.client import get_docker_client
 from aicage.gpg import (
     resolve_gpg_agent_socket,
     resolve_gpg_home,
@@ -28,7 +24,6 @@ from aicage.gpg import (
 from aicage.paths import container_project_path
 from aicage.runtime.run_args import BindMountSpec, MountSpec, VolumeMountSpec
 
-from ._env import _credential_agent_user
 from ._resource_gpg import (
     _gpg_fingerprints,
     _gpg_key_is_usable,
@@ -215,41 +210,11 @@ def _gpg_sidecar_target_args(
     ) as directory:
         client_home = Path(directory)
         _copy_gpg_support_files(gpg_home, client_home)
-        _create_gpg_socket_link(resource, client_home)
         yield [
             BindMountSpec(client_home, _GPG_STAGING_HOME),
             *_external_gpg_support_mounts(gpg_home),
             VolumeMountSpec(resource.volume_name, _GPG_SOCKET_DIRECTORY, True),
         ]
-
-
-def _create_gpg_socket_link(resource: _CredentialResource, client_home: Path) -> None:
-    """Create the client-home socket link in Docker's Linux filesystem."""
-    try:
-        get_docker_client().containers.run(
-            CREDENTIAL_AGENT_IMAGE,
-            [
-                "-c",
-                f"ln -s {_GPG_SOCKET_PATH.as_posix()} "
-                f"{(_GPG_STAGING_HOME / _GPG_SOCKET_NAME).as_posix()}",
-            ],
-            entrypoint="/bin/sh",
-            remove=True,
-            user=_credential_agent_user(),
-            network_disabled=True,
-            volumes={
-                str(client_home): {
-                    "bind": _GPG_STAGING_HOME.as_posix(),
-                    "mode": "rw",
-                },
-                resource.volume_name: {
-                    "bind": _GPG_SOCKET_DIRECTORY.as_posix(),
-                    "mode": "ro",
-                },
-            },
-        )
-    except DockerException as exc:
-        raise DockerError("Failed to prepare the GnuPG client home.") from exc
 
 
 @contextmanager
@@ -259,7 +224,6 @@ def _gpg_direct_target_args(socket: Path, gpg_home: Path) -> Iterator[list[Mount
     ) as directory:
         client_home = Path(directory)
         _copy_gpg_support_files(gpg_home, client_home)
-        (client_home / _GPG_SOCKET_NAME).symlink_to(_GPG_SOCKET_PATH)
         yield [
             BindMountSpec(client_home, _GPG_STAGING_HOME),
             BindMountSpec(socket, _GPG_SOCKET_PATH),
